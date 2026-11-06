@@ -1412,7 +1412,7 @@ async function listDir({ node, space, path: sub = '' } = {}) {
 async function readFile({ node, space, path: p } = {}) {
   const n = (await listNodes()).find((x) => x.port === Number(node));
   if (!n) throw new Error(`node ${node} not found`);
-  const base = path.join(n.dir, 'usr', 'local', 'work', space);
+  const base = baseDirOf(n, space);
   const file = path.join(base, ...String(p || '').split('/').filter(Boolean));
   if (file !== base && !file.startsWith(base + path.sep)) throw new Error('path escapes the space');
   let content;
@@ -1427,7 +1427,7 @@ async function readFile({ node, space, path: p } = {}) {
 async function writeFile({ node, space, path: p, content = '' } = {}) {
   const n = (await listNodes()).find((x) => x.port === Number(node));
   if (!n) throw new Error(`node ${node} not found`);
-  const base = path.join(n.dir, 'usr', 'local', 'work', space);
+  const base = baseDirOf(n, space);
   const file = path.join(base, ...String(p || '').split('/').filter(Boolean));
   if (file !== base && !file.startsWith(base + path.sep)) throw new Error('path escapes the space');
   await fs.writeFile(file, content, 'utf8');
@@ -1435,10 +1435,14 @@ async function writeFile({ node, space, path: p, content = '' } = {}) {
 }
 
 /** 列出项目空间内的目录项（IDE 文件树用）。 */
+function baseDirOf(n, space) {
+  return space ? path.join(n.dir, 'usr', 'local', 'work', space) : n.dir;
+}
+
 async function listTree({ node, space, path: p = '' } = {}) {
   const n = (await listNodes()).find((x) => x.port === Number(node));
   if (!n) throw new Error(`node ${node} not found`);
-  const base = path.join(n.dir, 'usr', 'local', 'work', space);
+  const base = baseDirOf(n, space);
   const dir = path.join(base, ...String(p || '').split('/').filter(Boolean));
   if (dir !== base && !dir.startsWith(base + path.sep)) throw new Error('path escapes the space');
   const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -1453,7 +1457,7 @@ async function listTree({ node, space, path: p = '' } = {}) {
 async function spaceBase({ node, space }) {
   const n = (await listNodes()).find((x) => x.port === Number(node));
   if (!n) throw new Error(`node ${node} not found`);
-  return path.join(n.dir, 'usr', 'local', 'work', space);
+  return baseDirOf(n, space);
 }
 function resolveIn(base, p) {
   const full = path.join(base, ...String(p || '').split('/').filter(Boolean));
@@ -1519,7 +1523,7 @@ async function compileSpace({ node, space } = {}) {
 async function spaceDir({ node, space } = {}) {
   const n = (await listNodes()).find((x) => x.port === Number(node));
   if (!n) throw new Error(`node ${node} not found`);
-  return { dir: path.join(n.dir, 'usr', 'local', 'work', space) };
+  return { dir: baseDirOf(n, space) };
 }
 
 async function listSpaces({ node } = {}) {

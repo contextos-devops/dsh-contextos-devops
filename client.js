@@ -1373,7 +1373,7 @@ window.__ModuleLoader__.load({
       const [gitOpen, setGitOpen] = useState(true);
       const [cursor, setCursor] = useState({ line: 1, column: 1 });
       const refreshGit = async () => {
-        if (!node || !space) return;
+        if (!node) return;
         try { setGit(await api('git', { node, space })); } catch { /* no git */ }
       };
       useEffect(() => { refreshGit(); }, [node, space]);
@@ -1460,7 +1460,7 @@ window.__ModuleLoader__.load({
       };
 
       const loadDir = async (p) => {
-        if (!node || !space) return;
+        if (!node) return;
         try {
           const list = await api('tree', { node, space, path: p });
           setDirs((d) => ({ ...d, [p]: list }));
@@ -1505,7 +1505,7 @@ window.__ModuleLoader__.load({
       const ideKey = `${node || ''}:${space || ''}`;
       const readIdeOpen = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide-open') || '{}'); } catch { return {}; } };
       useEffect(() => {
-        if (!node || !space) return;
+        if (!node) return;
         restorePendingRef.current = true;
         setStatus('');
         (async () => {
@@ -1530,7 +1530,7 @@ window.__ModuleLoader__.load({
         return () => { disposed = true; };
       }, [node, space]);
       useEffect(() => {
-        if (!node || !space || restorePendingRef.current) return;
+        if (!node || restorePendingRef.current) return;
         try {
           const all = readIdeOpen();
           all[ideKey] = { tabs: tabs.map((t) => t.path), active: activePath };
@@ -1754,14 +1754,14 @@ window.__ModuleLoader__.load({
       };
       const readPanes = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide-panes') || '{}'); } catch { return {}; } };
       useEffect(() => {
-        if (!node || !space) return;
+        if (!node) return;
         const p = readPanes()[`${node}:${space}`];
         setShowLeft(p ? !!p.left : true);
         setShowRight(p ? !!p.right : false);
         setShowBottom(p ? !!p.bottom : false);
       }, [node, space]);
       useEffect(() => {
-        if (!node || !space) return;
+        if (!node) return;
         try { const all = readPanes(); all[`${node}:${space}`] = { left: showLeft, right: showRight, bottom: showBottom }; localStorage.setItem('contextos-devops-dsh:ide-panes', JSON.stringify(all)); } catch {}
       }, [showLeft, showRight, showBottom, node, space]);
       const jumpLine = (line) => { const ed = editorRef.current; if (ed) { try { ed.revealLineInCenter(line); ed.setPosition({ lineNumber: line, column: 1 }); ed.focus(); } catch {} } };
@@ -1840,18 +1840,19 @@ window.__ModuleLoader__.load({
         h('div', { className: 'cx-dev-top' },
           h('div', { className: 'cx-dev-projects' },
             (projects || []).map((p) => h('button', { key: p.key, className: `cx-dev-ptab${p.key === activeKey ? ' on' : ''}`, onClick: () => onSelectProject && onSelectProject(p.key), title: `${p.node} · ${p.space}` },
-              h('span', { className: 'nm' }, `${p.node} · ${p.space}`),
+              h('span', { className: 'nm' }, `${p.node} · ${p.space || (zh ? '节点目录' : 'node')}`),
               h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); onCloseProject && onCloseProject(p.key); } }, '×')))),
           h('div', { className: 'cx-dev-target' },
             h('button', { className: 'cx-btn xs', onClick: compile, title: zh ? '编译当前项目' : 'Compile' }, zh ? '编译' : 'BUILD'),
             h('select', { className: 'cx-select', value: node || '', onChange: (e) => onSelectNode && onSelectNode(Number(e.target.value)) },
               (nodes || []).map((n) => h('option', { key: n.port, value: n.port }, n.name || `:${n.port}`))),
             h('select', { className: 'cx-select', value: space || '', onChange: (e) => onSelectSpace && onSelectSpace(e.target.value) },
+              h('option', { key: '__node', value: '' }, zh ? '（节点目录）' : '(node root)'),
               (spaces || []).map((x) => h('option', { key: x.name, value: x.name }, x.name))))),
         h('div', { className: `cx-dev${showLeft ? '' : ' hide-left'}${showRight ? '' : ' hide-right'}${showBottom ? '' : ' hide-bottom'}` },
         h('section', { className: 'cx-dev-col cx-dev-explorer' },
           h('div', { className: 'cx-dev-b' },
-            !node || !space
+            !node
               ? h('div', { className: 'cx-empty' }, zh ? '先在服务节点/项目空间上点「编程」打开项目。' : 'Pick a node/space and click CODE.')
               : h('div', { className: 'cx-tree' },
                 h('div', { className: 'cx-tree-recent' },
@@ -2030,7 +2031,7 @@ window.__ModuleLoader__.load({
           on
             ? h('button', { className: 'cx-btn xs', onClick: (e) => { e.stopPropagation(); onOpen(n.port); } }, locale === 'zh' ? '主页' : 'HOME')
             : h('button', { className: 'cx-btn xs pri', onClick: (e) => { e.stopPropagation(); onStart(n.port); } }, locale === 'zh' ? '启动' : 'START'),
-          h('button', { className: 'cx-btn xs', onClick: (e) => { e.stopPropagation(); onIde && onIde(n.port); } }, locale === 'zh' ? '编程' : 'CODE'),
+          h('button', { className: 'cx-btn xs', onClick: (e) => { e.stopPropagation(); onIde && onIde(n.port, ''); } }, locale === 'zh' ? '编程' : 'CODE'),
           on ? h(MenuButton, { items: [{ label: '停止', danger: true, action: () => onStop(n.port) }, { label: '删除', danger: true, action: () => onDelete(n.port) }] }) : h(MenuButton, { items: [{ label: '删除', danger: true, action: () => onDelete(n.port) }] })));
     }
 
@@ -4501,10 +4502,10 @@ window.__ModuleLoader__.load({
         setNode(n);
         setViewMode('dev');
         let target = sp || '';
-        if (!target) {
+        if (sp === undefined) {
           try { target = ((await api('spaces', { node: n })) || [])[0]?.name || ''; } catch { /* keep */ }
         }
-        if (target) setSpace(target);
+        setSpace(target || '');
         if (target) {
           const key = `${n}:${target}`;
           setIdeProjects((ps) => (ps.some((x) => x.key === key) ? ps : [...ps, { key, node: n, space: target }]));
