@@ -1240,6 +1240,7 @@ window.__ModuleLoader__.load({
       const wsRef = useRef(null);
       const tabsRef = useRef(tabs); tabsRef.current = tabs;
       const activeRef = useRef(activePath); activeRef.current = activePath;
+      const restorePendingRef = useRef(false);
       const saveRef = useRef(() => {});
       const activeTab = tabs.find((t) => t.path === activePath) || null;
 
@@ -1318,11 +1319,36 @@ window.__ModuleLoader__.load({
       };
       saveRef.current = save;
 
+      const ideKey = `${node || ''}:${space || ''}`;
+      const readIdeOpen = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide-open') || '{}'); } catch { return {}; } };
       useEffect(() => {
         if (!node || !space) return;
+        restorePendingRef.current = true;
         setTabs([]); setActivePath(''); setDirs({}); setExpanded({ '': true }); setStatus('');
         loadDir('');
+        const saved = readIdeOpen()[ideKey];
+        if (!saved || !Array.isArray(saved.tabs) || !saved.tabs.length) { restorePendingRef.current = false; return; }
+        let disposed = false;
+        (async () => {
+          const out = [];
+          for (const p of saved.tabs.slice(0, 12)) {
+            try { const r = await api('readFile', { node, space, path: p }); out.push({ path: p, name: p.split('/').pop(), content: r.content, dirty: false }); } catch { /* skip missing */ }
+          }
+          if (disposed) { restorePendingRef.current = false; return; }
+          setTabs(out);
+          setActivePath(out.some((t) => t.path === saved.active) ? saved.active : (out[0] ? out[0].path : ''));
+          restorePendingRef.current = false;
+        })();
+        return () => { disposed = true; };
       }, [node, space]);
+      useEffect(() => {
+        if (!node || !space || restorePendingRef.current) return;
+        try {
+          const all = readIdeOpen();
+          all[ideKey] = { tabs: tabs.map((t) => t.path), active: activePath };
+          localStorage.setItem('contextos-devops-dsh:ide-open', JSON.stringify(all));
+        } catch {}
+      }, [tabs, activePath, node, space]);
 
       useEffect(() => {
         let disposed = false; let ed = null;
