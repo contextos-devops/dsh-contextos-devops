@@ -1070,6 +1070,16 @@ window.__ModuleLoader__.load({
 .cx-dev .cx-tabs{background:transparent;border:0}
 .cx-dev .cx-editor-wrap,.cx-dev .cx-editor-host,.cx-dev .cx-editor-ta{border:0}
 .cx-dev .cx-tab{border-right:0}
+.cx-dev .cx-tab .ico{font-size:7px;font-weight:800;letter-spacing:0;color:var(--cx-text-faint);min-width:12px;text-align:center}
+.cx-dev .cx-tab.on .ico{color:var(--cx-accent)}
+.cx-crumb{display:flex;align-items:center;gap:3px;padding:3px 10px;background:transparent;font:10px var(--cx-mono);color:var(--cx-text-dim);overflow:auto;flex:none;white-space:nowrap}
+.cx-crumb .seg{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:3px;cursor:pointer}
+.cx-crumb .seg:hover{background:var(--cx-accent-soft);color:var(--cx-accent)}
+.cx-crumb .seg.file{color:var(--cx-text)}
+.cx-crumb .ci{opacity:.65;font-size:9px}
+.cx-crumb .sep{opacity:.45}
+.cx-crumb-actions{margin-left:auto;display:flex;gap:2px;flex:none}
+
 .cx-dev .cx-tab{background:transparent;border:0;border-top:2px solid transparent}
 .cx-dev .cx-tab.on{background:transparent;border-top-color:var(--cx-accent);color:var(--cx-accent)}
 .cx-dev .cx-tab .x{color:inherit}
@@ -1436,6 +1446,10 @@ window.__ModuleLoader__.load({
       }, [node, space]);
 
       const askName = (title, value = '') => new Promise((resolve) => setNameDlg({ title, value, resolve }));
+      const fileGlyph = (name) => {
+        const ext = (String(name).split('.').pop() || '').toLowerCase();
+        return ({ go: 'GO', js: 'JS', ts: 'TS', json: '{}', css: 'CS', html: '<>', md: 'MD', sh: '$', yml: 'YM', yaml: 'YM', sql: 'DB', py: 'PY' })[ext] || '·';
+      };
       const dirOf = (entry) => (entry.type === 'dir' ? entry.path : entry.path.split('/').slice(0, -1).join('/'));
       const reloadDir = async (p) => {
         try { const list = await api('tree', { node, space, path: p }); setDirs((d) => ({ ...d, [p]: list })); setExpanded((e) => ({ ...e, [p]: true })); } catch (e) { setStatus(String(e?.message || e)); }
@@ -1524,8 +1538,24 @@ window.__ModuleLoader__.load({
         h('section', { className: 'cx-dev-col cx-dev-editor' },
           h('div', { className: 'cx-dev-h' }, 'EDITOR', h('span', { className: 'cx-dev-hint' }, activeTab ? activeTab.path : (zh ? '双击左侧文件' : 'OPEN A FILE'))),
           h('div', { className: 'cx-tabs' }, tabs.map((t) => h('div', { key: t.path, className: `cx-tab${t.path === activePath ? ' on' : ''}`, onClick: () => setActivePath(t.path), title: t.path },
-            h('span', null, t.name + (t.dirty ? ' ●' : '')),
+            h('span', { className: 'ico' }, fileGlyph(t.name)),
+            h('span', { className: 'nm' }, t.name + (t.dirty ? ' ●' : '')),
             h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); closeTab(t.path); } }, '×')))),
+          h('div', { className: 'cx-crumb' },
+            h('span', { className: 'seg', onClick: () => onSelectNode && onSelectNode(node), title: 'node' }, h('span', { className: 'ci' }, '◉'), String(node || '')),
+            h('span', { className: 'sep' }, '›'),
+            h('span', { className: 'seg', onClick: () => onSelectSpace && onSelectSpace(space), title: 'space' }, h('span', { className: 'ci' }, '▣'), space || ''),
+            (activePath || '').split('/').filter(Boolean).map((seg, i, arr) => {
+              const p = arr.slice(0, i + 1).join('/');
+              const isFile = i === arr.length - 1;
+              return h(React.Fragment, { key: p },
+                h('span', { className: 'sep' }, '›'),
+                h('span', { className: `seg${isFile ? ' file' : ''}`, onClick: () => (isFile ? setActivePath(p) : null), title: p }, h('span', { className: 'ci' }, isFile ? '◈' : '▤'), seg));
+            }),
+            h('div', { className: 'cx-crumb-actions' },
+              h('button', { className: 'cx-pm-op', onClick: () => save(), title: zh ? '保存' : 'Save' }, '⤓'),
+              h('button', { className: 'cx-pm-op', onClick: () => { if (activePath) reloadDir(''); }, title: zh ? '重新加载目录' : 'Reload' }, '↻'),
+              h('button', { className: 'cx-pm-op', onClick: () => { try { navigator.clipboard.writeText([node, space, activePath].filter(Boolean).join(' / ')); } catch {} setStatus(zh ? '路径已复制' : 'path copied'); }, title: zh ? '复制路径' : 'Copy path' }, '⧉'))),
           h('div', { className: 'cx-dev-b cx-editor-wrap' },
             h('div', { className: 'cx-editor-host', ref: editorHostRef, style: editorErr ? { display: 'none' } : null }),
             editorErr ? h('textarea', {
