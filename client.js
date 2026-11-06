@@ -2732,10 +2732,10 @@ window.__ModuleLoader__.load({
           h('div', { className: 'cx-scan-tabs' },
             [
               { id: 'hosts', label: '远程主机', n: (ssh?.services || []).length },
-              { id: 'wifi', label: 'WIFI 网络', n: (data.wifiNetworks || []).length },
               { id: 'lan', label: 'WIFI 设备', n: (data.lanHosts || []).length },
+              { id: 'wifi', label: 'WIFI 网络', n: (data.wifiNetworks || []).length },
               { id: 'bt', label: '蓝牙设备', n: (data.bluetoothNearby || []).length + (data.devices || []).filter((d) => d.kind === 'bluetooth').length },
-              { id: 'nodes', label: '节点', n: (data.devices || []).filter((d) => d.kind === 'contextos').length },
+              { id: 'ir', label: '红外设备', n: 0 },
             ].map((t) => h('button', { key: t.id, className: `cx-scan-tab${tab === t.id ? ' on' : ''}`, onClick: () => setTab(t.id) }, t.label, h('span', { className: 'n' }, t.n)))),
           h('div', { className: 'cx-scan-body' },
             tab === 'hosts' ? ((ssh?.services || []).length
@@ -2771,10 +2771,12 @@ window.__ModuleLoader__.load({
                   h('span', { className: 'cx-tag cy' }, 'PAIRED')))]
               : h('div', { className: 'cx-empty-d' }, '没有蓝牙设备（附近扫描需安装 blueutil）'))
             : null,
-            tab === 'nodes' ? (data.devices || []).filter((d) => d.kind === 'contextos').map((d) => h('div', { className: 'cx-device', key: d.id },
-              h('span', { className: `cx-led${['running', 'online'].includes(d.status) ? ' on' : ''}` }),
-              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, d.name), h('div', { className: 'dd' }, `${d.address} · ${d.status}`)),
-              h('button', { className: 'cx-btn xs', onClick: () => { try { window.open(`http://127.0.0.1:${String(d.address).split(':').pop()}`, '_blank'); } catch {} } }, '打开'))) : null),
+            tab === 'ir' ? (() => {
+              const ad = (data.adapters || []).find((a) => a.kind === 'infrared');
+              return ad && ad.supported
+                ? h('div', { className: 'cx-empty-d' }, '红外适配器已就绪，等待发现设备')
+                : h('div', { className: 'cx-empty-d' }, `当前宿主无红外适配器${ad && ad.reason ? '（' + ad.reason + '）' : ''}`);
+            })() : null),
           h('div', { className: 'desc' }, data.note || '')) : null);
     }
 
