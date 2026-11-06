@@ -1111,6 +1111,22 @@ window.__ModuleLoader__.load({
 .cx-dev .cx-dev-editor .cx-dev-h{border-bottom:0}
 .cx-dev .cx-tabs{background:transparent;border:0}
 .cx-dev .cx-editor-wrap,.cx-dev .cx-editor-host,.cx-dev .cx-editor-ta,.cx-dev .cx-dev-editor,.cx-dev .cx-dev-editor .cx-dev-b{border:0!important;box-shadow:none!important;outline:0!important}
+.cx-dev.hide-left{grid-template-columns:minmax(0,1fr) 360px}
+.cx-dev.hide-right{grid-template-columns:220px minmax(0,1fr)}
+.cx-dev.hide-left.hide-right{grid-template-columns:minmax(0,1fr)}
+.cx-dev.hide-bottom{grid-template-rows:minmax(0,1fr)}
+.cx-dev.hide-left .cx-dev-explorer{display:none}
+.cx-dev.hide-left .cx-dev-editor{grid-column:1}
+.cx-dev.hide-left .cx-dev-preview{grid-column:2}
+.cx-dev.hide-left .cx-dev-term{grid-column:1/3}
+.cx-dev.hide-right .cx-dev-preview{display:none}
+.cx-dev.hide-right .cx-dev-term{grid-column:2/3}
+.cx-dev.hide-left.hide-right .cx-dev-editor{grid-column:1}
+.cx-dev.hide-left.hide-right .cx-dev-term{grid-column:1/2}
+.cx-dev.hide-bottom .cx-dev-term{display:none}
+.cx-dev.hide-bottom .cx-dev-explorer{grid-row:1/2}
+.cx-pm-op.on{color:var(--cx-accent);border-color:var(--cx-accent)}
+
 .cx-dev .cx-editor-host .monaco-editor,.cx-dev .cx-editor-host .monaco-editor .overflow-guard,.cx-dev .cx-editor-host .monaco-editor .margin{border:0!important;box-shadow:none!important;outline:0!important}
 .cx-dev .cx-tabs,.cx-dev .cx-tabs .cx-tab{border-bottom:0!important;box-shadow:none!important}
 .cx-dev .cx-crumb{border:0}
@@ -1316,6 +1332,9 @@ window.__ModuleLoader__.load({
       const [treeMenu, setTreeMenu] = useState(null);
       const [nameDlg, setNameDlg] = useState(null);
       const [crumbMenu, setCrumbMenu] = useState(null);
+      const [showLeft, setShowLeft] = useState(true);
+      const [showRight, setShowRight] = useState(true);
+      const [showBottom, setShowBottom] = useState(true);
       const [editorErr, setEditorErr] = useState('');
       const [termErr, setTermErr] = useState('');
       const [termTab, setTermTab] = useState('term');
@@ -1652,7 +1671,7 @@ window.__ModuleLoader__.load({
               (nodes || []).map((n) => h('option', { key: n.port, value: n.port }, n.name || `:${n.port}`))),
             h('select', { className: 'cx-select', value: space || '', onChange: (e) => onSelectSpace && onSelectSpace(e.target.value) },
               (spaces || []).map((x) => h('option', { key: x.name, value: x.name }, x.name))))),
-        h('div', { className: 'cx-dev' },
+        h('div', { className: `cx-dev${showLeft ? '' : ' hide-left'}${showRight ? '' : ' hide-right'}${showBottom ? '' : ' hide-bottom'}` },
         h('section', { className: 'cx-dev-col cx-dev-explorer' },
           h('div', { className: 'cx-dev-h' }, zh ? '资源管理器' : 'EXPLORER', h('span', { className: 'cx-dev-hint' }, node && space ? `${node} · ${space}` : (zh ? '未选择空间' : 'NO SPACE')),
             h('button', { className: 'cx-pm-op', style: { marginLeft: 'auto' }, onClick: () => newEntry({ type: 'dir', path: '', name: '' }, false), title: zh ? '新建文件' : 'New file' }, '+'),
@@ -1694,6 +1713,9 @@ window.__ModuleLoader__.load({
               h('span', { className: 'seg', title: 'symbols', onClick: (ev) => { ev.stopPropagation(); const items = symbolsOf(activeTab.content); if (items.length) setCrumbMenu({ ...menuAt(ev.currentTarget), items }); } },
                 h('span', { className: 'ci' }, 'ƒ'), (symbolsOf(activeTab.content)[0] || {}).label || (zh ? '函数' : 'fn'))) : null,
             h('div', { className: 'cx-crumb-actions' },
+              h('button', { className: `cx-pm-op${showLeft ? ' on' : ''}`, onClick: () => setShowLeft((v) => !v), title: zh ? '左侧栏' : 'Left panel' }, '▌'),
+              h('button', { className: `cx-pm-op${showBottom ? ' on' : ''}`, onClick: () => setShowBottom((v) => !v), title: zh ? '输出栏' : 'Bottom panel' }, '▄'),
+              h('button', { className: `cx-pm-op${showRight ? ' on' : ''}`, onClick: () => setShowRight((v) => !v), title: zh ? '右侧栏' : 'Right panel' }, '▐'),
               h('button', { className: 'cx-pm-op', onClick: () => save(), title: zh ? '保存' : 'Save' }, '⤓'),
               h('button', { className: 'cx-pm-op', onClick: () => { if (activePath) reloadDir(''); }, title: zh ? '重新加载目录' : 'Reload' }, '↻'),
               h('button', { className: 'cx-pm-op', onClick: () => { try { navigator.clipboard.writeText([node, space, activePath].filter(Boolean).join(' / ')); } catch {} setStatus(zh ? '路径已复制' : 'path copied'); }, title: zh ? '复制路径' : 'Copy path' }, '⧉'))),
