@@ -4,9 +4,20 @@ window.__ModuleLoader__.load({
     const React = require('react');
     const h = React.createElement;
     const { useState, useEffect, useCallback, useRef } = React;
-    const API = '/contextos-devops/api';
+    const API = '/contextos-devops-dsh/api';
+    // 旧版 localStorage 键迁移（一次性）
+    try {
+      const OLD = 'contextos-devops:';
+      const NEW = 'contextos-devops-dsh:';
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(OLD)) keys.push(k); }
+      for (const k of keys) {
+        const nk = NEW + k.slice(OLD.length);
+        if (localStorage.getItem(nk) == null) localStorage.setItem(nk, localStorage.getItem(k));
+      }
+    } catch {}
     let OPEN_LINK = null;
-    const WEBTABS_KEY = 'contextos-devops:webtabs';
+    const WEBTABS_KEY = 'contextos-devops-dsh:webtabs';
     const NS = 'contextosDevops';
     const OFFICIAL = [['community','云社区','20240724'],['enterprise','云办公','20240724'],['operation','云研发','20240903'],['knowledge','云知识','20250520'],['education','云教育','20240724'],['healthy','云健康','20250520'],['tourism','云文旅','20250520'],['charity','云公益','20250520'],['industry','云工业','20250520'],['agriculture','云农业','20250520']];
     const OFFICIAL_KEY = Object.fromEntries(OFFICIAL.flatMap(([k, n]) => [[k, k], [n, k]]));
@@ -1199,11 +1210,11 @@ window.__ModuleLoader__.load({
       };
       const loadMonaco = async () => {
         if (window.monaco) return window.monaco;
-        await ensureScript('/contextos-devops/monaco/vs/loader.js');
+        await ensureScript('/contextos-devops-dsh/monaco/vs/loader.js');
         return new Promise((res, rej) => {
           const req = window.require;
           if (!req || !req.config) return rej(new Error('monaco loader missing'));
-          req.config({ paths: { vs: '/contextos-devops/monaco/vs' } });
+          req.config({ paths: { vs: '/contextos-devops-dsh/monaco/vs' } });
           req(['vs/editor/editor.main'], () => res(window.monaco), rej);
         });
       };
@@ -1292,15 +1303,15 @@ window.__ModuleLoader__.load({
         let disposed = false; let term = null; let ws = null;
         (async () => {
           try {
-            ensureCss('/contextos-devops/xterm/xterm.css');
+            ensureCss('/contextos-devops-dsh/xterm/xterm.css');
             const loadPlain = async (src) => {
               const oldDefine = window.define;
               try { window.define = undefined; } catch {}
               try { await ensureScript(src); } finally { try { window.define = oldDefine; } catch {} }
             };
-            await loadPlain('/contextos-devops/xterm/xterm.js');
+            await loadPlain('/contextos-devops-dsh/xterm/xterm.js');
             if (!window.Terminal) throw new Error('xterm missing');
-            await loadPlain('/contextos-devops/xterm/addon-fit.js').catch(() => {});
+            await loadPlain('/contextos-devops-dsh/xterm/addon-fit.js').catch(() => {});
             if (disposed || !termHostRef.current) return;
             term = new window.Terminal({ fontSize: 12, fontFamily: 'Menlo, monospace', cursorBlink: true, convertEol: true, theme: { background: '#04101a', foreground: '#cfeff9', cursor: '#3ee7ff' } });
             const fit = window.FitAddon && window.FitAddon.FitAddon ? new window.FitAddon.FitAddon() : null;
@@ -1311,7 +1322,7 @@ window.__ModuleLoader__.load({
             term.onData((d) => { if (ws && ws.readyState === 1) ws.send(d); });
             const info = await api('spaceDir', { node, space }).catch(() => ({ dir: '' }));
             const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-            ws = new WebSocket(`${proto}://${location.host}/contextos-devops/terminal?cwd=${encodeURIComponent(info.dir || '')}`);
+            ws = new WebSocket(`${proto}://${location.host}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(info.dir || '')}`);
             wsRef.current = ws;
             ws.onmessage = (ev) => { try { term.write(ev.data); } catch {} };
             ws.onclose = () => { try { term.write('\r\n[terminal closed]\r\n'); } catch {} };
@@ -1576,10 +1587,10 @@ window.__ModuleLoader__.load({
       const [taskId, setTaskId] = useState('');
       const [reportId, setReportId] = useState('');
       const [feedbackId, setFeedbackId] = useState('');
-      const bootCal = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops:cal') || 'null') || {}; } catch { return {}; } })();
+      const bootCal = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || 'null') || {}; } catch { return {}; } })();
       const [calStart, setCalStart] = useState(bootCal.start || '');
       const [calEnd, setCalEnd] = useState(bootCal.end || '');
-      useEffect(() => { try { const prev = JSON.parse(localStorage.getItem('contextos-devops:cal') || '{}'); localStorage.setItem('contextos-devops:cal', JSON.stringify({ ...prev, start: calStart, end: calEnd })); } catch {} }, [calStart, calEnd]);
+      useEffect(() => { try { const prev = JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || '{}'); localStorage.setItem('contextos-devops-dsh:cal', JSON.stringify({ ...prev, start: calStart, end: calEnd })); } catch {} }, [calStart, calEnd]);
       const [planStatusFilter, setPlanStatusFilter] = useState([]);
       const [taskStatusFilter, setTaskStatusFilter] = useState([]);
       const [reportTypeFilter, setReportTypeFilter] = useState([]);
@@ -2005,10 +2016,10 @@ window.__ModuleLoader__.load({
     }
 
     function PmCalendar({ tasks, start, end, onChange, locale }) {
-      const bootCalView = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops:cal') || 'null') || {}; } catch { return {}; } })();
+      const bootCalView = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || 'null') || {}; } catch { return {}; } })();
       const [view, setView] = useState(bootCalView.view || 'month');
       const [cursor, setCursor] = useState(() => { try { return bootCalView.cursor ? new Date(bootCalView.cursor) : new Date(); } catch { return new Date(); } });
-      useEffect(() => { try { const prev = JSON.parse(localStorage.getItem('contextos-devops:cal') || '{}'); localStorage.setItem('contextos-devops:cal', JSON.stringify({ ...prev, view, cursor: cursor.toISOString() })); } catch {} }, [view, cursor]);
+      useEffect(() => { try { const prev = JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || '{}'); localStorage.setItem('contextos-devops-dsh:cal', JSON.stringify({ ...prev, view, cursor: cursor.toISOString() })); } catch {} }, [view, cursor]);
       const counts = {};
       for (const t of tasks || []) {
         const d = String(t.created_at || '').slice(0, 10);
@@ -2106,13 +2117,13 @@ window.__ModuleLoader__.load({
       if (window.L) return Promise.resolve(window.L);
       if (!document.querySelector('link[data-cx-leaflet]')) {
         const link = document.createElement('link');
-        link.rel = 'stylesheet'; link.href = '/contextos-devops/leaflet/leaflet.css'; link.dataset.cxLeaflet = '1';
+        link.rel = 'stylesheet'; link.href = '/contextos-devops-dsh/leaflet/leaflet.css'; link.dataset.cxLeaflet = '1';
         document.head.appendChild(link);
       }
       if (window.__cxLeafletPromise) return window.__cxLeafletPromise;
       window.__cxLeafletPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = '/contextos-devops/leaflet/leaflet.js';
+        script.src = '/contextos-devops-dsh/leaflet/leaflet.js';
         script.async = true;
         script.onload = () => window.L ? resolve(window.L) : reject(new Error('leaflet not loaded'));
         script.onerror = () => reject(new Error('leaflet load failed'));
@@ -2146,11 +2157,11 @@ window.__ModuleLoader__.load({
             const pre = document.createElement('link'); pre.rel = 'preconnect'; pre.href = 'https://rt0.map.gtimg.com'; pre.dataset.cxTencent = '1'; document.head.appendChild(pre);
           }
           leafletRef.current = L;
-          const bootMap = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops:map') || 'null'); } catch { return null; } })();
+          const bootMap = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:map') || 'null'); } catch { return null; } })();
           const startView = bootMap && Number.isFinite(bootMap.lat) && Number.isFinite(bootMap.lng) ? [bootMap.lat, bootMap.lng] : [22.5431, 114.0579];
           const startZoom = bootMap && Number.isFinite(bootMap.zoom) ? bootMap.zoom : 11;
           const map = L.map(hostRef.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: true, wheelDebounceTime: 80, wheelPxPerZoomLevel: 120, preferCanvas: true, zoomAnimation: true }).setView(startView, startZoom);
-          const saveMapState = () => { try { const c = map.getCenter(); localStorage.setItem('contextos-devops:map', JSON.stringify({ lat: c.lat, lng: c.lng, zoom: map.getZoom() })); } catch {} };
+          const saveMapState = () => { try { const c = map.getCenter(); localStorage.setItem('contextos-devops-dsh:map', JSON.stringify({ lat: c.lat, lng: c.lng, zoom: map.getZoom() })); } catch {} };
           map.on('moveend', saveMapState);
           map.on('zoomend', saveMapState);
           const tiles = L.tileLayer('https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&type=vector&styleid=3&scene=0', {
@@ -2366,7 +2377,7 @@ window.__ModuleLoader__.load({
         let disposed = false;
         let cleanup = () => {};
         let observer = null;
-        import('/contextos-devops/three/three.module.js').then((THREE) => {
+        import('/contextos-devops-dsh/three/three.module.js').then((THREE) => {
           if (disposed || !ref.current) return;
           const host = ref.current;
           const scene = new THREE.Scene();
@@ -2622,8 +2633,8 @@ window.__ModuleLoader__.load({
       const [reportId, setReportId] = useState('');
       const [feedbackId, setFeedbackId] = useState('');
       const pmSelUidRef = useRef('');
-      const [folds, setFolds] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops:folds') || 'null') || {}; } catch { return {}; } });
-      useEffect(() => { try { localStorage.setItem('contextos-devops:folds', JSON.stringify(folds)); } catch {} }, [folds]);
+      const [folds, setFolds] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:folds') || 'null') || {}; } catch { return {}; } });
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:folds', JSON.stringify(folds)); } catch {} }, [folds]);
       const fold = (k) => folds[k] === true;
       const foldHeadProps = (k) => ({ onClick: (e) => { if (e.target.closest('button, select, input, .cx-menu, .cx-sel')) return; setFolds((f) => ({ ...f, [k]: !f[k] })); } });
       const foldBtn = (k) => h('button', { className: 'cx-fold', type: 'button', title: fold(k) ? T('展开') : T('折叠'), onClick: (e) => { e.stopPropagation(); setFolds((f) => ({ ...f, [k]: !f[k] })); } }, fold(k) ? '▸' : '▾');
@@ -2631,16 +2642,16 @@ window.__ModuleLoader__.load({
         const uid = avatar?.uid; if (!uid || pmSelUidRef.current === uid) return;
         pmSelUidRef.current = uid;
         let saved = {};
-        try { saved = (JSON.parse(localStorage.getItem('contextos-devops:pm') || '{}'))[uid] || {}; } catch {}
+        try { saved = (JSON.parse(localStorage.getItem('contextos-devops-dsh:pm') || '{}'))[uid] || {}; } catch {}
         setTargetId(saved.target || ''); setPlanId(saved.plan || ''); setTaskId(saved.task || ''); setReportId(saved.report || ''); setFeedbackId(saved.feedback || '');
       }, [avatar?.uid]);
       useEffect(() => {
         const uid = avatar?.uid; if (!uid || pmSelUidRef.current !== uid) return;
         if (!targetId && !planId && !taskId && !reportId && !feedbackId) return;
         try {
-          const all = JSON.parse(localStorage.getItem('contextos-devops:pm') || '{}');
+          const all = JSON.parse(localStorage.getItem('contextos-devops-dsh:pm') || '{}');
           all[uid] = { target: targetId, plan: planId, task: taskId, report: reportId, feedback: feedbackId };
-          localStorage.setItem('contextos-devops:pm', JSON.stringify(all));
+          localStorage.setItem('contextos-devops-dsh:pm', JSON.stringify(all));
         } catch {}
       }, [avatar?.uid, targetId, planId, taskId, reportId, feedbackId]);
       useEffect(() => {
@@ -2651,10 +2662,10 @@ window.__ModuleLoader__.load({
         if (reportId && !(pm.reports || []).some((x) => x.uid === reportId)) setReportId('');
         if (feedbackId && !(pm.feedbacks || []).some((x) => x.uid === feedbackId)) setFeedbackId('');
       }, [pm]);
-      const bootCal = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops:cal') || 'null') || {}; } catch { return {}; } })();
+      const bootCal = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || 'null') || {}; } catch { return {}; } })();
       const [calStart, setCalStart] = useState(bootCal.start || '');
       const [calEnd, setCalEnd] = useState(bootCal.end || '');
-      useEffect(() => { try { const prev = JSON.parse(localStorage.getItem('contextos-devops:cal') || '{}'); localStorage.setItem('contextos-devops:cal', JSON.stringify({ ...prev, start: calStart, end: calEnd })); } catch {} }, [calStart, calEnd]);
+      useEffect(() => { try { const prev = JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || '{}'); localStorage.setItem('contextos-devops-dsh:cal', JSON.stringify({ ...prev, start: calStart, end: calEnd })); } catch {} }, [calStart, calEnd]);
       const [planStatusFilter, setPlanStatusFilter] = useState([]);
       const [taskStatusFilter, setTaskStatusFilter] = useState([]);
       const [reportTypeFilter, setReportTypeFilter] = useState([]);
@@ -2665,9 +2676,9 @@ window.__ModuleLoader__.load({
       const fileRef = useRef(null);
       const avatarImgRef = useRef(null);
       const bgImgRef = useRef(null);
-      const [showLeft, setShowLeft] = useState(() => { try { const s = JSON.parse(localStorage.getItem('contextos-devops:panels') || 'null'); return s ? s.left !== false : true; } catch { return true; } });
-      const [showRight, setShowRight] = useState(() => { try { const s = JSON.parse(localStorage.getItem('contextos-devops:panels') || 'null'); return s ? s.right !== false : true; } catch { return true; } });
-      useEffect(() => { try { localStorage.setItem('contextos-devops:panels', JSON.stringify({ left: showLeft, right: showRight })); } catch {} }, [showLeft, showRight]);
+      const [showLeft, setShowLeft] = useState(() => { try { const s = JSON.parse(localStorage.getItem('contextos-devops-dsh:panels') || 'null'); return s ? s.left !== false : true; } catch { return true; } });
+      const [showRight, setShowRight] = useState(() => { try { const s = JSON.parse(localStorage.getItem('contextos-devops-dsh:panels') || 'null'); return s ? s.right !== false : true; } catch { return true; } });
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:panels', JSON.stringify({ left: showLeft, right: showRight })); } catch {} }, [showLeft, showRight]);
       const [ctxMenu, setCtxMenu] = useState(null);
       const [sceneOpen, setSceneOpen] = useState(false);
       const [chatTab, setChatTab] = useState('chat');
@@ -2723,7 +2734,7 @@ window.__ModuleLoader__.load({
       const taskStatusOptions = [...new Set(allTasks.map((t) => t.status_name).filter(Boolean))].map((v) => ({ value: v, label: allTasks.find((t) => t.status_name === v)?.status_label || v }));
       const reportTypeOptions = [...new Set(allReports.map((r) => r.type_name).filter(Boolean))].map((v) => ({ value: v, label: allReports.find((r) => r.type_name === v)?.type_label || v }));
       const feedbackStatusOptions = [...new Set(allFeedbacks.map((f) => f.status_name).filter(Boolean))].map((v) => ({ value: v, label: allFeedbacks.find((f) => f.status_name === v)?.status_label || v }));
-      const sessionKey = `contextos-devops:chat:${avatar?.uid || 'anon'}:${activePlan?.uid || 'none'}`;
+      const sessionKey = `contextos-devops-dsh:chat:${avatar?.uid || 'anon'}:${activePlan?.uid || 'none'}`;
       const chatReady = !!avatar?.project && !!pm?.project;
       const chatWebTab = chatTab !== 'chat' ? (webTabs || []).find((t) => t.id === chatTab) : null;
       const [pmBooted, setPmBooted] = useState(false);
@@ -3200,7 +3211,7 @@ window.__ModuleLoader__.load({
 
     function Page() {
       const bootSelRef = useRef(null);
-      if (bootSelRef.current === null) { try { bootSelRef.current = JSON.parse(localStorage.getItem('contextos-devops:sel') || 'null') || {}; } catch { bootSelRef.current = {}; } }
+      if (bootSelRef.current === null) { try { bootSelRef.current = JSON.parse(localStorage.getItem('contextos-devops-dsh:sel') || 'null') || {}; } catch { bootSelRef.current = {}; } }
       const [nodes, setNodes] = useState([]);
       const [node, setNode] = useState(() => bootSelRef.current?.node ?? null);
       const [spaces, setSpaces] = useState([]);
@@ -3227,14 +3238,14 @@ window.__ModuleLoader__.load({
       const [activeWeb, setActiveWeb] = useState(() => {
         try { const saved = JSON.parse(localStorage.getItem(WEBTABS_KEY) || 'null'); return saved?.active || null; } catch { return null; }
       });
-      const [viewMode, setViewMode] = useState(() => { try { const v = localStorage.getItem('contextos-devops:view'); return ['chat', 'manage', 'dev'].indexOf(v) >= 0 ? v : 'chat'; } catch { return 'chat'; } });
-      const [chatFull, setChatFull] = useState(() => { try { const v = localStorage.getItem('contextos-devops:chatfull'); return v === null ? true : v === '1'; } catch { return true; } });
-      const [themeMode, setThemeMode] = useState(() => { try { return localStorage.getItem('contextos-devops:theme') || 'system'; } catch { return 'system'; } });
-      const [theme, setTheme] = useState(() => { const sys = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark'; try { const m = localStorage.getItem('contextos-devops:theme') || 'system'; return m === 'system' ? sys : m; } catch { return sys; } });
-      const [langMode, setLangMode] = useState(() => { try { return localStorage.getItem('contextos-devops:lang') || 'system'; } catch { return 'system'; } });
-      const [locale, setLocale] = useState(() => { try { const m = localStorage.getItem('contextos-devops:lang') || 'system'; return m === 'system' ? browserLang() : m; } catch { return browserLang(); } });
+      const [viewMode, setViewMode] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:view'); return ['chat', 'manage', 'dev'].indexOf(v) >= 0 ? v : 'chat'; } catch { return 'chat'; } });
+      const [chatFull, setChatFull] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:chatfull'); return v === null ? true : v === '1'; } catch { return true; } });
+      const [themeMode, setThemeMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:theme') || 'system'; } catch { return 'system'; } });
+      const [theme, setTheme] = useState(() => { const sys = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark'; try { const m = localStorage.getItem('contextos-devops-dsh:theme') || 'system'; return m === 'system' ? sys : m; } catch { return sys; } });
+      const [langMode, setLangMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:lang') || 'system'; } catch { return 'system'; } });
+      const [locale, setLocale] = useState(() => { try { const m = localStorage.getItem('contextos-devops-dsh:lang') || 'system'; return m === 'system' ? browserLang() : m; } catch { return browserLang(); } });
       CURRENT_LANG = locale === 'zh' ? 'zh' : 'en';
-      const bootConsole = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops:console') || 'null') || {}; } catch { return {}; } })();
+      const bootConsole = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:console') || 'null') || {}; } catch { return {}; } })();
       const [consoleOpen, setConsoleOpen] = useState(bootConsole.open === true);
       const [consoleTab, setConsoleTab] = useState(bootConsole.tab || 'activity');
       const [consoleHeight, setConsoleHeight] = useState(Number(bootConsole.height) || 190);
@@ -3247,7 +3258,7 @@ window.__ModuleLoader__.load({
         return mm ? { method: mm[1].toUpperCase(), url: mm[2], rest: mm[3], raw: text } : { method: '', url: text, rest: '', raw: text };
       };
       const [files, setFiles] = useState(null);
-      useEffect(() => { try { localStorage.setItem('contextos-devops:console', JSON.stringify({ open: consoleOpen, tab: consoleTab, height: consoleHeight })); } catch {} }, [consoleOpen, consoleTab, consoleHeight]);
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:console', JSON.stringify({ open: consoleOpen, tab: consoleTab, height: consoleHeight })); } catch {} }, [consoleOpen, consoleTab, consoleHeight]);
       const [nodeStatusFilter, setNodeStatusFilter] = useState([]);
       const [spaceStatusFilter, setSpaceStatusFilter] = useState([]);
       const [appSpaceFilter, setAppSpaceFilter] = useState([]);
@@ -3268,10 +3279,10 @@ window.__ModuleLoader__.load({
         window.addEventListener?.('languagechange', apply);
         return () => window.removeEventListener?.('languagechange', apply);
       }, [langMode]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops:theme', themeMode); } catch {} }, [themeMode]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops:lang', langMode); } catch {} }, [langMode]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops:view', viewMode); } catch {} }, [viewMode]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops:chatfull', chatFull ? '1' : '0'); } catch {} }, [chatFull]);
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:theme', themeMode); } catch {} }, [themeMode]);
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:lang', langMode); } catch {} }, [langMode]);
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:view', viewMode); } catch {} }, [viewMode]);
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:chatfull', chatFull ? '1' : '0'); } catch {} }, [chatFull]);
       const shellRef = useRef(null);
       React.useLayoutEffect(() => {
         const el = shellRef.current; if (!el) return;
@@ -3356,7 +3367,7 @@ window.__ModuleLoader__.load({
           { k: '', t: 'LIVE locale', m: locale },
         ];
         try {
-          return [...liveRows, ...Object.keys(localStorage).filter((k) => k.startsWith('contextos-devops:')).sort().map((k) => ({ k: 'ok', t: k.replace('contextos-devops:', ''), m: String(localStorage.getItem(k) || '').slice(0, 260) }))];
+          return [...liveRows, ...Object.keys(localStorage).filter((k) => k.startsWith('contextos-devops-dsh:')).sort().map((k) => ({ k: 'ok', t: k.replace('contextos-devops-dsh:', ''), m: String(localStorage.getItem(k) || '').slice(0, 260) }))];
         } catch { return liveRows; }
       })();
       const prettyJson = (v) => { try { return JSON.stringify(JSON.parse(v), null, 2); } catch { return String(v ?? ''); } };
@@ -3474,7 +3485,7 @@ window.__ModuleLoader__.load({
             mark('node', 'done', `已连接 ${cfg.remoteUrl} · sessid ${String(r.sessid).slice(0, 10)}…`);
             ['spaces', 'avatar', 'scene', 'project'].forEach((id) => mark(id, 'done', T('远程连接：跳过本地步骤')));
             current = 'chat'; mark('chat', 'run');
-            try { localStorage.setItem('contextos-devops:init', '1'); } catch {}
+            try { localStorage.setItem('contextos-devops-dsh:init', '1'); } catch {}
             setViewMode('chat'); setChatFull(true);
             mark('chat', 'done', T('远程会话已建立'));
             finish();
@@ -3548,7 +3559,7 @@ window.__ModuleLoader__.load({
           const active = await loadAvatars(nodePort);
           await loadBackgrounds(nodePort).catch(() => null);
           await loadApps(nodePort, '', active?.uid || '');
-          try { localStorage.setItem('contextos-devops:init', '1'); } catch {}
+          try { localStorage.setItem('contextos-devops-dsh:init', '1'); } catch {}
           setViewMode('chat');
           setChatFull(true);
           mark('chat', 'done', T('对话已就绪'));
@@ -3590,7 +3601,7 @@ window.__ModuleLoader__.load({
         if (!nodesLoaded || autoInitRef.current) return;
         autoInitRef.current = true;
         let done = false;
-        try { done = localStorage.getItem('contextos-devops:init') === '1'; } catch {}
+        try { done = localStorage.getItem('contextos-devops-dsh:init') === '1'; } catch {}
         if (!done) openInit();
       }, [nodesLoaded, openInit]);
 
@@ -3627,7 +3638,7 @@ window.__ModuleLoader__.load({
       }, [theme, locale]);
       useEffect(() => {
         try {
-          localStorage.setItem('contextos-devops:sel', JSON.stringify({
+          localStorage.setItem('contextos-devops-dsh:sel', JSON.stringify({
             node, space,
             app: app ? { space: app.space || '', command: app.command || '', name: app.name || '', title: app.title || '', place_uid: app.place_uid || '' } : null,
           }));
@@ -3981,8 +3992,8 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots'],
       apply(ctx) {
-        ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: 'contextos-devops', order: 20, label: () => 'ContextOS DevOps' }, Icon));
-        ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'contextos-devops' }, () => h(Boundary, null, h(Page))));
+        ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: 'contextos-devops-dsh', order: 20, label: () => 'ContextOS DevOps' }, Icon));
+        ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'contextos-devops-dsh' }, () => h(Boundary, null, h(Page))));
       },
     };
   },

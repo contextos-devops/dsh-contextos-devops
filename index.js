@@ -24,7 +24,7 @@ function ctxRoot() {
 }
 
 function stateDir() {
-  return process.env.CTX_DEVOPS_STATE || path.join(process.env.DSH_HOME || path.join(os.homedir(), '.dsh'), 'contextos-devops');
+  return process.env.CTX_DEVOPS_STATE || path.join(process.env.DSH_HOME || path.join(os.homedir(), '.dsh'), 'contextos-devops-dsh');
 }
 
 
@@ -54,6 +54,19 @@ async function readDataFile({ name = '' } = {}) {
   if (!st.isFile()) throw new Error('not a file');
   if (st.size > 512 * 1024) throw new Error('file too large');
   return { name: safe, size: st.size, content: await fs.readFile(full, 'utf8') };
+}
+
+/** 把旧版状态目录迁移到新目录（一次性）。 */
+let STATE_MIGRATED = false;
+async function migrateStateOnce() {
+  if (STATE_MIGRATED) return;
+  STATE_MIGRATED = true;
+  try {
+    const dir = stateDir();
+    const home = process.env.DSH_HOME || path.join(os.homedir(), '.dsh');
+    const old = path.join(home, 'contextos-devops');
+    if (old !== dir && fsp.existsSync(old) && !fsp.existsSync(dir)) await fs.rename(old, dir);
+  } catch { /* keep old */ }
 }
 
 const USER_CACHE = new Map();
@@ -2264,7 +2277,7 @@ async function planProject({ node, avatarUid = '', goal = '' } = {}) {
 }
 
 
-const ROUTE = '/contextos-devops/api';
+const ROUTE = '/contextos-devops-dsh/api';
 
 const text = (value) => [{ type: 'text', text: JSON.stringify(value, null, 2) }];
 const output = {
@@ -2489,6 +2502,7 @@ function send(res, status, payload) {
 
 async function route(req, res) {
   try {
+    await migrateStateOnce();
     const body = await readBody(req);
     const op = String(body.op || 'health');
     const node = Number(body.node);
@@ -2779,7 +2793,7 @@ main()
 
   const server = ctx.webServer || ctx.get('webServer');
   if (server) {
-    ctx.effect(() => server.registerUpgrade({ path: '/contextos-devops/terminal', handler: terminalUpgrade }));
+    ctx.effect(() => server.registerUpgrade({ path: '/contextos-devops-dsh/terminal', handler: terminalUpgrade }));
     ctx.effect(() =>
       server.register({
         kind: 'exact',
@@ -2791,9 +2805,9 @@ main()
         },
       }),
     );
-    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops/monaco', handler: makeStatic('/contextos-devops/monaco', monacoRoot) }));
-    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops/xterm', handler: makeStatic('/contextos-devops/xterm', xtermRoot) }));
-    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops/three', handler: makeStatic('/contextos-devops/three', threeRoot) }));
-    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops/leaflet', handler: makeStatic('/contextos-devops/leaflet', leafletRoot) }));
+    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops-dsh/monaco', handler: makeStatic('/contextos-devops-dsh/monaco', monacoRoot) }));
+    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops-dsh/xterm', handler: makeStatic('/contextos-devops-dsh/xterm', xtermRoot) }));
+    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops-dsh/three', handler: makeStatic('/contextos-devops-dsh/three', threeRoot) }));
+    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops-dsh/leaflet', handler: makeStatic('/contextos-devops-dsh/leaflet', leafletRoot) }));
   }
 }

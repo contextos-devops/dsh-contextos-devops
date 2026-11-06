@@ -64,7 +64,7 @@
 - 初始化过程用 `InitOverlay` 展示每一步 `wait/run/done/err` 和详情；
 - 云社区/云办公部署完成后会 `GET /s/<space>/` 打开首页，触发数据库初始化，应用商店才能出列表；
 - 创建分身时自动在云办公创建 `项目管理` 实例，用于存目标/计划/任务/报告/反馈；
-- 成功后写入 `localStorage['contextos-devops:init']=1`，失败保留错误并可重试；
+- 成功后写入 `localStorage['contextos-devops-dsh:init']=1`，失败保留错误并可重试；
 - 顶栏/对话头部 `INIT` 可随时重新打开初始化表单；
 - 已有同端口节点时复用；端口不可用时回退到现有节点。
 
@@ -92,7 +92,7 @@
 | — | `帮助` | 六步提示 |
 
 意图层直接走 **DSH `ctx.llm.stream`**：模型返回 `{reply, action}`，插件只执行白名单动作；
-动作仍走真实 `/contextos-devops/api`。每次对话都把当前 `node/space/app`（含 space/place_uid/command）作为 context 传给模型，
+动作仍走真实 `/contextos-devops-dsh/api`。每次对话都把当前 `node/space/app`（含 space/place_uid/command）作为 context 传给模型，
 提示词要求“当前选中项直接操作，不再让用户重复指定”。DSH 没有可用模型时明确报错，不回退本地正则。
 
 ## 十个标准空间
@@ -207,7 +207,7 @@ createAvatar
 - 每个分身有独立 `user.uid`、公司、城市、人格、喜好、风格；
 - 可创建多个分身，点击选择当前分身；
 - 创建采用对话式向导，逐个询问：名字 → 城市 → 公司 → 人格 → 喜好 → 风格；
-- `user.uid` 持久化在 `$DSH_HOME/contextos-devops/avatars.json`；
+- `user.uid` 持久化在 `$DSH_HOME/contextos-devops-dsh/avatars.json`；
 - 最近应用按当前分身查询；
 - 服务商店上架/下架/编程/配置；创建应用实例时，默认带当前分身的 `uid/city/company`，弹窗可改。
 
@@ -255,7 +255,7 @@ API：
 ```
 
 - 每个节点首次请求时创建一个 `dsh_copilot_<port>` 用户，uid 持久化到
-  `$DSH_HOME/contextos-devops/users.json`；
+  `$DSH_HOME/contextos-devops-dsh/users.json`；
 - 之后所有发往该节点的 HTTP 请求自动带 `user.uid`；
 - 列表项带 `space/place_uid/updated_at`，`OPEN` 按行里的 space 打开。
 
@@ -306,7 +306,7 @@ DATA → 选择 FUNCTION → 填 title/content → WRITE + READ
 ## JSON API
 
 ```
-POST /contextos-devops/api   {"op": "...", ...参数}
+POST /contextos-devops-dsh/api   {"op": "...", ...参数}
 ```
 
 | op | 参数 | 说明 |
@@ -352,7 +352,7 @@ POST /contextos-devops/api   {"op": "...", ...参数}
 |---|---|---|
 | `CTX_ROOT` | `$HOME/ContextOS` | 主仓根 |
 | `CTX_NODES_FILE` | `~/.contextos/nodes.json` | 节点台账 |
-| `CTX_DEVOPS_STATE` | `$DSH_HOME/contextos-devops` | 插件状态/错误日志 |
+| `CTX_DEVOPS_STATE` | `$DSH_HOME/contextos-devops-dsh` | 插件状态/错误日志 |
 
 ## 实测与边界
 
