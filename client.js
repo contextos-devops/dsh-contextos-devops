@@ -167,6 +167,10 @@ window.__ModuleLoader__.load({
 
 .cx-shell{overflow-x:hidden}
 .cx-chat-b,.cx-pm-side,.cx-dev-b,.cx-sel-menu,.cx-console-main,.cx-webmask{overflow-x:hidden}
+.cx-chat,.cx-chat-body,.cx-chat-center,.cx-chat-b{overflow-x:hidden;min-width:0}
+.cx-msg-body,.cx-msg-main{min-width:0;overflow-wrap:anywhere}
+.cx-msg pre{max-width:100%;overflow-x:auto}
+.cx-chat-hin,.cx-compose{min-width:0}
 .cx-shell,.cx-shell *{scrollbar-width:thin;scrollbar-color:rgba(62,231,255,.22) transparent}
 .cx-shell::-webkit-scrollbar,.cx-shell ::-webkit-scrollbar{width:8px;height:8px}
 .cx-shell::-webkit-scrollbar-track,.cx-shell ::-webkit-scrollbar-track{background:transparent}
