@@ -911,6 +911,11 @@ window.__ModuleLoader__.load({
 .cx-shell .cx-btn{background:var(--cx-surface-2);border-color:var(--cx-border);color:var(--cx-text)}
 .cx-shell .cx-btn:hover{border-color:var(--cx-accent);color:var(--cx-accent)}
 .cx-shell .cx-btn.pri{background:var(--cx-accent-soft);border-color:var(--cx-accent);color:var(--cx-accent)}
+.cx-node-actions .cx-btn,.cx-space-actions .cx-btn,.cx-app-actions .cx-btn{border-color:var(--cx-line2);background:rgba(8,25,40,.7);color:var(--cx-text-dim);box-shadow:none}
+.cx-node-actions .cx-btn:hover,.cx-space-actions .cx-btn:hover,.cx-app-actions .cx-btn:hover{border-color:var(--cx-accent);color:var(--cx-accent)}
+.cx-node-actions .cx-btn.pri,.cx-space-actions .cx-btn.pri,.cx-app-actions .cx-btn.pri{border-color:var(--cx-line2);background:rgba(8,25,40,.7);color:var(--cx-text)}
+.cx-node-actions .cx-btn.pri:hover,.cx-space-actions .cx-btn.pri:hover,.cx-app-actions .cx-btn.pri:hover{border-color:var(--cx-accent);color:var(--cx-accent)}
+
 .cx-shell .cx-menu,.cx-shell .cx-sel-menu{background:var(--cx-surface-1);border-color:var(--cx-border-strong)}
 .cx-shell .cx-menu-item,.cx-shell .cx-sel-item{color:var(--cx-text);border-color:var(--cx-border)}
 .cx-shell .cx-menu-item:hover,.cx-shell .cx-sel-item:hover,.cx-shell .cx-sel-item.on{background:var(--cx-accent-soft);color:var(--cx-accent)}
