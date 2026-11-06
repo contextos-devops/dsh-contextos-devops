@@ -565,6 +565,8 @@ window.__ModuleLoader__.load({
 .cx-addrbar .nav:disabled{opacity:.35;cursor:default}
 .cx-addr-input{flex:1;min-width:0;height:26px;padding:0 10px;border:1px solid var(--cx-border);border-radius:6px;background:var(--cx-surface-2);color:var(--cx-text);font:11px var(--cx-mono)}
 .cx-addr-input:focus{outline:none;border-color:var(--cx-accent)}
+.cx-chat-center.webmax .cx-chat-h,.cx-chat-center.webmax .cx-chat-tabs,.cx-chat-center.webmax .cx-hint,.cx-chat-center.webmax .cx-compose{display:none}
+
 .cx-chat-webframes{flex:1;min-height:0;position:relative;display:flex}
 .cx-chat-webframes iframe{flex:1;width:100%;height:100%;border:0;background:var(--cx-surface-1)}
 
@@ -2694,6 +2696,7 @@ window.__ModuleLoader__.load({
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:chattab', chatTab); } catch {} }, [chatTab]);
       const [replyPop, setReplyPop] = useState(false);
       const [chatLoaded, setChatLoaded] = useState({});
+      const [webMax, setWebMax] = useState(false);
       const [turn, setTurn] = useState(null);
       const [, setTick] = useState(0);
       OPEN_LINK = (url, title) => { const id = onOpenWebTab ? onOpenWebTab(url, title) : ''; if (id) setChatTab(id); };
@@ -3166,7 +3169,7 @@ window.__ModuleLoader__.load({
         h('div', { className: `cx-chat-bg${bg?.image ? ' photo' : ''}` }, bg?.image ? h('img', { src: bg.image, alt: '' }) : (full ? h(ThreeCity) : null)),
         h('div', { className: 'cx-chat-body' },
           full && showLeft ? leftPanel : null,
-          h('div', { className: 'cx-chat-center' },
+          h('div', { className: `cx-chat-center${webMax && chatTab !== 'chat' ? ' webmax' : ''}` },
             h('div', { className: 'cx-chat-h' },
               h('div', { className: 'cx-chat-hin' },
                 h('div', { className: 'cx-chat-brand' },
@@ -3199,7 +3202,8 @@ window.__ModuleLoader__.load({
                 { label: '在浏览器打开', action: () => { try { window.open(chatWebTab.base || chatWebTab.url, '_blank'); } catch {} } },
                 { label: '在管理中打开', action: () => onManageWebTab && onManageWebTab(chatWebTab.id) },
                 { label: '关闭标签', danger: true, action: () => { onCloseWebTab && onCloseWebTab(chatWebTab.id); setChatTab('chat'); } },
-              ] })) : null,
+              ] }),
+              h('button', { className: 'nav', onClick: () => setWebMax((v) => !v), title: webMax ? tt('restore') : tt('maximize') }, webMax ? '❐' : '⛶')) : null,
             h('div', { className: 'cx-chat-webframes', style: chatTab === 'chat' ? { display: 'none' } : null },
               (webTabs || []).map((t) => h('iframe', { key: t.id, src: t.url, title: t.title || 'web', allow: 'clipboard-read; clipboard-write', onLoad: () => setChatLoaded((m) => (m[t.id] ? m : { ...m, [t.id]: 1 })), style: chatTab === t.id ? null : { display: 'none' } })),
               chatWebTab && !chatLoaded[chatWebTab.id] ? h('div', { className: 'cx-webmask' }, T('加载中…')) : null),
