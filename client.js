@@ -71,7 +71,7 @@ window.__ModuleLoader__.load({
       '+ 计划': '+ Plan', '+ 任务': '+ Task', '+ 报告': '+ Report', '+ 反馈': '+ Feedback',
       '赛博世界': 'Cyber world', '默认赛博世界': 'Default cyber world', '默认': 'Default', '刷新': 'Refresh', '应用商店': 'Store', '部署': 'Deploy',
       '隐藏左栏': 'Hide left panel', '显示左栏': 'Show left panel', '隐藏右栏': 'Hide right panel', '显示右栏': 'Show right panel',
-      '+ 技能': '+ Skill', '上传形象': 'Upload image', '重新开始': 'Restart', '生成': 'Generate', '隐藏': 'Hide', '后退': 'Back', '前进': 'Forward', '复制地址': 'Copy address', '在浏览器打开': 'Open in browser', '在管理中打开': 'Open in manage', '关闭标签': 'Close tab', 'Copilot 正在执行…': 'Copilot is working…', '我的分身': 'My Digital Avatar', '我的赛博世界': 'My cyber world',
+      '+ 技能': '+ Skill', '上传形象': 'Upload image', '重新开始': 'Restart', '生成': 'Generate', '隐藏': 'Hide', '后退': 'Back', '前进': 'Forward', '复制地址': 'Copy address', '在浏览器打开': 'Open in browser', '在管理中打开': 'Open in manage', '关闭标签': 'Close tab', '加载中…': 'Loading…', 'Copilot 正在执行…': 'Copilot is working…', '我的分身': 'My Digital Avatar', '我的赛博世界': 'My cyber world',
       '上一步': 'Back', '下一步': 'Next', '登录中…': 'Logging in…', '登录并获取 sessid': 'Login & get sessid',
       '本机部署': 'Local', '容器部署': 'Docker', '远程部署': 'Remote deploy', '远程连接': 'Remote connect',
       '部署': 'Deploy', '分身与场景': 'Digital Avatar & World', '项目': 'Project',
@@ -566,7 +566,7 @@ window.__ModuleLoader__.load({
 .cx-addr-input{flex:1;min-width:0;height:26px;padding:0 10px;border:1px solid var(--cx-border);border-radius:6px;background:var(--cx-surface-2);color:var(--cx-text);font:11px var(--cx-mono)}
 .cx-addr-input:focus{outline:none;border-color:var(--cx-accent)}
 .cx-chat-webframes{flex:1;min-height:0;position:relative;display:flex}
-.cx-chat-webframes iframe{flex:1;width:100%;height:100%;border:0;background:#fff}
+.cx-chat-webframes iframe{flex:1;width:100%;height:100%;border:0;background:var(--cx-surface-1)}
 
 .cx-pm-side{width:280px;flex:none;overflow:auto;border-right:1px solid rgba(30,70,92,.65);background:rgba(4,13,22,.86);padding:9px;display:flex;flex-direction:column}
 .cx-pm-side>*{flex:none}
@@ -2693,6 +2693,7 @@ window.__ModuleLoader__.load({
       const [chatTab, setChatTab] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:chattab') || 'chat'; } catch { return 'chat'; } });
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:chattab', chatTab); } catch {} }, [chatTab]);
       const [replyPop, setReplyPop] = useState(false);
+      const [chatLoaded, setChatLoaded] = useState({});
       const [turn, setTurn] = useState(null);
       const [, setTick] = useState(0);
       OPEN_LINK = (url, title) => { const id = onOpenWebTab ? onOpenWebTab(url, title) : ''; if (id) setChatTab(id); };
@@ -3200,7 +3201,8 @@ window.__ModuleLoader__.load({
                 { label: '关闭标签', danger: true, action: () => { onCloseWebTab && onCloseWebTab(chatWebTab.id); setChatTab('chat'); } },
               ] })) : null,
             h('div', { className: 'cx-chat-webframes', style: chatTab === 'chat' ? { display: 'none' } : null },
-              (webTabs || []).map((t) => h('iframe', { key: t.id, src: t.url, title: t.title || 'web', allow: 'clipboard-read; clipboard-write', style: chatTab === t.id ? null : { display: 'none' } }))),
+              (webTabs || []).map((t) => h('iframe', { key: t.id, src: t.url, title: t.title || 'web', allow: 'clipboard-read; clipboard-write', onLoad: () => setChatLoaded((m) => (m[t.id] ? m : { ...m, [t.id]: 1 })), style: chatTab === t.id ? null : { display: 'none' } })),
+              chatWebTab && !chatLoaded[chatWebTab.id] ? h('div', { className: 'cx-webmask' }, T('加载中…')) : null),
             h('div', { className: 'cx-chat-b', ref: endRef, style: chatTab !== 'chat' ? { display: 'none' } : null, onContextMenu: (e) => { if (e.target.closest('.cx-msg, button, a, input, textarea, select, .cx-sel, .cx-hint, .cx-suggest')) return; openCtx(e, 'bg'); } },
           h('div', { className: `cx-world${msgs.some((m) => m.role === 'user') ? ' gone' : ''}` },
             h('div', { className: 'cx-world-kicker' }, 'WELCOME TO'),
@@ -3934,7 +3936,7 @@ window.__ModuleLoader__.load({
             h('button', { className: 'cx-chip', onClick: () => setShowAvatars(true), title: t('avatar') }, h('span', { className: 'dot on' }), `${t('avatar')} `, h('b', null, avatar?.name || '—')),
             h('button', { className: 'cx-chip', onClick: () => setViewMode('chat'), title: `${t('scene')}: ${bg?.name || T('默认')}` }, h('span', { className: `dot${bg?.image ? ' on' : ''}` }), `${t('scene')} `, h('b', null, bg?.name || T('默认'))))),
         error ? h('div', { className: 'cx-err' }, error) : null,
-        viewMode === 'chat' ? h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}` }, h(ChatPanel, { ...chatProps, docked: !chatFull })) : null,
+        h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}`, style: viewMode === 'chat' ? null : { display: 'none' } }, h(ChatPanel, { ...chatProps, docked: !chatFull })),
         viewMode === 'dev' ? h(DevWorkspace, { locale, node, space, onPick: openIde }) : null,
         h('div', { className: 'cx-body', style: viewMode === 'manage' ? null : { display: 'none' } },
           h(Panel, {
