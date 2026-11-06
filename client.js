@@ -1351,6 +1351,7 @@ window.__ModuleLoader__.load({
       const [termIds, setTermIds] = useState([1]);
       const [termActive, setTermActive] = useState(1);
       const [termOut, setTermOut] = useState('');
+      const termActiveRef = useRef(termActive); termActiveRef.current = termActive;
       const editorHostRef = useRef(null);
       const taRef = useRef(null);
       const termHostsRef = useRef({});
@@ -1540,7 +1541,7 @@ window.__ModuleLoader__.load({
               const fit = window.FitAddon && window.FitAddon.FitAddon ? new window.FitAddon.FitAddon() : null;
               if (fit) term.loadAddon(fit);
               term.open(host);
-              try { fit && fit.fit(); } catch {}
+              if (host.offsetParent) { try { fit && fit.fit(); } catch {} }
               let wsHost = location.host;
               let wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
               if (!/^https?:$/.test(location.protocol)) {
@@ -1573,13 +1574,21 @@ window.__ModuleLoader__.load({
             if (!cancelled) setTermErr('');
           } catch (e) { if (!cancelled) setTermErr(String(e?.message || e)); }
         })();
-        const onResize = () => { Object.values(termMapRef.current).forEach((x) => { try { x.fit && x.fit.fit(); } catch {} }); };
+        const onResize = () => {
+          const active = termMapRef.current[termActiveRef.current];
+          if (active && active.term && active.term.element && active.term.element.offsetParent) { try { active.fit && active.fit.fit(); } catch {} }
+        };
         window.addEventListener('resize', onResize);
         return () => { cancelled = true; window.removeEventListener('resize', onResize); };
       }, [termIds, node, space]);
       useEffect(() => {
         if (!showBottom || termTab !== 'term') return;
-        const t = setTimeout(() => { Object.values(termMapRef.current).forEach((x) => { try { x.fit && x.fit.fit(); } catch {} }); }, 60);
+        const t = setTimeout(() => {
+          const x = termMapRef.current[termActive];
+          if (!x) return;
+          try { x.fit && x.fit.fit(); } catch {}
+          try { x.term && x.term.refresh(0, Math.max(0, x.term.rows - 1)); } catch {}
+        }, 80);
         return () => clearTimeout(t);
       }, [showBottom, termTab, termActive, termIds]);
       useEffect(() => () => {
@@ -1790,7 +1799,7 @@ window.__ModuleLoader__.load({
             h('span', { className: 'cx-dev-hint' }, `${node || ''} · ${space || ''}`),
             h('div', { className: 'cx-term-sessions' },
               termIds.map((id) => h('span', { key: id, className: `cx-term-sess${id === termActive && termTab === 'term' ? ' on' : ''}`,
-                onClick: () => { setTermActive(id); setTermTab('term'); setTimeout(() => { const x = termMapRef.current[id]; try { x && x.fit && x.fit.fit(); } catch {} }, 60); } },
+                onClick: () => { setTermActive(id); setTermTab('term'); setTimeout(() => { const x = termMapRef.current[id]; if (!x) return; try { x.fit && x.fit.fit(); } catch {}; try { x.term && x.term.refresh(0, Math.max(0, x.term.rows - 1)); } catch {}; try { x.term && x.term.focus(); } catch {} }, 80); } },
                 h('span', { className: 'n' }, String(id)),
                 termIds.length > 1 ? h('button', { className: 'x', onClick: (ev) => { ev.stopPropagation(); closeTerm(id); } }, '×') : null)),
               h('button', { className: 'cx-term-add', onClick: addTerm, title: zh ? '新建终端' : 'New terminal' }, '+'))),
