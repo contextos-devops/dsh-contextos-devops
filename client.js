@@ -445,7 +445,7 @@ window.__ModuleLoader__.load({
 .cx-msg-body{flex:1;min-width:0;white-space:normal;line-height:1.7}
 .cx-msg.sys{max-width:none;align-self:center;border:0;background:transparent;box-shadow:none;color:var(--cx-muted);font-size:9px;padding:3px}
 .cx-chat.full .cx-msg{max-width:82%}
-.cx-chat.full .cx-msg{max-width:100%!important;width:100%!important}
+.cx-chat.full .cx-msg{max-width:100%;width:100%}
 .cx-suggest{display:grid;grid-template-columns:1fr 1fr;gap:7px;max-width:1080px;width:100%;margin:8px auto 0;padding:0 10px}
 .cx-suggest button{text-align:left;padding:10px 11px;border:1px solid rgba(30,70,92,.8);background:linear-gradient(135deg,rgba(10,32,49,.8),rgba(7,19,31,.8));color:#c9edf8;font:10.5px/1.5 var(--cx-font);cursor:pointer;border-radius:10px;transition:.15s}
 .cx-suggest button:hover{border-color:var(--cx-cyan);color:var(--cx-cyan);transform:translateY(-1px);box-shadow:0 8px 22px rgba(62,231,255,.1)}
