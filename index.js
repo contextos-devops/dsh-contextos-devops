@@ -1449,6 +1449,39 @@ async function listTree({ node, space, path: p = '' } = {}) {
     .sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'dir' ? -1 : 1));
 }
 
+/** 项目空间内路径解析（防越界）。 */
+async function spaceBase({ node, space }) {
+  const n = (await listNodes()).find((x) => x.port === Number(node));
+  if (!n) throw new Error(`node ${node} not found`);
+  return path.join(n.dir, 'usr', 'local', 'work', space);
+}
+function resolveIn(base, p) {
+  const full = path.join(base, ...String(p || '').split('/').filter(Boolean));
+  if (full !== base && !full.startsWith(base + path.sep)) throw new Error('path escapes the space');
+  return full;
+}
+async function makeDir({ node, space, path: p = '' } = {}) {
+  const base = await spaceBase({ node, space });
+  await fs.mkdir(resolveIn(base, p), { recursive: true });
+  return { path: p, created: true };
+}
+async function renamePath({ node, space, from = '', to = '' } = {}) {
+  const base = await spaceBase({ node, space });
+  if (!from || !to) throw new Error('from/to are required');
+  await fs.rename(resolveIn(base, from), resolveIn(base, to));
+  return { from, to, renamed: true };
+}
+async function removePath({ node, space, path: p = '' } = {}) {
+  const base = await spaceBase({ node, space });
+  if (!p) throw new Error('path is required');
+  await fs.rm(resolveIn(base, p), { recursive: true, force: true });
+  return { path: p, removed: true };
+}
+async function compileSpace({ node, space } = {}) {
+  const r = await http(node, `/s/${encode(space)}/c/vimer/action/compile`, { method: 'POST', timeout: 120000 });
+  return { status: r.status, out: String(r.text || '').slice(0, 4000) };
+}
+
 /** 项目空间的绝对路径（终端 cwd 用）。 */
 async function spaceDir({ node, space } = {}) {
   const n = (await listNodes()).find((x) => x.port === Number(node));
@@ -2524,6 +2557,10 @@ async function route(req, res) {
     if (op === 'spaceOpen') return send(res, 200, { ok: true, data: await openSpace({ node, space: body.space }) });
     if (op === 'spaceTerminal') return send(res, 200, { ok: true, data: await spaceTerminal({ node, space: body.space }) });
     if (op === 'listDir') return send(res, 200, { ok: true, data: await listDir({ node, space: body.space, path: body.path || '' }) });
+    if (op === 'mkdir') return send(res, 200, { ok: true, data: await makeDir({ node, space: body.space, path: body.path || '' }) });
+    if (op === 'renamePath') return send(res, 200, { ok: true, data: await renamePath({ node, space: body.space, from: body.from || '', to: body.to || '' }) });
+    if (op === 'removePath') return send(res, 200, { ok: true, data: await removePath({ node, space: body.space, path: body.path || '' }) });
+    if (op === 'compile') return send(res, 200, { ok: true, data: await compileSpace({ node, space: body.space }) });
     if (op === 'tree') return send(res, 200, { ok: true, data: await listTree({ node, space: body.space, path: body.path || '' }) });
     if (op === 'spaceDir') return send(res, 200, { ok: true, data: await spaceDir({ node, space: body.space }) });
     if (op === 'readFile') return send(res, 200, { ok: true, data: await readFile({ node, space: body.space, path: body.path || '' }) });

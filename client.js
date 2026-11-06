@@ -1062,7 +1062,12 @@ window.__ModuleLoader__.load({
 .cx-dev-preview{grid-column:3;grid-row:1}
 .cx-dev-term{grid-column:2/4;grid-row:2}
 .cx-preview-wrap{display:flex;flex-direction:column}
-.cx-preview-frame{flex:1;width:100%;border:0;background:#fff}
+.cx-preview-frame{flex:1;width:100%;border:0;background:#fff}.cx-tree-menu{position:fixed;z-index:900;min-width:150px;padding:4px;border:1px solid var(--cx-border-strong);border-radius:6px;background:var(--cx-surface-1);box-shadow:0 12px 30px rgba(0,0,0,.45)}
+.cx-namedlg{position:fixed;z-index:950;left:50%;top:30%;transform:translateX(-50%);width:min(360px,80vw);padding:12px;border:1px solid var(--cx-border-strong);border-radius:8px;background:var(--cx-surface-1);box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.cx-namedlg .t{font:10px var(--cx-mono);color:var(--cx-accent);margin-bottom:8px}
+.cx-namedlg .cx-input{width:100%;margin-bottom:8px}
+.cx-namedlg .b{display:flex;justify-content:flex-end;gap:8px}
+
 
 .cx-dev-col{display:flex;flex-direction:column;min-height:0;min-width:0;border:1px solid var(--cx-line);background:var(--cx-surface-1)}
 .cx-dev-h{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--cx-line);background:var(--cx-surface-2);font:700 9px/1 var(--cx-font);letter-spacing:.14em;color:var(--cx-text-dim)}
@@ -1222,6 +1227,8 @@ window.__ModuleLoader__.load({
       const [tabs, setTabs] = useState([]);
       const [activePath, setActivePath] = useState('');
       const [status, setStatus] = useState('');
+      const [treeMenu, setTreeMenu] = useState(null);
+      const [nameDlg, setNameDlg] = useState(null);
       const [editorErr, setEditorErr] = useState('');
       const [termErr, setTermErr] = useState('');
       const editorHostRef = useRef(null);
@@ -1391,12 +1398,63 @@ window.__ModuleLoader__.load({
         return () => { disposed = true; try { ws && ws.close(); } catch {}; try { term && term.dispose(); } catch {} };
       }, [node, space]);
 
+      const askName = (title, value = '') => new Promise((resolve) => setNameDlg({ title, value, resolve }));
+      const dirOf = (entry) => (entry.type === 'dir' ? entry.path : entry.path.split('/').slice(0, -1).join('/'));
+      const reloadDir = async (p) => {
+        try { const list = await api('tree', { node, space, path: p }); setDirs((d) => ({ ...d, [p]: list })); setExpanded((e) => ({ ...e, [p]: true })); } catch (e) { setStatus(String(e?.message || e)); }
+      };
+      const newEntry = async (entry, isDir) => {
+        const dir = dirOf(entry);
+        const name = await askName(zh ? (isDir ? '新文件夹名' : '新文件名') : (isDir ? 'Folder name' : 'File name'), '');
+        if (!name) return;
+        const target = [dir, name].filter(Boolean).join('/');
+        try {
+          if (isDir) await api('mkdir', { node, space, path: target });
+          else await api('writeFile', { node, space, path: target, content: '' });
+          await reloadDir(dir);
+          if (!isDir) openFile(target);
+        } catch (e) { setStatus(String(e?.message || e)); }
+      };
+      const renameEntry = async (entry) => {
+        const dir = dirOf(entry);
+        const name = await askName(zh ? '重命名为' : 'Rename to', entry.name);
+        if (!name || name === entry.name) return;
+        const target = [dir, name].filter(Boolean).join('/');
+        try {
+          await api('renamePath', { node, space, from: entry.path, to: target });
+          closeTab(entry.path);
+          await reloadDir(dir);
+        } catch (e) { setStatus(String(e?.message || e)); }
+      };
+      const removeEntry = async (entry) => {
+        if (!window.confirm(zh ? `删除「${entry.name}」？` : `Delete "${entry.name}"?`)) return;
+        const dir = dirOf(entry);
+        try { await api('removePath', { node, space, path: entry.path }); closeTab(entry.path); await reloadDir(dir); }
+        catch (e) { setStatus(String(e?.message || e)); }
+      };
+      const compile = async () => {
+        if (!node || !space) return;
+        setStatus(zh ? '编译中…' : 'compiling…');
+        try {
+          const r = await api('compile', { node, space });
+          const out = String(r?.out || '');
+          setStatus(r?.status === 200 ? (zh ? '编译完成' : 'compiled') : (zh ? '编译失败' : 'compile failed'));
+          if (termRef.current) termRef.current.write(`\r\n$ compile\r\n${out}\r\n`);
+        } catch (e) { setStatus(String(e?.message || e)); }
+      };
+      useEffect(() => {
+        if (!treeMenu) return;
+        const close = () => setTreeMenu(null);
+        window.addEventListener('click', close);
+        window.addEventListener('scroll', close, true);
+        return () => { window.removeEventListener('click', close); window.removeEventListener('scroll', close, true); };
+      }, [treeMenu]);
       const renderDir = (p, depth) => (dirs[p] || []).map((e) => {
         const isDir = e.type === 'dir';
         const key = p + '/' + e.name;
         const open = !!expanded[key];
         return h(React.Fragment, { key },
-          h('div', { className: `cx-tree-item${activePath === e.path ? ' on' : ''}`, style: { paddingLeft: 8 + depth * 12 }, onClick: () => (isDir ? toggleDir(key) : openFile(e.path)), title: e.path },
+          h('div', { className: `cx-tree-item${activePath === e.path ? ' on' : ''}`, style: { paddingLeft: 8 + depth * 12 }, onClick: () => (isDir ? toggleDir(key) : openFile(e.path)), onContextMenu: (ev) => { ev.preventDefault(); ev.stopPropagation(); setTreeMenu({ x: ev.clientX, y: ev.clientY, entry: e }); }, title: e.path },
             h('span', { className: 'ico' }, isDir ? (open ? '▾' : '▸') : '·'),
             h('span', { className: 'nm' }, e.name)),
           isDir && open ? renderDir(key, depth + 1) : null);
@@ -1411,13 +1469,16 @@ window.__ModuleLoader__.load({
               h('span', { className: 'nm' }, `${p.node} · ${p.space}`),
               h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); onCloseProject && onCloseProject(p.key); } }, '×')))),
           h('div', { className: 'cx-dev-target' },
+            h('button', { className: 'cx-btn xs', onClick: compile, title: zh ? '编译当前项目' : 'Compile' }, zh ? '编译' : 'BUILD'),
             h('select', { className: 'cx-select', value: node || '', onChange: (e) => onSelectNode && onSelectNode(Number(e.target.value)) },
               (nodes || []).map((n) => h('option', { key: n.port, value: n.port }, n.name || `:${n.port}`))),
             h('select', { className: 'cx-select', value: space || '', onChange: (e) => onSelectSpace && onSelectSpace(e.target.value) },
               (spaces || []).map((x) => h('option', { key: x.name, value: x.name }, x.name))))),
         h('div', { className: 'cx-dev' },
         h('section', { className: 'cx-dev-col cx-dev-explorer' },
-          h('div', { className: 'cx-dev-h' }, 'EXPLORER', h('span', { className: 'cx-dev-hint' }, node && space ? `${node} · ${space}` : (zh ? '未选择空间' : 'NO SPACE'))),
+          h('div', { className: 'cx-dev-h' }, 'EXPLORER', h('span', { className: 'cx-dev-hint' }, node && space ? `${node} · ${space}` : (zh ? '未选择空间' : 'NO SPACE')),
+            h('button', { className: 'cx-pm-op', style: { marginLeft: 'auto' }, onClick: () => newEntry({ type: 'dir', path: '', name: '' }, false), title: zh ? '新建文件' : 'New file' }, '+'),
+            h('button', { className: 'cx-pm-refresh', onClick: () => reloadDir('') }, '↻')),
           h('div', { className: 'cx-dev-b' },
             !node || !space
               ? h('div', { className: 'cx-empty' }, zh ? '先在服务节点/项目空间上点「编程」打开项目。' : 'Pick a node/space and click CODE.')
@@ -1447,7 +1508,20 @@ window.__ModuleLoader__.load({
           h('div', { className: 'cx-dev-h' }, 'TERMINAL', h('span', { className: 'cx-dev-hint' }, 'xterm')),
           h('div', { className: 'cx-dev-b cx-term-wrap' },
             h('div', { className: 'cx-term-host', ref: termHostRef }),
-            termErr ? h('div', { className: 'cx-dev-status err' }, termErr) : null))));
+            termErr ? h('div', { className: 'cx-dev-status err' }, termErr) : null))),
+        nameDlg ? h('div', { className: 'cx-namedlg' },
+          h('div', { className: 't' }, nameDlg.title),
+          h('input', { className: 'cx-input', value: nameDlg.value, autoFocus: true,
+            onChange: (e) => setNameDlg((d) => ({ ...d, value: e.target.value })),
+            onKeyDown: (e) => { if (e.key === 'Enter') { const v = nameDlg.value; const r = nameDlg.resolve; setNameDlg(null); r(v); } if (e.key === 'Escape') { const r = nameDlg.resolve; setNameDlg(null); r(''); } } }),
+          h('div', { className: 'b' },
+            h('button', { className: 'cx-btn', onClick: () => { const r = nameDlg.resolve; setNameDlg(null); r(''); } }, T('取消')),
+            h('button', { className: 'cx-btn pri', onClick: () => { const v = nameDlg.value; const r = nameDlg.resolve; setNameDlg(null); r(v); } }, T('保存')))) : null,
+        treeMenu ? h('div', { className: 'cx-tree-menu', style: { left: treeMenu.x, top: treeMenu.y }, onClick: (e) => e.stopPropagation() },
+          h('button', { className: 'cx-menu-item', onClick: () => { const t = treeMenu.entry; setTreeMenu(null); newEntry(t, false); } }, zh ? '新建文件' : 'New file'),
+          h('button', { className: 'cx-menu-item', onClick: () => { const t = treeMenu.entry; setTreeMenu(null); newEntry(t, true); } }, zh ? '新建文件夹' : 'New folder'),
+          h('button', { className: 'cx-menu-item', onClick: () => { const t = treeMenu.entry; setTreeMenu(null); renameEntry(t); } }, zh ? '重命名' : 'Rename'),
+          h('button', { className: 'cx-menu-item danger', onClick: () => { const t = treeMenu.entry; setTreeMenu(null); removeEntry(t); } }, zh ? '删除' : 'Delete')) : null);
     }
 
     function MenuButton({ items, disabled }) {
