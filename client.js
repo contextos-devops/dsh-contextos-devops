@@ -1978,8 +1978,8 @@ window.__ModuleLoader__.load({
           h('span', { className: `cx-status-r ${on ? 'on' : 'off'}` }, on ? (locale === 'zh' ? '运行中' : 'start') : (locale === 'zh' ? '已停止' : 'stop'))),
         h('div', { className: 'sub' }, h('span', null, s.version || '—'), h('span', null, s.size || '')),
         h('div', { className: 'cx-space-actions' },
-          h('button', { className: 'cx-btn xs', onClick: (e) => { e.stopPropagation(); onIde && onIde(node, s.name); } }, locale === 'zh' ? '编程' : 'CODE'),
           on ? h('button', { className: 'cx-btn xs pri', onClick: (e) => { e.stopPropagation(); onOpen(s.name); } }, locale === 'zh' ? '打开' : 'OPEN') : h('button', { className: 'cx-btn xs pri', onClick: (e) => { e.stopPropagation(); onStart(s.name); } }, locale === 'zh' ? '启动' : 'START'),
+          h('button', { className: 'cx-btn xs', onClick: (e) => { e.stopPropagation(); onIde && onIde(node, s.name); } }, locale === 'zh' ? '编程' : 'CODE'),
           h(MenuButton, { items: on ? [{ label: '停止', danger: true, action: () => onStop(s.name) }, { label: '删除', danger: true, action: () => onDelete(s.name) }] : [{ label: '删除', danger: true, action: () => onDelete(s.name) }] })));
     }
 
