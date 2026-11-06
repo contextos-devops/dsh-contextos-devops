@@ -1112,7 +1112,7 @@ window.__ModuleLoader__.load({
 .cx-dev-ptab.on{color:var(--cx-accent);border-color:var(--cx-accent);background:var(--cx-accent-soft)}
 .cx-dev-ptab .x{border:0;background:transparent;color:inherit;cursor:pointer;font-size:10px;padding:0}
 .cx-dev-target{display:flex;gap:6px;flex:none}
-.cx-dev{flex:1;min-height:0;display:grid;grid-template-columns:220px minmax(0,1fr) 360px;grid-template-rows:minmax(0,1fr) 200px;gap:8px;padding:8px 10px;overflow:hidden}
+.cx-dev{flex:1;min-height:0;display:grid;grid-template-columns:220px minmax(0,1fr) var(--cx-preview-w,360px);grid-template-rows:minmax(0,1fr) 200px;gap:8px;padding:8px 10px;overflow:hidden}
 .cx-dev-explorer{grid-column:1;grid-row:1/3}
 .cx-dev-editor{grid-column:2;grid-row:1}
 .cx-dev-preview{grid-column:3;grid-row:1}
@@ -1122,6 +1122,8 @@ window.__ModuleLoader__.load({
 .cx-dev-preview{position:relative}
 .cx-pane-refresh{position:absolute;top:6px;right:8px;z-index:3;width:20px;height:20px;border:1px solid var(--cx-border);border-radius:4px;background:rgba(6,20,32,.75);color:var(--cx-text-dim);cursor:pointer;font-size:11px;line-height:1}
 .cx-pane-refresh:hover{color:var(--cx-accent);border-color:var(--cx-accent)}
+.cx-preview-grip{position:absolute;left:0;top:0;bottom:0;width:6px;cursor:col-resize;z-index:4}
+.cx-preview-grip:hover{background:var(--cx-accent-soft)}
 .cx-preview-md{flex:1;min-height:0;overflow:auto;padding:10px 12px;font:12px/1.8 var(--cx-font);color:var(--cx-text)}
 .cx-preview-md h1,.cx-preview-md h2,.cx-preview-md h3{margin:10px 0 6px;color:var(--cx-text-strong)}
 .cx-preview-md pre{background:rgba(6,20,32,.7);padding:8px;border-radius:6px;overflow:auto}
@@ -1135,7 +1137,7 @@ window.__ModuleLoader__.load({
 .cx-dev .cx-dev-editor .cx-dev-h{border-bottom:0}
 .cx-dev .cx-tabs{background:transparent;border:0}
 .cx-dev .cx-editor-wrap,.cx-dev .cx-editor-host,.cx-dev .cx-editor-ta,.cx-dev .cx-dev-editor,.cx-dev .cx-dev-editor .cx-dev-b{border:0!important;box-shadow:none!important;outline:0!important}
-.cx-dev.hide-left{grid-template-columns:minmax(0,1fr) 360px}
+.cx-dev.hide-left{grid-template-columns:minmax(0,1fr) var(--cx-preview-w,360px)}
 .cx-dev.hide-right{grid-template-columns:220px minmax(0,1fr)}
 .cx-dev.hide-left.hide-right{grid-template-columns:minmax(0,1fr)}
 .cx-dev.hide-bottom{grid-template-rows:minmax(0,1fr)}
@@ -1379,6 +1381,17 @@ window.__ModuleLoader__.load({
       const [showRight, setShowRight] = useState(false);
       const [showBottom, setShowBottom] = useState(false);
       const [previewNonce, setPreviewNonce] = useState(0);
+      const [previewWidth, setPreviewWidth] = useState(() => { try { return Number(localStorage.getItem('contextos-devops-dsh:preview-w')) || 360; } catch { return 360; } });
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:preview-w', String(previewWidth)); } catch {} }, [previewWidth]);
+      const startResize = (e) => {
+        e.preventDefault();
+        const startX = e.clientX; const startW = previewWidth;
+        const onMove = (ev) => { const w = Math.min(Math.max(240, startW - (ev.clientX - startX)), 900); setPreviewWidth(w); };
+        const onUp = () => { document.body.style.userSelect = ''; window.removeEventListener('mousemove', onMove); };
+        document.body.style.userSelect = 'none';
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp, { once: true });
+      };
       const [git, setGit] = useState(null);
       const [gitOpen, setGitOpen] = useState(true);
       const [gitHistOpen, setGitHistOpen] = useState(true);
@@ -1881,7 +1894,7 @@ window.__ModuleLoader__.load({
             h('select', { className: 'cx-select', value: space || '', onChange: (e) => onSelectSpace && onSelectSpace(e.target.value) },
               h('option', { key: '__node', value: '' }, zh ? '（节点目录）' : '(node root)'),
               (spaces || []).map((x) => h('option', { key: x.name, value: x.name }, x.name))))),
-        h('div', { className: `cx-dev${showLeft ? '' : ' hide-left'}${showRight ? '' : ' hide-right'}${showBottom ? '' : ' hide-bottom'}` },
+        h('div', { className: `cx-dev${showLeft ? '' : ' hide-left'}${showRight ? '' : ' hide-right'}${showBottom ? '' : ' hide-bottom'}`, style: { '--cx-preview-w': `${previewWidth}px` } },
         h('section', { className: 'cx-dev-col cx-dev-explorer' },
           h('div', { className: 'cx-dev-b' },
             !node
@@ -1953,6 +1966,7 @@ window.__ModuleLoader__.load({
             }) : null,
             editorErr ? h('div', { className: 'cx-dev-status err' }, `${editorErr} · ${zh ? '已回退到基础编辑器' : 'fallback editor'}`) : null)),
         h('section', { className: 'cx-dev-col cx-dev-preview' },
+          h('div', { className: 'cx-preview-grip', onMouseDown: startResize, title: zh ? '拖动调整宽度' : 'Drag to resize' }),
           h('button', { className: 'cx-pane-refresh', onClick: () => setPreviewNonce((v) => v + 1), title: T('刷新') }, '↻'),
           h('div', { className: 'cx-dev-b cx-preview-wrap' },
             pvKind === 'md'
