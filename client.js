@@ -123,7 +123,7 @@ window.__ModuleLoader__.load({
       '上传头像': 'Upload avatar', '上传背景': 'Upload background', '名称': 'Name', '公司': 'Company', '城市': 'City',
       '赛博世界名称': 'Cyber world name', '项目名称': 'Project name', '项目简介': 'Description', '任务清单（每行一个）': 'Tasks (one per line)',
       '关闭其它标签': 'Close others', '关闭全部标签': 'Close all', '刷新': 'Refresh', '外部打开': 'Open externally',
-      '编辑代码': 'Edit code', '添加数据': 'Add data', '创建实例': 'Create instance', '将生成': 'Will create', '目标': 'target', '计划': 'plan', '任务': 'task',
+      '编辑代码': 'Edit code', '添加数据': 'Add data', '创建实例': 'Create instance', '创建应用实例': 'Create app instance', '将生成': 'Will create', '目标': 'target', '计划': 'plan', '任务': 'task',
       '初始化 / INITIALIZE': 'INITIALIZE', '正在初始化 / INITIALIZING': 'INITIALIZING', '初始化完成 / INIT DONE': 'INIT DONE', '初始化失败 / INIT FAILED': 'INIT FAILED',
       '三步进入你的赛博世界：部署 → 数字分身与赛博世界 → 项目。': 'Three steps into your cyber world: deploy → avatar & world → project.',
       '部署节点 → 部署空间 → 数字分身 → 赛博世界 → 项目管理 → 进入对话': 'Deploy node → Deploy spaces → Create avatar → Create cyber world → Create project → Enter chat',
@@ -2368,13 +2368,13 @@ window.__ModuleLoader__.load({
         try { const r = await api('createInstance', { node, space, command: app.command, place: app.place || '', name, city, company, uid: avatar?.uid || '' }); onDone(r); }
         catch (e) { setErr(String(e?.message || e)); } finally { setBusy(false); }
       };
-      return h(Modal, { title: `创建实例 / ${app.title || app.name}`, desc: `在 ${space} 用 ${app.command} 建实例；实例行会出现在该用户的 recent 列表。`, onClose },
+      return h(Modal, { title: `创建应用实例 / ${app.title || app.name}`, desc: `在 ${space} 用 ${app.command} 建实例；实例行会出现在该用户的 recent 列表。`, onClose },
         h('div', { className: 'cx-form' },
           h('label', { className: 'cx-field full' }, '实例名称 / INSTANCE NAME', h('input', { className: 'cx-input', value: name, onChange: (e) => setName(e.target.value) })),
           h('label', { className: 'cx-field' }, '城市 / CITY', h('input', { className: 'cx-input', value: city, onChange: (e) => setCity(e.target.value) })),
           h('label', { className: 'cx-field' }, '公司 / COMPANY', h('input', { className: 'cx-input', value: company, onChange: (e) => setCompany(e.target.value) }))),
         err ? h('div', { className: 'cx-err' }, err) : null,
-        h('div', { className: 'cx-foot' }, h('button', { className: 'cx-btn', onClick: onClose }, T('取消')), h('button', { className: 'cx-btn pri', disabled: busy, onClick: go }, busy ? '创建中…' : '创建实例')));
+        h('div', { className: 'cx-foot' }, h('button', { className: 'cx-btn', onClick: onClose }, T('取消')), h('button', { className: 'cx-btn pri', disabled: busy, onClick: go }, busy ? '创建中…' : '创建应用实例')));
     }
 
     function StoreInstanceModal({ node, service, avatar, onClose, onDone }) {
@@ -2388,14 +2388,14 @@ window.__ModuleLoader__.load({
         try { const r = await api('createStoreInstance', { node, service, city, company, name, uid: avatar?.uid || '' }); onDone(r); }
         catch (e) { setErr(String(e?.message || e)); } finally { setBusy(false); }
       };
-      return h(Modal, { title: `创建实例 / ${service.name}`, desc: '从应用商店模板创建实例：城市 + 公司 + 应用名称三个参数。', onClose },
+      return h(Modal, { title: `创建应用实例 / ${service.name}`, desc: '从应用商店模板创建实例：城市 + 公司 + 应用名称三个参数。', onClose },
         h('div', { className: 'cx-form' },
           h('label', { className: 'cx-field full' }, '城市名称 / CITY', h('input', { className: 'cx-input', value: city, onChange: (e) => setCity(e.target.value) })),
           h('label', { className: 'cx-field full' }, '公司名称 / COMPANY', h('input', { className: 'cx-input', value: company, onChange: (e) => setCompany(e.target.value) })),
           h('label', { className: 'cx-field full' }, '应用名称 / APP NAME', h('input', { className: 'cx-input', value: name, onChange: (e) => setName(e.target.value) }))),
         h('div', { className: 'desc' }, `space: ${service.space} · command: ${service.command}`),
         err ? h('div', { className: 'cx-err' }, err) : null,
-        h('div', { className: 'cx-foot' }, h('button', { className: 'cx-btn', onClick: onClose }, T('取消')), h('button', { className: 'cx-btn pri', disabled: busy, onClick: go }, busy ? '创建中…' : '创建实例')));
+        h('div', { className: 'cx-foot' }, h('button', { className: 'cx-btn', onClick: onClose }, T('取消')), h('button', { className: 'cx-btn pri', disabled: busy, onClick: go }, busy ? '创建中…' : '创建应用实例')));
     }
 
     function AvatarModal({ node, data, active, onSelect, onCreated, onUpdated, onClose }) {
@@ -4715,7 +4715,7 @@ window.__ModuleLoader__.load({
                     ...(t.app ? [
                       { label: '编辑代码', action: () => { setApp(t.app); setModal('code'); } },
                       { label: '添加数据', action: () => { setApp(t.app); setModal('data'); } },
-                      { label: '创建实例', action: () => { setApp(t.app); setModal('instance'); } },
+                      { label: '创建应用实例', action: () => { setApp(t.app); setModal('instance'); } },
                     ] : []),
                   ] }),
                   h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); closeWeb(t.id); } }, '×'))),
