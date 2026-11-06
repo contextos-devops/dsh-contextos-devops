@@ -240,7 +240,7 @@ window.__ModuleLoader__.load({
 .cx-space .sub{display:flex;gap:6px;align-items:center;margin-top:2px;font-size:9px;color:var(--cx-muted);flex-wrap:wrap}
 .cx-app{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding:8px;border-bottom:1px solid rgba(22,56,77,.55);cursor:pointer}
 .cx-app:hover{background:rgba(11,35,53,.55)}
-.cx-app.on{background:rgba(13,45,64,.65);box-shadow:inset 2px 0 0 var(--cx-cyan)}
+.cx-app.on{background:rgba(13,45,64,.65);outline:1px solid var(--cx-accent);outline-offset:-1px;box-shadow:none}
 .cx-app .an{font-size:12px;font-weight:700;color:#e9fbff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cx-app .ac{font-size:9px;color:var(--cx-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cx-app .aa{display:flex;gap:3px;align-items:center;justify-content:flex-end;grid-column:1/-1;margin-left:auto}
