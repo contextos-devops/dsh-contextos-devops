@@ -2160,8 +2160,12 @@ window.__ModuleLoader__.load({
           h(MenuButton, { items: on ? [{ label: '停止', danger: true, action: () => onStop(s.name) }, { label: '删除', danger: true, action: () => onDelete(s.name) }] : [{ label: '删除', danger: true, action: () => onDelete(s.name) }] })));
     }
 
-    function ItemIcon({ item, name, size, src }) {
-      const iconSrc = String(src || (item && (item.icons || item.icon || item.image)) || '').trim();
+    function ItemIcon({ item, name, size, src, port }) {
+      const raw = String(src || (item && (item.icons || item.icon || item.image)) || '').trim();
+      const iconSrc = !raw ? ''
+        : /^(https?:|data:)/i.test(raw) ? raw
+        : raw.startsWith('/') && port ? `http://127.0.0.1:${port}${raw}`
+        : '';
       const label = String(name || (item && (item.title || item.name)) || '?').trim().slice(0, 1) || '?';
       let hue = 0;
       const sname = String((item && (item.name || item.command)) || label);
@@ -2173,10 +2177,10 @@ window.__ModuleLoader__.load({
       return h('span', { className: 'cx-ai', style: { width: px, height: px, background: `linear-gradient(135deg, hsl(${hue} 72% 42%), hsl(${(hue + 42) % 360} 70% 26%))` } }, label.toUpperCase());
     }
 
-    function AppRow({ a, active, onSelect, onOpen, locale }) {
+    function AppRow({ a, active, onSelect, onOpen, locale, node }) {
       return h('div', { className: `cx-app${active ? ' on' : ''}`, onClick: () => onOpen(a) },
         h('div', { className: 'cx-app-top' },
-          h(ItemIcon, { item: a, name: a.title || a.name, size: 26, src: a.place_avatar || a.icon }),
+          h(ItemIcon, { item: a, name: a.title || a.name, size: 26, src: a.place_avatar || a.icon, port: node }),
           h('div', { style: { minWidth: 0 } },
             h('div', { className: 'an' }, a.title || a.name),
             h('div', { className: 'ac' }, [a.city_name, a.company_name, a.service_name].filter(Boolean).join(' · ') || a.command))),
@@ -2184,14 +2188,14 @@ window.__ModuleLoader__.load({
           h('button', { className: 'cx-btn xs pri', onClick: (e) => { e.stopPropagation(); onOpen(a); } }, locale === 'zh' ? '打开' : 'OPEN')));
     }
 
-    function StoreRow({ s, onCreate, busy, onAction, onCode, onConfig, locale }) {
+    function StoreRow({ s, onCreate, busy, onAction, onCode, onConfig, locale, node }) {
       const online = s.status === 'online';
       const acts = s.actions || ['create', 'online', 'offline', 'code', 'conf'];
       const has = (x) => acts.includes(x);
       const label = (x) => locale === 'zh' ? ({ create: '创建', online: '上架', offline: '下架', code: '编程', conf: '配置' }[x] || x) : ({ create: 'CREATE', online: 'Online', offline: 'Offline', code: 'Code', conf: 'Config' }[x] || x);
       return h('div', { className: 'cx-store' },
         h('div', { className: 'cx-store-main', onClick: () => !busy && onCreate(s) },
-          h(ItemIcon, { item: s, name: s.name, size: 26, src: s.icon }),
+          h(ItemIcon, { item: s, name: s.name, size: 26, src: s.icon, port: node }),
           h('div', { style: { flex: 1, minWidth: 0 } },
             h('div', { className: 'cx-store-titleline' },
               h('span', { className: 'sn' }, s.name),
@@ -4686,8 +4690,8 @@ window.__ModuleLoader__.load({
               : [h(MultiFilter, { key: 'f', label: t('space'), options: appSpaceOptions, value: appSpaceFilter, onChange: setAppSpaceFilter }), h('button', { key: 's', className: 'cx-btn xs pri', disabled: !node, onClick: showStore }, t('store')), h('span', { key: 'sp', className: 'cx-tools-spacer' }), h('button', { key: 'c', className: 'cx-btn xs cx-icon-btn', disabled: !space, onClick: () => setModal('app'), title: t('create') + ' ' + t('template') }, '+'), h('button', { key: 'r', className: 'cx-btn xs cx-icon-btn', disabled: !node, onClick: () => act('REFRESH RECENT', () => loadApps(node, space)), title: t('refresh') }, '↻')],
           },
             appMode === 'store'
-              ? (storeRows.length ? storeRows.map((s) => h(StoreRow, { key: `${s.space}:${s.command}:${s.uid}`, s, onCreate: openStoreCreate, busy: !!busy, onAction: storeAct, onCode: storeCode, onConfig: storeConfig, locale })) : h('div', { className: 'cx-empty' }, '应用商店加载中，或当前节点没有 service。'))
-              : (!node ? h('div', { className: 'cx-empty' }, '先选择左侧服务节点。') : appRows.length ? appRows.map((a) => h(AppRow, { key: `${a.space}:${a.command}:${a.place_uid || a.name}`, a, active: app?.place_uid === a.place_uid, onOpen: openApp, locale })) : h('div', { className: 'cx-empty' }, '该用户最近还没有应用。用「应用商店」创建，或 AI 生成模板。'))),
+              ? (storeRows.length ? storeRows.map((s) => h(StoreRow, { key: `${s.space}:${s.command}:${s.uid}`, s, onCreate: openStoreCreate, busy: !!busy, onAction: storeAct, onCode: storeCode, onConfig: storeConfig, locale, node })) : h('div', { className: 'cx-empty' }, '应用商店加载中，或当前节点没有 service。'))
+              : (!node ? h('div', { className: 'cx-empty' }, '先选择左侧服务节点。') : appRows.length ? appRows.map((a) => h(AppRow, { key: `${a.space}:${a.command}:${a.place_uid || a.name}`, a, active: app?.place_uid === a.place_uid, onOpen: openApp, locale, node })) : h('div', { className: 'cx-empty' }, '该用户最近还没有应用。用「应用商店」创建，或 AI 生成模板。'))),
           h(Panel, {
             index: '04', title: tp('web'), count: webTabs.length ? `${webTabs.length} TABS` : 'NO TAB',
           },
