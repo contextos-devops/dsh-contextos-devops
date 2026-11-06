@@ -1247,15 +1247,26 @@ window.__ModuleLoader__.load({
         if (document.querySelector(`link[href="${href}"]`)) return;
         const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l);
       };
-      const loadMonaco = async () => {
-        if (window.monaco) return window.monaco;
-        await ensureScript('/contextos-devops-dsh/monaco/vs/loader.js');
-        return new Promise((res, rej) => {
-          const req = window.require;
-          if (!req || !req.config) return rej(new Error('monaco loader missing'));
-          req.config({ paths: { vs: '/contextos-devops-dsh/monaco/vs' } });
-          req(['vs/editor/editor.main'], () => res(window.monaco), rej);
-        });
+      let monacoPromise = null;
+      const loadMonaco = () => {
+        if (window.monaco && window.monaco.editor) return Promise.resolve(window.monaco);
+        if (monacoPromise) return monacoPromise;
+        monacoPromise = (async () => {
+          if (!(window.require && window.require.config)) {
+            try { if (window.require) delete window.require; } catch {}
+            await ensureScript('/contextos-devops-dsh/monaco/vs/loader.js');
+          }
+          return new Promise((res, rej) => {
+            const req = window.require;
+            if (!req || !req.config) return rej(new Error('monaco loader missing'));
+            req.config({ paths: { vs: '/contextos-devops-dsh/monaco/vs' } });
+            req(['vs/editor/editor.main'], () => {
+              if (window.monaco && window.monaco.editor) res(window.monaco);
+              else { monacoPromise = null; rej(new Error('monaco editor missing')); }
+            }, (e) => { monacoPromise = null; rej(e || new Error('monaco load failed')); });
+          });
+        })();
+        return monacoPromise;
       };
 
       const loadDir = async (p) => {
@@ -1349,14 +1360,14 @@ window.__ModuleLoader__.load({
         (async () => {
           try {
             ensureCss('/contextos-devops-dsh/xterm/xterm.css');
-            const loadPlain = async (src) => {
-              const oldDefine = window.define;
-              try { window.define = undefined; } catch {}
-              try { await ensureScript(src); } finally { try { window.define = oldDefine; } catch {} }
+            const evalScript = async (src) => {
+              const code = await (await fetch(src)).text();
+              const fn = new Function('module', 'exports', 'define', 'require', 'window', 'self', 'globalThis', code);
+              fn(undefined, undefined, undefined, undefined, window, window, window);
             };
-            await loadPlain('/contextos-devops-dsh/xterm/xterm.js');
+            if (!window.Terminal) await evalScript('/contextos-devops-dsh/xterm/xterm.js');
             if (!window.Terminal) throw new Error('xterm missing');
-            await loadPlain('/contextos-devops-dsh/xterm/addon-fit.js').catch(() => {});
+            if (!(window.FitAddon && window.FitAddon.FitAddon)) await evalScript('/contextos-devops-dsh/xterm/addon-fit.js').catch(() => {});
             if (disposed || !termHostRef.current) return;
             term = new window.Terminal({ fontSize: 12, fontFamily: 'Menlo, monospace', cursorBlink: true, convertEol: true, theme: { background: '#04101a', foreground: '#cfeff9', cursor: '#3ee7ff' } });
             const fit = window.FitAddon && window.FitAddon.FitAddon ? new window.FitAddon.FitAddon() : null;
