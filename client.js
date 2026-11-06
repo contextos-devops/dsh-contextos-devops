@@ -1361,14 +1361,21 @@ window.__ModuleLoader__.load({
         const k = key || termKeyRef.current;
         if (!k) return;
         try {
-          const texts = {};
-          Object.keys(termMapRef.current).forEach((id) => { texts[id] = String(termMapRef.current[id].text || '').slice(-200000); });
+          const ids = []; const texts = {};
+          Object.keys(termMapRef.current).forEach((id) => {
+            const x = termMapRef.current[id];
+            if (x.key !== k) return;
+            ids.push(Number(id));
+            texts[id] = String(x.text || '').slice(-200000);
+          });
+          if (!ids.length) return;
+          ids.sort((a, b) => a - b);
           const all = readTermBuf();
-          all[k] = { ids: termIdsRef.current, texts };
+          all[k] = { ids, texts };
           localStorage.setItem('contextos-devops-dsh:term-buf', JSON.stringify(all));
         } catch {}
       };
-      const scheduleSave = () => { try { clearTimeout(saveTimerRef.current); } catch {} saveTimerRef.current = setTimeout(() => persistTermBuf(), 800); };
+      const scheduleSave = () => { try { clearTimeout(saveTimerRef.current); } catch {} const k = termKeyRef.current; saveTimerRef.current = setTimeout(() => persistTermBuf(k), 800); };
       const editorHostRef = useRef(null);
       const taRef = useRef(null);
       const termHostsRef = useRef({});
@@ -1526,14 +1533,18 @@ window.__ModuleLoader__.load({
       }, [activePath, activeTab && activeTab.path]);
 
       useEffect(() => {
+        const sameKey = termKeyRef.current === `${node}:${space}`;
+        if (sameKey && Object.keys(termMapRef.current).length) return;
         Object.keys(termMapRef.current).forEach((id) => {
           const x = termMapRef.current[id];
           x.alive = false; try { x.timer && clearTimeout(x.timer); } catch {}
           try { x.ws && x.ws.close(); } catch {}
           try { x.term && x.term.dispose(); } catch {}
         });
-        persistTermBuf(termKeyRef.current);
-        termKeyRef.current = `${node}:${space}`;
+        const nextKey = `${node}:${space}`;
+        const prevKey = termKeyRef.current;
+        if (prevKey && prevKey !== nextKey) persistTermBuf(prevKey);
+        termKeyRef.current = nextKey;
         termMapRef.current = {};
         termHostsRef.current = {};
         const saved = readTermBuf()[`${node}:${space}`] || {};
@@ -1572,7 +1583,7 @@ window.__ModuleLoader__.load({
                 try { const o = await api('origin'); if (o && o.host) { wsHost = o.host; wsProto = 'ws'; } } catch {}
               }
               const url = `${wsProto}://${wsHost}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(info.dir || '')}`;
-              const state = { term, ws: null, fit, alive: true, timer: null };
+              const state = { term, ws: null, fit, alive: true, timer: null, key: `${node}:${space}` };
               if (restored) state.text = restored;
               const connect = () => {
                 if (!state.alive) return;
