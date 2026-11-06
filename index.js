@@ -2542,6 +2542,12 @@ async function route(req, res) {
     if (op === 'health' || op === 'nodes') {
       return send(res, 200, { ok: true, data: { ctxRoot: ctxRoot(), nodes: await listNodes() } });
     }
+    if (op === 'origin') {
+      let host = '';
+      try { const a = server && server.address && server.address(); if (a && a.port) host = `${!a.address || a.address === '::' || a.address === '::1' ? '127.0.0.1' : a.address}:${a.port}`; } catch {}
+      if (!host) { try { host = String(req.headers.host || ''); } catch {} }
+      return send(res, 200, { ok: true, data: { host } });
+    }
     if (op === 'deploy') {
       return send(res, 200, {
         ok: true,

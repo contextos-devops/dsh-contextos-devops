@@ -1541,15 +1541,28 @@ window.__ModuleLoader__.load({
               if (fit) term.loadAddon(fit);
               term.open(host);
               try { fit && fit.fit(); } catch {}
-              const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-              const url = `${proto}://${location.host}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(info.dir || '')}`;
+              let wsHost = location.host;
+              let wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+              if (!/^https?:$/.test(location.protocol)) {
+                try { const o = await api('origin'); if (o && o.host) { wsHost = o.host; wsProto = 'ws'; } } catch {}
+              }
+              const url = `${wsProto}://${wsHost}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(info.dir || '')}`;
               const state = { term, ws: null, fit, alive: true, timer: null };
               const connect = () => {
                 if (!state.alive) return;
                 const ws = new WebSocket(url);
                 state.ws = ws;
                 ws.onmessage = (ev) => { try { term.write(ev.data); } catch {} };
-                ws.onclose = () => { if (!state.alive) return; try { term.write('\r\n[reconnecting…]\r\n'); } catch {}; state.timer = setTimeout(connect, 1000); };
+                ws.onclose = () => {
+                  if (!state.alive) return;
+                  state.fail = (state.fail || 0) + 1;
+                  try {
+                    term.write('\r\n[reconnecting…]\r\n');
+                    if (state.fail === 3) term.write(`[terminal ${url}]\r\n`);
+                  } catch {}
+                  state.timer = setTimeout(connect, 1000);
+                };
+                ws.onopen = () => { state.fail = 0; };
                 ws.onerror = () => {};
               };
               term.onData((d) => { const ws = state.ws; if (ws && ws.readyState === 1) ws.send(d); });
