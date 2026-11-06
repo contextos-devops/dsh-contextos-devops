@@ -2700,6 +2700,18 @@ window.__ModuleLoader__.load({
       const [turn, setTurn] = useState(null);
       const [, setTick] = useState(0);
       OPEN_LINK = (url, title) => { if (onOpenWebTab) onOpenWebTab(url, title); };
+      useEffect(() => {
+        const onMsg = (e) => {
+          const d = e && e.data;
+          if (!d || d.type !== 'ctx-open-url') return;
+          const url = String(d.url || '');
+          if (!/^https?:\/\//i.test(url)) return;
+          const id = onOpenWebTab ? onOpenWebTab(url, url) : '';
+          if (id) setChatTab(id);
+        };
+        window.addEventListener('message', onMsg);
+        return () => window.removeEventListener('message', onMsg);
+      }, [onOpenWebTab]);
       useEffect(() => { if (chatTab !== 'chat' && !(webTabs || []).some((t) => t.id === chatTab)) setChatTab('chat'); }, [webTabs, chatTab]);
       const [avatarEditOpen, setAvatarEditOpen] = useState(false);
       const openCtx = (e, kind) => { e.preventDefault(); e.stopPropagation(); setCtxMenu({ x: e.clientX, y: e.clientY, kind }); };
