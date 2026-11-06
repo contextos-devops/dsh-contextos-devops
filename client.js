@@ -71,7 +71,7 @@ window.__ModuleLoader__.load({
       '+ 计划': '+ Plan', '+ 任务': '+ Task', '+ 报告': '+ Report', '+ 反馈': '+ Feedback',
       '赛博世界': 'Cyber world', '默认赛博世界': 'Default cyber world', '默认': 'Default', '刷新': 'Refresh', '应用商店': 'Store', '部署': 'Deploy',
       '隐藏左栏': 'Hide left panel', '显示左栏': 'Show left panel', '隐藏右栏': 'Hide right panel', '显示右栏': 'Show right panel',
-      '+ 技能': '+ Skill', '上传形象': 'Upload image', '重新开始': 'Restart', '生成': 'Generate', '隐藏': 'Hide', 'Copilot 正在执行…': 'Copilot is working…', '我的分身': 'My Digital Avatar', '我的赛博世界': 'My cyber world',
+      '+ 技能': '+ Skill', '上传形象': 'Upload image', '重新开始': 'Restart', '生成': 'Generate', '隐藏': 'Hide', '后退': 'Back', '前进': 'Forward', '复制地址': 'Copy address', '在浏览器打开': 'Open in browser', '在管理中打开': 'Open in manage', '关闭标签': 'Close tab', 'Copilot 正在执行…': 'Copilot is working…', '我的分身': 'My Digital Avatar', '我的赛博世界': 'My cyber world',
       '上一步': 'Back', '下一步': 'Next', '登录中…': 'Logging in…', '登录并获取 sessid': 'Login & get sessid',
       '本机部署': 'Local', '容器部署': 'Docker', '远程部署': 'Remote deploy', '远程连接': 'Remote connect',
       '部署': 'Deploy', '分身与场景': 'Digital Avatar & World', '项目': 'Project',
@@ -559,6 +559,12 @@ window.__ModuleLoader__.load({
 .cx-chat-tab.on{color:var(--cx-accent);border-color:var(--cx-border-strong);background:var(--cx-accent-soft)}
 .cx-chat-tab .nm{max-width:160px;overflow:hidden;text-overflow:ellipsis}
 .cx-chat-tab .x{border:0;background:transparent;color:inherit;cursor:pointer;font-size:10px;margin-left:2px;padding:0}
+.cx-addrbar{display:flex;align-items:center;gap:6px;padding:6px 18px;border-bottom:1px solid var(--cx-border);background:var(--cx-surface-1);flex:none}
+.cx-addrbar .nav{width:24px;height:24px;border:1px solid var(--cx-border);border-radius:5px;background:var(--cx-surface-2);color:var(--cx-text-dim);cursor:pointer;font-size:12px;line-height:1;padding:0}
+.cx-addrbar .nav:hover:not(:disabled){color:var(--cx-accent);border-color:var(--cx-accent)}
+.cx-addrbar .nav:disabled{opacity:.35;cursor:default}
+.cx-addr-input{flex:1;min-width:0;height:26px;padding:0 10px;border:1px solid var(--cx-border);border-radius:6px;background:var(--cx-surface-2);color:var(--cx-text);font:11px var(--cx-mono)}
+.cx-addr-input:focus{outline:none;border-color:var(--cx-accent)}
 .cx-chat-webframes{flex:1;min-height:0;position:relative;display:flex}
 .cx-chat-webframes iframe{flex:1;width:100%;height:100%;border:0;background:#fff}
 
@@ -2621,7 +2627,7 @@ window.__ModuleLoader__.load({
           h('circle', { cx: 300, cy: 430, r: 4, fill: '#3ee7ff', className: 'cx-pulse' })));
     }
 
-    function ChatPanel({ open, booted, onClose, nodes, node, spaces, space, apps, app, avatar, webTabs, onOpenWebTab, onCloseWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices }) {
+    function ChatPanel({ open, booted, onClose, nodes, node, spaces, space, apps, app, avatar, webTabs, onOpenWebTab, onCloseWebTab, onNavWebTab, onReloadWebTab, onManageWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices }) {
       const [mode, setMode] = useState('avatar');
       const tt = (key) => term(locale, key);
       const sectionTitle = (cn, en) => locale === 'zh' ? `${cn} ${en}` : en;
@@ -2684,7 +2690,8 @@ window.__ModuleLoader__.load({
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:panels', JSON.stringify({ left: showLeft, right: showRight })); } catch {} }, [showLeft, showRight]);
       const [ctxMenu, setCtxMenu] = useState(null);
       const [sceneOpen, setSceneOpen] = useState(false);
-      const [chatTab, setChatTab] = useState('chat');
+      const [chatTab, setChatTab] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:chattab') || 'chat'; } catch { return 'chat'; } });
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:chattab', chatTab); } catch {} }, [chatTab]);
       const [replyPop, setReplyPop] = useState(false);
       const [turn, setTurn] = useState(null);
       const [, setTick] = useState(0);
@@ -2740,6 +2747,27 @@ window.__ModuleLoader__.load({
       const sessionKey = `contextos-devops-dsh:chat:${avatar?.uid || 'anon'}:${activePlan?.uid || 'none'}`;
       const chatReady = !!avatar?.project && !!pm?.project;
       const chatWebTab = chatTab !== 'chat' ? (webTabs || []).find((t) => t.id === chatTab) : null;
+      const [addr, setAddr] = useState('');
+      const [navHist, setNavHist] = useState({});
+      const histKey = chatWebTab ? chatWebTab.id : '';
+      const hist = navHist[histKey] || null;
+      useEffect(() => { setAddr(chatWebTab?.base || chatWebTab?.url || ''); }, [chatWebTab?.id, chatWebTab?.base]);
+      useEffect(() => { if (chatWebTab) setNavHist((h) => (h[chatWebTab.id] ? h : { ...h, [chatWebTab.id]: { list: [chatWebTab.base || chatWebTab.url], idx: 0 } })); }, [chatWebTab?.id]);
+      const pushHist = (url) => setNavHist((h) => {
+        const cur = h[histKey] || { list: [], idx: -1 };
+        const list = cur.list.slice(0, cur.idx + 1);
+        if (list[list.length - 1] !== url) list.push(url);
+        return { ...h, [histKey]: { list, idx: list.length - 1 } };
+      });
+      const go = (raw) => {
+        const t = String(raw || '').trim();
+        if (!t || !chatWebTab) return;
+        const full = /^https?:\/\//i.test(t) ? t : `http://${t}`;
+        pushHist(full);
+        onNavWebTab && onNavWebTab(chatWebTab.id, full);
+      };
+      const back = () => { const cur = navHist[histKey]; if (!cur || cur.idx <= 0 || !chatWebTab) return; const url = cur.list[cur.idx - 1]; setNavHist((h) => ({ ...h, [histKey]: { ...cur, idx: cur.idx - 1 } })); onNavWebTab && onNavWebTab(chatWebTab.id, url); };
+      const fwd = () => { const cur = navHist[histKey]; if (!cur || cur.idx >= cur.list.length - 1 || !chatWebTab) return; const url = cur.list[cur.idx + 1]; setNavHist((h) => ({ ...h, [histKey]: { ...cur, idx: cur.idx + 1 } })); onNavWebTab && onNavWebTab(chatWebTab.id, url); };
       const [pmBooted, setPmBooted] = useState(false);
       useEffect(() => { if (pm) setPmBooted(true); }, [pm]);
       useEffect(() => { const t = setTimeout(() => setPmBooted(true), 1500); return () => clearTimeout(t); }, []);
@@ -3160,6 +3188,17 @@ window.__ModuleLoader__.load({
               (webTabs || []).map((t) => h('button', { key: t.id, className: `cx-chat-tab${chatTab === t.id ? ' on' : ''}`, title: t.url, onClick: () => setChatTab(t.id) },
                 h('span', { className: 'nm' }, t.title || 'web'),
                 h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); onCloseWebTab && onCloseWebTab(t.id); if (chatTab === t.id) setChatTab('chat'); } }, '×')))),
+            chatWebTab ? h('div', { className: 'cx-addrbar' },
+              h('button', { className: 'nav', disabled: !(hist && hist.idx > 0), onClick: back, title: T('后退') }, '←'),
+              h('button', { className: 'nav', disabled: !(hist && hist.idx < hist.list.length - 1), onClick: fwd, title: T('前进') }, '→'),
+              h('button', { className: 'nav', onClick: () => onReloadWebTab && onReloadWebTab(chatWebTab.id), title: T('刷新') }, '↻'),
+              h('input', { className: 'cx-addr-input', value: addr, placeholder: 'https://…', onChange: (e) => setAddr(e.target.value), onKeyDown: (e) => { if (e.key === 'Enter') go(addr); } }),
+              h(MenuButton, { items: [
+                { label: '复制地址', action: () => { try { navigator.clipboard.writeText(chatWebTab.base || chatWebTab.url); } catch {} } },
+                { label: '在浏览器打开', action: () => { try { window.open(chatWebTab.base || chatWebTab.url, '_blank'); } catch {} } },
+                { label: '在管理中打开', action: () => onManageWebTab && onManageWebTab(chatWebTab.id) },
+                { label: '关闭标签', danger: true, action: () => { onCloseWebTab && onCloseWebTab(chatWebTab.id); setChatTab('chat'); } },
+              ] })) : null,
             h('div', { className: 'cx-chat-webframes', style: chatTab === 'chat' ? { display: 'none' } : null },
               (webTabs || []).map((t) => h('iframe', { key: t.id, src: t.url, title: t.title || 'web', allow: 'clipboard-read; clipboard-write', style: chatTab === t.id ? null : { display: 'none' } }))),
             h('div', { className: 'cx-chat-b', ref: endRef, style: chatTab !== 'chat' ? { display: 'none' } : null, onContextMenu: (e) => { if (e.target.closest('.cx-msg, button, a, input, textarea, select, .cx-sel, .cx-hint, .cx-suggest')) return; openCtx(e, 'bg'); } },
@@ -3683,6 +3722,14 @@ window.__ModuleLoader__.load({
       };
       const closeAll = () => { setWebTabs([]); setActiveWeb(null); setApp(null); };
       const reloadTab = (id) => setWebTabs((tabs) => tabs.map((t) => t.id === id ? { ...t, url: withView(t.base || t.url), reload: (t.reload || 0) + 1 } : t));
+      const navWeb = (id, url) => {
+        const raw = String(url || '').trim();
+        if (!raw) return;
+        const full = /^https?:\/\//i.test(raw) ? raw : `http://${raw}`;
+        setWebTabs((tabs) => tabs.map((t) => t.id === id ? { ...t, base: full, url: withView(full), title: full, reload: (t.reload || 0) + 1 } : t));
+        setActiveWeb(id);
+      };
+      const manageWeb = (id) => { setActiveWeb(id); setViewMode('manage'); };
       const reloadWeb = () => activeWeb && reloadTab(activeWeb);
       const openExternal = () => { if (activeTab?.url) openUrl(activeTab.url); };
       const selectCreated = async (r) => {
@@ -3856,7 +3903,7 @@ window.__ModuleLoader__.load({
           if (first) setSpace(first.name);
         } catch { /* keep current */ }
       };
-      const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onRefresh: refreshAll, onOpenApp: openApp, onData: () => app && setModal('data'), onStore: showStore, onDevices: () => setShowDevices(true), avatar };
+      const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onNavWebTab: navWeb, onReloadWebTab: reloadTab, onManageWebTab: manageWeb, onRefresh: refreshAll, onOpenApp: openApp, onData: () => app && setModal('data'), onStore: showStore, onDevices: () => setShowDevices(true), avatar };
       return h('div', { className: 'cx-shell', 'data-theme': theme, ref: shellRef },
         h('style', null, css),
         h('header', { className: 'cx-header' },
