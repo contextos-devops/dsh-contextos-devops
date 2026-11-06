@@ -1420,6 +1420,8 @@ window.__ModuleLoader__.load({
 .cx-req-pre{margin:0;padding:8px;background:rgba(6,20,32,.6);border:1px solid var(--cx-line);border-radius:4px;font:10px/1.55 var(--cx-mono);color:var(--cx-text);white-space:pre-wrap;word-break:break-word;max-height:26vh;overflow:auto}
 
 .cx-chat-center{overflow:visible!important}
+
+.cx-dev-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}
 `;
 
     const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-event', { detail })); } catch {} };
@@ -2415,15 +2417,15 @@ window.__ModuleLoader__.load({
       };
       return h(Modal, { title: '部署服务节点 / DEPLOY NODE', desc: 'copy=复用本机 ice.bin；download=从父节点 /publish 下载；source=git clone + miss.sh 编译。端口即节点身份。', onClose },
         h('div', { className: 'cx-form' },
-          h('label', { className: 'cx-field' }, 'MODE', h('select', { className: 'cx-select', value: mode, onChange: (e) => setMode(e.target.value) },
+          h('label', { className: 'cx-field' }, '部署方式 / MODE', h('select', { className: 'cx-select', value: mode, onChange: (e) => setMode(e.target.value) },
             h('option', { value: 'copy' }, 'copy / 本机复制'), h('option', { value: 'download' }, 'download / 下载'), h('option', { value: 'source' }, 'source / 源码构建'))),
-          h('label', { className: 'cx-field' }, 'PORT', h('input', { className: 'cx-input', value: port, onChange: (e) => setPort(e.target.value) })),
-          h('label', { className: 'cx-field' }, 'NAME', h('input', { className: 'cx-input', value: name, placeholder: 'ContextOS-prod', onChange: (e) => setName(e.target.value) })),
-          (mode === 'download' || mode === 'source') ? h('label', { className: 'cx-field' }, 'PARENT', h('input', { className: 'cx-input', value: parent, placeholder: 'https://shylinux.com', onChange: (e) => setParent(e.target.value) })) : null,
-          mode === 'source' ? h('label', { className: 'cx-field full' }, 'REPO', h('input', { className: 'cx-input', value: repo, placeholder: 'https://shylinux.com/x/ContextOS', onChange: (e) => setRepo(e.target.value) })) : null,
-          mode === 'copy' ? h('label', { className: 'cx-field full' }, 'SOURCE BIN', h('input', { className: 'cx-input', value: sourceBin, placeholder: '留空用 usr/publish，或 /path/bin/ice.bin', onChange: (e) => setSourceBin(e.target.value) })) : null),
+          h('label', { className: 'cx-field' }, '端口 / PORT', h('input', { className: 'cx-input', value: port, onChange: (e) => setPort(e.target.value) })),
+          h('label', { className: 'cx-field' }, '名称 / NAME', h('input', { className: 'cx-input', value: name, placeholder: 'ContextOS-prod', onChange: (e) => setName(e.target.value) })),
+          (mode === 'download' || mode === 'source') ? h('label', { className: 'cx-field' }, '父节点 / PARENT', h('input', { className: 'cx-input', value: parent, placeholder: 'https://shylinux.com', onChange: (e) => setParent(e.target.value) })) : null,
+          mode === 'source' ? h('label', { className: 'cx-field full' }, '代码仓库 / REPO', h('input', { className: 'cx-input', value: repo, placeholder: 'https://shylinux.com/x/ContextOS', onChange: (e) => setRepo(e.target.value) })) : null,
+          mode === 'copy' ? h('label', { className: 'cx-field full' }, '节点镜像 / SOURCE BIN', h('input', { className: 'cx-input', value: sourceBin, placeholder: '留空用 usr/publish，或 /path/bin/ice.bin', onChange: (e) => setSourceBin(e.target.value) })) : null),
         err ? h('div', { className: 'cx-err' }, err) : null,
-        h('div', { className: 'cx-foot' }, h('button', { className: 'cx-btn', onClick: onClose }, T('取消')), h('button', { className: 'cx-btn pri', disabled: busy, onClick: go }, busy ? 'DEPLOYING…' : 'DEPLOY')));
+        h('div', { className: 'cx-foot' }, h('button', { className: 'cx-btn', onClick: onClose }, T('取消')), h('button', { className: 'cx-btn pri', disabled: busy, onClick: go }, busy ? '部署中…' : '部署')));
     }
 
     function SpaceModal({ node, onClose, onDone }) {
@@ -2439,10 +2441,10 @@ window.__ModuleLoader__.load({
         } catch (e) { setErr(String(e?.message || e)); } finally { setBusy(false); }
       };
       return h(Modal, { title: '创建项目空间 / CREATE WORKSPACE', desc: '不指定 repos：dream create 建空空间 → web.code.git.status init 生成 .git / src/main.go / go.mod 骨架。', onClose },
-        h('div', { className: 'cx-form' }, h('label', { className: 'cx-field full' }, 'SPACE NAME', h('input', { className: 'cx-input', value: name, placeholder: 'project', onChange: (e) => setName(e.target.value) }))),
+        h('div', { className: 'cx-form' }, h('label', { className: 'cx-field full' }, '空间名称 / SPACE NAME', h('input', { className: 'cx-input', value: name, placeholder: 'project', onChange: (e) => setName(e.target.value) }))),
         h('div', { className: 'desc' }, '空间名只用字母、数字、下划线；服务端自动加 YYYYMMDD- 前缀。'),
         err ? h('div', { className: 'cx-err' }, err) : null,
-        h('div', { className: 'cx-foot' }, h('button', { className: 'cx-btn', onClick: onClose }, T('取消')), h('button', { className: 'cx-btn pri', disabled: busy, onClick: go }, busy ? 'CREATING…' : 'CREATE + INIT')));
+        h('div', { className: 'cx-foot' }, h('button', { className: 'cx-btn', onClick: onClose }, T('取消')), h('button', { className: 'cx-btn pri', disabled: busy, onClick: go }, busy ? '创建中…' : '创建并初始化')));
     }
 
     function AppModal({ node, space, onClose, onDone }) {
@@ -2683,6 +2685,13 @@ window.__ModuleLoader__.load({
         api('devices', { node }).then((d) => { if (alive) { setData(d); setBusy(false); } }).catch((e) => { if (alive) { setErr(String(e?.message || e)); setBusy(false); } });
         return () => { alive = false; };
       }, [node]);
+      const [scanKind, setScanKind] = useState('');
+      const scan = async (kind) => {
+        setScanKind(kind); setBusy(true); setErr('');
+        try { setData(await api('devices', { node })); }
+        catch (e) { setErr(String(e?.message || e)); }
+        finally { setBusy(false); }
+      };
       const groups = {};
       for (const d of data?.devices || []) (groups[d.kind] || (groups[d.kind] = [])).push(d);
       const renderDevice = (d) => h('div', { className: 'cx-device', key: d.id },
@@ -2690,7 +2699,8 @@ window.__ModuleLoader__.load({
         h('div', { style: { flex: 1, minWidth: 0 } },
           h('div', { className: 'dn' }, d.name),
           h('div', { className: 'dd' }, `${d.address || '—'} · ${d.status || ''}`)),
-        h('span', { className: 'cx-tag cy' }, d.controllable ? 'CONTROL' : 'DISCOVER'));
+        h('span', { className: 'cx-tag cy' }, d.controllable ? 'CONTROL' : 'DISCOVER'),
+        d.kind === 'contextos' ? h('button', { className: 'cx-btn xs', onClick: () => { try { window.open(`http://127.0.0.1:${String(d.address).split(':').pop()}`, '_blank'); } catch {} } }, '打开') : null);
       const renderGroup = ([kind, list]) => h('div', { key: kind },
         h('div', { className: 'oh', style: { marginTop: 6 } }, `${kind.toUpperCase()} · ${list.length}`),
         list.map(renderDevice));
@@ -2698,25 +2708,33 @@ window.__ModuleLoader__.load({
         busy ? h('div', { className: 'desc' }, '扫描中…') : null,
         err ? h('div', { className: 'cx-err' }, err) : null,
         data ? h('div', { className: 'cx-devices' },
-          h('div', { className: 'cx-adapter' }, (data.adapters || []).map((a) => h('span', { key: a.kind, className: `cx-tag ${a.supported ? 'gr' : ''}` }, `${a.kind}${a.supported ? '' : ' ✕'}`)),
-            h('button', { className: 'cx-btn xs', style: { marginLeft: 'auto' }, onClick: () => { setBusy(true); api('devices', { node }).then((d) => setData(d)).catch((e) => setErr(String(e?.message || e))).finally(() => setBusy(false)); } }, '重新扫描')),
+          h('div', { className: 'cx-adapter' }, (data.adapters || []).map((a) => h('span', { key: a.kind, className: `cx-tag ${a.supported ? 'gr' : ''}` }, `${a.kind}${a.supported ? '' : ' ✕'}`))),
+          h('div', { className: 'cx-dev-actions' },
+            h('button', { className: `cx-btn xs${scanKind === 'lan' ? ' on' : ''}`, onClick: () => scan('lan') }, '扫描同网设备'),
+            h('button', { className: `cx-btn xs${scanKind === 'wifi' ? ' on' : ''}`, onClick: () => scan('wifi') }, '扫描无线网络'),
+            h('button', { className: `cx-btn xs${scanKind === 'bt' ? ' on' : ''}`, onClick: () => scan('bt') }, '扫描蓝牙设备'),
+            h('button', { className: 'cx-btn xs', style: { marginLeft: 'auto' }, onClick: () => scan('') }, '重新扫描')),
           Object.entries(groups).map(renderGroup),
           (data.bluetoothNearby || []).length ? h('div', { key: 'btn' },
             h('div', { className: 'oh', style: { marginTop: 8 } }, `BLUETOOTH · 附近 ${data.bluetoothNearby.length}`),
             data.bluetoothNearby.map((d, i) => h('div', { className: 'cx-device', key: 'bt' + i },
               h('span', { className: 'cx-led on' }),
               h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, d.name || d.address || 'BLE'), h('div', { className: 'dd' }, `${d.address || '—'}${d.rssi != null ? ` · ${d.rssi} dBm` : ''}`)),
-              h('span', { className: 'cx-tag cy' }, 'NEARBY')))) : null,
+              h('span', { className: 'cx-tag cy' }, 'NEARBY'),
+              h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(d.address || d.name || ''); } catch {} } }, '复制')))) : null,
           (data.wifiNetworks || []).length ? h('div', { key: 'wn' },
             h('div', { className: 'oh', style: { marginTop: 8 } }, `WIFI · 附近网络 ${data.wifiNetworks.length}`),
             data.wifiNetworks.slice(0, 20).map((n, i) => h('div', { className: 'cx-device', key: 'wn' + i },
               h('span', { className: 'cx-led on' }),
-              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, n.ssid || '(隐藏)'), h('div', { className: 'dd' }, `${n.bssid || '—'} · ch ${n.channel || '—'}${n.rssi != null ? ` · ${n.rssi} dBm` : ''}`))))) : null,
+              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, n.ssid || '(隐藏)'), h('div', { className: 'dd' }, `${n.bssid || '—'} · ch ${n.channel || '—'}${n.rssi != null ? ` · ${n.rssi} dBm` : ''}`)),
+              h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(n.ssid || ''); } catch {} } }, '复制')))) : null,
           (data.lanHosts || []).length ? h('div', { key: 'lan' },
             h('div', { className: 'oh', style: { marginTop: 8 } }, `LAN · 同网设备 ${data.lanHosts.length}`),
             data.lanHosts.slice(0, 30).map((x, i) => h('div', { className: 'cx-device', key: 'lan' + i },
               h('span', { className: 'cx-led on' }),
-              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name || x.ip), h('div', { className: 'dd' }, `${x.ip} · ${x.mac}`))))) : null,
+              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name || x.ip), h('div', { className: 'dd' }, `${x.ip} · ${x.mac}`)),
+              h('button', { className: 'cx-btn xs', onClick: () => { try { window.open(`http://${x.ip}`, '_blank'); } catch {} } }, '打开'),
+              h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(x.ip || ''); } catch {} } }, '复制')))) : null,
           h('div', { className: 'desc' }, data.note || '')) : null);
     }
 
