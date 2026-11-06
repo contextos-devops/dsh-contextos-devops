@@ -1510,6 +1510,7 @@ window.__ModuleLoader__.load({
       useEffect(() => {
         Object.keys(termMapRef.current).forEach((id) => {
           const x = termMapRef.current[id];
+          x.alive = false; try { x.timer && clearTimeout(x.timer); } catch {}
           try { x.ws && x.ws.close(); } catch {}
           try { x.term && x.term.dispose(); } catch {}
         });
@@ -1541,11 +1542,19 @@ window.__ModuleLoader__.load({
               term.open(host);
               try { fit && fit.fit(); } catch {}
               const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-              const ws = new WebSocket(`${proto}://${location.host}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(info.dir || '')}`);
-              term.onData((d) => { if (ws.readyState === 1) ws.send(d); });
-              ws.onmessage = (ev) => { try { term.write(ev.data); } catch {} };
-              ws.onclose = () => { try { term.write('\r\n[terminal closed]\r\n'); } catch {} };
-              termMapRef.current[id] = { term, ws, fit };
+              const url = `${proto}://${location.host}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(info.dir || '')}`;
+              const state = { term, ws: null, fit, alive: true, timer: null };
+              const connect = () => {
+                if (!state.alive) return;
+                const ws = new WebSocket(url);
+                state.ws = ws;
+                ws.onmessage = (ev) => { try { term.write(ev.data); } catch {} };
+                ws.onclose = () => { if (!state.alive) return; try { term.write('\r\n[reconnecting…]\r\n'); } catch {}; state.timer = setTimeout(connect, 1000); };
+                ws.onerror = () => {};
+              };
+              term.onData((d) => { const ws = state.ws; if (ws && ws.readyState === 1) ws.send(d); });
+              connect();
+              termMapRef.current[id] = state;
               setTimeout(() => { try { fit && fit.fit(); } catch {} }, 150);
             }
             if (!cancelled) setTermErr('');
@@ -1555,8 +1564,13 @@ window.__ModuleLoader__.load({
         window.addEventListener('resize', onResize);
         return () => { cancelled = true; window.removeEventListener('resize', onResize); };
       }, [termIds, node, space]);
+      useEffect(() => {
+        if (!showBottom || termTab !== 'term') return;
+        const t = setTimeout(() => { Object.values(termMapRef.current).forEach((x) => { try { x.fit && x.fit.fit(); } catch {} }); }, 60);
+        return () => clearTimeout(t);
+      }, [showBottom, termTab, termActive, termIds]);
       useEffect(() => () => {
-        Object.values(termMapRef.current).forEach((x) => { try { x.ws && x.ws.close(); } catch {}; try { x.term && x.term.dispose(); } catch {} });
+        Object.values(termMapRef.current).forEach((x) => { x.alive = false; try { x.timer && clearTimeout(x.timer); } catch {}; try { x.ws && x.ws.close(); } catch {}; try { x.term && x.term.dispose(); } catch {} });
         termMapRef.current = {};
       }, []);
 
@@ -1641,6 +1655,7 @@ window.__ModuleLoader__.load({
       const addTerm = () => { const id = Math.max(0, ...termIds) + 1; setTermIds([...termIds, id]); setTermActive(id); setTermTab('term'); };
       const closeTerm = (id) => {
         const x = termMapRef.current[id];
+        if (x) { x.alive = false; try { x.timer && clearTimeout(x.timer); } catch {} }
         try { x && x.ws && x.ws.close(); } catch {}
         try { x && x.term && x.term.dispose(); } catch {}
         delete termMapRef.current[id];
