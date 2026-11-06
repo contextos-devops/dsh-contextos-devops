@@ -1107,6 +1107,11 @@ window.__ModuleLoader__.load({
 .cx-tree-item.on{background:var(--cx-accent-soft);color:var(--cx-accent)}
 .cx-tree-item .ico{width:10px;flex:none;opacity:.8}
 .cx-tree-item .nm{overflow:hidden;text-overflow:ellipsis}
+.cx-tree-item .chev{width:10px;flex:none;opacity:.6;font-size:9px}
+.cx-tree-item .fic{width:14px;flex:none;text-align:center;font-size:10px}
+.cx-tree-recent{border-bottom:1px solid var(--cx-line);padding-bottom:4px;margin-bottom:4px}
+.cx-tree-sect{display:flex;align-items:center;gap:6px;padding:5px 8px 3px;font:9px var(--cx-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--cx-text-faint)}
+
 .cx-editor-wrap{position:relative;display:flex;flex-direction:column;overflow:hidden}
 .cx-editor-host{flex:1;min-height:0;width:100%;min-height:220px}
 .cx-editor-ta{flex:1;width:100%;min-height:220px;border:0;resize:none;background:#1e1e1e;color:#d4d4d4;font:12px/1.6 Menlo,monospace;padding:10px;outline:none}
@@ -1446,6 +1451,16 @@ window.__ModuleLoader__.load({
       }, [node, space]);
 
       const askName = (title, value = '') => new Promise((resolve) => setNameDlg({ title, value, resolve }));
+      const fileColor = (name) => {
+        const ext = (String(name).split('.').pop() || '').toLowerCase();
+        return ({
+          go: '#00d3d3', js: '#f7df1e', jsx: '#f7df1e', ts: '#3b9cff', tsx: '#3b9cff', json: '#f5c542',
+          md: '#b07cff', css: '#42a5f5', scss: '#42a5f5', html: '#ff7043', htm: '#ff7043', sh: '#8bc34a',
+          yml: '#7cb342', yaml: '#7cb342', py: '#4fc3f7', sql: '#f06292', png: '#ef5350', jpg: '#ef5350',
+          jpeg: '#ef5350', gif: '#ef5350', svg: '#ffb74d', mod: '#00d3d3', sum: '#00d3d3', shy: '#b07cff',
+        })[ext] || 'var(--cx-text-faint)';
+      };
+      const recentFiles = (() => { try { const m = readIdeOpen()[ideKey]; return (m && m.tabs) || []; } catch { return []; } })();
       const fileGlyph = (name) => {
         const ext = (String(name).split('.').pop() || '').toLowerCase();
         return ({ go: 'GO', js: 'JS', ts: 'TS', json: '{}', css: 'CS', html: '<>', md: 'MD', sh: '$', yml: 'YM', yaml: 'YM', sql: 'DB', py: 'PY' })[ext] || '·';
@@ -1505,8 +1520,9 @@ window.__ModuleLoader__.load({
         const key = p + '/' + e.name;
         const open = !!expanded[key];
         return h(React.Fragment, { key },
-          h('div', { className: `cx-tree-item${activePath === e.path ? ' on' : ''}`, style: { paddingLeft: 8 + depth * 12 }, onClick: () => (isDir ? toggleDir(key) : openFile(e.path)), onContextMenu: (ev) => { ev.preventDefault(); ev.stopPropagation(); setTreeMenu({ x: ev.clientX, y: ev.clientY, entry: e }); }, title: e.path },
-            h('span', { className: 'ico' }, isDir ? (open ? '▾' : '▸') : '·'),
+          h('div', { className: `cx-tree-item${activePath === e.path ? ' on' : ''}`, style: { paddingLeft: 6 + depth * 12 }, onClick: () => (isDir ? toggleDir(key) : openFile(e.path)), onContextMenu: (ev) => { ev.preventDefault(); ev.stopPropagation(); setTreeMenu({ x: ev.clientX, y: ev.clientY, entry: e }); }, title: e.path },
+            h('span', { className: 'chev' }, isDir ? (open ? '▾' : '▸') : ''),
+            h('span', { className: 'fic', style: { color: isDir ? '#f0b64a' : fileColor(e.name) } }, isDir ? '▤' : '◈'),
             h('span', { className: 'nm' }, e.name)),
           isDir && open ? renderDir(key, depth + 1) : null);
       });
@@ -1527,13 +1543,21 @@ window.__ModuleLoader__.load({
               (spaces || []).map((x) => h('option', { key: x.name, value: x.name }, x.name))))),
         h('div', { className: 'cx-dev' },
         h('section', { className: 'cx-dev-col cx-dev-explorer' },
-          h('div', { className: 'cx-dev-h' }, 'EXPLORER', h('span', { className: 'cx-dev-hint' }, node && space ? `${node} · ${space}` : (zh ? '未选择空间' : 'NO SPACE')),
+          h('div', { className: 'cx-dev-h' }, zh ? '资源管理器' : 'EXPLORER', h('span', { className: 'cx-dev-hint' }, node && space ? `${node} · ${space}` : (zh ? '未选择空间' : 'NO SPACE')),
             h('button', { className: 'cx-pm-op', style: { marginLeft: 'auto' }, onClick: () => newEntry({ type: 'dir', path: '', name: '' }, false), title: zh ? '新建文件' : 'New file' }, '+'),
             h('button', { className: 'cx-pm-refresh', onClick: () => reloadDir('') }, '↻')),
           h('div', { className: 'cx-dev-b' },
             !node || !space
               ? h('div', { className: 'cx-empty' }, zh ? '先在服务节点/项目空间上点「编程」打开项目。' : 'Pick a node/space and click CODE.')
-              : h('div', { className: 'cx-tree' }, renderDir('', 0)),
+              : h('div', { className: 'cx-tree' },
+                recentFiles.length ? h('div', { className: 'cx-tree-recent' },
+                  h('div', { className: 'cx-tree-sect' }, h('span', { className: 'chev' }, '▾'), zh ? '最近打开的文件' : 'RECENT'),
+                  recentFiles.slice(0, 8).map((p) => h('div', { key: 'r:' + p, className: `cx-tree-item${activePath === p ? ' on' : ''}`, style: { paddingLeft: 6 }, onClick: () => openFile(p) },
+                    h('span', { className: 'chev' }, ''),
+                    h('span', { className: 'fic', style: { color: fileColor(p) } }, '◈'),
+                    h('span', { className: 'nm' }, p.split('/').pop()))),
+                  h('div', { className: 'cx-tree-sect' }, h('span', { className: 'chev' }, '▾'), zh ? '资源管理器' : 'WORKSPACE')) : null,
+                renderDir('', 0)),
             status ? h('div', { className: 'cx-dev-status' }, status) : null)),
         h('section', { className: 'cx-dev-col cx-dev-editor' },
           h('div', { className: 'cx-dev-h' }, 'EDITOR', h('span', { className: 'cx-dev-hint' }, activeTab ? activeTab.path : (zh ? '双击左侧文件' : 'OPEN A FILE'))),
