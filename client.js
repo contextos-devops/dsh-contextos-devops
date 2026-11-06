@@ -565,7 +565,7 @@ window.__ModuleLoader__.load({
 .cx-addrbar .nav:disabled{opacity:.35;cursor:default}
 .cx-addr-input{flex:1;min-width:0;height:26px;padding:0 10px;border:1px solid var(--cx-border);border-radius:6px;background:var(--cx-surface-2);color:var(--cx-text);font:11px var(--cx-mono)}
 .cx-addr-input:focus{outline:none;border-color:var(--cx-accent)}
-.cx-chat-center.webmax .cx-chat-h,.cx-chat-center.webmax .cx-chat-tabs,.cx-chat-center.webmax .cx-hint,.cx-chat-center.webmax .cx-compose{display:none}
+.cx-chat.webmax .cx-chat-h,.cx-chat.webmax .cx-chat-tabs,.cx-chat.webmax .cx-hint,.cx-chat.webmax .cx-compose,.cx-chat.webmax .cx-pm-side{display:none}
 
 .cx-chat-webframes{flex:1;min-height:0;position:relative;display:flex}
 .cx-chat-webframes iframe{flex:1;width:100%;height:100%;border:0;background:var(--cx-surface-1)}
@@ -3165,11 +3165,11 @@ window.__ModuleLoader__.load({
           fold('map') ? null : h(TaskMap, { tasks, activeTask, onSelect: (t) => { setTaskId(t.uid); setReportId(''); setFeedbackId(''); } })));
 
       if (!open) return null;
-      return h('div', { className: `cx-chat${full ? ' full' : ''}${docked ? ' dock' : ''}`, 'data-theme': theme },
+      return h('div', { className: `cx-chat${full ? ' full' : ''}${docked ? ' dock' : ''}${webMax && chatTab !== 'chat' ? ' webmax' : ''}`, 'data-theme': theme },
         h('div', { className: `cx-chat-bg${bg?.image ? ' photo' : ''}` }, bg?.image ? h('img', { src: bg.image, alt: '' }) : (full ? h(ThreeCity) : null)),
         h('div', { className: 'cx-chat-body' },
           full && showLeft ? leftPanel : null,
-          h('div', { className: `cx-chat-center${webMax && chatTab !== 'chat' ? ' webmax' : ''}` },
+          h('div', { className: 'cx-chat-center' },
             h('div', { className: 'cx-chat-h' },
               h('div', { className: 'cx-chat-hin' },
                 h('div', { className: 'cx-chat-brand' },
@@ -3197,13 +3197,13 @@ window.__ModuleLoader__.load({
               h('button', { className: 'nav', disabled: !(hist && hist.idx < hist.list.length - 1), onClick: fwd, title: T('前进') }, '→'),
               h('button', { className: 'nav', onClick: () => onReloadWebTab && onReloadWebTab(chatWebTab.id), title: T('刷新') }, '↻'),
               h('input', { className: 'cx-addr-input', value: addr, placeholder: 'https://…', onChange: (e) => setAddr(e.target.value), onKeyDown: (e) => { if (e.key === 'Enter') go(addr); } }),
+              h('button', { className: 'nav', onClick: () => setWebMax((v) => !v), title: webMax ? tt('restore') : tt('maximize') }, webMax ? '❐' : '⛶'),
               h(MenuButton, { items: [
                 { label: '复制地址', action: () => { try { navigator.clipboard.writeText(chatWebTab.base || chatWebTab.url); } catch {} } },
                 { label: '在浏览器打开', action: () => { try { window.open(chatWebTab.base || chatWebTab.url, '_blank'); } catch {} } },
                 { label: '在管理中打开', action: () => onManageWebTab && onManageWebTab(chatWebTab.id) },
                 { label: '关闭标签', danger: true, action: () => { onCloseWebTab && onCloseWebTab(chatWebTab.id); setChatTab('chat'); } },
-              ] }),
-              h('button', { className: 'nav', onClick: () => setWebMax((v) => !v), title: webMax ? tt('restore') : tt('maximize') }, webMax ? '❐' : '⛶')) : null,
+              ] })) : null,
             h('div', { className: 'cx-chat-webframes', style: chatTab === 'chat' ? { display: 'none' } : null },
               (webTabs || []).map((t) => h('iframe', { key: t.id, src: t.url, title: t.title || 'web', allow: 'clipboard-read; clipboard-write', onLoad: () => setChatLoaded((m) => (m[t.id] ? m : { ...m, [t.id]: 1 })), style: chatTab === t.id ? null : { display: 'none' } })),
               chatWebTab && !chatLoaded[chatWebTab.id] ? h('div', { className: 'cx-webmask' }, T('加载中…')) : null),
