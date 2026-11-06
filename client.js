@@ -64,9 +64,9 @@ window.__ModuleLoader__.load({
     const OFFICIAL = [['community','云社区','20240724'],['enterprise','云办公','20240724'],['operation','云研发','20240903'],['knowledge','云知识','20250520'],['education','云教育','20240724'],['healthy','云健康','20250520'],['tourism','云文旅','20250520'],['charity','云公益','20250520'],['industry','云工业','20250520'],['agriculture','云农业','20250520']];
     const OFFICIAL_KEY = Object.fromEntries(OFFICIAL.flatMap(([k, n]) => [[k, k], [n, k]]));
     const PRODUCT_NOTES = {
-      avatar: { tag: '身份层', title: '数字分身', text: '一个用户可以有多个分身；每个分身独立 user.uid、城市、公司、人格、喜好、风格。创建应用实例、添加数据、项目任务都归属当前分身。' },
-      factory: { tag: '生产层', title: '软件工厂', text: '从服务节点到项目空间，再到应用模板、应用代码、应用实例。把部署、生成、编译、实例化串成一条可运行的软件生产线。' },
-      iot: { tag: '世界层', title: '赛博世界', text: '把数字分身放进可切换的赛博世界：上传背景、设置场景参数（主题/语言/时区/地点），让对话发生在你选择的世界里。' },
+      avatar: { tag: '身份层', title: '数字分身', text: '只做两件事：用当前分身（user.uid / 城市 / 公司）创建应用实例、添加数据。不部署节点、不建空间、不生成代码。' },
+      factory: { tag: '生产层', title: '软件工厂', text: '持续生产：部署服务节点、创建项目空间、生成应用模板与代码、编译上线、实例化。把从机器到应用的整条生产线跑起来。' },
+      iot: { tag: '世界层', title: '赛博世界', text: '发现周边、连接万物：蓝牙扫描附近设备、WiFi 扫描附近网络与同网设备，结合场景与背景，把数字分身放进真实环境。' },
     };
     const INIT_STEPS = [
       { id: 'node', label: '部署服务节点' },
@@ -148,9 +148,9 @@ window.__ModuleLoader__.load({
     const browserLang = () => (typeof navigator !== 'undefined' && String(navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en');
 
     const CHAT_MODES = [
-      { id: 'avatar', name: '数字分身', intro: '数字分身模式：当前分身的 user.uid/公司/城市会用于创建实例；说「创建员工管理」「给最近应用添加数据」「查看项目进度」。', quick: ['创建员工管理', '最近应用', '查看项目进度', '拆解目标'], introEn: 'Digital avatar mode: the active avatar user.uid/company/city are used when creating instances. Say "create employee management", "add data to recent app", "check project progress".', quickEn: ['Create employee management', 'Recent apps', 'Check project progress', 'Break down a goal'] },
-      { id: 'factory', name: '软件工厂', intro: '软件工厂模式：说「部署 9188 节点」「创建空间 demo」「生成员工管理」「修改应用代码」。', quick: ['部署 9188 节点', '创建空间 demo', '生成员工管理', '修改应用代码'], introEn: 'Software factory mode: say "deploy node 9188", "create space demo", "generate employee management", "edit app code".', quickEn: ['Deploy node 9188', 'Create space demo', 'Generate employee management', 'Edit app code'] },
-      { id: 'iot', name: '赛博世界', intro: '赛博世界模式：说「切换场景」「上传背景照片」「设置场景时间地点」，用场景承载对话环境与数字分身的外观。', quick: ['扫描周边设备', '切换场景', '上传背景照片', '设置场景时间地点'], introEn: 'Cyber world mode: say "switch scene", "upload background", "set scene time and location" to shape the conversation environment.', quickEn: ['Switch scene', 'Upload background', 'Set scene time/location', 'Open app'] },
+      { id: 'avatar', name: '数字分身', intro: '数字分身模式：只用当前分身（user.uid / 城市 / 公司）创建应用实例、添加数据、查看应用数据；不会部署节点、创建空间或生成代码。', quick: ['创建应用实例', '添加数据', '查看应用数据', '拆解目标'], introEn: 'Digital avatar mode: the active avatar user.uid/company/city are used when creating instances. Say "create employee management", "add data to recent app", "check project progress".', quickEn: ['Create employee management', 'Recent apps', 'Check project progress', 'Break down a goal'] },
+      { id: 'factory', name: '软件工厂', intro: '软件工厂模式：持续部署服务节点、创建项目空间、生成应用代码并编译上线；说「部署 9188 节点」「创建空间 demo」「生成员工管理」「修改应用代码」。', quick: ['部署节点', '创建项目空间', '生成应用代码', '编译上线'], introEn: 'Software factory mode: say "deploy node 9188", "create space demo", "generate employee management", "edit app code".', quickEn: ['Deploy node 9188', 'Create space demo', 'Generate employee management', 'Edit app code'] },
+      { id: 'iot', name: '赛博世界', intro: '赛博世界模式：发现周边设备——蓝牙扫描附近设备、WiFi 扫描附近网络与同网设备，实现万物互联；也可切换场景与背景。', quick: ['扫描周边设备', '扫描 WiFi', '扫描蓝牙', '切换场景'], introEn: 'Cyber world mode: say "switch scene", "upload background", "set scene time and location" to shape the conversation environment.', quickEn: ['Switch scene', 'Upload background', 'Set scene time/location', 'Open app'] },
     ];
 
     const reportError = (msg) => {

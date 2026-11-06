@@ -2251,6 +2251,12 @@ function extractAction(text) {
   }
 }
 
+const MODE_ACTIONS = {
+  avatar: ['createInstance', 'createStoreInstance', 'readData', 'writeData', 'listApps', 'storeApps', 'projectStatus', 'pmList', 'pmCreate', 'pmModify', 'pmRemove', 'planProject', 'createAvatar', 'openApp'],
+  factory: ['deploy', 'start', 'stop', 'delete', 'createSpace', 'officialSpaces', 'initSpace', 'spaceStart', 'spaceStop', 'spaceBuild', 'autogenApp', 'code', 'buildSpace', 'compile', 'dockerDeploy', 'remoteDeploy', 'remoteLogin', 'createInstance', 'createStoreInstance', 'listApps', 'storeApps'],
+  iot: ['devices', 'updateBackground', 'createBackground', 'openApp', 'openNode', 'listApps', 'projectStatus', 'pmList'],
+};
+
 async function chatWithDSH({ message, history = [], context = {}, provider = '', model = '', mode = 'factory' } = {}) {
   if (!String(message || '').trim()) throw new Error('empty message');
   const choice = await resolveChatModel({ provider, model });
@@ -2266,11 +2272,13 @@ async function chatWithDSH({ message, history = [], context = {}, provider = '',
     '- officialSpaces args: {keys:[standard key or Chinese name]}; autogenApp args: {name,help,place,value,trans}; createInstance args: {space,command,place,name,city,company}; buildSpace args: {space};',
     '- openApp args: {space,name}; openNode args: {port}; code args: {name}; listApps/data args: {}.',
     '- Six capabilities, in order: deploy node, create workspace, generate app template, edit app code, create app instance, add app data.',
-    `MODE: ${mode}. ${mode === 'avatar'
-      ? '数字分身: use storeApps/createStoreInstance to create apps, listApps/data to add data, projectStatus to check project progress, and createAvatar when the user wants a new avatar. For createAvatar, ask one question at a time for name, city, company, persona, preferences, style; then call it. Do not deploy nodes or create spaces unless explicitly asked.'
-      : mode === 'iot'
-        ? '赛博世界: focus on the active scene and avatar environment. Use context.scene (theme/language/timezone/location) as the user world; help switch scenes, adjust scene params, and keep device discovery (devices) as a secondary capability. Use deploy/openNode/openApp/listApps to open a node/app. Do not invent devices or claim control when an adapter is unsupported.'
-        : '软件工厂: use deploy/createSpace/officialSpaces/autogenApp/code/buildSpace to build software; createInstance only when asked.'}`,
+    `MODE: ${mode}.`,
+    'MODE BEHAVIOUR:',
+    '- avatar（数字分身）: only create app instances and add data; never deploy nodes, create project spaces or generate app code.',
+    '- factory（软件工厂）: deploy service nodes, create project spaces, generate app code, compile and instantiate — the full software production line.',
+    '- iot（赛博世界）: discover nearby devices (bluetooth scan / wifi scan / same-LAN hosts), switch scenes and backgrounds, connect things.',
+    `ALLOWED ACTIONS IN ${String(mode).toUpperCase()} MODE: ${(MODE_ACTIONS[mode] || []).join(', ')}.`,
+    '- Refuse any action outside the allowlist with one short Chinese sentence explaining the mode; do not invent extra capabilities.',
     '- storeApps args: {}; createStoreInstance args: {name?,city?,company?,command?}; createAvatar args: {name,city,company,persona,preferences,style}; projectStatus args: {}; planProject args: {goal}; pmList args: {}; pmCreate args: {kind,target_uid?,plan_uid?,task_uid?,report_uid?,title?,content?,begin_time?,end_time?,report_type?,score?,feedback_status?}; pmAct args: {kind,item_uid,action}; pmModify args: {kind,item_uid,title?,content?,begin_time?,end_time?,report_type?,score?,feedback_status?}; pmRemove args: {kind,item_uid}; devices args: {}.',
     '- CURRENT SELECTION is authoritative: context.node, context.space and context.app are the active node/workspace/app instance. Use them directly; do not ask the user to repeat node/space/app if present.',
     '- Every request carries context.selection {serve, space, place, avatar, scene, mode}; these are the current conversation parameters. If any action argument is missing, fill it from context.selection first, then context.node/space/app/avatar. Only ask when the selection is empty.',
@@ -2291,8 +2299,6 @@ async function chatWithDSH({ message, history = [], context = {}, provider = '',
     '- CONCEPT ORDER (use consistently): serve/node, space/pod, place/app, avatar, scene/background, mode, view, web, editor.',
     '- Aliases: 服务节点=serve=node; 项目空间=space=pod; 应用实例=place=app; 数字分身=avatar; 赛博世界=scene=background; 工作模式=mode (factory/avatar/iot); 视图模式=view (chat/manage/dev); 网页界面=web; 源码编程=editor.',
     '- When the user says 节点/serve/node use context.serve; 空间/pod use context.space; 应用实例/place use context.place; 赛博世界/scene use context.scene; 视图/view use context.view; 网页 use context.web; 文件/代码 use context.editor.',
-    '- WORK MODES: avatar mode only creates app instances and adds data (no node/space/codegen); factory mode deploys nodes, creates project spaces and generates app code; iot (cyber world) mode discovers nearby devices — bluetooth scan, wifi scan (nearby networks + same-LAN devices) and IoT actions.',
-    '- In avatar mode refuse node deployment, space creation and code generation with a short explanation; in factory mode prefer deploy/space/autogen actions; in iot mode prefer devices/scan actions and report bluetooth/wifi/lan findings.',
     '- context.editor is the file currently open in the dev editor: {node, space, path, language, dirty, content (truncated)}. When the user says "this file"/"这个文件"/asks about the open code, use context.editor.path and context.editor.content.',
     '- createSpace name regex [a-zA-Z][a-zA-Z0-9_]*; autogen name/place same regex.',
     '- Standard spaces: community=云社区, enterprise=云办公, operation=云研发, knowledge=云知识, education=云教育, healthy=云健康, tourism=云文旅, charity=云公益, industry=云工业, agriculture=云农业.',
