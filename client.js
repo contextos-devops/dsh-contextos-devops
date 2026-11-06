@@ -1357,6 +1357,7 @@ window.__ModuleLoader__.load({
     // 开发模式：VSCode 风格 IDE 的骨架（编辑器、终端、预览后续接入）
     function DevWorkspace({ locale, node, space, bg, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onPick }) {
       const zh = locale === 'zh';
+      const sp = space || '';
       const [dirs, setDirs] = useState({});
       const [expanded, setExpanded] = useState({ '': true });
       const [tabs, setTabs] = useState([]);
@@ -1374,7 +1375,7 @@ window.__ModuleLoader__.load({
       const [cursor, setCursor] = useState({ line: 1, column: 1 });
       const refreshGit = async () => {
         if (!node) return;
-        try { setGit(await api('git', { node, space })); } catch { /* no git */ }
+        try { setGit(await api('git', { node, space: sp })); } catch { /* no git */ }
       };
       useEffect(() => { refreshGit(); }, [node, space]);
       const [recentOpen, setRecentOpen] = useState(true);
@@ -1462,7 +1463,7 @@ window.__ModuleLoader__.load({
       const loadDir = async (p) => {
         if (!node) return;
         try {
-          const list = await api('tree', { node, space, path: p });
+          const list = await api('tree', { node, space: sp, path: p });
           setDirs((d) => ({ ...d, [p]: list }));
           setExpanded((e) => ({ ...e, [p]: true }));
         } catch (e) { setStatus(String(e?.message || e)); }
@@ -1478,7 +1479,7 @@ window.__ModuleLoader__.load({
         setStatus('');
         if (!tabsRef.current.some((t) => t.path === p)) {
           try {
-            const r = await api('readFile', { node, space, path: p });
+            const r = await api('readFile', { node, space: sp, path: p });
             setTabs((ts) => [...ts, { path: p, name: p.split('/').pop(), content: r.content, dirty: false }]);
           } catch (e) { setStatus(String(e?.message || e)); return; }
         }
@@ -1494,7 +1495,7 @@ window.__ModuleLoader__.load({
         if (!t) return;
         const value = ed ? ed.getValue() : (taRef.current ? taRef.current.value : t.content);
         try {
-          await api('writeFile', { node, space, path: t.path, content: value });
+          await api('writeFile', { node, space: sp, path: t.path, content: value });
           setTabs((ts) => ts.map((x) => x.path === t.path ? { ...x, content: value, dirty: false } : x));
           setStatus(zh ? `已保存 ${t.path}` : `saved ${t.path}`);
           refreshGit();
@@ -1520,7 +1521,7 @@ window.__ModuleLoader__.load({
         (async () => {
           const out = [];
           for (const p of saved.tabs.slice(0, 12)) {
-            try { const r = await api('readFile', { node, space, path: p }); out.push({ path: p, name: p.split('/').pop(), content: r.content, dirty: false }); } catch { /* skip missing */ }
+            try { const r = await api('readFile', { node, space: sp, path: p }); out.push({ path: p, name: p.split('/').pop(), content: r.content, dirty: false }); } catch { /* skip missing */ }
           }
           if (disposed) { restorePendingRef.current = false; return; }
           setTabs(out);
@@ -1590,7 +1591,7 @@ window.__ModuleLoader__.load({
           const saved = (remote && remote.termBuf && remote.termBuf[nextKey]) || readTermBuf()[nextKey] || {};
           const ids = Array.isArray(saved.ids) && saved.ids.length ? saved.ids : [1];
           const texts = saved.texts || {};
-          const cwd = (await api('spaceDir', { node, space }).catch(() => ({ dir: '' }))).dir || '';
+          const cwd = (await api('spaceDir', { node, space: sp }).catch(() => ({ dir: '' }))).dir || '';
           if (cancelled) return;
           Object.keys(termMapRef.current).forEach((id) => {
             if (ids.map((x) => String(x)).includes(String(id))) return;
@@ -1631,7 +1632,7 @@ window.__ModuleLoader__.load({
             if (!window.Terminal) await evalScript('/contextos-devops-dsh/xterm/xterm.js');
             if (!window.Terminal) throw new Error('xterm missing');
             if (!(window.FitAddon && window.FitAddon.FitAddon)) await evalScript('/contextos-devops-dsh/xterm/addon-fit.js').catch(() => {});
-            const info = await api('spaceDir', { node, space }).catch(() => ({ dir: '' }));
+            const info = await api('spaceDir', { node, space: sp }).catch(() => ({ dir: '' }));
             for (const id of termIds) {
               if (termMapRef.current[id]) continue;
               const host = termHostsRef.current[id];
@@ -1721,7 +1722,7 @@ window.__ModuleLoader__.load({
       };
       const dirOf = (entry) => (entry.type === 'dir' ? entry.path : entry.path.split('/').slice(0, -1).join('/'));
       const reloadDir = async (p) => {
-        try { const list = await api('tree', { node, space, path: p }); setDirs((d) => ({ ...d, [p]: list })); setExpanded((e) => ({ ...e, [p]: true })); } catch (e) { setStatus(String(e?.message || e)); }
+        try { const list = await api('tree', { node, space: sp, path: p }); setDirs((d) => ({ ...d, [p]: list })); setExpanded((e) => ({ ...e, [p]: true })); } catch (e) { setStatus(String(e?.message || e)); }
       };
       const newEntry = async (entry, isDir) => {
         const dir = dirOf(entry);
@@ -1729,8 +1730,8 @@ window.__ModuleLoader__.load({
         if (!name) return;
         const target = [dir, name].filter(Boolean).join('/');
         try {
-          if (isDir) await api('mkdir', { node, space, path: target });
-          else await api('writeFile', { node, space, path: target, content: '' });
+          if (isDir) await api('mkdir', { node, space: sp, path: target });
+          else await api('writeFile', { node, space: sp, path: target, content: '' });
           await reloadDir(dir); refreshGit();
           if (!isDir) openFile(target);
         } catch (e) { setStatus(String(e?.message || e)); }
@@ -1741,7 +1742,7 @@ window.__ModuleLoader__.load({
         if (!name || name === entry.name) return;
         const target = [dir, name].filter(Boolean).join('/');
         try {
-          await api('renamePath', { node, space, from: entry.path, to: target });
+          await api('renamePath', { node, space: sp, from: entry.path, to: target });
           closeTab(entry.path);
           await reloadDir(dir); refreshGit();
         } catch (e) { setStatus(String(e?.message || e)); }
@@ -1749,7 +1750,7 @@ window.__ModuleLoader__.load({
       const removeEntry = async (entry) => {
         if (!window.confirm(zh ? `删除「${entry.name}」？` : `Delete "${entry.name}"?`)) return;
         const dir = dirOf(entry);
-        try { await api('removePath', { node, space, path: entry.path }); closeTab(entry.path); await reloadDir(dir); refreshGit(); }
+        try { await api('removePath', { node, space: sp, path: entry.path }); closeTab(entry.path); await reloadDir(dir); refreshGit(); }
         catch (e) { setStatus(String(e?.message || e)); }
       };
       const readPanes = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide-panes') || '{}'); } catch { return {}; } };
