@@ -1175,6 +1175,7 @@ window.__ModuleLoader__.load({
 .cx-statusbar .sep{width:1px;height:10px;background:var(--cx-border)}
 .cx-statusbar .sb-path{max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--cx-text)}
 .cx-statusbar .sb-branch{color:var(--cx-accent)}
+.cx-tree-sect.cx-tree-sect-top{border-top:1px solid var(--cx-border);border-radius:0;margin-top:8px;padding-top:9px}
 .cx-git-count{margin-left:6px;padding:0 5px;border-radius:8px;background:var(--cx-accent-soft);color:var(--cx-accent);font-size:9px}
 .cx-tree-item .cx-git-badge{margin-left:auto;width:12px;text-align:center;font:9px var(--cx-mono);color:var(--cx-muted)}
 .cx-git-badge.mod{color:#ffb454}.cx-git-badge.add{color:#42f5a7}.cx-git-badge.del{color:#ff5c7a}.cx-git-badge.unt{color:#8fd9b6}
@@ -1857,7 +1858,16 @@ window.__ModuleLoader__.load({
         window.addEventListener('scroll', close, true);
         return () => { window.removeEventListener('click', close); window.removeEventListener('scroll', close, true); };
       }, [treeMenu, crumbMenu]);
-      const renderDir = (p, depth) => (dirs[p] || []).map((e) => {
+      const sortEntries = (list) => {
+        const ORDER = ['src', 'etc', 'bin', 'var', 'usr'];
+        const rank = (e) => { const i = ORDER.indexOf(e.name); return i < 0 ? 99 : i; };
+        return (list || []).filter((e) => !String(e.name || '').startsWith('.')).slice().sort((a, b) => {
+          if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+          if (a.type === 'dir') { const ra = rank(a), rb = rank(b); if (ra !== rb) return ra - rb; }
+          return String(a.name).localeCompare(String(b.name));
+        });
+      };
+      const renderDir = (p, depth) => sortEntries(dirs[p]).map((e) => {
         const isDir = e.type === 'dir';
         const key = p + '/' + e.name;
         const open = !!expanded[key];
@@ -1901,7 +1911,7 @@ window.__ModuleLoader__.load({
                   h('button', { className: 'cx-pm-refresh', onClick: (ev) => { ev.stopPropagation(); reloadDir(''); } }, '↻')),
                 treeOpen ? renderDir('', 0) : null,
                 git && git.changed ? h('div', { className: 'cx-tree-recent' },
-                  h('div', { className: 'cx-tree-sect', onClick: () => setGitOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(gitOpen) }), zh ? 'GIT 变更' : 'GIT CHANGES',
+                  h('div', { className: 'cx-tree-sect cx-tree-sect-top', onClick: () => setGitOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(gitOpen) }), zh ? 'GIT 变更' : 'GIT CHANGES',
                     h('span', { className: 'cx-git-count' }, String(git.changed))),
                   gitOpen ? Object.keys(git.files).slice(0, 60).map((fp) => h('div', { key: 'g:' + fp, className: `cx-tree-item${activePath === fp ? ' on' : ''}`, style: { paddingLeft: 6 }, onClick: () => openFile(fp) },
                     h('span', { className: 'chev' }),

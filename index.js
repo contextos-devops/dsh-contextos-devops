@@ -1405,8 +1405,17 @@ async function listDir({ node, space, path: sub = '' } = {}) {
       path: sub ? `${sub}/${ent.name}` : ent.name,
     });
   }
-  out.sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'dir' ? -1 : 1));
-  return { node: Number(node), space, path: sub || '', entries: out };
+  const ORDER = ['src', 'etc', 'bin', 'var', 'usr'];
+  const rank = (e) => { const i = ORDER.indexOf(e.name); return i < 0 ? 99 : i; };
+  out.sort((a, b) => {
+    if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+    if (a.type === 'dir') {
+      const ra = rank(a), rb = rank(b);
+      if (ra !== rb) return ra - rb;
+    }
+    return a.name.localeCompare(b.name);
+  });
+  return { node: Number(node), space, path: sub || '', entries: out.filter((e) => !e.name.startsWith('.')) };
 }
 
 async function readFile({ node, space, path: p } = {}) {
