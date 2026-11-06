@@ -915,6 +915,11 @@ window.__ModuleLoader__.load({
 .cx-node-actions .cx-btn:hover,.cx-space-actions .cx-btn:hover,.cx-app-actions .cx-btn:hover{border-color:var(--cx-accent);color:var(--cx-accent)}
 .cx-node-actions .cx-btn.pri,.cx-space-actions .cx-btn.pri,.cx-app-actions .cx-btn.pri{border-color:var(--cx-line2);background:rgba(8,25,40,.7);color:var(--cx-text)}
 .cx-node-actions .cx-btn.pri:hover,.cx-space-actions .cx-btn.pri:hover,.cx-app-actions .cx-btn.pri:hover{border-color:var(--cx-accent);color:var(--cx-accent)}
+.cx-tools .cx-btn{border-color:var(--cx-line2);background:rgba(8,25,40,.7);color:var(--cx-text-dim);box-shadow:none}
+.cx-tools .cx-btn:hover{border-color:var(--cx-accent);color:var(--cx-accent)}
+.cx-tools .cx-btn.pri{border-color:var(--cx-line2);background:rgba(8,25,40,.7);color:var(--cx-text)}
+.cx-tools .cx-btn.pri:hover{border-color:var(--cx-accent);color:var(--cx-accent)}
+
 
 .cx-shell .cx-menu,.cx-shell .cx-sel-menu{background:var(--cx-surface-1);border-color:var(--cx-border-strong)}
 .cx-shell .cx-menu-item,.cx-shell .cx-sel-item{color:var(--cx-text);border-color:var(--cx-border)}
