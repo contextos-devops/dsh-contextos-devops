@@ -3353,7 +3353,7 @@ window.__ModuleLoader__.load({
       const [reportId, setReportId] = useState('');
       const [feedbackId, setFeedbackId] = useState('');
       const pmSelUidRef = useRef('');
-      const [folds, setFolds] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:folds') || 'null') || {}; } catch { return {}; } });
+      const [folds, setFolds] = useState(() => { try { const saved = JSON.parse(localStorage.getItem('contextos-devops-dsh:folds') || 'null') || {}; return { map: true, ...saved }; } catch { return { map: true }; } });
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:folds', JSON.stringify(folds)); } catch {} }, [folds]);
       const fold = (k) => folds[k] === true;
       const foldHeadProps = (k) => ({ onClick: (e) => { if (e.target.closest('button, select, input, .cx-menu, .cx-sel')) return; setFolds((f) => ({ ...f, [k]: !f[k] })); } });
