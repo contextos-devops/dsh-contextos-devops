@@ -1396,6 +1396,11 @@ window.__ModuleLoader__.load({
 .cx-shell[data-theme="light"] .cx-dev .cx-tab.on{background:transparent;border-top-color:var(--cx-accent);color:var(--cx-accent)}
 .cx-shell[data-theme="light"] .cx-dev .cx-tab.on .ico{color:var(--cx-accent)}
 .cx-shell[data-theme="light"] .cx-dev .cx-tab .ico{color:var(--cx-text-faint)}
+
+.cx-shell[data-theme="light"] .cx-editor-ta{background:transparent;color:var(--cx-text)}
+.cx-shell[data-theme="light"] .cx-editor-host .monaco-editor,
+.cx-shell[data-theme="light"] .cx-editor-host .monaco-editor-background,
+.cx-shell[data-theme="light"] .cx-editor-host .monaco-editor .margin{background:transparent!important}
 `;
 
     const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-event', { detail })); } catch {} };
@@ -1460,7 +1465,7 @@ window.__ModuleLoader__.load({
     }
 
     // 开发模式：VSCode 风格 IDE 的骨架（编辑器、终端、预览后续接入）
-    function DevWorkspace({ locale, node, space, bg, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onPick }) {
+    function DevWorkspace({ locale, node, space, bg, theme, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onPick }) {
       const zh = locale === 'zh';
       const sp = space || '';
       const [dirs, setDirs] = useState({});
@@ -1711,7 +1716,7 @@ window.__ModuleLoader__.load({
             if (disposed || !editorHostRef.current) return;
             monacoRef.current = monaco;
             registerShyLang(monaco);
-            ed = monaco.editor.create(editorHostRef.current, { value: '', theme: 'vs-dark', automaticLayout: true, fontSize: 12, minimap: { enabled: false }, scrollBeyondLastLine: false, tabSize: 4 });
+            ed = monaco.editor.create(editorHostRef.current, { value: '', theme: theme === 'light' ? 'vs' : 'vs-dark', automaticLayout: true, fontSize: 12, minimap: { enabled: false }, scrollBeyondLastLine: false, tabSize: 4 });
             editorRef.current = ed;
             ed.onDidChangeModelContent(() => {
               const p = activeRef.current;
@@ -1732,6 +1737,11 @@ window.__ModuleLoader__.load({
         return () => { disposed = true; try { ed && ed.dispose(); } catch {} };
       }, []);
 
+      useEffect(() => {
+        const m = monacoRef.current;
+        if (!m || !m.editor) return;
+        try { m.editor.setTheme(theme === 'light' ? 'vs' : 'vs-dark'); } catch {}
+      }, [theme]);
       useEffect(() => {
         const ed = editorRef.current, monaco = monacoRef.current;
         if (!ed || !activeTab) return;
@@ -4777,7 +4787,7 @@ window.__ModuleLoader__.load({
             h('button', { className: 'cx-chip', onClick: () => setViewMode('chat'), title: `${t('scene')}: ${bg?.name || T('默认')}` }, h('span', { className: `dot${bg?.image ? ' on' : ''}` }), `${t('scene')} `, h('b', null, bg?.name || T('默认'))))),
         error ? h('div', { className: 'cx-err' }, error) : null,
         h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}`, style: viewMode === 'chat' ? null : { display: 'none' } }, h(ChatPanel, { ...chatProps, docked: !chatFull })),
-        viewMode === 'dev' ? h(DevWorkspace, { locale, node, space, bg, nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onPick: openIde }) : null,
+        viewMode === 'dev' ? h(DevWorkspace, { locale, node, space, bg, theme, nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onPick: openIde }) : null,
         h('div', { className: 'cx-body', style: viewMode === 'manage' ? null : { display: 'none' } },
           h(Panel, {
             index: '01', title: tp('serve'), count: `${nodeRows.length}/${nodes.length} NODES`,
