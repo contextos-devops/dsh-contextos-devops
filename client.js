@@ -1355,6 +1355,8 @@ window.__ModuleLoader__.load({
       const restoreTextRef = useRef({});
       const saveTimerRef = useRef(null);
       const readTermBuf = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:term-buf') || '{}'); } catch { return {}; } };
+      const readRemoteState = async () => { try { return (await api('stateGet')) || {}; } catch { return {}; } };
+      const writeRemoteState = (name, value) => { try { api('stateSet', { name, value }).catch(() => {}); } catch {} };
       const termIdsRef = useRef(termIds); termIdsRef.current = termIds;
       const termKeyRef = useRef('');
       const persistTermBuf = (key) => {
@@ -1366,13 +1368,14 @@ window.__ModuleLoader__.load({
             const x = termMapRef.current[id];
             if (x.key !== k) return;
             ids.push(Number(id));
-            texts[id] = String(x.text || '').slice(-200000);
+            texts[id] = String(x.text || '').slice(-60000);
           });
           if (!ids.length) return;
           ids.sort((a, b) => a - b);
           const all = readTermBuf();
           all[k] = { ids, texts };
           localStorage.setItem('contextos-devops-dsh:term-buf', JSON.stringify(all));
+          writeRemoteState('termBuf', all);
         } catch {}
       };
       const scheduleSave = () => { try { clearTimeout(saveTimerRef.current); } catch {} const k = termKeyRef.current; saveTimerRef.current = setTimeout(() => persistTermBuf(k), 800); };
@@ -1547,10 +1550,21 @@ window.__ModuleLoader__.load({
         termKeyRef.current = nextKey;
         termMapRef.current = {};
         termHostsRef.current = {};
-        const saved = readTermBuf()[`${node}:${space}`] || {};
-        const ids = Array.isArray(saved.ids) && saved.ids.length ? saved.ids : [1];
-        restoreTextRef.current = saved.texts || {};
-        setTermIds(ids); setTermActive(ids[0]); setTermErr(''); setTermTab('term');
+        const apply = (saved) => {
+          const ids = Array.isArray(saved.ids) && saved.ids.length ? saved.ids : [1];
+          restoreTextRef.current = saved.texts || {};
+          setTermIds(ids); setTermActive(ids[0]); setTermErr(''); setTermTab('term');
+        };
+        const local = readTermBuf()[`${node}:${space}`];
+        apply(local || {});
+        let cancelled = false;
+        (async () => {
+          const remote = await readRemoteState();
+          if (cancelled) return;
+          const saved = remote && remote.termBuf && remote.termBuf[`${node}:${space}`];
+          if (saved && Array.isArray(saved.ids) && saved.ids.length) apply(saved);
+        })();
+        return () => { cancelled = true; };
       }, [node, space]);
       useEffect(() => {
         let cancelled = false;
@@ -1589,7 +1603,7 @@ window.__ModuleLoader__.load({
                 if (!state.alive) return;
                 const ws = new WebSocket(url);
                 state.ws = ws;
-                ws.onmessage = (ev) => { try { term.write(ev.data); } catch {}; state.text = String(state.text || '') + String(ev.data); if (state.text.length > 400000) state.text = state.text.slice(-200000); scheduleSave(); };
+                ws.onmessage = (ev) => { try { term.write(ev.data); } catch {}; state.text = String(state.text || '') + String(ev.data); if (state.text.length > 400000) state.text = state.text.slice(-60000); scheduleSave(); };
                 ws.onclose = () => {
                   if (!state.alive) return;
                   state.fail = (state.fail || 0) + 1;

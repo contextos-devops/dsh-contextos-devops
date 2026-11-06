@@ -2548,6 +2548,21 @@ async function route(req, res) {
       if (!host) { try { host = String(req.headers.host || ''); } catch {} }
       return send(res, 200, { ok: true, data: { host } });
     }
+    if (op === 'stateGet') {
+      try { return send(res, 200, { ok: true, data: JSON.parse(await fs.readFile(path.join(stateDir(), 'state.json'), 'utf8')) }); }
+      catch { return send(res, 200, { ok: true, data: {} }); }
+    }
+    if (op === 'stateSet') {
+      const name = String(body.name || '');
+      if (!name) throw new Error('name is required');
+      const file = path.join(stateDir(), 'state.json');
+      let data = {};
+      try { data = JSON.parse(await fs.readFile(file, 'utf8')); } catch {}
+      data[name] = body.value;
+      await fs.mkdir(path.dirname(file), { recursive: true });
+      await fs.writeFile(file, JSON.stringify(data));
+      return send(res, 200, { ok: true, data: { saved: name } });
+    }
     if (op === 'deploy') {
       return send(res, 200, {
         ok: true,
