@@ -2700,7 +2700,7 @@ window.__ModuleLoader__.load({
       const [scanKind, setScanKind] = useState('');
       const [ssh, setSsh] = useState(null);
       const [tab, setTab] = useState('hosts');
-      const loadSsh = async () => { try { setSsh(await api('sshHosts')); } catch { /* no ssh */ } };
+      const loadSsh = async () => { try { const r = await api('sshHosts'); setSsh(r && (r.services || r.knownHosts) ? r : { unavailable: true }); } catch { setSsh({ unavailable: true }); } };
       const scan = async (kind) => {
         setScanKind(kind); setBusy(true); setErr('');
         try { setData(await api('devices', { node })); await loadSsh(); }
@@ -2743,7 +2743,7 @@ window.__ModuleLoader__.load({
                   h('span', { className: 'cx-led on' }),
                   h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name), h('div', { className: 'dd' }, `${x.username ? x.username + '@' : ''}${x.host}:${x.port}${x.init ? ' · ' + x.init : ''}`)),
                   h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(`ssh ${x.username ? x.username + '@' : ''}${x.host} -p ${x.port}`); } catch {} } }, '复制')))
-              : h('div', { className: 'cx-empty-d' }, '没有读取到 ~/.ssh/host 服务'))
+              : h('div', { className: 'cx-empty-d' }, ssh && ssh.unavailable ? '服务端版本过旧：请重启 DSH 以启用 SSH 主机扫描' : '没有读取到 ~/.ssh/host 服务（目录：~/.ssh/host/*.json）'))
             : null,
             tab === 'wifi' ? ((data.wifiNetworks || []).length
               ? data.wifiNetworks.slice(0, 30).map((n, i) => h('div', { className: 'cx-device', key: 'wn' + i },
