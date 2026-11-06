@@ -1012,6 +1012,7 @@ window.__ModuleLoader__.load({
 .cx-header{padding-left:calc(16px + var(--cx-host-left-pad))}
 .cx-chat.full .cx-chat-hin{max-width:900px}
 .cx-chat.full .cx-compose{max-width:900px}
+.cx-chat.full .cx-chat-b{padding-left:max(10px,calc((100% - 900px)/2));padding-right:max(10px,calc((100% - 900px)/2))}
 .cx-shell{--cx-pm-side-w:280px}
 .cx-chat-host{flex:1;min-height:0;display:flex;min-width:0;padding:10px 12px 12px}
 .cx-chat-host.full{position:absolute;inset:0;z-index:500;padding:0}
