@@ -1402,6 +1402,22 @@ window.__ModuleLoader__.load({
 .cx-shell[data-theme="light"] .cx-editor-host .monaco-editor,
 .cx-shell[data-theme="light"] .cx-editor-host .monaco-editor-background,
 .cx-shell[data-theme="light"] .cx-editor-host .monaco-editor .margin{background:transparent!important}
+
+/* 请求日志 */
+.cx-term-badge{margin-left:4px;padding:0 5px;border-radius:8px;background:var(--cx-accent-soft);color:var(--cx-accent);font-size:8px}
+.cx-req-list{display:flex;flex-direction:column;padding:4px 6px}
+.cx-req-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--cx-line);background:transparent;color:var(--cx-text-dim);font:10px var(--cx-mono);padding:5px 6px;cursor:pointer}
+.cx-req-row:hover{background:rgba(62,231,255,.10);color:var(--cx-text)}
+.cx-req-row .at{flex:none;color:var(--cx-text)}
+.cx-req-row .ms,.cx-req-row .tk{flex:none;opacity:.75}
+.cx-req-row .msg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-req-detail{display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow:auto}
+.cx-req-detail .kv{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font:10px var(--cx-mono)}
+.cx-req-detail .kv .row{display:flex;gap:8px}
+.cx-req-detail .kv .k{color:var(--cx-text-faint);flex:none}
+.cx-req-detail .kv .v{color:var(--cx-text)}
+.cx-req-sect{font:600 10px var(--cx-font);color:var(--cx-accent);margin-top:4px}
+.cx-req-pre{margin:0;padding:8px;background:rgba(6,20,32,.6);border:1px solid var(--cx-line);border-radius:4px;font:10px/1.55 var(--cx-mono);color:var(--cx-text);white-space:pre-wrap;word-break:break-word;max-height:26vh;overflow:auto}
 `;
 
     const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-event', { detail })); } catch {} };
@@ -1466,7 +1482,7 @@ window.__ModuleLoader__.load({
     }
 
     // 开发模式：VSCode 风格 IDE 的骨架（编辑器、终端、预览后续接入）
-    function DevWorkspace({ locale, node, space, bg, theme, active, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onActiveFile, onPick }) {
+    function DevWorkspace({ locale, node, space, bg, theme, active, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onActiveFile, requests, onPick }) {
       const zh = locale === 'zh';
       const sp = space || '';
       const [dirs, setDirs] = useState({});
@@ -1518,6 +1534,7 @@ window.__ModuleLoader__.load({
       const [termIds, setTermIds] = useState([1]);
       const [termActive, setTermActive] = useState(1);
       const [termOut, setTermOut] = useState('');
+      const [reqDetail, setReqDetail] = useState(null);
       const termActiveRef = useRef(termActive); termActiveRef.current = termActive;
       useEffect(() => {
         if (!onActiveFile) return;
@@ -2142,6 +2159,8 @@ window.__ModuleLoader__.load({
           h('div', { className: 'cx-dev-h cx-term-h' },
             h('div', { className: 'cx-term-tabs' },
               h('button', { className: `cx-term-tab${termTab === 'term' ? ' on' : ''}`, onClick: () => setTermTab('term') }, zh ? '终端' : 'TERMINAL'),
+              h('button', { className: `cx-term-tab${termTab === 'req' ? ' on' : ''}`, onClick: () => setTermTab('req') }, zh ? '请求' : 'REQUEST',
+                requests && requests.length ? h('span', { className: 'cx-term-badge' }, String(requests.length)) : null),
               h('button', { className: `cx-term-tab${termTab === 'out' ? ' on' : ''}`, onClick: () => setTermTab('out') }, zh ? '输出' : 'OUTPUT')),
             h('span', { className: 'cx-dev-hint' }, `${node || ''} · ${space || ''}`),
             h('div', { className: 'cx-term-sessions' },
@@ -2151,7 +2170,15 @@ window.__ModuleLoader__.load({
                 termIds.length > 1 ? h('button', { className: 'x', onClick: (ev) => { ev.stopPropagation(); closeTerm(id); } }, '×') : null)),
               h('button', { className: 'cx-term-add', onClick: addTerm, title: zh ? '新建终端' : 'New terminal' }, '+'))),
           h('div', { className: 'cx-dev-b cx-term-wrap' },
-            termTab === 'out'
+            termTab === 'req'
+              ? ((requests || []).length
+                  ? h('div', { className: 'cx-req-list' }, (requests || []).slice().reverse().map((r, i) => h('button', { key: i, className: 'cx-req-row', onClick: () => setReqDetail(r) },
+                      h('span', { className: 'at' }, new Date(r.at).toLocaleTimeString()),
+                      h('span', { className: 'ms' }, `${r.ms}ms`),
+                      h('span', { className: 'tk' }, `${r.tokens || 0} tok`),
+                      h('span', { className: 'msg' }, String(r.message || '').replace(/\s+/g, ' ').slice(0, 140)))))
+                  : h('div', { className: 'cx-empty' }, zh ? '还没有请求记录' : 'no requests yet'))
+              : termTab === 'out'
               ? h('pre', { className: 'cx-term-out' }, termOut || (zh ? '（暂无输出，点上方「编译」生成）' : 'no output'))
               : termIds.map((id) => h('div', { key: id, className: 'cx-term-host', style: id === termActive ? null : { display: 'none' }, ref: (el) => { if (el) termHostsRef.current[id] = el; } })),
             termErr ? h('div', { className: 'cx-dev-status err' }, termErr) : null))),
@@ -2166,6 +2193,21 @@ window.__ModuleLoader__.load({
           h('span', null, `行 ${cursor.line}, 列 ${cursor.column}`),
           h('span', null, langOfPath(activePath)),
           h('span', null, 'UTF-8')),
+        reqDetail ? h(Modal, { title: (zh ? '请求详情 / REQUEST' : 'REQUEST'), desc: '', onClose: () => setReqDetail(null) },
+          h('div', { className: 'cx-req-detail' },
+            h('div', { className: 'kv' },
+              [['请求时间', new Date(reqDetail.at).toLocaleString()],
+               ['耗时', `${reqDetail.ms} ms`],
+               ['报文大小', `↑ ${reqDetail.reqBytes || 0} B · ↓ ${reqDetail.resBytes || 0} B`],
+               ['Token', `${reqDetail.tokens || 0}${reqDetail.est ? '（估算）' : ''}`],
+               ['金额', (() => { const u = reqDetail.usage || {}; const c = u.cost ?? u.total_cost ?? u.total_price; if (c !== undefined && c !== null) return String(c); const i = Number(u.input_tokens || u.prompt_tokens || 0); const o = Number(u.output_tokens || u.completion_tokens || 0); return (i || o) ? `≈¥${((i * 0.000002) + (o * 0.000008)).toFixed(6)}` : '—'; })()],
+               ['模式 / 视图', `${reqDetail.mode || '-'} / ${(reqDetail.context && reqDetail.context.view) || '-'}`]].map(([k, v]) => h('div', { key: k, className: 'row' }, h('span', { className: 'k' }, k), h('span', { className: 'v' }, v)))),
+            h('div', { className: 'cx-req-sect' }, zh ? '请求内容' : 'REQUEST'),
+            h('pre', { className: 'cx-req-pre' }, String(reqDetail.message || '')),
+            h('div', { className: 'cx-req-sect' }, zh ? '请求参数' : 'PARAMS'),
+            h('pre', { className: 'cx-req-pre' }, (() => { try { return JSON.stringify(reqDetail.context || {}, null, 2); } catch { return ''; } })()),
+            h('div', { className: 'cx-req-sect' }, zh ? '返回内容' : 'RESPONSE'),
+            h('pre', { className: 'cx-req-pre' }, String(reqDetail.reply || '') + (reqDetail.action ? `\n\nACTION:\n${JSON.stringify(reqDetail.action, null, 2)}` : '')))) : null,
         nameDlg ? h('div', { className: 'cx-namedlg' },
           h('div', { className: 't' }, nameDlg.title),
           h('input', { className: 'cx-input', value: nameDlg.value, autoFocus: true,
@@ -3477,7 +3519,7 @@ window.__ModuleLoader__.load({
           h('circle', { cx: 300, cy: 430, r: 4, fill: '#3ee7ff', className: 'cx-pulse' })));
     }
 
-    function ChatPanel({ open, booted, onClose, nodes, node, spaces, space, apps, app, avatar, ideFile, view, webTabs, onOpenWebTab, onCloseWebTab, onNavWebTab, onReloadWebTab, onManageWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices }) {
+    function ChatPanel({ open, booted, onClose, nodes, node, spaces, space, apps, app, avatar, ideFile, view, onRequest, webTabs, onOpenWebTab, onCloseWebTab, onNavWebTab, onReloadWebTab, onManageWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices }) {
       const [mode, setMode] = useState('avatar');
       const tt = (key) => term(locale, key);
       const sectionTitle = (cn, en) => locale === 'zh' ? `${cn} ${en}` : en;
@@ -3887,6 +3929,17 @@ window.__ModuleLoader__.load({
           const tokens = u ? (Number(u.total_tokens) || ((Number(u.input_tokens) || Number(u.prompt_tokens) || 0) + (Number(u.output_tokens) || Number(u.completion_tokens) || 0))) : Math.round((content.length + reply.length) / 4);
           setTurn({ at: startedAt, ms: Number(r?.ms) || (Date.now() - startedAt), tokens, est: !u, reqBytes: Number(r?.promptBytes) || 0, resBytes: Number(r?.outputBytes) || reply.length, q: text.slice(0, 70), a: reply.slice(0, 80) });
           if (reply) ai(reply, { ms: Number(r?.ms) || (Date.now() - startedAt), tokens, est: !u, bytes: Number(r?.outputBytes) || reply.length });
+          if (onRequest) onRequest({
+            at: new Date(startedAt).toISOString(),
+            ms: Number(r?.ms) || (Date.now() - startedAt),
+            tokens, usage: u, est: !u,
+            reqBytes: Number(r?.promptBytes) || 0,
+            resBytes: Number(r?.outputBytes) || reply.length,
+            message: String(content).slice(0, 4000),
+            context, mode,
+            reply: String(reply).slice(0, 8000),
+            action: r?.action || null,
+          });
           if (r?.action) await executeAction(r.action);
         } catch (e) {
           ai(`DSH 意图层调用失败：${String(e?.message || e)}\n请确认 DSH 已配置模型，或重启 DSH 加载 llm 注入。`);
@@ -4764,6 +4817,9 @@ window.__ModuleLoader__.load({
       const [ideProjects, setIdeProjects] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide') || 'null') || []; } catch { return []; } });
       const [ideActive, setIdeActive] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:ide-active') || ''; } catch { return ''; } });
       const [ideFile, setIdeFile] = useState(null);
+      const [reqLog, setReqLog] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:reqlog') || '[]') || []; } catch { return []; } });
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:reqlog', JSON.stringify(reqLog.slice(-50))); } catch {} }, [reqLog]);
+      const pushReq = (e) => { try { setReqLog((l) => [...l, e].slice(-50)); } catch {} };
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:ide', JSON.stringify(ideProjects)); } catch {} }, [ideProjects]);
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:ide-active', ideActive); } catch {} }, [ideActive]);
       useEffect(() => { const key = `${node}:${space}`; if (ideProjects.some((x) => x.key === key)) setIdeActive(key); }, [node, space]);
@@ -4784,7 +4840,7 @@ window.__ModuleLoader__.load({
           setIdeActive(key);
         }
       };
-      const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, view: viewMode, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, ideFile, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onNavWebTab: navWeb, onReloadWebTab: reloadTab, onManageWebTab: manageWeb, onRefresh: refreshAll, onOpenApp: openApp, onData: () => app && setModal('data'), onStore: showStore, onDevices: () => setShowDevices(true), avatar };
+      const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, view: viewMode, onRequest: pushReq, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, ideFile, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onNavWebTab: navWeb, onReloadWebTab: reloadTab, onManageWebTab: manageWeb, onRefresh: refreshAll, onOpenApp: openApp, onData: () => app && setModal('data'), onStore: showStore, onDevices: () => setShowDevices(true), avatar };
       return h('div', { className: 'cx-shell', 'data-theme': theme, ref: shellRef },
         h('style', null, css),
         h('header', { className: 'cx-header' },
@@ -4814,7 +4870,7 @@ window.__ModuleLoader__.load({
             h('button', { className: 'cx-chip', onClick: () => setViewMode('chat'), title: `${t('scene')}: ${bg?.name || T('默认')}` }, h('span', { className: `dot${bg?.image ? ' on' : ''}` }), `${t('scene')} `, h('b', null, bg?.name || T('默认'))))),
         error ? h('div', { className: 'cx-err' }, error) : null,
         h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}`, style: viewMode === 'chat' ? null : { display: 'none' } }, h(ChatPanel, { ...chatProps, docked: !chatFull })),
-        h('div', { className: 'cx-dev-host', style: viewMode === 'dev' ? null : { display: 'none' } }, h(DevWorkspace, { locale, node, space, bg, theme, active: viewMode === 'dev', nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onActiveFile: setIdeFile, onPick: openIde })),
+        h('div', { className: 'cx-dev-host', style: viewMode === 'dev' ? null : { display: 'none' } }, h(DevWorkspace, { locale, node, space, bg, theme, active: viewMode === 'dev', nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onActiveFile: setIdeFile, requests: reqLog, onPick: openIde })),
         h('div', { className: 'cx-body', style: viewMode === 'manage' ? null : { display: 'none' } },
           h(Panel, {
             index: '01', title: tp('serve'), count: `${nodeRows.length}/${nodes.length} NODES`,
