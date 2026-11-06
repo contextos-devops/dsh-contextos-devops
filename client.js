@@ -3477,7 +3477,7 @@ window.__ModuleLoader__.load({
           h('circle', { cx: 300, cy: 430, r: 4, fill: '#3ee7ff', className: 'cx-pulse' })));
     }
 
-    function ChatPanel({ open, booted, onClose, nodes, node, spaces, space, apps, app, avatar, ideFile, webTabs, onOpenWebTab, onCloseWebTab, onNavWebTab, onReloadWebTab, onManageWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices }) {
+    function ChatPanel({ open, booted, onClose, nodes, node, spaces, space, apps, app, avatar, ideFile, view, webTabs, onOpenWebTab, onCloseWebTab, onNavWebTab, onReloadWebTab, onManageWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices }) {
       const [mode, setMode] = useState('avatar');
       const tt = (key) => term(locale, key);
       const sectionTitle = (cn, en) => locale === 'zh' ? `${cn} ${en}` : en;
@@ -3848,30 +3848,31 @@ window.__ModuleLoader__.load({
         const selectedScene = bg ? { id: bg.id, name: bg.name, theme: themeMode, language: locale === 'zh' ? 'zh' : 'en', timezone: sceneTz, location: sceneLoc } : null;
         const webPage = chatWebTab ? { url: chatWebTab.base || chatWebTab.url, title: chatWebTab.title || '' } : null;
         const editorFile = ideFile && ideFile.path ? { node: ideFile.node, space: ideFile.space, path: ideFile.path, language: ideFile.language, dirty: !!ideFile.dirty, content: String(ideFile.content || '').slice(0, 1500) } : null;
+        // 概念顺序：serve/node → space/pod → place/app → avatar → scene/background → mode → view → web → editor
         const selection = {
-          serve: node,
-          space,
-          place: selectedApp,
+          serve: node, node,
+          space, pod: space,
+          place: selectedApp, app: selectedApp,
           avatar: selectedAvatar,
-          scene: selectedScene,
+          scene: selectedScene, background: selectedScene,
+          mode,
+          view: view || 'chat',
           web: webPage,
           editor: editorFile,
-          mode,
           functions,
         };
         const context = {
-          mode,
           selection,
-          functions,
-          serve: node,
-          place: selectedApp,
+          serve: node, node,
+          space, pod: space,
+          place: selectedApp, app: selectedApp,
           avatar: selectedAvatar,
-          scene: selectedScene,
+          scene: selectedScene, background: selectedScene,
+          mode,
+          view: view || 'chat',
           web: webPage,
           editor: editorFile,
-          node,
-          space,
-          app: selectedApp,
+          functions,
           nodes: (nodes || []).map((n) => ({ port: n.port, name: n.name, state: n.state, env: n.env })),
           spaces: (spaces || []).map((s) => ({ name: s.name, status: s.status })),
           apps: (apps || []).map((a) => ({ name: a.name, title: a.title, command: a.command })),
@@ -4783,7 +4784,7 @@ window.__ModuleLoader__.load({
           setIdeActive(key);
         }
       };
-      const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, ideFile, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onNavWebTab: navWeb, onReloadWebTab: reloadTab, onManageWebTab: manageWeb, onRefresh: refreshAll, onOpenApp: openApp, onData: () => app && setModal('data'), onStore: showStore, onDevices: () => setShowDevices(true), avatar };
+      const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, view: viewMode, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, ideFile, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onNavWebTab: navWeb, onReloadWebTab: reloadTab, onManageWebTab: manageWeb, onRefresh: refreshAll, onOpenApp: openApp, onData: () => app && setModal('data'), onStore: showStore, onDevices: () => setShowDevices(true), avatar };
       return h('div', { className: 'cx-shell', 'data-theme': theme, ref: shellRef },
         h('style', null, css),
         h('header', { className: 'cx-header' },
