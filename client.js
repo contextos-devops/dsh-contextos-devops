@@ -1110,7 +1110,10 @@ window.__ModuleLoader__.load({
 .cx-dev .cx-dev-editor{border:0}
 .cx-dev .cx-dev-editor .cx-dev-h{border-bottom:0}
 .cx-dev .cx-tabs{background:transparent;border:0}
-.cx-dev .cx-editor-wrap,.cx-dev .cx-editor-host,.cx-dev .cx-editor-ta{border:0}
+.cx-dev .cx-editor-wrap,.cx-dev .cx-editor-host,.cx-dev .cx-editor-ta,.cx-dev .cx-dev-editor,.cx-dev .cx-dev-editor .cx-dev-b{border:0!important;box-shadow:none!important;outline:0!important}
+.cx-dev .cx-editor-host .monaco-editor,.cx-dev .cx-editor-host .monaco-editor .overflow-guard,.cx-dev .cx-editor-host .monaco-editor .margin{border:0!important;box-shadow:none!important;outline:0!important}
+.cx-dev .cx-tabs,.cx-dev .cx-tabs .cx-tab{border-bottom:0!important;box-shadow:none!important}
+.cx-dev .cx-crumb{border:0}
 .cx-dev .cx-tab{border-right:0}
 .cx-dev .cx-tab .ico{font-size:7px;font-weight:800;letter-spacing:0;color:var(--cx-text-faint);min-width:12px;text-align:center}
 .cx-dev .cx-tab.on .ico{color:var(--cx-accent)}
