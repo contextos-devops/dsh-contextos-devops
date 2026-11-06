@@ -1465,6 +1465,41 @@ window.__ModuleLoader__.load({
         if (document.querySelector(`link[href="${href}"]`)) return;
         const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l);
       };
+      const registerShyLang = (monaco) => {
+        try {
+          if (monaco.languages.getLanguages().some((l) => l.id === 'shy')) return;
+          monaco.languages.register({ id: 'shy', extensions: ['.shy'], aliases: ['Shy', 'shy'] });
+          monaco.languages.setMonarchTokensProvider('shy', {
+            ignoreCase: false,
+            tokenizer: {
+              root: [
+                [/#.*$/, 'comment'],
+                [/^[ \t]*~[\w\-.]*/, 'keyword'],
+                [/^[ \t]*[\w\-./]+/, 'keyword'],
+                [/"/, { token: 'string.quote', next: '@dstr' }],
+                [/`/, { token: 'string.quote', next: '@bstr' }],
+                [/[a-zA-Z_][\w\-.]*/, 'identifier'],
+                [/\d[\w\-.:%/]*/, 'number'],
+                [/[=,;:(){}[\]]/, 'delimiter'],
+              ],
+              dstr: [
+                [/[^\\"]+/, 'string'],
+                [/\\./, 'string.escape'],
+                [/"/, { token: 'string.quote', next: '@pop' }],
+              ],
+              bstr: [
+                [/[^`]+/, 'string'],
+                [/`/, { token: 'string.quote', next: '@pop' }],
+              ],
+            },
+          });
+          monaco.languages.setLanguageConfiguration('shy', {
+            comments: { lineComment: '#' },
+            autoClosingPairs: [{ open: '"', close: '"' }, { open: '`', close: '`' }],
+            surroundingPairs: [{ open: '"', close: '"' }, { open: '`', close: '`' }],
+          });
+        } catch {}
+      };
       let monacoPromise = null;
       const loadMonaco = () => {
         if (window.monaco && window.monaco.editor) return Promise.resolve(window.monaco);
@@ -1585,6 +1620,7 @@ window.__ModuleLoader__.load({
             const monaco = await loadMonaco();
             if (disposed || !editorHostRef.current) return;
             monacoRef.current = monaco;
+            registerShyLang(monaco);
             ed = monaco.editor.create(editorHostRef.current, { value: '', theme: 'vs-dark', automaticLayout: true, fontSize: 12, minimap: { enabled: false }, scrollBeyondLastLine: false, tabSize: 4 });
             editorRef.current = ed;
             ed.onDidChangeModelContent(() => {
@@ -1611,7 +1647,7 @@ window.__ModuleLoader__.load({
         if (!ed || !activeTab) return;
         const lang = (() => {
           const ext = (activeTab.path.split('.').pop() || '').toLowerCase();
-          return ({ go: 'go', js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript', json: 'json', css: 'css', html: 'html', md: 'markdown', sh: 'shell', yml: 'yaml', yaml: 'yaml', sql: 'sql', py: 'python' })[ext] || 'plaintext';
+          return ({ go: 'go', js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript', json: 'json', css: 'css', html: 'html', md: 'markdown', sh: 'shell', yml: 'yaml', yaml: 'yaml', sql: 'sql', py: 'python', shy: 'shy' })[ext] || 'plaintext';
         })();
         if (ed.getValue() !== activeTab.content) ed.setValue(activeTab.content);
         try { if (monaco && ed.getModel()) monaco.editor.setModelLanguage(ed.getModel(), lang); } catch {}
