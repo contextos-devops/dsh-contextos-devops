@@ -373,7 +373,8 @@ window.__ModuleLoader__.load({
 .cx-init .cx-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 .cx-menu-wrap{position:relative;display:inline-flex;flex:none}
 .cx-menu{position:absolute;right:0;top:100%;z-index:400;min-width:145px;padding:4px;background:#081826;border:1px solid var(--cx-line2);box-shadow:0 8px 24px rgba(0,0,0,.45)}
-.cx-menu-item{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--cx-text);font:10px/1.5 var(--cx-font);padding:5px 8px;cursor:pointer;white-space:nowrap}
+.cx-menu-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:transparent;color:var(--cx-text);font:10px/1.5 var(--cx-font);padding:5px 8px;cursor:pointer;white-space:nowrap}
+.cx-menu-item .mi{width:14px;display:inline-flex;align-items:center;justify-content:center;flex:none;opacity:.85}
 .cx-menu-item:hover{background:rgba(62,231,255,.12);color:var(--cx-cyan)}
 .cx-devices{display:flex;flex-direction:column;gap:6px}
 .cx-adapter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
@@ -1163,6 +1164,7 @@ window.__ModuleLoader__.load({
 .cx-dev .cx-tab.on{background:transparent;border-top-color:var(--cx-accent);color:var(--cx-accent)}
 .cx-dev .cx-tab .x{color:inherit}
 .cx-menu-item .hint{margin-left:auto;padding-left:12px;opacity:.5;font-size:9px}
+.cx-menu-item .lb{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .cx-menu-item.on{color:var(--cx-accent)}
 .cx-tree-menu{position:fixed;z-index:900;min-width:150px;padding:4px;border:1px solid var(--cx-border-strong);border-radius:6px;background:var(--cx-surface-1);box-shadow:0 12px 30px rgba(0,0,0,.45)}
 .cx-namedlg{position:fixed;z-index:950;left:50%;top:30%;transform:translateX(-50%);width:min(360px,80vw);padding:12px;border:1px solid var(--cx-border-strong);border-radius:8px;background:var(--cx-surface-1);box-shadow:0 18px 50px rgba(0,0,0,.5)}
@@ -1727,7 +1729,7 @@ window.__ModuleLoader__.load({
         const out = [];
         String(text || '').split('\n').forEach((ln, i) => {
           const m = ln.match(/^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)/) || ln.match(/^\s*(?:function|class|def|struct|interface|type)\s+([A-Za-z_]\w*)/);
-          if (m) out.push({ label: m[1], hint: String(i + 1), action: () => jumpLine(i + 1) });
+          if (m) out.push({ label: m[1], hint: String(i + 1), icon: `<svg width='12' height='12' viewBox='0 0 16 16' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round'><path d='M6 4.2c-1.2 0-1.6.7-1.6 1.7v1.3c0 .6-.3 1-.9 1.1.6.1.9.5.9 1.1v1.3c0 1 .4 1.7 1.6 1.7'/><path d='M10 4.2c1.2 0 1.6.7 1.6 1.7v1.3c0 .6.3 1 .9 1.1-.6.1-.9.5-.9 1.1v1.3c0 1-.4 1.7-1.6 1.7'/></svg>`, action: () => jumpLine(i + 1) });
         });
         return out;
       };
@@ -1736,7 +1738,8 @@ window.__ModuleLoader__.load({
       const dirItems = (dirPath, current) => ev => {
         const pos = menuAt(ev.currentTarget || ev.target);
         listDir(dirPath).then((list) => setCrumbMenu({ ...pos, items: (list || []).map((e) => ({
-          label: e.name, hint: e.type === 'dir' ? 'dir' : '', on: e.path === current || (e.type !== 'dir' && e.path === activePath),
+          label: e.name, hint: e.type === 'dir' ? 'dir' : '', icon: e.type === 'dir' ? dirIconHtml(false) : fileIconHtml(e.name),
+          on: e.path === current || (e.type !== 'dir' && e.path === activePath),
           action: () => { if (e.type === 'dir') { setExpanded((m) => ({ ...m, [([dirPath, e.name].filter(Boolean).join('/'))]: true })); } else openFile(e.path); },
         })) }));
       };
@@ -1821,9 +1824,9 @@ window.__ModuleLoader__.load({
             h('span', { className: 'nm' }, t.name + (t.dirty ? ' ●' : '')),
             h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); closeTab(t.path); } }, '×')))),
           h('div', { className: 'cx-crumb' },
-            h('span', { className: 'seg', title: 'node', onClick: (ev) => { ev.stopPropagation(); setCrumbMenu({ ...menuAt(ev.currentTarget), items: (nodes || []).map((n) => ({ label: n.name || `:${n.port}`, hint: ':' + n.port, on: n.port === node, action: () => onSelectNode && onSelectNode(n.port) })) }); } }, h('span', { className: 'ci', dangerouslySetInnerHTML: nodeIconHtml(true) }), String(node || '')),
+            h('span', { className: 'seg', title: 'node', onClick: (ev) => { ev.stopPropagation(); setCrumbMenu({ ...menuAt(ev.currentTarget), items: (nodes || []).map((n) => ({ label: n.name || `:${n.port}`, hint: ':' + n.port, icon: nodeIconHtml(true), on: n.port === node, action: () => onSelectNode && onSelectNode(n.port) })) }); } }, h('span', { className: 'ci', dangerouslySetInnerHTML: nodeIconHtml(true) }), String(node || '')),
             h('span', { className: 'sep' }, '›'),
-            h('span', { className: 'seg', title: 'space', onClick: (ev) => { ev.stopPropagation(); setCrumbMenu({ ...menuAt(ev.currentTarget), items: (spaces || []).map((x) => ({ label: x.name, hint: '', on: x.name === space, action: () => onSelectSpace && onSelectSpace(x.name) })) }); } }, h('span', { className: 'ci', dangerouslySetInnerHTML: spaceIconHtml() }), space || ''),
+            h('span', { className: 'seg', title: 'space', onClick: (ev) => { ev.stopPropagation(); setCrumbMenu({ ...menuAt(ev.currentTarget), items: (spaces || []).map((x) => ({ label: x.name, hint: '', icon: spaceIconHtml(), on: x.name === space, action: () => onSelectSpace && onSelectSpace(x.name) })) }); } }, h('span', { className: 'ci', dangerouslySetInnerHTML: spaceIconHtml() }), space || ''),
             (activePath || '').split('/').filter(Boolean).map((seg, i, arr) => {
               const p = arr.slice(0, i + 1).join('/');
               const isFile = i === arr.length - 1;
@@ -1883,7 +1886,8 @@ window.__ModuleLoader__.load({
             h('button', { className: 'cx-btn pri', onClick: () => { const v = nameDlg.value; const r = nameDlg.resolve; setNameDlg(null); r(v); } }, T('保存')))) : null,
         crumbMenu ? h('div', { className: 'cx-tree-menu', style: { left: crumbMenu.x, top: crumbMenu.y }, onClick: (e) => e.stopPropagation() },
           crumbMenu.items.map((it, i) => h('button', { key: i, className: `cx-menu-item${it.on ? ' on' : ''}`, onClick: () => { setCrumbMenu(null); it.action(); } },
-            it.label, it.hint ? h('span', { className: 'hint' }, it.hint) : null))) : null,
+            h('span', { className: 'mi', dangerouslySetInnerHTML: it.icon ? (typeof it.icon === 'string' ? { __html: it.icon } : it.icon) : { __html: '' } }),
+            h('span', { className: 'lb' }, it.label), it.hint ? h('span', { className: 'hint' }, it.hint) : null))) : null,
         treeMenu ? h('div', { className: 'cx-tree-menu', style: { left: treeMenu.x, top: treeMenu.y }, onClick: (e) => e.stopPropagation() },
           h('button', { className: 'cx-menu-item', onClick: () => { const t = treeMenu.entry; setTreeMenu(null); newEntry(t, false); } }, zh ? '新建文件' : 'New file'),
           h('button', { className: 'cx-menu-item', onClick: () => { const t = treeMenu.entry; setTreeMenu(null); newEntry(t, true); } }, zh ? '新建文件夹' : 'New folder'),
