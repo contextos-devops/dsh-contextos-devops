@@ -1361,6 +1361,20 @@ window.__ModuleLoader__.load({
   color: var(--cx-accent);
   box-shadow: none !important;
 }
+
+/* ── 卡片 / 按钮 / 标签：悬停统一背景高亮 ─────────────────────────────── */
+.cx-shell :is(.cx-btn,.cx-pm-op,.cx-pm-act,.cx-filter-chip,.cx-filter-btn,.cx-filter,.cx-sel-btn,
+  .cx-compose-plus,.cx-compose-mini,.cx-suggest button,.cx-hint-card,.cx-webstatus,.cx-addrbar .nav,
+  .cx-pane-refresh,.cx-term-add,.cx-term-tab,.cx-term-sess,.cx-tab,.cx-chat-tab,.cx-init-tab,.cx-init-mode,
+  .cx-console-actions button,.cx-taskmap-actions button):hover {
+  background: rgba(62,231,255,.10);
+}
+.cx-shell :is(.cx-btn.pri,.cx-chat-actions .cx-btn.on):hover {
+  background: color-mix(in srgb, var(--cx-accent) 20%, transparent);
+}
+.cx-shell :is(.cx-node,.cx-space,.cx-app,.cx-avatar,.cx-hint-card,.cx-cal-day):hover {
+  background: rgba(62,231,255,.07);
+}
 `;
 
     const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-event', { detail })); } catch {} };
