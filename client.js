@@ -2159,8 +2159,6 @@ window.__ModuleLoader__.load({
           h('div', { className: 'cx-dev-h cx-term-h' },
             h('div', { className: 'cx-term-tabs' },
               h('button', { className: `cx-term-tab${termTab === 'term' ? ' on' : ''}`, onClick: () => setTermTab('term') }, 'TERMINAL'),
-              h('button', { className: `cx-term-tab${termTab === 'req' ? ' on' : ''}`, onClick: () => setTermTab('req') }, 'REQUEST',
-                requests && requests.length ? h('span', { className: 'cx-term-badge' }, String(requests.length)) : null),
               h('button', { className: `cx-term-tab${termTab === 'out' ? ' on' : ''}`, onClick: () => setTermTab('out') }, 'OUTPUT')),
             h('span', { className: 'cx-dev-hint' }, `${node || ''} · ${space || ''}`),
             h('div', { className: 'cx-term-sessions' },
@@ -2170,15 +2168,7 @@ window.__ModuleLoader__.load({
                 termIds.length > 1 ? h('button', { className: 'x', onClick: (ev) => { ev.stopPropagation(); closeTerm(id); } }, '×') : null)),
               h('button', { className: 'cx-term-add', onClick: addTerm, title: zh ? '新建终端' : 'New terminal' }, '+'))),
           h('div', { className: 'cx-dev-b cx-term-wrap' },
-            termTab === 'req'
-              ? ((requests || []).length
-                  ? h('div', { className: 'cx-req-list' }, (requests || []).slice().reverse().map((r, i) => h('button', { key: i, className: 'cx-req-row', onClick: () => setReqDetail(r) },
-                      h('span', { className: 'at' }, new Date(r.at).toLocaleTimeString()),
-                      h('span', { className: 'ms' }, `${r.ms}ms`),
-                      h('span', { className: 'tk' }, `${r.tokens || 0} tok`),
-                      h('span', { className: 'msg' }, String(r.message || '').replace(/\s+/g, ' ').slice(0, 140)))))
-                  : h('div', { className: 'cx-empty' }, zh ? '还没有请求记录' : 'no requests yet'))
-              : termTab === 'out'
+            termTab === 'out'
               ? h('pre', { className: 'cx-term-out' }, termOut || (zh ? '（暂无输出，点上方「编译」生成）' : 'no output'))
               : termIds.map((id) => h('div', { key: id, className: 'cx-term-host', style: id === termActive ? null : { display: 'none' }, ref: (el) => { if (el) termHostsRef.current[id] = el; } })),
             termErr ? h('div', { className: 'cx-dev-status err' }, termErr) : null))),
@@ -4337,6 +4327,17 @@ window.__ModuleLoader__.load({
       const rowKey = (r) => `${r.t}|${r.req || r.text || r.m || ''}`;
       const openDetail = (r) => {
         const key = rowKey(r);
+        if (consoleTab === 'request') {
+          const it = r.raw || {};
+          const u = it.usage || {};
+          const cost = (() => { const c = u.cost ?? u.total_cost ?? u.total_price; if (c !== undefined && c !== null) return String(c); const i = Number(u.input_tokens || u.prompt_tokens || 0); const o = Number(u.output_tokens || u.completion_tokens || 0); return (i || o) ? `≈¥${((i * 0.000002) + (o * 0.000008)).toFixed(6)}` : '—'; })();
+          setDetail({
+            key, row: r, title: 'REQUEST',
+            fields: [['TIME', new Date(it.at).toLocaleString()], ['MS', it.ms], ['BYTES', `↑${it.reqBytes || 0} ↓${it.resBytes || 0}`], ['TOKENS', it.tokens], ['COST', cost], ['MODE/VIEW', `${it.mode || '-'} / ${(it.context && it.context.view) || '-'}`]],
+            body: `REQUEST:\n${it.message || ''}\n\nPARAMS:\n${JSON.stringify(it.context || {}, null, 2)}\n\nRESPONSE:\n${it.reply || ''}${it.action ? `\n\nACTION:\n${JSON.stringify(it.action, null, 2)}` : ''}`,
+          });
+          return;
+        }
         if (consoleTab === 'activity') { setDetail({ key, row: r, title: 'ACTIVITY', fields: [['TIME', r.t], ['TYPE', r.k || '—'], ['MESSAGE', r.m]] }); return; }
         if (consoleTab === 'events') { setDetail({ key, row: r, title: 'EVENT', fields: [['TIME', r.t], ['KIND', r.kind], ['RESULT', r.ok], ['MS', r.ms ?? '—']], body: r.text }); return; }
         if (consoleTab === 'debug') { setDetail({ key, row: r, title: 'REQUEST', fields: [['TIME', r.t], ['METHOD', r.method], ['URL', r.req]], body: r.raw }); return; }
@@ -4351,6 +4352,7 @@ window.__ModuleLoader__.load({
       };
       const consoleTable = (() => {
         if (consoleTab === 'activity') return { cols: [{ k: 't', label: 'TIME' }, { k: 'k', label: 'TYPE' }, { k: 'm', label: 'MESSAGE' }], rows: logs };
+        if (consoleTab === 'request') return { cols: [{ k: 't', label: 'TIME' }, { k: 'ms', label: 'MS' }, { k: 'tokens', label: 'TOKENS' }, { k: 'msg', label: 'MESSAGE' }], rows: (reqLog || []).map((r) => ({ t: new Date(r.at).toLocaleTimeString(), ms: r.ms, tokens: r.tokens, msg: String(r.message || '').replace(/\s+/g, ' ').slice(0, 120), raw: r })) };
         if (consoleTab === 'events') return { cols: [{ k: 't', label: 'TIME' }, { k: 'kind', label: 'KIND' }, { k: 'text', label: 'DETAIL' }, { k: 'ms', label: 'MS' }, { k: 'ok', label: 'RESULT' }], rows: events.map((e) => ({ t: e.at, kind: String(e.kind || '').toUpperCase(), text: `${e.text}${e.error ? ` · ${e.error}` : ''}`, ms: e.ms ?? '', ok: e.ok === false ? 'ERR' : 'OK' })) };
         if (consoleTab === 'debug') return { cols: [{ k: 't', label: 'TIME' }, { k: 'method', label: 'METHOD' }, { k: 'req', label: 'REQUEST' }], rows: debug.map((l) => { const p = parseDebug(l.m); return { t: l.t, method: p.method || '—', req: p.url, rest: p.rest, raw: p.raw }; }) };
         if (consoleTab === 'state') return { cols: [{ k: 't', label: 'KEY' }, { k: 'm', label: 'VALUE' }], rows: stateRows };
@@ -4929,6 +4931,7 @@ window.__ModuleLoader__.load({
           h('div', { className: 'cx-console-h' },
             h('div', { className: 'cx-console-tabs' },
               h('button', { className: `cx-console-tab${consoleTab === 'activity' ? ' on' : ''}`, onClick: () => setConsoleTab('activity') }, 'ACTIVITY', h('span', null, logs.length)),
+              h('button', { className: `cx-console-tab${consoleTab === 'request' ? ' on' : ''}`, onClick: () => setConsoleTab('request') }, 'REQUEST', h('span', null, (reqLog || []).length)),
               h('button', { className: `cx-console-tab${consoleTab === 'events' ? ' on' : ''}`, onClick: () => setConsoleTab('events') }, 'EVENTS', h('span', null, events.length)),
               h('button', { className: `cx-console-tab${consoleTab === 'debug' ? ' on' : ''}`, onClick: () => setConsoleTab('debug') }, 'DEBUG / URL', h('span', null, debug.length)),
               h('button', { className: `cx-console-tab${consoleTab === 'state' ? ' on' : ''}`, onClick: () => setConsoleTab('state') }, 'STATE', h('span', null, stateRows.length)),
