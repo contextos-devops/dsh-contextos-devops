@@ -1588,10 +1588,11 @@ window.__ModuleLoader__.load({
         });
         return out;
       };
+      const menuAt = (el) => { const r = el.getBoundingClientRect(); return { x: Math.max(8, r.left), y: r.bottom + 4 }; };
       const listDir = async (dirPath) => { try { return await api('tree', { node, space, path: dirPath }); } catch { return []; } };
-      const dirItems = (dirPath, keepOpen) => h => {
-        const x = h.clientX, y = h.clientY;
-        listDir(dirPath).then((list) => setCrumbMenu({ x, y, items: (list || []).map((e) => ({
+      const dirItems = (dirPath) => ev => {
+        const pos = menuAt(ev.currentTarget || ev.target);
+        listDir(dirPath).then((list) => setCrumbMenu({ ...pos, items: (list || []).map((e) => ({
           label: e.name, hint: e.type === 'dir' ? 'dir' : '', on: e.type !== 'dir' && e.path === activePath,
           action: () => { if (e.type === 'dir') { setExpanded((m) => ({ ...m, [([dirPath, e.name].filter(Boolean).join('/'))]: true })); } else openFile(e.path); },
         })) }));
@@ -1676,21 +1677,21 @@ window.__ModuleLoader__.load({
             h('span', { className: 'nm' }, t.name + (t.dirty ? ' ●' : '')),
             h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); closeTab(t.path); } }, '×')))),
           h('div', { className: 'cx-crumb' },
-            h('span', { className: 'seg', title: 'node', onClick: (ev) => { ev.stopPropagation(); setCrumbMenu({ x: ev.clientX, y: ev.clientY, items: (nodes || []).map((n) => ({ label: n.name || `:${n.port}`, hint: ':' + n.port, on: n.port === node, action: () => onSelectNode && onSelectNode(n.port) })) }); } }, h('span', { className: 'ci', dangerouslySetInnerHTML: nodeIconHtml(true) }), String(node || '')),
+            h('span', { className: 'seg', title: 'node', onClick: (ev) => { ev.stopPropagation(); setCrumbMenu({ ...menuAt(ev.currentTarget), items: (nodes || []).map((n) => ({ label: n.name || `:${n.port}`, hint: ':' + n.port, on: n.port === node, action: () => onSelectNode && onSelectNode(n.port) })) }); } }, h('span', { className: 'ci', dangerouslySetInnerHTML: nodeIconHtml(true) }), String(node || '')),
             h('span', { className: 'sep' }, '›'),
-            h('span', { className: 'seg', title: 'space', onClick: (ev) => { ev.stopPropagation(); setCrumbMenu({ x: ev.clientX, y: ev.clientY, items: (spaces || []).map((x) => ({ label: x.name, hint: '', on: x.name === space, action: () => onSelectSpace && onSelectSpace(x.name) })) }); } }, h('span', { className: 'ci', dangerouslySetInnerHTML: spaceIconHtml() }), space || ''),
+            h('span', { className: 'seg', title: 'space', onClick: (ev) => { ev.stopPropagation(); setCrumbMenu({ ...menuAt(ev.currentTarget), items: (spaces || []).map((x) => ({ label: x.name, hint: '', on: x.name === space, action: () => onSelectSpace && onSelectSpace(x.name) })) }); } }, h('span', { className: 'ci', dangerouslySetInnerHTML: spaceIconHtml() }), space || ''),
             (activePath || '').split('/').filter(Boolean).map((seg, i, arr) => {
               const p = arr.slice(0, i + 1).join('/');
               const isFile = i === arr.length - 1;
               const dir = isFile ? arr.slice(0, -1).join('/') : p;
               return h(React.Fragment, { key: p },
                 h('span', { className: 'sep' }, '›'),
-                h('span', { className: `seg${isFile ? ' file' : ''}`, title: p, onClick: (ev) => { ev.stopPropagation(); if (isFile) { const e2 = { clientX: ev.clientX, clientY: ev.clientY }; dirItems(arr.slice(0, -1).join('/'))(e2); } else { dirItems(p)(ev); } } },
+                h('span', { className: `seg${isFile ? ' file' : ''}`, title: p, onClick: (ev) => { ev.stopPropagation(); dirItems(isFile ? arr.slice(0, -1).join('/') : p)(ev); } },
                   h('span', { className: 'ci', dangerouslySetInnerHTML: isFile ? fileIconHtml(seg) : dirIconHtml(true) }), seg));
             }),
             activeTab ? h(React.Fragment, null,
               h('span', { className: 'sep' }, '›'),
-              h('span', { className: 'seg', title: 'symbols', onClick: (ev) => { ev.stopPropagation(); const items = symbolsOf(activeTab.content); if (items.length) setCrumbMenu({ x: ev.clientX, y: ev.clientY, items }); } },
+              h('span', { className: 'seg', title: 'symbols', onClick: (ev) => { ev.stopPropagation(); const items = symbolsOf(activeTab.content); if (items.length) setCrumbMenu({ ...menuAt(ev.currentTarget), items }); } },
                 h('span', { className: 'ci' }, 'ƒ'), (symbolsOf(activeTab.content)[0] || {}).label || (zh ? '函数' : 'fn'))) : null,
             h('div', { className: 'cx-crumb-actions' },
               h('button', { className: 'cx-pm-op', onClick: () => save(), title: zh ? '保存' : 'Save' }, '⤓'),
