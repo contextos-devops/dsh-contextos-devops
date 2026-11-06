@@ -1658,9 +1658,10 @@ window.__ModuleLoader__.load({
                 state.switching = false;
                 const ws = new WebSocket(url);
                 state.ws = ws;
-                ws.onmessage = (ev) => { try { term.write(ev.data); } catch {}; state.text = String(state.text || '') + String(ev.data); if (state.text.length > 400000) state.text = state.text.slice(-200000); scheduleSave(); };
+                ws.onmessage = (ev) => { if (ws !== state.ws) return; try { term.write(ev.data); } catch {}; state.text = String(state.text || '') + String(ev.data); if (state.text.length > 400000) state.text = state.text.slice(-200000); scheduleSave(); };
                 ws.onclose = () => {
-                  if (!state.alive || state.switching) return;
+                  if (!state.alive || state.switching || ws !== state.ws) return;
+                  state.ws = null;
                   state.fail = (state.fail || 0) + 1;
                   try {
                     term.write('\r\n[reconnecting…]\r\n');
@@ -1668,7 +1669,7 @@ window.__ModuleLoader__.load({
                   } catch {}
                   state.timer = setTimeout(() => openWs(state.cwd), 1000);
                 };
-                ws.onopen = () => { state.fail = 0; };
+                ws.onopen = () => { if (ws !== state.ws) return; state.fail = 0; };
                 ws.onerror = () => {};
               };
               state.openWs = openWs;
