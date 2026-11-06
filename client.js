@@ -3097,7 +3097,7 @@ window.__ModuleLoader__.load({
 
       const renderMsg = (m, i) => m.role === 'sys'
         ? h('div', { key: i, className: 'cx-sysline' }, h('span', { className: 'cx-sysdot' }), m.text)
-        : h('div', { key: i, className: `cx-msg ${m.role}`, style: { maxWidth: '100%', width: '100%' } },
+        : h('div', { key: i, className: `cx-msg ${m.role}` },
             h('span', { className: 'cx-msg-avatar' }, m.role === 'user' ? 'ME' : 'AI'),
             h('div', { className: 'cx-msg-main' },
               h('div', { className: 'cx-msg-meta' },
