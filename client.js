@@ -1316,6 +1316,51 @@ window.__ModuleLoader__.load({
 .cx-init-pic .ph span{font-size:8px;color:#6f97a9}
 .cx-init-sum{font:9px var(--cx-mono);color:#8fb8c9;margin-top:8px}
 
+
+/* ── 按钮一律不用强调色描边：只有数据卡片与页签才高亮 ─────────────── */
+.cx-shell .cx-btn,
+.cx-shell .cx-btn:hover,
+.cx-shell .cx-btn.pri,
+.cx-shell .cx-btn.pri:hover,
+.cx-shell .cx-pm-op,
+.cx-shell .cx-pm-op:hover,
+.cx-shell .cx-pm-op.on,
+.cx-shell .cx-pane-refresh,
+.cx-shell .cx-pane-refresh:hover,
+.cx-shell .cx-term-add,
+.cx-shell .cx-term-add:hover,
+.cx-shell .cx-compose-plus:hover,
+.cx-shell .cx-compose-mini:hover,
+.cx-shell .cx-sel-btn:hover,
+.cx-shell .cx-sel-btn.on,
+.cx-shell .cx-webstatus:hover,
+.cx-shell .cx-addrbar .nav:hover:not(:disabled),
+.cx-shell .cx-suggest button:hover,
+.cx-shell .cx-hint-card:hover,
+.cx-shell .cx-hint-card.on,
+.cx-shell .cx-pm-act:hover,
+.cx-shell .cx-console-actions button:hover,
+.cx-shell .cx-taskmap-actions button:hover,
+.cx-shell .cx-chat-actions .cx-btn.on,
+.cx-shell .cx-filter-chip:hover,
+.cx-shell .cx-filter-chip.on,
+.cx-shell .cx-filter-btn:hover,
+.cx-shell .cx-filter-btn.on {
+  border-color: var(--cx-line2) !important;
+  box-shadow: none !important;
+}
+/* 主按钮靠底色/文字体现，不靠描边 */
+.cx-shell .cx-btn.pri,
+.cx-shell .cx-chat-actions .cx-btn.on {
+  background: var(--cx-accent-soft);
+  color: var(--cx-accent);
+}
+.cx-shell .cx-select:hover,
+.cx-shell .cx-select:focus {
+  border-color: var(--cx-line2) !important;
+  color: var(--cx-accent);
+  box-shadow: none !important;
+}
 `;
 
     const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-event', { detail })); } catch {} };
