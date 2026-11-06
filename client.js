@@ -2699,7 +2699,7 @@ window.__ModuleLoader__.load({
       const [webMax, setWebMax] = useState(false);
       const [turn, setTurn] = useState(null);
       const [, setTick] = useState(0);
-      OPEN_LINK = (url, title) => { const id = onOpenWebTab ? onOpenWebTab(url, title) : ''; if (id) setChatTab(id); };
+      OPEN_LINK = (url, title) => { if (onOpenWebTab) onOpenWebTab(url, title); };
       useEffect(() => { if (chatTab !== 'chat' && !(webTabs || []).some((t) => t.id === chatTab)) setChatTab('chat'); }, [webTabs, chatTab]);
       const [avatarEditOpen, setAvatarEditOpen] = useState(false);
       const openCtx = (e, kind) => { e.preventDefault(); e.stopPropagation(); setCtxMenu({ x: e.clientX, y: e.clientY, kind }); };
