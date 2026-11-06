@@ -839,6 +839,68 @@ async function scanLanHosts() {
   return hosts;
 }
 
+async function sysControl({ action, value } = {}) {
+  const a = String(action || '').toLowerCase();
+  const v = value == null ? '' : String(value);
+  const run = (cmd, timeoutMs = 8000) => runShell(cmd, process.cwd(), { timeoutMs });
+  if (a === 'volume') {
+    if (v === '') { const r = await run("osascript -e 'output volume of (get volume settings)'"); return { action: a, result: String(r.out || '').trim() }; }
+    const n = Math.max(0, Math.min(100, Number(v) || 0));
+    await run(`osascript -e 'set volume output volume ${n}'`);
+    return { action: a, result: `volume=${n}` };
+  }
+  if (a === 'mute') {
+    const on = ['1', 'true', 'on', 'yes', '是'].includes(v.toLowerCase());
+    await run(`osascript -e 'set volume output muted ${on ? 'true' : 'false'}'`);
+    return { action: a, result: on ? 'muted' : 'unmuted' };
+  }
+  if (a === 'clipboard') {
+    if (v === '') { const r = await run('pbpaste'); return { action: a, result: String(r.out || '').slice(0, 20000) }; }
+    const file = path.join(stateDir(), 'clipboard.txt');
+    await fs.writeFile(file, v);
+    await run(`pbcopy < ${JSON.stringify(file)}`);
+    return { action: a, result: `copied ${v.length} chars` };
+  }
+  if (a === 'screenshot') {
+    const file = path.join(stateDir(), `screenshot-${Date.now()}.png`);
+    await run(`screencapture -x ${JSON.stringify(file)}`, 12000);
+    let bytes = 0;
+    try { bytes = (await fs.stat(file)).size; } catch {}
+    if (!bytes) throw new Error('截屏失败：需要给 DSH 授予「屏幕录制」权限（系统设置 → 隐私与安全性 → 屏幕录制）');
+    return { action: a, result: file, path: file, bytes };
+  }
+  if (a === 'open') {
+    if (!/^(https?:\/\/|\/|file:)/i.test(v)) throw new Error('open 只接受 http(s) URL 或绝对路径');
+    await run(`open ${JSON.stringify(v)}`);
+    return { action: a, result: v };
+  }
+  if (a === 'wifi') {
+    if (v === 'on' || v === 'off') await run(`networksetup -setairportpower en0 ${v}`);
+    const r = await run('networksetup -getairportpower en0');
+    return { action: a, result: String(r.out || '').trim() };
+  }
+  if (a === 'sleep') { await run('pmset sleepnow'); return { action: a, result: 'sleeping' }; }
+  if (a === 'lock') { await run('pmset displaysleepnow'); return { action: a, result: 'display asleep' }; }
+  if (a === 'wallpaper') {
+    if (!v) throw new Error('wallpaper 需要图片绝对路径');
+    await run(`osascript -e 'tell application "System Events" to set picture of every desktop to ${JSON.stringify(v)}'`);
+    return { action: a, result: v };
+  }
+  if (a === 'shortcut') {
+    if (!v) throw new Error('shortcut 需要名称');
+    const r = await run(`shortcuts run ${JSON.stringify(v)}`, 30000);
+    return { action: a, result: r.code === 0 ? `ran ${v}` : String(r.out || 'failed').slice(0, 400) };
+  }
+  if (a === 'shortcuts') { const r = await run('shortcuts list'); return { action: a, result: String(r.out || '').trim() }; }
+  if (a === 'info') {
+    const [bt, dsk, mem, disp] = await Promise.all([
+      run('pmset -g batt'), run('df -h /'), run('vm_stat'), run('system_profiler SPDisplaysDataType'),
+    ]);
+    return { action: a, result: { battery: String(bt.out || '').trim().split('\n').slice(0, 2).join(' '), disk: String(dsk.out || '').trim().split('\n').slice(-1)[0], displays: String(disp.out || '').split('\n').filter((l) => /Resolution|Display Type/.test(l)).slice(0, 4) } };
+  }
+  throw new Error(`unknown sysControl action: ${a}`);
+}
+
 async function discoverDevices({ node } = {}) {
   const devices = [];
   const adapters = DEVICE_ADAPTERS.map((x) => ({ ...x }));
@@ -2254,7 +2316,7 @@ function extractAction(text) {
 const MODE_ACTIONS = {
   avatar: ['createInstance', 'createStoreInstance', 'readData', 'writeData', 'listApps', 'storeApps', 'projectStatus', 'pmList', 'pmCreate', 'pmModify', 'pmRemove', 'planProject', 'createAvatar', 'openApp'],
   factory: ['deploy', 'start', 'stop', 'delete', 'createSpace', 'officialSpaces', 'initSpace', 'spaceStart', 'spaceStop', 'spaceBuild', 'autogenApp', 'code', 'buildSpace', 'compile', 'dockerDeploy', 'remoteDeploy', 'remoteLogin', 'createInstance', 'createStoreInstance', 'listApps', 'storeApps'],
-  iot: ['devices', 'updateBackground', 'createBackground', 'openApp', 'openNode', 'listApps', 'projectStatus', 'pmList'],
+  iot: ['devices', 'sysControl', 'updateBackground', 'createBackground', 'openApp', 'openNode', 'listApps', 'projectStatus', 'pmList'],
 };
 
 async function chatWithDSH({ message, history = [], context = {}, provider = '', model = '', mode = 'factory' } = {}) {
@@ -2299,6 +2361,7 @@ async function chatWithDSH({ message, history = [], context = {}, provider = '',
     '- CONCEPT ORDER (use consistently): serve/node, space/pod, place/app, avatar, scene/background, mode, view, web, editor.',
     '- Aliases: 服务节点=serve=node; 项目空间=space=pod; 应用实例=place=app; 数字分身=avatar; 赛博世界=scene=background; 工作模式=mode (factory/avatar/iot); 视图模式=view (chat/manage/dev); 网页界面=web; 源码编程=editor.',
     '- When the user says 节点/serve/node use context.serve; 空间/pod use context.space; 应用实例/place use context.place; 赛博世界/scene use context.scene; 视图/view use context.view; 网页 use context.web; 文件/代码 use context.editor.',
+    '- sysControl args: {action, value}. actions: volume (value 0-100, empty=read), mute (on/off), clipboard (empty=read, text=write), screenshot, open (http(s)/absolute path), wifi (on/off/empty=status), sleep, lock, wallpaper (absolute image path), shortcut (name), shortcuts (list), info (battery/disk/displays). Only in iot mode; ask before sleep/lock.',
     '- context.editor is the file currently open in the dev editor: {node, space, path, language, dirty, content (truncated)}. When the user says "this file"/"这个文件"/asks about the open code, use context.editor.path and context.editor.content.',
     '- createSpace name regex [a-zA-Z][a-zA-Z0-9_]*; autogen name/place same regex.',
     '- Standard spaces: community=云社区, enterprise=云办公, operation=云研发, knowledge=云知识, education=云教育, healthy=云健康, tourism=云文旅, charity=云公益, industry=云工业, agriculture=云农业.',
@@ -2679,6 +2742,7 @@ async function route(req, res) {
     if (op === 'health' || op === 'nodes') {
       return send(res, 200, { ok: true, data: { ctxRoot: ctxRoot(), nodes: await listNodes() } });
     }
+    if (op === 'sysControl') return send(res, 200, { ok: true, data: await sysControl({ action: body.action, value: body.value }) });
     if (op === 'git') return send(res, 200, { ok: true, data: await gitStatus({ node, space: body.space }) });
     if (op === 'origin') {
       let host = '';

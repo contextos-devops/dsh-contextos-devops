@@ -3782,6 +3782,15 @@ window.__ModuleLoader__.load({
         const args = action.args && typeof action.args === 'object' ? action.args : {};
         const ctxApp = app || null;
         const ctxSpace = space || ctxApp?.space || '';
+        if (op === 'sysControl') {
+          const act = String(args.action || '').toLowerCase();
+          const val = args.value == null ? '' : args.value;
+          return run(`SYS ${act}`, async () => {
+            const r = await api('sysControl', { action: act, value: val });
+            ai(`已执行 ${act}：${String(r?.result == null ? '' : r.result).slice(0, 300)}`);
+            return r;
+          });
+        }
         if (op === 'deploy') return deploy(Number(args.port) || 9188);
         if (op === 'officialSpaces') {
           const keys = (Array.isArray(args.keys) ? args.keys : [args.name]).map((k) => OFFICIAL_KEY[k] || k).filter(Boolean);
