@@ -1158,6 +1158,9 @@ window.__ModuleLoader__.load({
 .cx-crumb .ci{opacity:.65;font-size:9px}
 .cx-crumb .sep{opacity:.45}
 .cx-crumb-actions{margin-left:auto;display:flex;gap:2px;flex:none}
+.cx-git-log .h{color:var(--cx-accent);font:9px var(--cx-mono);flex:none}
+.cx-git-log .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-git-log .when{flex:none;font-size:9px;opacity:.55}
 .cx-statusbar{display:flex;align-items:center;gap:10px;padding:3px 10px;border-top:1px solid var(--cx-border);background:var(--cx-surface-1);font:9px var(--cx-mono);color:var(--cx-text-dim);flex:none;overflow:hidden}
 .cx-statusbar .spacer{flex:1}
 .cx-statusbar .sep{width:1px;height:10px;background:var(--cx-border)}
@@ -1372,6 +1375,7 @@ window.__ModuleLoader__.load({
       const [previewNonce, setPreviewNonce] = useState(0);
       const [git, setGit] = useState(null);
       const [gitOpen, setGitOpen] = useState(true);
+      const [gitHistOpen, setGitHistOpen] = useState(true);
       const [cursor, setCursor] = useState({ line: 1, column: 1 });
       const refreshGit = async () => {
         if (!node) return;
@@ -1862,6 +1866,11 @@ window.__ModuleLoader__.load({
                     h('span', { className: 'chev' }),
                     h('span', { className: 'fic', dangerouslySetInnerHTML: fileIconHtml(p) }),
                     h('span', { className: 'nm' }, p.split('/').pop()))) : null),
+
+                h('div', { className: 'cx-tree-sect', onClick: () => setTreeOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(treeOpen) }), zh ? '资源管理器' : 'WORKSPACE',
+                  h('button', { className: 'cx-pm-op', style: { marginLeft: 'auto' }, onClick: (ev) => { ev.stopPropagation(); newEntry({ type: 'dir', path: '', name: '' }, false); }, title: zh ? '新建文件' : 'New file' }, '+'),
+                  h('button', { className: 'cx-pm-refresh', onClick: (ev) => { ev.stopPropagation(); reloadDir(''); } }, '↻')),
+                treeOpen ? renderDir('', 0) : null,
                 git && git.changed ? h('div', { className: 'cx-tree-recent' },
                   h('div', { className: 'cx-tree-sect', onClick: () => setGitOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(gitOpen) }), zh ? 'GIT 变更' : 'GIT CHANGES',
                     h('span', { className: 'cx-git-count' }, String(git.changed))),
@@ -1870,10 +1879,14 @@ window.__ModuleLoader__.load({
                     h('span', { className: 'fic', dangerouslySetInnerHTML: fileIconHtml(fp) }),
                     h('span', { className: 'nm' }, fp.split('/').pop()),
                     h('span', { className: `cx-git-badge ${gitClass(git.files[fp])}` }, git.files[fp] === '??' ? 'U' : git.files[fp]))) : null) : null,
-                h('div', { className: 'cx-tree-sect', onClick: () => setTreeOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(treeOpen) }), zh ? '资源管理器' : 'WORKSPACE',
-                  h('button', { className: 'cx-pm-op', style: { marginLeft: 'auto' }, onClick: (ev) => { ev.stopPropagation(); newEntry({ type: 'dir', path: '', name: '' }, false); }, title: zh ? '新建文件' : 'New file' }, '+'),
-                  h('button', { className: 'cx-pm-refresh', onClick: (ev) => { ev.stopPropagation(); reloadDir(''); } }, '↻')),
-                treeOpen ? renderDir('', 0) : null),
+                git && git.history && git.history.length ? h('div', { className: 'cx-tree-recent' },
+                  h('div', { className: 'cx-tree-sect', onClick: () => setGitHistOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(gitHistOpen) }), zh ? 'GIT 历史' : 'GIT HISTORY',
+                    h('span', { className: 'cx-git-count' }, String(git.history.length))),
+                  gitHistOpen ? git.history.slice(0, 30).map((c) => h('div', { key: 'h:' + c.hash, className: 'cx-tree-item cx-git-log', style: { paddingLeft: 6 }, title: `${c.hash} ${c.subject} · ${c.author} · ${c.when}`, onClick: () => { try { navigator.clipboard.writeText(c.hash); } catch {} setStatus(`${c.hash} ${c.subject}`); } },
+                    h('span', { className: 'h' }, c.hash),
+                    h('span', { className: 'nm' }, c.subject),
+                    h('span', { className: 'when' }, c.when))) : null) : null,
+                ),
             status ? h('div', { className: 'cx-dev-status' }, status) : null)),
         h('section', { className: 'cx-dev-col cx-dev-editor' },
           h('div', { className: 'cx-tabs' }, tabs.map((t) => h('div', { key: t.path, className: `cx-tab${t.path === activePath ? ' on' : ''}`, onClick: () => setActivePath(t.path), title: t.path },

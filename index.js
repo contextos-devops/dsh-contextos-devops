@@ -1511,7 +1511,11 @@ async function gitStatus({ node, space } = {}) {
     if (xy) files[file] = xy;
   });
   const hist = await run(['rev-list', '--count', 'HEAD']);
-  return { branch, ahead, behind, files, changed: Object.keys(files).length, commits: Number((hist.out || '').trim()) || 0 };
+  const log = await run(['log', '-n', '40', '--pretty=format:%h%x1f%s%x1f%an%x1f%ar']);
+  const history = log.code === 0
+    ? log.out.split('\n').filter(Boolean).map((line) => { const [hash, subject, author, when] = line.split('\x1f'); return { hash, subject, author, when }; })
+    : [];
+  return { branch, ahead, behind, files, changed: Object.keys(files).length, commits: Number((hist.out || '').trim()) || 0, history };
 }
 
 async function compileSpace({ node, space } = {}) {
