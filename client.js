@@ -4205,6 +4205,9 @@ window.__ModuleLoader__.load({
       const bootConsole = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:console') || 'null') || {}; } catch { return {}; } })();
       const [consoleOpen, setConsoleOpen] = useState(bootConsole.open === true);
       const [consoleTab, setConsoleTab] = useState(bootConsole.tab || 'activity');
+      const [reqLog, setReqLog] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:reqlog') || '[]') || []; } catch { return []; } });
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:reqlog', JSON.stringify(reqLog.slice(-50))); } catch {} }, [reqLog]);
+      const pushReq = (e) => { try { setReqLog((l) => [...l, e].slice(-50)); } catch {} };
       const [consoleHeight, setConsoleHeight] = useState(Number(bootConsole.height) || 190);
       const [events, setEvents] = useState([]);
       const [sort, setSort] = useState({ key: '', dir: 1 });
@@ -4823,9 +4826,6 @@ window.__ModuleLoader__.load({
       const [ideProjects, setIdeProjects] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide') || 'null') || []; } catch { return []; } });
       const [ideActive, setIdeActive] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:ide-active') || ''; } catch { return ''; } });
       const [ideFile, setIdeFile] = useState(null);
-      const [reqLog, setReqLog] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:reqlog') || '[]') || []; } catch { return []; } });
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:reqlog', JSON.stringify(reqLog.slice(-50))); } catch {} }, [reqLog]);
-      const pushReq = (e) => { try { setReqLog((l) => [...l, e].slice(-50)); } catch {} };
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:ide', JSON.stringify(ideProjects)); } catch {} }, [ideProjects]);
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:ide-active', ideActive); } catch {} }, [ideActive]);
       useEffect(() => { const key = `${node}:${space}`; if (ideProjects.some((x) => x.key === key)) setIdeActive(key); }, [node, space]);
