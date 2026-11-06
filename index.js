@@ -787,6 +787,31 @@ async function scanWifiNetworks() {
     }
     if (rows.length) return rows;
   }
+  // 新版 macOS 无 airport：从 system_profiler 的 “Other Local Wi-Fi Networks” 解析
+  const prof = await runShell('/usr/sbin/system_profiler SPAirPortDataType 2>/dev/null', process.cwd(), { timeoutMs: 10000 }).catch(() => null);
+  if (prof && prof.code === 0) {
+    const lines = String(prof.out || '').split('\n');
+    const start = lines.findIndex((l) => /Other Local Wi-Fi Networks:/i.test(l));
+    const rows = [];
+    let cur = null;
+    for (let i = start + 1; start >= 0 && i < lines.length; i += 1) {
+      const raw = lines[i];
+      const t = raw.trim();
+      if (!t) continue;
+      if (/^[a-z]+\d+:$/.test(t)) break;
+      if (/^[A-Za-z].*:$/.test(t) && /^(Interfaces|Current Network|Other Local|Software|AirPort|Wake|AirDrop|Auto|Status)/i.test(t)) break;
+      if (/^<redacted>:$/.test(t) || /^.+:$/.test(t) && !/^([A-Z][A-Za-z /]+):/.test(t)) {
+        if (cur) rows.push(cur);
+        cur = { ssid: /<redacted>/.test(t) ? `网络 ${rows.length + 1}` : t.replace(/:$/, ''), bssid: '', rssi: null, channel: null };
+        continue;
+      }
+      if (!cur) continue;
+      const ch = /Channel:\s*(\d+)/i.exec(t); if (ch) cur.channel = Number(ch[1]);
+      const sg = /Signal \/ Noise:\s*(-?\d+)/i.exec(t); if (sg) cur.rssi = Number(sg[1]);
+    }
+    if (cur) rows.push(cur);
+    if (rows.length) return rows;
+  }
   return [];
 }
 
@@ -867,7 +892,7 @@ async function discoverDevices({ node } = {}) {
   return {
     adapters, devices, wifiNetworks, bluetoothNearby: btNearby, lanHosts,
     scannedAt: new Date().toISOString(),
-    note: 'Bluetooth nearby needs blueutil; WiFi nearby needs the airport tool; LAN lists arp neighbors. ContextOS nodes are controllable.',
+    note: 'macOS 会隐藏未授权的 Wi-Fi 名称（显示为 网络 N）；附近蓝牙需要安装 blueutil；局域网来自 arp 邻居表；ContextOS 节点可控制。',
   };
 }
 
