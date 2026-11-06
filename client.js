@@ -1000,8 +1000,8 @@ window.__ModuleLoader__.load({
 .cx-card-line .cx-name{min-width:0;flex:1}
 .cx-card-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px}
 .cx-status-r{font-size:8px;padding:2px 5px;border:1px solid var(--cx-border);border-radius:3px;color:var(--cx-text-dim)}
-.cx-status-r.on{color:#8fd9b6;border-color:rgba(127,201,168,.35);background:rgba(7,132,90,.10)}
-.cx-status-r.off{color:#c9a3aa;border-color:rgba(216,169,177,.30);background:rgba(160,70,80,.08)}
+.cx-status-r.on{color:#3ff0a2;font-weight:700;border-color:rgba(127,201,168,.35);background:rgba(7,132,90,.10)}
+.cx-status-r.off{color:#ff8196;font-weight:700;border-color:rgba(216,169,177,.30);background:rgba(160,70,80,.08)}
 
 .cx-actions .cx-btn{flex:none;white-space:nowrap;height:30px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;line-height:1}
 .cx-actions .cx-btn.cx-icon-btn{width:30px;min-width:30px;padding:0}
