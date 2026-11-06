@@ -1240,7 +1240,7 @@ window.__ModuleLoader__.load({
 .cx-term-wrap{display:flex;flex-direction:column;background:#04101a;overflow:hidden}
 .cx-term-h{padding:4px 8px;border-bottom:1px solid var(--cx-line)}
 .cx-term-tabs{display:flex;gap:4px;align-items:center}
-.cx-term-tab{border:0;border-bottom:2px solid transparent;background:transparent;color:var(--cx-text-dim);font:10px var(--cx-mono);padding:3px 8px;cursor:pointer}
+.cx-term-tab{border:0;border-bottom:2px solid transparent;background:transparent;color:var(--cx-text-dim);font:600 10px var(--cx-font);letter-spacing:.10em;text-transform:uppercase;padding:4px 10px;cursor:pointer}
 .cx-term-tab.on{color:var(--cx-accent);border-bottom-color:var(--cx-accent)}
 .cx-term-sessions{display:flex;gap:4px;align-items:center;margin-left:8px}
 .cx-term-sess{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border:1px solid var(--cx-border);border-radius:3px;font:9px var(--cx-mono);color:var(--cx-text-dim);cursor:pointer}
@@ -1404,7 +1404,7 @@ window.__ModuleLoader__.load({
 .cx-shell[data-theme="light"] .cx-editor-host .monaco-editor .margin{background:transparent!important}
 
 /* 请求日志 */
-.cx-term-badge{margin-left:4px;padding:0 5px;border-radius:8px;background:var(--cx-accent-soft);color:var(--cx-accent);font-size:8px}
+.cx-term-badge{margin-left:5px;font-size:8px;letter-spacing:0;color:var(--cx-text-faint)}
 .cx-req-list{display:flex;flex-direction:column;padding:4px 6px}
 .cx-req-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--cx-line);background:transparent;color:var(--cx-text-dim);font:10px var(--cx-mono);padding:5px 6px;cursor:pointer}
 .cx-req-row:hover{background:rgba(62,231,255,.10);color:var(--cx-text)}
@@ -2158,10 +2158,10 @@ window.__ModuleLoader__.load({
         h('section', { className: 'cx-dev-col cx-dev-term' },
           h('div', { className: 'cx-dev-h cx-term-h' },
             h('div', { className: 'cx-term-tabs' },
-              h('button', { className: `cx-term-tab${termTab === 'term' ? ' on' : ''}`, onClick: () => setTermTab('term') }, zh ? '终端' : 'TERMINAL'),
-              h('button', { className: `cx-term-tab${termTab === 'req' ? ' on' : ''}`, onClick: () => setTermTab('req') }, zh ? '请求' : 'REQUEST',
+              h('button', { className: `cx-term-tab${termTab === 'term' ? ' on' : ''}`, onClick: () => setTermTab('term') }, 'TERMINAL'),
+              h('button', { className: `cx-term-tab${termTab === 'req' ? ' on' : ''}`, onClick: () => setTermTab('req') }, 'REQUEST',
                 requests && requests.length ? h('span', { className: 'cx-term-badge' }, String(requests.length)) : null),
-              h('button', { className: `cx-term-tab${termTab === 'out' ? ' on' : ''}`, onClick: () => setTermTab('out') }, zh ? '输出' : 'OUTPUT')),
+              h('button', { className: `cx-term-tab${termTab === 'out' ? ' on' : ''}`, onClick: () => setTermTab('out') }, 'OUTPUT')),
             h('span', { className: 'cx-dev-hint' }, `${node || ''} · ${space || ''}`),
             h('div', { className: 'cx-term-sessions' },
               termIds.map((id) => h('span', { key: id, className: `cx-term-sess${id === termActive && termTab === 'term' ? ' on' : ''}`,
