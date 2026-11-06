@@ -1352,6 +1352,23 @@ window.__ModuleLoader__.load({
       const [termActive, setTermActive] = useState(1);
       const [termOut, setTermOut] = useState('');
       const termActiveRef = useRef(termActive); termActiveRef.current = termActive;
+      const restoreTextRef = useRef({});
+      const saveTimerRef = useRef(null);
+      const readTermBuf = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:term-buf') || '{}'); } catch { return {}; } };
+      const termIdsRef = useRef(termIds); termIdsRef.current = termIds;
+      const termKeyRef = useRef('');
+      const persistTermBuf = (key) => {
+        const k = key || termKeyRef.current;
+        if (!k) return;
+        try {
+          const texts = {};
+          Object.keys(termMapRef.current).forEach((id) => { texts[id] = String(termMapRef.current[id].text || '').slice(-200000); });
+          const all = readTermBuf();
+          all[k] = { ids: termIdsRef.current, texts };
+          localStorage.setItem('contextos-devops-dsh:term-buf', JSON.stringify(all));
+        } catch {}
+      };
+      const scheduleSave = () => { try { clearTimeout(saveTimerRef.current); } catch {} saveTimerRef.current = setTimeout(() => persistTermBuf(), 800); };
       const editorHostRef = useRef(null);
       const taRef = useRef(null);
       const termHostsRef = useRef({});
@@ -1515,9 +1532,14 @@ window.__ModuleLoader__.load({
           try { x.ws && x.ws.close(); } catch {}
           try { x.term && x.term.dispose(); } catch {}
         });
+        persistTermBuf(termKeyRef.current);
+        termKeyRef.current = `${node}:${space}`;
         termMapRef.current = {};
         termHostsRef.current = {};
-        setTermIds([1]); setTermActive(1); setTermErr(''); setTermTab('term');
+        const saved = readTermBuf()[`${node}:${space}`] || {};
+        const ids = Array.isArray(saved.ids) && saved.ids.length ? saved.ids : [1];
+        restoreTextRef.current = saved.texts || {};
+        setTermIds(ids); setTermActive(ids[0]); setTermErr(''); setTermTab('term');
       }, [node, space]);
       useEffect(() => {
         let cancelled = false;
@@ -1541,6 +1563,8 @@ window.__ModuleLoader__.load({
               const fit = window.FitAddon && window.FitAddon.FitAddon ? new window.FitAddon.FitAddon() : null;
               if (fit) term.loadAddon(fit);
               term.open(host);
+              const restored = restoreTextRef.current && restoreTextRef.current[id];
+              if (restored) { try { term.write(restored); } catch {} }
               if (host.offsetParent) { try { fit && fit.fit(); } catch {} }
               let wsHost = location.host;
               let wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -1549,11 +1573,12 @@ window.__ModuleLoader__.load({
               }
               const url = `${wsProto}://${wsHost}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(info.dir || '')}`;
               const state = { term, ws: null, fit, alive: true, timer: null };
+              if (restored) state.text = restored;
               const connect = () => {
                 if (!state.alive) return;
                 const ws = new WebSocket(url);
                 state.ws = ws;
-                ws.onmessage = (ev) => { try { term.write(ev.data); } catch {} };
+                ws.onmessage = (ev) => { try { term.write(ev.data); } catch {}; state.text = String(state.text || '') + String(ev.data); if (state.text.length > 400000) state.text = state.text.slice(-200000); scheduleSave(); };
                 ws.onclose = () => {
                   if (!state.alive) return;
                   state.fail = (state.fail || 0) + 1;
@@ -1592,6 +1617,7 @@ window.__ModuleLoader__.load({
         return () => clearTimeout(t);
       }, [showBottom, termTab, termActive, termIds]);
       useEffect(() => () => {
+        persistTermBuf(termKeyRef.current);
         Object.values(termMapRef.current).forEach((x) => { x.alive = false; try { x.timer && clearTimeout(x.timer); } catch {}; try { x.ws && x.ws.close(); } catch {}; try { x.term && x.term.dispose(); } catch {} });
         termMapRef.current = {};
       }, []);
@@ -1674,7 +1700,7 @@ window.__ModuleLoader__.load({
           action: () => { if (e.type === 'dir') { setExpanded((m) => ({ ...m, [([dirPath, e.name].filter(Boolean).join('/'))]: true })); } else openFile(e.path); },
         })) }));
       };
-      const addTerm = () => { const id = Math.max(0, ...termIds) + 1; setTermIds([...termIds, id]); setTermActive(id); setTermTab('term'); };
+      const addTerm = () => { const id = Math.max(0, ...termIds) + 1; setTermIds([...termIds, id]); setTermActive(id); setTermTab('term'); setTimeout(() => scheduleSave(), 0); };
       const closeTerm = (id) => {
         const x = termMapRef.current[id];
         if (x) { x.alive = false; try { x.timer && clearTimeout(x.timer); } catch {} }
@@ -1685,6 +1711,7 @@ window.__ModuleLoader__.load({
         const next = rest.length ? rest : [1];
         setTermIds(next);
         if (termActive === id) setTermActive(next[0]);
+        setTimeout(() => scheduleSave(), 0);
       };
       const compile = async () => {
         if (!node || !space) return;
