@@ -4194,7 +4194,7 @@ window.__ModuleLoader__.load({
       const [activeWeb, setActiveWeb] = useState(() => {
         try { const saved = JSON.parse(localStorage.getItem(WEBTABS_KEY) || 'null'); return saved?.active || null; } catch { return null; }
       });
-      const [viewMode, setViewMode] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:view'); return ['chat', 'manage', 'dev'].indexOf(v) >= 0 ? v : 'chat'; } catch { return 'chat'; } });      const [viewMode, setViewMode] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:view'); return ['chat', 'manage', 'dev'].indexOf(v) >= 0 ? v : 'chat'; } catch { return 'chat'; } });
+      const [viewMode, setViewMode] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:view'); return ['chat', 'manage', 'dev'].indexOf(v) >= 0 ? v : 'chat'; } catch { return 'chat'; } });
       const [workMode, setWorkMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:work-mode') || 'avatar'; } catch { return 'avatar'; } });
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:work-mode', workMode); } catch {} }, [workMode]);
       const [chatFull, setChatFull] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:chatfull'); return v === null ? true : v === '1'; } catch { return true; } });
