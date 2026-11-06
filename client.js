@@ -1152,6 +1152,7 @@ window.__ModuleLoader__.load({
 .cx-dev.hide-bottom .cx-dev-term{display:none}
 .cx-dev.hide-bottom .cx-dev-explorer{grid-row:1/2}
 .cx-pm-op.on{color:var(--cx-accent);border-color:var(--cx-accent)}
+.cx-pm-op.cx-pm-txt{width:auto;min-width:34px;padding:0 6px;font:9px/1 var(--cx-font);letter-spacing:.04em}
 
 .cx-dev .cx-editor-host .monaco-editor,.cx-dev .cx-editor-host .monaco-editor .overflow-guard,.cx-dev .cx-editor-host .monaco-editor .margin{border:0!important;box-shadow:none!important;outline:0!important}
 .cx-dev .cx-tabs,.cx-dev .cx-tabs .cx-tab{border-bottom:0!important;box-shadow:none!important}
@@ -1882,18 +1883,6 @@ window.__ModuleLoader__.load({
 
       return h('div', { className: 'cx-dev-wrap' },
         bg && bg.image ? h('div', { className: 'cx-chat-bg photo' }, h('img', { src: bg.image, alt: '' })) : null,
-        h('div', { className: 'cx-dev-top' },
-          h('div', { className: 'cx-dev-projects' },
-            (projects || []).map((p) => h('button', { key: p.key, className: `cx-dev-ptab${p.key === activeKey ? ' on' : ''}`, onClick: () => onSelectProject && onSelectProject(p.key), title: `${p.node} · ${p.space}` },
-              h('span', { className: 'nm' }, `${p.node} · ${p.space || (zh ? '节点目录' : 'node')}`),
-              h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); onCloseProject && onCloseProject(p.key); } }, '×')))),
-          h('div', { className: 'cx-dev-target' },
-            h('button', { className: 'cx-btn xs', onClick: compile, title: zh ? '编译当前项目' : 'Compile' }, zh ? '编译' : 'BUILD'),
-            h('select', { className: 'cx-select', value: node || '', onChange: (e) => onSelectNode && onSelectNode(Number(e.target.value)) },
-              (nodes || []).map((n) => h('option', { key: n.port, value: n.port }, n.name || `:${n.port}`))),
-            h('select', { className: 'cx-select', value: space || '', onChange: (e) => onSelectSpace && onSelectSpace(e.target.value) },
-              h('option', { key: '__node', value: '' }, zh ? '（节点目录）' : '(node root)'),
-              (spaces || []).map((x) => h('option', { key: x.name, value: x.name }, x.name))))),
         h('div', { className: `cx-dev${showLeft ? '' : ' hide-left'}${showRight ? '' : ' hide-right'}${showBottom ? '' : ' hide-bottom'}`, style: { '--cx-preview-w': `${previewWidth}px` } },
         h('section', { className: 'cx-dev-col cx-dev-explorer' },
           h('div', { className: 'cx-dev-b' },
@@ -1951,6 +1940,7 @@ window.__ModuleLoader__.load({
               h('span', { className: 'seg', title: 'symbols', onClick: (ev) => { ev.stopPropagation(); const items = symbolsOf(activeTab.content); if (items.length) setCrumbMenu({ ...menuAt(ev.currentTarget), items }); } },
                 h('span', { className: 'ci' }, 'ƒ'), (symbolsOf(activeTab.content)[0] || {}).label || (zh ? '函数' : 'fn'))) : null,
             h('div', { className: 'cx-crumb-actions' },
+              h('button', { className: 'cx-pm-op cx-pm-txt', onClick: compile, title: zh ? '编译当前项目' : 'Compile' }, zh ? '编译' : 'BUILD'),
               h('button', { className: 'cx-pm-op', onClick: () => save(), title: zh ? '保存' : 'Save' }, '⤓'),
               h('button', { className: 'cx-pm-op', onClick: () => { if (activePath) reloadDir(''); }, title: zh ? '重新加载目录' : 'Reload' }, '↻'),
               h('button', { className: 'cx-pm-op', onClick: () => { try { navigator.clipboard.writeText([node, space, activePath].filter(Boolean).join(' / ')); } catch {} setStatus(zh ? '路径已复制' : 'path copied'); }, title: zh ? '复制路径' : 'Copy path' }, '⧉'),
