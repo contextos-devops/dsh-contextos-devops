@@ -1387,6 +1387,7 @@ window.__ModuleLoader__.load({
       const [termOut, setTermOut] = useState('');
       const termActiveRef = useRef(termActive); termActiveRef.current = termActive;
       const restoreTextRef = useRef({});
+      const termPendingRef = useRef(false);
       const saveTimerRef = useRef(null);
       const readTermBuf = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:term-buf') || '{}'); } catch { return {}; } };
       const readRemoteState = async () => { try { return (await api('stateGet')) || {}; } catch { return {}; } };
@@ -1506,10 +1507,15 @@ window.__ModuleLoader__.load({
       useEffect(() => {
         if (!node || !space) return;
         restorePendingRef.current = true;
-        setTabs([]); setActivePath(''); setDirs({}); setExpanded({ '': true }); setStatus('');
-        loadDir('');
+        setStatus('');
+        (async () => {
+          try {
+            const list = await api('tree', { node, space, path: '' });
+            setDirs({ '': list }); setExpanded({ '': true });
+          } catch {}
+        })();
         const saved = readIdeOpen()[ideKey];
-        if (!saved || !Array.isArray(saved.tabs) || !saved.tabs.length) { restorePendingRef.current = false; return; }
+        if (!saved || !Array.isArray(saved.tabs) || !saved.tabs.length) { setTabs([]); setActivePath(''); restorePendingRef.current = false; return; }
         let disposed = false;
         (async () => {
           const out = [];
@@ -1572,37 +1578,47 @@ window.__ModuleLoader__.load({
       }, [activePath, activeTab && activeTab.path]);
 
       useEffect(() => {
-        const sameKey = termKeyRef.current === `${node}:${space}`;
-        if (sameKey && Object.keys(termMapRef.current).length) return;
-        Object.keys(termMapRef.current).forEach((id) => {
-          const x = termMapRef.current[id];
-          x.alive = false; try { x.timer && clearTimeout(x.timer); } catch {}
-          try { x.ws && x.ws.close(); } catch {}
-          try { x.term && x.term.dispose(); } catch {}
-        });
         const nextKey = `${node}:${space}`;
+        if (termKeyRef.current === nextKey && Object.keys(termMapRef.current).length) return;
         const prevKey = termKeyRef.current;
         if (prevKey && prevKey !== nextKey) persistTermBuf(prevKey);
-        termKeyRef.current = nextKey;
-        termMapRef.current = {};
-        termHostsRef.current = {};
-        const apply = (saved) => {
-          const ids = Array.isArray(saved.ids) && saved.ids.length ? saved.ids : [1];
-          restoreTextRef.current = saved.texts || {};
-          setTermIds(ids); setTermActive(ids[0]); setTermErr(''); setTermTab('term');
-        };
-        const local = readTermBuf()[`${node}:${space}`];
-        apply(local || {});
+        termPendingRef.current = true;
         let cancelled = false;
         (async () => {
           const remote = await readRemoteState();
           if (cancelled) return;
-          const saved = remote && remote.termBuf && remote.termBuf[`${node}:${space}`];
-          if (saved && Array.isArray(saved.ids) && saved.ids.length) apply(saved);
+          const saved = (remote && remote.termBuf && remote.termBuf[nextKey]) || readTermBuf()[nextKey] || {};
+          const ids = Array.isArray(saved.ids) && saved.ids.length ? saved.ids : [1];
+          const texts = saved.texts || {};
+          const cwd = (await api('spaceDir', { node, space }).catch(() => ({ dir: '' }))).dir || '';
+          if (cancelled) return;
+          Object.keys(termMapRef.current).forEach((id) => {
+            if (ids.map((x) => String(x)).includes(String(id))) return;
+            const x = termMapRef.current[id];
+            x.alive = false; try { x.timer && clearTimeout(x.timer); } catch {}
+            try { x.ws && x.ws.close(); } catch {}
+            try { x.term && x.term.dispose(); } catch {}
+            delete termMapRef.current[id];
+          });
+          ids.forEach((id) => {
+            const x = termMapRef.current[id];
+            if (!x) return;
+            x.key = nextKey; x.cwd = cwd;
+            try { x.term.reset(); } catch {}
+            const t = texts[id] || '';
+            try { if (t) x.term.write(t); } catch {}
+            x.text = t;
+            try { x.openWs && x.openWs(cwd); } catch {}
+          });
+          termKeyRef.current = nextKey;
+          restoreTextRef.current = texts;
+          termPendingRef.current = false;
+          setTermIds(ids); setTermActive(ids[0]); setTermErr(''); setTermTab('term');
         })();
-        return () => { cancelled = true; };
+        return () => { cancelled = true; termPendingRef.current = false; };
       }, [node, space]);
       useEffect(() => {
+        if (termPendingRef.current) return;
         let cancelled = false;
         (async () => {
           try {
@@ -1632,28 +1648,32 @@ window.__ModuleLoader__.load({
               if (!/^https?:$/.test(location.protocol)) {
                 try { const o = await api('origin'); if (o && o.host) { wsHost = o.host; wsProto = 'ws'; } } catch {}
               }
-              const url = `${wsProto}://${wsHost}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(info.dir || '')}`;
-              const state = { term, ws: null, fit, alive: true, timer: null, key: `${node}:${space}` };
+              const state = { term, ws: null, fit, alive: true, timer: null, key: `${node}:${space}`, cwd: info.dir || '' };
               if (restored) state.text = restored;
-              const connect = () => {
+              const openWs = (cwd) => {
                 if (!state.alive) return;
+                const url = `${wsProto}://${wsHost}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(cwd || '')}`;
+                state.switching = true;
+                try { state.ws && state.ws.close(); } catch {}
+                state.switching = false;
                 const ws = new WebSocket(url);
                 state.ws = ws;
-                ws.onmessage = (ev) => { try { term.write(ev.data); } catch {}; state.text = String(state.text || '') + String(ev.data); if (state.text.length > 400000) state.text = state.text.slice(-60000); scheduleSave(); };
+                ws.onmessage = (ev) => { try { term.write(ev.data); } catch {}; state.text = String(state.text || '') + String(ev.data); if (state.text.length > 400000) state.text = state.text.slice(-200000); scheduleSave(); };
                 ws.onclose = () => {
-                  if (!state.alive) return;
+                  if (!state.alive || state.switching) return;
                   state.fail = (state.fail || 0) + 1;
                   try {
                     term.write('\r\n[reconnecting…]\r\n');
                     if (state.fail === 3) term.write(`[terminal ${url}]\r\n`);
                   } catch {}
-                  state.timer = setTimeout(connect, 1000);
+                  state.timer = setTimeout(() => openWs(state.cwd), 1000);
                 };
                 ws.onopen = () => { state.fail = 0; };
                 ws.onerror = () => {};
               };
+              state.openWs = openWs;
               term.onData((d) => { const ws = state.ws; if (ws && ws.readyState === 1) ws.send(d); });
-              connect();
+              openWs(state.cwd);
               termMapRef.current[id] = state;
               setTimeout(() => { try { fit && fit.fit(); } catch {} }, 150);
             }
