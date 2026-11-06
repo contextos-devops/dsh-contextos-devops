@@ -1128,6 +1128,8 @@ window.__ModuleLoader__.load({
 .cx-dev .cx-tab{background:transparent;border:0;border-top:2px solid transparent}
 .cx-dev .cx-tab.on{background:transparent;border-top-color:var(--cx-accent);color:var(--cx-accent)}
 .cx-dev .cx-tab .x{color:inherit}
+.cx-menu-item .hint{margin-left:auto;padding-left:12px;opacity:.5;font-size:9px}
+.cx-menu-item.on{color:var(--cx-accent)}
 .cx-tree-menu{position:fixed;z-index:900;min-width:150px;padding:4px;border:1px solid var(--cx-border-strong);border-radius:6px;background:var(--cx-surface-1);box-shadow:0 12px 30px rgba(0,0,0,.45)}
 .cx-namedlg{position:fixed;z-index:950;left:50%;top:30%;transform:translateX(-50%);width:min(360px,80vw);padding:12px;border:1px solid var(--cx-border-strong);border-radius:8px;background:var(--cx-surface-1);box-shadow:0 18px 50px rgba(0,0,0,.5)}
 .cx-namedlg .t{font:10px var(--cx-mono);color:var(--cx-accent);margin-bottom:8px}
@@ -1313,6 +1315,7 @@ window.__ModuleLoader__.load({
       const [status, setStatus] = useState('');
       const [treeMenu, setTreeMenu] = useState(null);
       const [nameDlg, setNameDlg] = useState(null);
+      const [crumbMenu, setCrumbMenu] = useState(null);
       const [editorErr, setEditorErr] = useState('');
       const [termErr, setTermErr] = useState('');
       const [termTab, setTermTab] = useState('term');
@@ -1576,6 +1579,23 @@ window.__ModuleLoader__.load({
         try { await api('removePath', { node, space, path: entry.path }); closeTab(entry.path); await reloadDir(dir); }
         catch (e) { setStatus(String(e?.message || e)); }
       };
+      const jumpLine = (line) => { const ed = editorRef.current; if (ed) { try { ed.revealLineInCenter(line); ed.setPosition({ lineNumber: line, column: 1 }); ed.focus(); } catch {} } };
+      const symbolsOf = (text) => {
+        const out = [];
+        String(text || '').split('\n').forEach((ln, i) => {
+          const m = ln.match(/^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)/) || ln.match(/^\s*(?:function|class|def|struct|interface|type)\s+([A-Za-z_]\w*)/);
+          if (m) out.push({ label: m[1], hint: String(i + 1), action: () => jumpLine(i + 1) });
+        });
+        return out;
+      };
+      const listDir = async (dirPath) => { try { return await api('tree', { node, space, path: dirPath }); } catch { return []; } };
+      const dirItems = (dirPath, keepOpen) => h => {
+        const x = h.clientX, y = h.clientY;
+        listDir(dirPath).then((list) => setCrumbMenu({ x, y, items: (list || []).map((e) => ({
+          label: e.name, hint: e.type === 'dir' ? 'dir' : '', on: e.type !== 'dir' && e.path === activePath,
+          action: () => { if (e.type === 'dir') { setExpanded((m) => ({ ...m, [([dirPath, e.name].filter(Boolean).join('/'))]: true })); } else openFile(e.path); },
+        })) }));
+      };
       const addTerm = () => { const id = Math.max(0, ...termIds) + 1; setTermIds([...termIds, id]); setTermActive(id); setTermTab('term'); };
       const closeTerm = (id) => {
         const x = termMapRef.current[id];
@@ -1599,12 +1619,12 @@ window.__ModuleLoader__.load({
         } catch (e) { setStatus(String(e?.message || e)); }
       };
       useEffect(() => {
-        if (!treeMenu) return;
-        const close = () => setTreeMenu(null);
+        if (!treeMenu && !crumbMenu) return;
+        const close = () => { setTreeMenu(null); setCrumbMenu(null); };
         window.addEventListener('click', close);
         window.addEventListener('scroll', close, true);
         return () => { window.removeEventListener('click', close); window.removeEventListener('scroll', close, true); };
-      }, [treeMenu]);
+      }, [treeMenu, crumbMenu]);
       const renderDir = (p, depth) => (dirs[p] || []).map((e) => {
         const isDir = e.type === 'dir';
         const key = p + '/' + e.name;
@@ -1656,16 +1676,22 @@ window.__ModuleLoader__.load({
             h('span', { className: 'nm' }, t.name + (t.dirty ? ' ●' : '')),
             h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); closeTab(t.path); } }, '×')))),
           h('div', { className: 'cx-crumb' },
-            h('span', { className: 'seg', onClick: () => onSelectNode && onSelectNode(node), title: 'node' }, h('span', { className: 'ci', dangerouslySetInnerHTML: nodeIconHtml(true) }), String(node || '')),
+            h('span', { className: 'seg', title: 'node', onClick: (ev) => { ev.stopPropagation(); setCrumbMenu({ x: ev.clientX, y: ev.clientY, items: (nodes || []).map((n) => ({ label: n.name || `:${n.port}`, hint: ':' + n.port, on: n.port === node, action: () => onSelectNode && onSelectNode(n.port) })) }); } }, h('span', { className: 'ci', dangerouslySetInnerHTML: nodeIconHtml(true) }), String(node || '')),
             h('span', { className: 'sep' }, '›'),
-            h('span', { className: 'seg', onClick: () => onSelectSpace && onSelectSpace(space), title: 'space' }, h('span', { className: 'ci', dangerouslySetInnerHTML: spaceIconHtml() }), space || ''),
+            h('span', { className: 'seg', title: 'space', onClick: (ev) => { ev.stopPropagation(); setCrumbMenu({ x: ev.clientX, y: ev.clientY, items: (spaces || []).map((x) => ({ label: x.name, hint: '', on: x.name === space, action: () => onSelectSpace && onSelectSpace(x.name) })) }); } }, h('span', { className: 'ci', dangerouslySetInnerHTML: spaceIconHtml() }), space || ''),
             (activePath || '').split('/').filter(Boolean).map((seg, i, arr) => {
               const p = arr.slice(0, i + 1).join('/');
               const isFile = i === arr.length - 1;
+              const dir = isFile ? arr.slice(0, -1).join('/') : p;
               return h(React.Fragment, { key: p },
                 h('span', { className: 'sep' }, '›'),
-                h('span', { className: `seg${isFile ? ' file' : ''}`, onClick: () => (isFile ? setActivePath(p) : null), title: p }, h('span', { className: 'ci', dangerouslySetInnerHTML: isFile ? fileIconHtml(seg) : dirIconHtml(true) }), seg));
+                h('span', { className: `seg${isFile ? ' file' : ''}`, title: p, onClick: (ev) => { ev.stopPropagation(); if (isFile) { const e2 = { clientX: ev.clientX, clientY: ev.clientY }; dirItems(arr.slice(0, -1).join('/'))(e2); } else { dirItems(p)(ev); } } },
+                  h('span', { className: 'ci', dangerouslySetInnerHTML: isFile ? fileIconHtml(seg) : dirIconHtml(true) }), seg));
             }),
+            activeTab ? h(React.Fragment, null,
+              h('span', { className: 'sep' }, '›'),
+              h('span', { className: 'seg', title: 'symbols', onClick: (ev) => { ev.stopPropagation(); const items = symbolsOf(activeTab.content); if (items.length) setCrumbMenu({ x: ev.clientX, y: ev.clientY, items }); } },
+                h('span', { className: 'ci' }, 'ƒ'), (symbolsOf(activeTab.content)[0] || {}).label || (zh ? '函数' : 'fn'))) : null,
             h('div', { className: 'cx-crumb-actions' },
               h('button', { className: 'cx-pm-op', onClick: () => save(), title: zh ? '保存' : 'Save' }, '⤓'),
               h('button', { className: 'cx-pm-op', onClick: () => { if (activePath) reloadDir(''); }, title: zh ? '重新加载目录' : 'Reload' }, '↻'),
@@ -1710,6 +1736,9 @@ window.__ModuleLoader__.load({
           h('div', { className: 'b' },
             h('button', { className: 'cx-btn', onClick: () => { const r = nameDlg.resolve; setNameDlg(null); r(''); } }, T('取消')),
             h('button', { className: 'cx-btn pri', onClick: () => { const v = nameDlg.value; const r = nameDlg.resolve; setNameDlg(null); r(v); } }, T('保存')))) : null,
+        crumbMenu ? h('div', { className: 'cx-tree-menu', style: { left: crumbMenu.x, top: crumbMenu.y }, onClick: (e) => e.stopPropagation() },
+          crumbMenu.items.map((it, i) => h('button', { key: i, className: `cx-menu-item${it.on ? ' on' : ''}`, onClick: () => { setCrumbMenu(null); it.action(); } },
+            it.label, it.hint ? h('span', { className: 'hint' }, it.hint) : null))) : null,
         treeMenu ? h('div', { className: 'cx-tree-menu', style: { left: treeMenu.x, top: treeMenu.y }, onClick: (e) => e.stopPropagation() },
           h('button', { className: 'cx-menu-item', onClick: () => { const t = treeMenu.entry; setTreeMenu(null); newEntry(t, false); } }, zh ? '新建文件' : 'New file'),
           h('button', { className: 'cx-menu-item', onClick: () => { const t = treeMenu.entry; setTreeMenu(null); newEntry(t, true); } }, zh ? '新建文件夹' : 'New folder'),
