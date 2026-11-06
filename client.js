@@ -1102,6 +1102,9 @@ window.__ModuleLoader__.load({
 .cx-view:hover{color:var(--cx-text)}
 .cx-view.on{background:color-mix(in srgb,var(--cx-accent) 16%,transparent);color:var(--cx-accent)}
 .cx-dev{flex:1;min-height:0;display:grid;grid-template-columns:220px minmax(0,1fr) 300px;gap:10px;padding:10px 12px 0;overflow:hidden}.cx-dev-wrap{flex:1;min-height:0;display:flex;flex-direction:column;min-width:0}
+.cx-dev-wrap{position:relative}
+.cx-dev-wrap>.cx-chat-bg{z-index:0}
+.cx-dev-top,.cx-dev{position:relative;z-index:1}
 .cx-dev-top{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--cx-line);background:var(--cx-surface-1);flex:none;flex-wrap:wrap}
 .cx-dev-projects{display:flex;gap:4px;overflow:auto;flex:1;min-width:0;padding-bottom:2px}
 .cx-dev-ptab{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--cx-border);border-radius:4px;background:transparent;color:var(--cx-text-dim);font:10px var(--cx-mono);cursor:pointer;white-space:nowrap}
@@ -1341,7 +1344,7 @@ window.__ModuleLoader__.load({
     }
 
     // 开发模式：VSCode 风格 IDE 的骨架（编辑器、终端、预览后续接入）
-    function DevWorkspace({ locale, node, space, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onPick }) {
+    function DevWorkspace({ locale, node, space, bg, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onPick }) {
       const zh = locale === 'zh';
       const [dirs, setDirs] = useState({});
       const [expanded, setExpanded] = useState({ '': true });
@@ -1783,6 +1786,7 @@ window.__ModuleLoader__.load({
       const previewUrl = node && space ? `http://127.0.0.1:${node}/s/${space}/` : '';
 
       return h('div', { className: 'cx-dev-wrap' },
+        bg && bg.image ? h('div', { className: 'cx-chat-bg photo' }, h('img', { src: bg.image, alt: '' })) : null,
         h('div', { className: 'cx-dev-top' },
           h('div', { className: 'cx-dev-projects' },
             (projects || []).map((p) => h('button', { key: p.key, className: `cx-dev-ptab${p.key === activeKey ? ' on' : ''}`, onClick: () => onSelectProject && onSelectProject(p.key), title: `${p.node} · ${p.space}` },
@@ -4472,7 +4476,7 @@ window.__ModuleLoader__.load({
             h('button', { className: 'cx-chip', onClick: () => setViewMode('chat'), title: `${t('scene')}: ${bg?.name || T('默认')}` }, h('span', { className: `dot${bg?.image ? ' on' : ''}` }), `${t('scene')} `, h('b', null, bg?.name || T('默认'))))),
         error ? h('div', { className: 'cx-err' }, error) : null,
         h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}`, style: viewMode === 'chat' ? null : { display: 'none' } }, h(ChatPanel, { ...chatProps, docked: !chatFull })),
-        viewMode === 'dev' ? h(DevWorkspace, { locale, node, space, nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onPick: openIde }) : null,
+        viewMode === 'dev' ? h(DevWorkspace, { locale, node, space, bg, nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onPick: openIde }) : null,
         h('div', { className: 'cx-body', style: viewMode === 'manage' ? null : { display: 'none' } },
           h(Panel, {
             index: '01', title: tp('serve'), count: `${nodeRows.length}/${nodes.length} NODES`,
