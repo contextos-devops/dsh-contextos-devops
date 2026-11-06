@@ -1590,10 +1590,10 @@ window.__ModuleLoader__.load({
       };
       const menuAt = (el) => { const r = el.getBoundingClientRect(); return { x: Math.max(8, r.left), y: r.bottom + 4 }; };
       const listDir = async (dirPath) => { try { return await api('tree', { node, space, path: dirPath }); } catch { return []; } };
-      const dirItems = (dirPath) => ev => {
+      const dirItems = (dirPath, current) => ev => {
         const pos = menuAt(ev.currentTarget || ev.target);
         listDir(dirPath).then((list) => setCrumbMenu({ ...pos, items: (list || []).map((e) => ({
-          label: e.name, hint: e.type === 'dir' ? 'dir' : '', on: e.type !== 'dir' && e.path === activePath,
+          label: e.name, hint: e.type === 'dir' ? 'dir' : '', on: e.path === current || (e.type !== 'dir' && e.path === activePath),
           action: () => { if (e.type === 'dir') { setExpanded((m) => ({ ...m, [([dirPath, e.name].filter(Boolean).join('/'))]: true })); } else openFile(e.path); },
         })) }));
       };
@@ -1686,7 +1686,7 @@ window.__ModuleLoader__.load({
               const dir = isFile ? arr.slice(0, -1).join('/') : p;
               return h(React.Fragment, { key: p },
                 h('span', { className: 'sep' }, '›'),
-                h('span', { className: `seg${isFile ? ' file' : ''}`, title: p, onClick: (ev) => { ev.stopPropagation(); dirItems(isFile ? arr.slice(0, -1).join('/') : p)(ev); } },
+                h('span', { className: `seg${isFile ? ' file' : ''}`, title: p, onClick: (ev) => { ev.stopPropagation(); const parent = p.split('/').slice(0, -1).join('/'); dirItems(parent, isFile ? activePath : p)(ev); } },
                   h('span', { className: 'ci', dangerouslySetInnerHTML: isFile ? fileIconHtml(seg) : dirIconHtml(true) }), seg));
             }),
             activeTab ? h(React.Fragment, null,
@@ -4279,6 +4279,7 @@ window.__ModuleLoader__.load({
       const [ideActive, setIdeActive] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:ide-active') || ''; } catch { return ''; } });
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:ide', JSON.stringify(ideProjects)); } catch {} }, [ideProjects]);
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:ide-active', ideActive); } catch {} }, [ideActive]);
+      useEffect(() => { const key = `${node}:${space}`; if (ideProjects.some((x) => x.key === key)) setIdeActive(key); }, [node, space]);
       const selectIdeProject = (key) => { const p = ideProjects.find((x) => x.key === key); if (!p) return; setIdeActive(key); setNode(p.node); setSpace(p.space); };
       const closeIdeProject = (key) => { setIdeProjects((ps) => ps.filter((x) => x.key !== key)); if (ideActive === key) setIdeActive(''); };
       const openIde = async (port, sp) => {
