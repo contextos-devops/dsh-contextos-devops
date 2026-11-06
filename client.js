@@ -1049,7 +1049,21 @@ window.__ModuleLoader__.load({
 .cx-view:last-child{border-right:0}
 .cx-view:hover{color:var(--cx-text)}
 .cx-view.on{background:color-mix(in srgb,var(--cx-accent) 16%,transparent);color:var(--cx-accent)}
-.cx-dev{flex:1;min-height:0;display:grid;grid-template-columns:220px minmax(0,1fr) 300px;gap:10px;padding:10px 12px 0;overflow:hidden}
+.cx-dev{flex:1;min-height:0;display:grid;grid-template-columns:220px minmax(0,1fr) 300px;gap:10px;padding:10px 12px 0;overflow:hidden}.cx-dev-wrap{flex:1;min-height:0;display:flex;flex-direction:column;min-width:0}
+.cx-dev-top{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--cx-line);background:var(--cx-surface-1);flex:none;flex-wrap:wrap}
+.cx-dev-projects{display:flex;gap:4px;overflow:auto;flex:1;min-width:0;padding-bottom:2px}
+.cx-dev-ptab{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--cx-border);border-radius:4px;background:transparent;color:var(--cx-text-dim);font:10px var(--cx-mono);cursor:pointer;white-space:nowrap}
+.cx-dev-ptab.on{color:var(--cx-accent);border-color:var(--cx-accent);background:var(--cx-accent-soft)}
+.cx-dev-ptab .x{border:0;background:transparent;color:inherit;cursor:pointer;font-size:10px;padding:0}
+.cx-dev-target{display:flex;gap:6px;flex:none}
+.cx-dev{flex:1;min-height:0;display:grid;grid-template-columns:220px minmax(0,1fr) 360px;grid-template-rows:minmax(0,1fr) 200px;gap:8px;padding:8px 10px;overflow:hidden}
+.cx-dev-explorer{grid-column:1;grid-row:1/3}
+.cx-dev-editor{grid-column:2;grid-row:1}
+.cx-dev-preview{grid-column:3;grid-row:1}
+.cx-dev-term{grid-column:2/4;grid-row:2}
+.cx-preview-wrap{display:flex;flex-direction:column}
+.cx-preview-frame{flex:1;width:100%;border:0;background:#fff}
+
 .cx-dev-col{display:flex;flex-direction:column;min-height:0;min-width:0;border:1px solid var(--cx-line);background:var(--cx-surface-1)}
 .cx-dev-h{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--cx-line);background:var(--cx-surface-2);font:700 9px/1 var(--cx-font);letter-spacing:.14em;color:var(--cx-text-dim)}
 .cx-dev-hint{margin-left:auto;font-weight:400;letter-spacing:.06em;opacity:.7}
@@ -1200,7 +1214,7 @@ window.__ModuleLoader__.load({
     }
 
     // 开发模式：VSCode 风格 IDE 的骨架（编辑器、终端、预览后续接入）
-    function DevWorkspace({ locale, node, space, onPick }) {
+    function DevWorkspace({ locale, node, space, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onPick }) {
       const zh = locale === 'zh';
       const [dirs, setDirs] = useState({});
       const [expanded, setExpanded] = useState({ '': true });
@@ -1369,15 +1383,28 @@ window.__ModuleLoader__.load({
           isDir && open ? renderDir(key, depth + 1) : null);
       });
 
-      return h('div', { className: 'cx-dev' },
-        h('section', { className: 'cx-dev-col' },
+      const previewUrl = node && space ? `http://127.0.0.1:${node}/s/${space}/` : '';
+
+      return h('div', { className: 'cx-dev-wrap' },
+        h('div', { className: 'cx-dev-top' },
+          h('div', { className: 'cx-dev-projects' },
+            (projects || []).map((p) => h('button', { key: p.key, className: `cx-dev-ptab${p.key === activeKey ? ' on' : ''}`, onClick: () => onSelectProject && onSelectProject(p.key), title: `${p.node} · ${p.space}` },
+              h('span', { className: 'nm' }, `${p.node} · ${p.space}`),
+              h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); onCloseProject && onCloseProject(p.key); } }, '×')))),
+          h('div', { className: 'cx-dev-target' },
+            h('select', { className: 'cx-select', value: node || '', onChange: (e) => onSelectNode && onSelectNode(Number(e.target.value)) },
+              (nodes || []).map((n) => h('option', { key: n.port, value: n.port }, n.name || `:${n.port}`))),
+            h('select', { className: 'cx-select', value: space || '', onChange: (e) => onSelectSpace && onSelectSpace(e.target.value) },
+              (spaces || []).map((x) => h('option', { key: x.name, value: x.name }, x.name))))),
+        h('div', { className: 'cx-dev' },
+        h('section', { className: 'cx-dev-col cx-dev-explorer' },
           h('div', { className: 'cx-dev-h' }, 'EXPLORER', h('span', { className: 'cx-dev-hint' }, node && space ? `${node} · ${space}` : (zh ? '未选择空间' : 'NO SPACE'))),
           h('div', { className: 'cx-dev-b' },
             !node || !space
               ? h('div', { className: 'cx-empty' }, zh ? '先在服务节点/项目空间上点「编程」打开项目。' : 'Pick a node/space and click CODE.')
               : h('div', { className: 'cx-tree' }, renderDir('', 0)),
             status ? h('div', { className: 'cx-dev-status' }, status) : null)),
-        h('section', { className: 'cx-dev-col' },
+        h('section', { className: 'cx-dev-col cx-dev-editor' },
           h('div', { className: 'cx-dev-h' }, 'EDITOR', h('span', { className: 'cx-dev-hint' }, activeTab ? activeTab.path : (zh ? '双击左侧文件' : 'OPEN A FILE'))),
           h('div', { className: 'cx-tabs' }, tabs.map((t) => h('div', { key: t.path, className: `cx-tab${t.path === activePath ? ' on' : ''}`, onClick: () => setActivePath(t.path), title: t.path },
             h('span', null, t.name + (t.dirty ? ' ●' : '')),
@@ -1388,11 +1415,16 @@ window.__ModuleLoader__.load({
           h('div', { className: 'cx-dev-statusbar' },
             h('span', null, node ? `:${node}` : ''), h('span', null, space || ''),
             h('button', { className: 'cx-btn', onClick: () => save() }, zh ? '保存' : 'SAVE'))),
-        h('section', { className: 'cx-dev-col' },
+        h('section', { className: 'cx-dev-col cx-dev-preview' },
+          h('div', { className: 'cx-dev-h' }, 'PREVIEW', h('span', { className: 'cx-dev-hint' }, previewUrl ? space : (zh ? '未选择空间' : 'NO SPACE')),
+            h('button', { className: 'cx-pm-refresh', style: { marginLeft: 'auto' }, onClick: () => { const f = document.querySelector('.cx-preview-frame'); if (f) { try { f.src = previewUrl; } catch {} } }, title: T('刷新') }, '↻')),
+          h('div', { className: 'cx-dev-b cx-preview-wrap' },
+            previewUrl ? h('iframe', { className: 'cx-preview-frame', src: previewUrl, title: 'preview' }) : h('div', { className: 'cx-empty' }, zh ? '选择节点/项目空间后显示预览' : 'Pick a node/space to preview'))),
+        h('section', { className: 'cx-dev-col cx-dev-term' },
           h('div', { className: 'cx-dev-h' }, 'TERMINAL', h('span', { className: 'cx-dev-hint' }, 'xterm')),
           h('div', { className: 'cx-dev-b cx-term-wrap' },
             h('div', { className: 'cx-term-host', ref: termHostRef }),
-            termErr ? h('div', { className: 'cx-dev-status err' }, termErr) : null)));
+            termErr ? h('div', { className: 'cx-dev-status err' }, termErr) : null))));
     }
 
     function MenuButton({ items, disabled }) {
@@ -3923,15 +3955,26 @@ window.__ModuleLoader__.load({
       const running = nodes.filter((n) => n.state === 'running').length;
       const stage = activeTab ? 4 : app ? 3 : space ? 2 : node ? 1 : 0;
 
+      const [ideProjects, setIdeProjects] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide') || 'null') || []; } catch { return []; } });
+      const [ideActive, setIdeActive] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:ide-active') || ''; } catch { return ''; } });
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:ide', JSON.stringify(ideProjects)); } catch {} }, [ideProjects]);
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:ide-active', ideActive); } catch {} }, [ideActive]);
+      const selectIdeProject = (key) => { const p = ideProjects.find((x) => x.key === key); if (!p) return; setIdeActive(key); setNode(p.node); setSpace(p.space); };
+      const closeIdeProject = (key) => { setIdeProjects((ps) => ps.filter((x) => x.key !== key)); if (ideActive === key) setIdeActive(''); };
       const openIde = async (port, sp) => {
-        setNode(Number(port));
+        const n = Number(port);
+        setNode(n);
         setViewMode('dev');
-        if (sp) { setSpace(sp); return; }
-        try {
-          const list = await api('spaces', { node: Number(port) });
-          const first = (list || [])[0];
-          if (first) setSpace(first.name);
-        } catch { /* keep current */ }
+        let target = sp || '';
+        if (!target) {
+          try { target = ((await api('spaces', { node: n })) || [])[0]?.name || ''; } catch { /* keep */ }
+        }
+        if (target) setSpace(target);
+        if (target) {
+          const key = `${n}:${target}`;
+          setIdeProjects((ps) => (ps.some((x) => x.key === key) ? ps : [...ps, { key, node: n, space: target }]));
+          setIdeActive(key);
+        }
       };
       const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onNavWebTab: navWeb, onReloadWebTab: reloadTab, onManageWebTab: manageWeb, onRefresh: refreshAll, onOpenApp: openApp, onData: () => app && setModal('data'), onStore: showStore, onDevices: () => setShowDevices(true), avatar };
       return h('div', { className: 'cx-shell', 'data-theme': theme, ref: shellRef },
@@ -3965,7 +4008,7 @@ window.__ModuleLoader__.load({
             h('button', { className: 'cx-chip', onClick: () => setViewMode('chat'), title: `${t('scene')}: ${bg?.name || T('默认')}` }, h('span', { className: `dot${bg?.image ? ' on' : ''}` }), `${t('scene')} `, h('b', null, bg?.name || T('默认'))))),
         error ? h('div', { className: 'cx-err' }, error) : null,
         h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}`, style: viewMode === 'chat' ? null : { display: 'none' } }, h(ChatPanel, { ...chatProps, docked: !chatFull })),
-        viewMode === 'dev' ? h(DevWorkspace, { locale, node, space, onPick: openIde }) : null,
+        viewMode === 'dev' ? h(DevWorkspace, { locale, node, space, nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onPick: openIde }) : null,
         h('div', { className: 'cx-body', style: viewMode === 'manage' ? null : { display: 'none' } },
           h(Panel, {
             index: '01', title: tp('serve'), count: `${nodeRows.length}/${nodes.length} NODES`,
