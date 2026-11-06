@@ -3513,8 +3513,7 @@ window.__ModuleLoader__.load({
           h('circle', { cx: 300, cy: 430, r: 4, fill: '#3ee7ff', className: 'cx-pulse' })));
     }
 
-    function ChatPanel({ open, booted, onClose, nodes, node, spaces, space, apps, app, avatar, ideFile, view, onRequest, webTabs, onOpenWebTab, onCloseWebTab, onNavWebTab, onReloadWebTab, onManageWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices }) {
-      const [mode, setMode] = useState('avatar');
+    function ChatPanel({ open, booted, onClose, nodes, node, spaces, space, apps, app, avatar, ideFile, view, mode, onModeChange, onRequest, webTabs, onOpenWebTab, onCloseWebTab, onNavWebTab, onReloadWebTab, onManageWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices }) {
       const tt = (key) => term(locale, key);
       const sectionTitle = (cn, en) => locale === 'zh' ? `${cn} ${en}` : en;
       const modeLabel = (m) => locale === 'zh' ? m.name : ({ avatar: 'Digital Avatar', factory: 'Software Factory', iot: 'Cyber World' })[m.id] || m.name;
@@ -3697,7 +3696,7 @@ window.__ModuleLoader__.load({
       const ai = (text, meta) => push('ai', text, meta);
       const switchMode = (m) => {
         if (m === mode) return;
-        setMode(m);
+        onModeChange(m);
         setShowMore(false);
       };
       const run = async (label, fn) => {
@@ -4195,7 +4194,9 @@ window.__ModuleLoader__.load({
       const [activeWeb, setActiveWeb] = useState(() => {
         try { const saved = JSON.parse(localStorage.getItem(WEBTABS_KEY) || 'null'); return saved?.active || null; } catch { return null; }
       });
-      const [viewMode, setViewMode] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:view'); return ['chat', 'manage', 'dev'].indexOf(v) >= 0 ? v : 'chat'; } catch { return 'chat'; } });
+      const [viewMode, setViewMode] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:view'); return ['chat', 'manage', 'dev'].indexOf(v) >= 0 ? v : 'chat'; } catch { return 'chat'; } });      const [viewMode, setViewMode] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:view'); return ['chat', 'manage', 'dev'].indexOf(v) >= 0 ? v : 'chat'; } catch { return 'chat'; } });
+      const [workMode, setWorkMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:work-mode') || 'avatar'; } catch { return 'avatar'; } });
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:work-mode', workMode); } catch {} }, [workMode]);
       const [chatFull, setChatFull] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:chatfull'); return v === null ? true : v === '1'; } catch { return true; } });
       const [themeMode, setThemeMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:theme') || 'system'; } catch { return 'system'; } });
       const [theme, setTheme] = useState(() => { const sys = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark'; try { const m = localStorage.getItem('contextos-devops-dsh:theme') || 'system'; return m === 'system' ? sys : m; } catch { return sys; } });
@@ -4846,7 +4847,7 @@ window.__ModuleLoader__.load({
           setIdeActive(key);
         }
       };
-      const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, view: viewMode, onRequest: pushReq, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, ideFile, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onNavWebTab: navWeb, onReloadWebTab: reloadTab, onManageWebTab: manageWeb, onRefresh: refreshAll, onOpenApp: openApp, onData: () => app && setModal('data'), onStore: showStore, onDevices: () => setShowDevices(true), avatar };
+      const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, view: viewMode, mode: workMode, onModeChange: setWorkMode, onRequest: pushReq, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, ideFile, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onNavWebTab: navWeb, onReloadWebTab: reloadTab, onManageWebTab: manageWeb, onRefresh: refreshAll, onOpenApp: openApp, onData: () => app && setModal('data'), onStore: showStore, onDevices: () => setShowDevices(true), avatar };
       return h('div', { className: 'cx-shell', 'data-theme': theme, ref: shellRef },
         h('style', null, css),
         h('header', { className: 'cx-header' },
@@ -4871,7 +4872,7 @@ window.__ModuleLoader__.load({
           h('div', { className: 'cx-chips' },
             h('button', { className: 'cx-chip', onClick: () => setShowAvatars(true), title: t('avatar') }, h('span', { className: 'dot on' }), `${t('avatar')} `, h('b', null, avatar?.name || '—')),
             h('button', { className: 'cx-chip', onClick: () => setViewMode('chat'), title: `${t('scene')}: ${bg?.name || T('默认')}` }, h('span', { className: `dot${bg?.image ? ' on' : ''}` }), `${t('scene')} `, h('b', null, bg?.name || T('默认'))),
-            h('button', { className: 'cx-chip', onClick: () => setMode((m) => (m === 'factory' ? 'avatar' : m === 'avatar' ? 'iot' : 'factory')), title: t('mode') }, h('span', { className: 'dot on' }), `${t('mode')} `, h('b', null, t(mode))),
+            h('button', { className: 'cx-chip', onClick: () => setWorkMode((m) => (m === 'factory' ? 'avatar' : m === 'avatar' ? 'iot' : 'factory')), title: t('mode') }, h('span', { className: 'dot on' }), `${t('mode')} `, h('b', null, t(workMode))),
             h('button', { className: 'cx-chip', onClick: () => setViewMode((v) => (v === 'chat' ? 'manage' : v === 'manage' ? 'dev' : 'chat')), title: t('view') }, h('span', { className: `dot${viewMode !== 'chat' ? ' on' : ''}` }), `${t('view')} `, h('b', null, t(viewMode))))),
         error ? h('div', { className: 'cx-err' }, error) : null,
         h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}`, style: viewMode === 'chat' ? null : { display: 'none' } }, h(ChatPanel, { ...chatProps, docked: !chatFull })),
