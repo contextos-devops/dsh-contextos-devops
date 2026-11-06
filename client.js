@@ -1525,8 +1525,19 @@ window.__ModuleLoader__.load({
             setDirs({ '': list }); setExpanded({ '': true });
           } catch {}
         })();
+        const openDefault = async () => {
+          for (const p of ['src/main.shy', 'main.shy', 'src/main.go']) {
+            try {
+              const r = await api('readFile', { node, space: sp, path: p });
+              setTabs([{ path: p, name: p.split('/').pop(), content: r.content, dirty: false }]);
+              setActivePath(p);
+              return;
+            } catch { /* try next */ }
+          }
+          setTabs([]); setActivePath('');
+        };
         const saved = readIdeOpen()[ideKey];
-        if (!saved || !Array.isArray(saved.tabs) || !saved.tabs.length) { setTabs([]); setActivePath(''); restorePendingRef.current = false; return; }
+        if (!saved || !Array.isArray(saved.tabs) || !saved.tabs.length) { openDefault(); restorePendingRef.current = false; return; }
         let disposed = false;
         (async () => {
           const out = [];
@@ -1534,6 +1545,7 @@ window.__ModuleLoader__.load({
             try { const r = await api('readFile', { node, space: sp, path: p }); out.push({ path: p, name: p.split('/').pop(), content: r.content, dirty: false }); } catch { /* skip missing */ }
           }
           if (disposed) { restorePendingRef.current = false; return; }
+          if (!out.length) { await openDefault(); restorePendingRef.current = false; return; }
           setTabs(out);
           setActivePath(out.some((t) => t.path === saved.active) ? saved.active : (out[0] ? out[0].path : ''));
           restorePendingRef.current = false;
