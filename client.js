@@ -1013,6 +1013,8 @@ window.__ModuleLoader__.load({
 .cx-chat.full .cx-chat-hin{max-width:900px}
 .cx-chat.full .cx-compose{max-width:900px}
 .cx-chat.full .cx-chat-b{padding-left:max(10px,calc((100% - 900px)/2));padding-right:max(10px,calc((100% - 900px)/2))}
+.cx-chat.full .cx-hint{max-width:900px;width:calc(100% - 36px);padding:0}
+.cx-chat.full .cx-hint-panel{max-width:900px;width:calc(100% - 36px);padding:0}
 .cx-shell{--cx-pm-side-w:280px}
 .cx-chat-host{flex:1;min-height:0;display:flex;min-width:0;padding:10px 12px 12px}
 .cx-chat-host.full{position:absolute;inset:0;z-index:500;padding:0}
