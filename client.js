@@ -1118,7 +1118,9 @@ window.__ModuleLoader__.load({
 .cx-dev-preview{grid-column:3;grid-row:1}
 .cx-dev-term{grid-column:2/4;grid-row:2}
 .cx-preview-wrap{display:flex;flex-direction:column}
-.cx-preview-frame{flex:1;width:100%;border:0;background:#fff}
+.cx-preview-frame{flex:1;width:100%;border:0;background:var(--cx-surface-1)}
+.cx-preview-wrap{background:var(--cx-surface-1)}
+.cx-preview-empty{background:var(--cx-surface-1);color:var(--cx-text-faint);font:10px var(--cx-mono);align-items:center;justify-content:center}
 .cx-dev-preview{position:relative}
 .cx-pane-refresh{position:absolute;top:6px;right:8px;z-index:3;width:20px;height:20px;border:1px solid var(--cx-border);border-radius:4px;background:rgba(6,20,32,.75);color:var(--cx-text-dim);cursor:pointer;font-size:11px;line-height:1}
 .cx-pane-refresh:hover{color:var(--cx-accent);border-color:var(--cx-accent)}
@@ -1975,9 +1977,9 @@ window.__ModuleLoader__.load({
                 ? h('pre', { className: 'cx-preview-text' }, activeTab ? activeTab.content : '')
                 : pvKind === 'html'
                   ? (activeTab ? h('iframe', { key: 'pv' + previewNonce + activePath, className: 'cx-preview-frame', srcDoc: activeTab.content, title: 'preview' }) : null)
-                  : previewUrl
+                  : previewUrl && activeTab
                     ? h('iframe', { key: 'pv' + previewNonce, className: 'cx-preview-frame', src: previewUrl, title: 'preview' })
-                    : h('div', { className: 'cx-empty' }, zh ? '选择节点/项目空间后显示预览' : 'Pick a node/space to preview'))),
+                    : h('div', { className: 'cx-empty cx-preview-empty' }, zh ? (activeTab ? '选择节点/项目空间后显示预览' : '打开文件后显示预览') : 'Open a file to preview'))),
         h('section', { className: 'cx-dev-col cx-dev-term' },
           h('div', { className: 'cx-dev-h cx-term-h' },
             h('div', { className: 'cx-term-tabs' },
