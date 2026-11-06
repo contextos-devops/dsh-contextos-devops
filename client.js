@@ -5,6 +5,48 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
     const { useState, useEffect, useCallback, useRef } = React;
     const API = '/contextos-devops-dsh/api';
+    // ── 图标（取自 usr/macos-app/Resources/editor.html，同一套 SVG） ──────
+    const ICON_PAGE = "<path d='M3.3 1.7h5.5l4 3.9v8.7H3.3z'/><path d='M8.8 1.7v3.9h4'/>";
+    const ICON_DIR = "<path d='M2.4 4.7a1 1 0 0 1 1-1h3.05l1.4 1.75h5.75a1 1 0 0 1 1 1v5.75a1 1 0 0 1-1 1H3.4a1 1 0 0 1-1-1z'/>";
+    const ICON_DIRO = "<path d='M2.4 12.1V4.7a1 1 0 0 1 1-1h3.05l1.4 1.75h5.8a1 1 0 0 1 1 1v1.1'/><path d='M2.4 12.1l1.45-4.1a1 1 0 0 1 .95-.67h9.3a.9.9 0 0 1 .85 1.18l-1.35 3.85a1 1 0 0 1-.94.66H3.33a.93.93 0 0 1-.93-.92z'/>";
+    const ICON_NODE = "<rect x='2.5' y='2.8' width='11' height='4.35' rx='1.1'/><rect x='2.5' y='8.85' width='11' height='4.35' rx='1.1'/><path d='M5.1 4.97h2.2'/><path d='M5.1 11.02h2.2'/><circle cx='11.35' cy='4.97' r='.72' fill='currentColor' stroke='none'/><circle cx='11.35' cy='11.02' r='.72' fill='currentColor' stroke='none'/>";
+    const ICON_NODEO = "<rect x='2.5' y='2.8' width='11' height='4.35' rx='1.1'/><rect x='2.5' y='8.85' width='11' height='4.35' rx='1.1'/><path d='M5.1 4.97h2.2'/><path d='M5.1 11.02h2.2'/><circle cx='11.35' cy='4.97' r='.72'/><circle cx='11.35' cy='11.02' r='.72'/>";
+    const ICON_SPACE = "<path d='M8 2.35l5.1 2.85v5.6L8 13.65l-5.1-2.85v-5.6z'/><path d='M2.9 5.2L8 8.03l5.1-2.83'/><path d='M8 8.03v5.62'/>";
+    const ICON_MARKS = {
+      sh: "<path d='M5.7 8.1l1.5 1.3-1.5 1.3'/><path d='M8.6 10.7h2.4'/>",
+      go: "<circle cx='6.9' cy='9.3' r='.78' fill='currentColor' stroke='none'/><circle cx='9.1' cy='9.3' r='.78' fill='currentColor' stroke='none'/><path d='M6.8 10.9a1.75 1.75 0 0 0 2.4 0'/>",
+      json: "<path d='M7.4 6.9c-.95 0-.95.8-.95 1.3 0 .5-.2.9-.75 1.05.55.15.75.55.75 1.05 0 .5 0 1.3.95 1.3'/><path d='M8.6 6.9c.95 0 .95.8.95 1.3 0 .5.2.9.75 1.05-.55.15-.75.55-.75 1.05 0 .5 0 1.3-.95 1.3'/>",
+      js: "<path d='M6.9 6.9c-1.15.7-1.15 3.5 0 4.2'/><path d='M9.1 6.9c1.15.7 1.15 3.5 0 4.2'/><circle cx='8' cy='9' r='.62' fill='currentColor' stroke='none'/>",
+      css: "<path d='M7.1 6.9L6.6 11.5'/><path d='M9.6 6.9L9.1 11.5'/><path d='M5.9 8.6h5.2'/><path d='M5.55 10.2h5.2'/>",
+      html: "<path d='M6.3 7.3L4.9 9.2l1.4 1.9'/><path d='M9.7 7.3l1.4 1.9-1.4 1.9'/><path d='M8.75 6.6l-1.5 5.1'/>",
+      shy: "<path d='M8 6.4l2.25 2.65L8 11.7 5.75 9.05z'/>",
+      md: "<path d='M6.2 7.1v4.4'/><path d='M9.8 7.1v4.4'/><path d='M8 6.8v4.7'/><path d='M6.95 10.25L8 11.35l1.05-1.1'/>",
+      mod: "<path d='M6.2 7.1v4.4'/><path d='M9.8 7.1v4.4'/><path d='M8 6.8v4.7'/><path d='M6.95 10.25L8 11.35l1.05-1.1'/>",
+      sum: "<path d='M6.2 7.1v4.4'/><path d='M9.8 7.1v4.4'/><path d='M8 6.8v4.7'/><path d='M6.95 10.25L8 11.35l1.05-1.1'/>",
+      lic: "<path d='M6.2 6.9h3.6'/><path d='M6.2 8.4h3.6'/><path d='M6.2 9.9h2.4'/>",
+      mk: "<path d='M6.2 6.9h3.6'/><path d='M6.2 8.4h3.6'/><path d='M6.2 9.9h2.4'/>",
+      img: "<circle cx='6.4' cy='8.3' r='.85' fill='currentColor' stroke='none'/><path d='M4.9 11.4l2.2-2.4 1.8 1.9 1.3-1.4 1.4 1.9z'/>",
+      log: "<path d='M6.2 6.9h3.6'/><path d='M6.2 8.4h3.6'/><path d='M6.2 9.9h2.4'/>",
+    };
+    const EXTC = { go: '#1ed6f2', js: '#ffc93c', mjs: '#ffc93c', cjs: '#ffc93c', ts: '#3d8bff', tsx: '#3d8bff', json: '#ffa412', md: '#b45cff', markdown: '#b45cff', html: '#ff4d4d', htm: '#ff4d4d', css: '#2ba7ff', scss: '#ff5cb0', sh: '#1ed760', bash: '#1ed760', zsh: '#1ed760', py: '#45e87d', rb: '#ff6b83', java: '#ff8a1f', c: '#5aa8ff', h: '#5aa8ff', cpp: '#5aa8ff', cc: '#5aa8ff', hpp: '#5aa8ff', m: '#9fb2d0', mm: '#9fb2d0', rs: '#ff8a1f', php: '#a985ff', swift: '#ff9b2e', sql: '#ff5cb0', yaml: '#f06bff', yml: '#f06bff', xml: '#ff9b2e', toml: '#ffc31f', ini: '#ffc31f', conf: '#ffc31f', svg: '#ffd614', plist: '#9fb2d0', shy: '#b45cff', mod: '#12a8f0', sum: '#8fa1c4', log: '#9fb2d0', less: '#2ba7ff', png: '#5eead4', apng: '#5eead4', jpg: '#5eead4', jpeg: '#5eead4', jpe: '#5eead4', gif: '#5eead4', webp: '#5eead4', bmp: '#5eead4', ico: '#5eead4', avif: '#5eead4', heic: '#5eead4', heif: '#5eead4', tif: '#5eead4', tiff: '#5eead4' };
+    const iconKey = (name) => {
+      const low = String(name || '').toLowerCase();
+      if (low === 'makefile' || low === 'gnumakefile' || low === 'makefile.am' || low === 'makefile.in') return 'mk';
+      if (low === 'license' || low === 'licence' || low === 'copying' || low === 'notice') return 'lic';
+      const e = low.indexOf('.') >= 0 ? low.split('.').pop() : '';
+      const map = { sh: 'sh', bash: 'sh', zsh: 'sh', go: 'go', json: 'json', js: 'js', mjs: 'js', cjs: 'js', ts: 'js', tsx: 'js', css: 'css', scss: 'css', less: 'css', html: 'html', htm: 'html', shy: 'shy', md: 'md', markdown: 'md', mod: 'mod', sum: 'sum', log: 'log', png: 'img', apng: 'img', jpg: 'img', jpeg: 'img', jpe: 'img', gif: 'img', webp: 'img', bmp: 'img', ico: 'img', avif: 'img', heic: 'img', heif: 'img', tif: 'img', tiff: 'img' };
+      return map[e] || '';
+    };
+    const svgIcon = (inner, color, size) => {
+      const px = size || 14;
+      return { __html: `<svg width="${px}" height="${px}" viewBox="0 0 16 16" fill="none" stroke="${color || 'currentColor'}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>` };
+    };
+    const fileIconHtml = (name, size) => svgIcon(ICON_PAGE + (ICON_MARKS[iconKey(name)] || ''), EXTC[(String(name).split('.').pop() || '').toLowerCase()] || 'var(--cx-text-dim)', size);
+    const dirIconHtml = (open, size) => svgIcon(open ? ICON_DIRO : ICON_DIR, '#7b8cff', size);
+    const nodeIconHtml = (running, size) => svgIcon(running ? ICON_NODE : ICON_NODEO, running ? '#b06bff' : '#6b7391', size);
+    const spaceIconHtml = (size) => svgIcon(ICON_SPACE, '#7c8cff', size);
+    const chevHtml = (open, size) => ({ __html: `<svg width="${size || 10}" height="${size || 10}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(${open ? 90 : 0}deg);transition:transform .12s">${'<path d="M5.5 3L10.5 8l-5 5"/>'}</svg>` });
+
     // 旧版 localStorage 键迁移（一次性）
     try {
       const OLD = 'contextos-devops:';
@@ -1108,7 +1150,8 @@ window.__ModuleLoader__.load({
 .cx-tree-item .ico{width:10px;flex:none;opacity:.8}
 .cx-tree-item .nm{overflow:hidden;text-overflow:ellipsis}
 .cx-tree-item .chev{width:10px;flex:none;opacity:.6;font-size:9px}
-.cx-tree-item .fic{width:14px;flex:none;text-align:center;font-size:10px}
+.cx-tree-item .fic{width:14px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.cx-tree-item .chev{display:inline-flex;align-items:center;justify-content:center;color:var(--cx-text-faint)}
 .cx-tree-recent{border-bottom:1px solid var(--cx-line);padding-bottom:4px;margin-bottom:4px}
 .cx-tree-sect{display:flex;align-items:center;gap:6px;padding:5px 8px 3px;font:9px var(--cx-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--cx-text-faint)}
 
@@ -1521,8 +1564,8 @@ window.__ModuleLoader__.load({
         const open = !!expanded[key];
         return h(React.Fragment, { key },
           h('div', { className: `cx-tree-item${activePath === e.path ? ' on' : ''}`, style: { paddingLeft: 6 + depth * 12 }, onClick: () => (isDir ? toggleDir(key) : openFile(e.path)), onContextMenu: (ev) => { ev.preventDefault(); ev.stopPropagation(); setTreeMenu({ x: ev.clientX, y: ev.clientY, entry: e }); }, title: e.path },
-            h('span', { className: 'chev' }, isDir ? (open ? '▾' : '▸') : ''),
-            h('span', { className: 'fic', style: { color: isDir ? '#f0b64a' : fileColor(e.name) } }, isDir ? '▤' : '◈'),
+            isDir ? h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(open) }) : h('span', { className: 'chev' }),
+            h('span', { className: 'fic', dangerouslySetInnerHTML: isDir ? dirIconHtml(open) : fileIconHtml(e.name) }),
             h('span', { className: 'nm' }, e.name)),
           isDir && open ? renderDir(key, depth + 1) : null);
       });
@@ -1551,30 +1594,30 @@ window.__ModuleLoader__.load({
               ? h('div', { className: 'cx-empty' }, zh ? '先在服务节点/项目空间上点「编程」打开项目。' : 'Pick a node/space and click CODE.')
               : h('div', { className: 'cx-tree' },
                 recentFiles.length ? h('div', { className: 'cx-tree-recent' },
-                  h('div', { className: 'cx-tree-sect' }, h('span', { className: 'chev' }, '▾'), zh ? '最近打开的文件' : 'RECENT'),
+                  h('div', { className: 'cx-tree-sect' }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(true) }), zh ? '最近打开的文件' : 'RECENT'),
                   recentFiles.slice(0, 8).map((p) => h('div', { key: 'r:' + p, className: `cx-tree-item${activePath === p ? ' on' : ''}`, style: { paddingLeft: 6 }, onClick: () => openFile(p) },
-                    h('span', { className: 'chev' }, ''),
-                    h('span', { className: 'fic', style: { color: fileColor(p) } }, '◈'),
+                    h('span', { className: 'chev' }),
+                    h('span', { className: 'fic', dangerouslySetInnerHTML: fileIconHtml(p) }),
                     h('span', { className: 'nm' }, p.split('/').pop()))),
-                  h('div', { className: 'cx-tree-sect' }, h('span', { className: 'chev' }, '▾'), zh ? '资源管理器' : 'WORKSPACE')) : null,
+                  h('div', { className: 'cx-tree-sect' }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(true) }), zh ? '资源管理器' : 'WORKSPACE')) : null,
                 renderDir('', 0)),
             status ? h('div', { className: 'cx-dev-status' }, status) : null)),
         h('section', { className: 'cx-dev-col cx-dev-editor' },
           h('div', { className: 'cx-dev-h' }, 'EDITOR', h('span', { className: 'cx-dev-hint' }, activeTab ? activeTab.path : (zh ? '双击左侧文件' : 'OPEN A FILE'))),
           h('div', { className: 'cx-tabs' }, tabs.map((t) => h('div', { key: t.path, className: `cx-tab${t.path === activePath ? ' on' : ''}`, onClick: () => setActivePath(t.path), title: t.path },
-            h('span', { className: 'ico' }, fileGlyph(t.name)),
+            h('span', { className: 'ico', dangerouslySetInnerHTML: fileIconHtml(t.name, 12) }),
             h('span', { className: 'nm' }, t.name + (t.dirty ? ' ●' : '')),
             h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); closeTab(t.path); } }, '×')))),
           h('div', { className: 'cx-crumb' },
-            h('span', { className: 'seg', onClick: () => onSelectNode && onSelectNode(node), title: 'node' }, h('span', { className: 'ci' }, '◉'), String(node || '')),
+            h('span', { className: 'seg', onClick: () => onSelectNode && onSelectNode(node), title: 'node' }, h('span', { className: 'ci', dangerouslySetInnerHTML: nodeIconHtml(true) }), String(node || '')),
             h('span', { className: 'sep' }, '›'),
-            h('span', { className: 'seg', onClick: () => onSelectSpace && onSelectSpace(space), title: 'space' }, h('span', { className: 'ci' }, '▣'), space || ''),
+            h('span', { className: 'seg', onClick: () => onSelectSpace && onSelectSpace(space), title: 'space' }, h('span', { className: 'ci', dangerouslySetInnerHTML: spaceIconHtml() }), space || ''),
             (activePath || '').split('/').filter(Boolean).map((seg, i, arr) => {
               const p = arr.slice(0, i + 1).join('/');
               const isFile = i === arr.length - 1;
               return h(React.Fragment, { key: p },
                 h('span', { className: 'sep' }, '›'),
-                h('span', { className: `seg${isFile ? ' file' : ''}`, onClick: () => (isFile ? setActivePath(p) : null), title: p }, h('span', { className: 'ci' }, isFile ? '◈' : '▤'), seg));
+                h('span', { className: `seg${isFile ? ' file' : ''}`, onClick: () => (isFile ? setActivePath(p) : null), title: p }, h('span', { className: 'ci', dangerouslySetInnerHTML: isFile ? fileIconHtml(seg) : dirIconHtml(true) }), seg));
             }),
             h('div', { className: 'cx-crumb-actions' },
               h('button', { className: 'cx-pm-op', onClick: () => save(), title: zh ? '保存' : 'Save' }, '⤓'),
