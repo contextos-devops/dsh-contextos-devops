@@ -1122,6 +1122,12 @@ window.__ModuleLoader__.load({
 .cx-dev-preview{position:relative}
 .cx-pane-refresh{position:absolute;top:6px;right:8px;z-index:3;width:20px;height:20px;border:1px solid var(--cx-border);border-radius:4px;background:rgba(6,20,32,.75);color:var(--cx-text-dim);cursor:pointer;font-size:11px;line-height:1}
 .cx-pane-refresh:hover{color:var(--cx-accent);border-color:var(--cx-accent)}
+.cx-preview-md{flex:1;min-height:0;overflow:auto;padding:10px 12px;font:12px/1.8 var(--cx-font);color:var(--cx-text)}
+.cx-preview-md h1,.cx-preview-md h2,.cx-preview-md h3{margin:10px 0 6px;color:var(--cx-text-strong)}
+.cx-preview-md pre{background:rgba(6,20,32,.7);padding:8px;border-radius:6px;overflow:auto}
+.cx-preview-md code{font-family:var(--cx-mono);color:var(--cx-accent)}
+.cx-preview-text{flex:1;min-height:0;overflow:auto;margin:0;padding:10px 12px;font:11px/1.7 var(--cx-mono);color:var(--cx-text-dim);white-space:pre-wrap}
+
 .cx-dev .cx-dev-editor{background:transparent}
 .cx-dev .cx-editor-wrap,.cx-dev .cx-editor-host,.cx-dev .cx-editor-ta{background:transparent}
 .cx-dev .cx-editor-host .monaco-editor,.cx-dev .cx-editor-host .monaco-editor .margin,.cx-dev .cx-editor-host .monaco-editor-background,.cx-dev .cx-editor-host .monaco-editor .overflow-guard{background:transparent!important}
@@ -1839,6 +1845,15 @@ window.__ModuleLoader__.load({
       });
 
       const previewUrl = node && space ? `http://127.0.0.1:${node}/s/${space}/` : '';
+      const previewKindOf = (p) => {
+        const e = String(p || '').split('.').pop().toLowerCase();
+        if (['html', 'htm', 'xhtml'].includes(e)) return 'html';
+        if (['md', 'markdown', 'mdx'].includes(e)) return 'md';
+        if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(e)) return 'image';
+        if (['txt', 'log', 'csv', 'json', 'yml', 'yaml', 'ini', 'conf', 'makefile', 'license'].includes(e)) return 'text';
+        return 'page';
+      };
+      const pvKind = activePath ? previewKindOf(activePath) : 'page';
 
       return h('div', { className: 'cx-dev-wrap' },
         bg && bg.image ? h('div', { className: 'cx-chat-bg photo' }, h('img', { src: bg.image, alt: '' })) : null,
@@ -1928,7 +1943,15 @@ window.__ModuleLoader__.load({
         h('section', { className: 'cx-dev-col cx-dev-preview' },
           h('button', { className: 'cx-pane-refresh', onClick: () => setPreviewNonce((v) => v + 1), title: T('刷新') }, '↻'),
           h('div', { className: 'cx-dev-b cx-preview-wrap' },
-            previewUrl ? h('iframe', { key: previewNonce, className: 'cx-preview-frame', src: previewUrl, title: 'preview' }) : h('div', { className: 'cx-empty' }, zh ? '选择节点/项目空间后显示预览' : 'Pick a node/space to preview'))),
+            pvKind === 'md'
+              ? h('div', { className: 'cx-preview-md' }, activeTab ? h(RichText, { text: activeTab.content }) : null)
+              : pvKind === 'text'
+                ? h('pre', { className: 'cx-preview-text' }, activeTab ? activeTab.content : '')
+                : pvKind === 'html'
+                  ? (activeTab ? h('iframe', { key: 'pv' + previewNonce + activePath, className: 'cx-preview-frame', srcDoc: activeTab.content, title: 'preview' }) : null)
+                  : previewUrl
+                    ? h('iframe', { key: 'pv' + previewNonce, className: 'cx-preview-frame', src: previewUrl, title: 'preview' })
+                    : h('div', { className: 'cx-empty' }, zh ? '选择节点/项目空间后显示预览' : 'Pick a node/space to preview'))),
         h('section', { className: 'cx-dev-col cx-dev-term' },
           h('div', { className: 'cx-dev-h cx-term-h' },
             h('div', { className: 'cx-term-tabs' },
