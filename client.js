@@ -1158,6 +1158,15 @@ window.__ModuleLoader__.load({
 .cx-crumb .ci{opacity:.65;font-size:9px}
 .cx-crumb .sep{opacity:.45}
 .cx-crumb-actions{margin-left:auto;display:flex;gap:2px;flex:none}
+.cx-statusbar{display:flex;align-items:center;gap:10px;padding:3px 10px;border-top:1px solid var(--cx-border);background:var(--cx-surface-1);font:9px var(--cx-mono);color:var(--cx-text-dim);flex:none;overflow:hidden}
+.cx-statusbar .spacer{flex:1}
+.cx-statusbar .sep{width:1px;height:10px;background:var(--cx-border)}
+.cx-statusbar .sb-path{max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--cx-text)}
+.cx-statusbar .sb-branch{color:var(--cx-accent)}
+.cx-git-count{margin-left:6px;padding:0 5px;border-radius:8px;background:var(--cx-accent-soft);color:var(--cx-accent);font-size:9px}
+.cx-tree-item .cx-git-badge{margin-left:auto;width:12px;text-align:center;font:9px var(--cx-mono);color:var(--cx-muted)}
+.cx-git-badge.mod{color:#ffb454}.cx-git-badge.add{color:#42f5a7}.cx-git-badge.del{color:#ff5c7a}.cx-git-badge.unt{color:#8fd9b6}
+
 
 .cx-dev .cx-tab{background:rgba(10,32,49,.65);border:0;border-top:2px solid transparent;border-radius:4px 4px 0 0;margin:0 2px 0 0}
 .cx-dev .cx-tab:hover{background:rgba(14,42,62,.8);color:var(--cx-text)}
@@ -1360,6 +1369,14 @@ window.__ModuleLoader__.load({
       const [showRight, setShowRight] = useState(false);
       const [showBottom, setShowBottom] = useState(false);
       const [previewNonce, setPreviewNonce] = useState(0);
+      const [git, setGit] = useState(null);
+      const [gitOpen, setGitOpen] = useState(true);
+      const [cursor, setCursor] = useState({ line: 1, column: 1 });
+      const refreshGit = async () => {
+        if (!node || !space) return;
+        try { setGit(await api('git', { node, space })); } catch { /* no git */ }
+      };
+      useEffect(() => { refreshGit(); }, [node, space]);
       const [recentOpen, setRecentOpen] = useState(true);
       const [treeOpen, setTreeOpen] = useState(true);
       const [editorErr, setEditorErr] = useState('');
@@ -1479,6 +1496,7 @@ window.__ModuleLoader__.load({
           await api('writeFile', { node, space, path: t.path, content: value });
           setTabs((ts) => ts.map((x) => x.path === t.path ? { ...x, content: value, dirty: false } : x));
           setStatus(zh ? `已保存 ${t.path}` : `saved ${t.path}`);
+          refreshGit();
         } catch (e) { setStatus(String(e?.message || e)); }
       };
       saveRef.current = save;
@@ -1530,6 +1548,7 @@ window.__ModuleLoader__.load({
               setTabs((ts) => ts.map((t) => (t.path === p && t.content !== v ? { ...t, content: v, dirty: true } : t)));
             });
             ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => saveRef.current());
+            ed.onDidChangeCursorPosition((ev) => { try { setCursor({ line: ev.position.lineNumber, column: ev.position.column }); } catch {} });
             const cur = tabsRef.current.find((t) => t.path === activeRef.current);
             if (cur) {
               ed.setValue(cur.content);
@@ -1691,7 +1710,7 @@ window.__ModuleLoader__.load({
         try {
           if (isDir) await api('mkdir', { node, space, path: target });
           else await api('writeFile', { node, space, path: target, content: '' });
-          await reloadDir(dir);
+          await reloadDir(dir); refreshGit();
           if (!isDir) openFile(target);
         } catch (e) { setStatus(String(e?.message || e)); }
       };
@@ -1703,13 +1722,13 @@ window.__ModuleLoader__.load({
         try {
           await api('renamePath', { node, space, from: entry.path, to: target });
           closeTab(entry.path);
-          await reloadDir(dir);
+          await reloadDir(dir); refreshGit();
         } catch (e) { setStatus(String(e?.message || e)); }
       };
       const removeEntry = async (entry) => {
         if (!window.confirm(zh ? `删除「${entry.name}」？` : `Delete "${entry.name}"?`)) return;
         const dir = dirOf(entry);
-        try { await api('removePath', { node, space, path: entry.path }); closeTab(entry.path); await reloadDir(dir); }
+        try { await api('removePath', { node, space, path: entry.path }); closeTab(entry.path); await reloadDir(dir); refreshGit(); }
         catch (e) { setStatus(String(e?.message || e)); }
       };
       const readPanes = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide-panes') || '{}'); } catch { return {}; } };
@@ -1725,6 +1744,12 @@ window.__ModuleLoader__.load({
         try { const all = readPanes(); all[`${node}:${space}`] = { left: showLeft, right: showRight, bottom: showBottom }; localStorage.setItem('contextos-devops-dsh:ide-panes', JSON.stringify(all)); } catch {}
       }, [showLeft, showRight, showBottom, node, space]);
       const jumpLine = (line) => { const ed = editorRef.current; if (ed) { try { ed.revealLineInCenter(line); ed.setPosition({ lineNumber: line, column: 1 }); ed.focus(); } catch {} } };
+      const gitMark = (p) => (git && git.files ? git.files[p] : '');
+      const gitClass = (x) => (x === 'A' || x === '?' || x === '??' ? 'add' : x === 'D' ? 'del' : x === 'U' || x === 'UU' ? 'unt' : 'mod');
+      const langOfPath = (p) => {
+        const e = String(p || '').split('.').pop().toLowerCase();
+        return ({ go: 'go', js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript', json: 'json', md: 'markdown', css: 'css', scss: 'scss', html: 'html', htm: 'html', sh: 'shell', yml: 'yaml', yaml: 'yaml', py: 'python', sql: 'sql', mod: 'go', sum: 'plaintext' })[e] || 'plaintext';
+      };
       const symbolsOf = (text) => {
         const out = [];
         String(text || '').split('\n').forEach((ln, i) => {
@@ -1782,7 +1807,8 @@ window.__ModuleLoader__.load({
           h('div', { className: `cx-tree-item${activePath === e.path ? ' on' : ''}`, style: { paddingLeft: 6 + depth * 12 }, onClick: () => (isDir ? toggleDir(key) : openFile(e.path)), onContextMenu: (ev) => { ev.preventDefault(); ev.stopPropagation(); setTreeMenu({ x: ev.clientX, y: ev.clientY, entry: e }); }, title: e.path },
             isDir ? h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(open) }) : h('span', { className: 'chev' }),
             h('span', { className: 'fic', dangerouslySetInnerHTML: isDir ? dirIconHtml(open) : fileIconHtml(e.name) }),
-            h('span', { className: 'nm' }, e.name)),
+            h('span', { className: 'nm' }, e.name),
+            gitMark(e.path) ? h('span', { className: `cx-git-badge ${gitClass(gitMark(e.path))}` }, gitMark(e.path) === '??' ? 'U' : gitMark(e.path)) : null),
           isDir && open ? renderDir(key, depth + 1) : null);
       });
 
@@ -1813,6 +1839,14 @@ window.__ModuleLoader__.load({
                     h('span', { className: 'chev' }),
                     h('span', { className: 'fic', dangerouslySetInnerHTML: fileIconHtml(p) }),
                     h('span', { className: 'nm' }, p.split('/').pop()))) : null),
+                git && git.changed ? h('div', { className: 'cx-tree-recent' },
+                  h('div', { className: 'cx-tree-sect', onClick: () => setGitOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(gitOpen) }), zh ? 'GIT 变更' : 'GIT CHANGES',
+                    h('span', { className: 'cx-git-count' }, String(git.changed))),
+                  gitOpen ? Object.keys(git.files).slice(0, 60).map((fp) => h('div', { key: 'g:' + fp, className: `cx-tree-item${activePath === fp ? ' on' : ''}`, style: { paddingLeft: 6 }, onClick: () => openFile(fp) },
+                    h('span', { className: 'chev' }),
+                    h('span', { className: 'fic', dangerouslySetInnerHTML: fileIconHtml(fp) }),
+                    h('span', { className: 'nm' }, fp.split('/').pop()),
+                    h('span', { className: `cx-git-badge ${gitClass(git.files[fp])}` }, git.files[fp] === '??' ? 'U' : git.files[fp]))) : null) : null,
                 h('div', { className: 'cx-tree-sect', onClick: () => setTreeOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(treeOpen) }), zh ? '资源管理器' : 'WORKSPACE',
                   h('button', { className: 'cx-pm-op', style: { marginLeft: 'auto' }, onClick: (ev) => { ev.stopPropagation(); newEntry({ type: 'dir', path: '', name: '' }, false); }, title: zh ? '新建文件' : 'New file' }, '+'),
                   h('button', { className: 'cx-pm-refresh', onClick: (ev) => { ev.stopPropagation(); reloadDir(''); } }, '↻')),
@@ -1876,6 +1910,17 @@ window.__ModuleLoader__.load({
               ? h('pre', { className: 'cx-term-out' }, termOut || (zh ? '（暂无输出，点上方「编译」生成）' : 'no output'))
               : termIds.map((id) => h('div', { key: id, className: 'cx-term-host', style: id === termActive ? null : { display: 'none' }, ref: (el) => { if (el) termHostsRef.current[id] = el; } })),
             termErr ? h('div', { className: 'cx-dev-status err' }, termErr) : null))),
+        h('div', { className: 'cx-statusbar' },
+          h('span', { className: 'sb-branch' }, `⎇ ${git && git.branch ? git.branch : '-'}`),
+          git && git.ahead ? h('span', null, `↑${git.ahead}`) : null,
+          h('span', null, `${git && git.changed ? git.changed : 0} 变更`),
+          h('span', { className: 'sep' }),
+          h('span', { className: 'sb-path' }, activePath || (zh ? '未打开文件' : 'no file')),
+          h('span', null, activeTab && activeTab.dirty ? (zh ? '未保存' : 'unsaved') : (zh ? '已保存' : 'saved')),
+          h('span', { className: 'spacer' }),
+          h('span', null, `行 ${cursor.line}, 列 ${cursor.column}`),
+          h('span', null, langOfPath(activePath)),
+          h('span', null, 'UTF-8')),
         nameDlg ? h('div', { className: 'cx-namedlg' },
           h('div', { className: 't' }, nameDlg.title),
           h('input', { className: 'cx-input', value: nameDlg.value, autoFocus: true,

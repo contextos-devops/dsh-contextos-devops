@@ -1477,6 +1477,39 @@ async function removePath({ node, space, path: p = '' } = {}) {
   await fs.rm(resolveIn(base, p), { recursive: true, force: true });
   return { path: p, removed: true };
 }
+async function gitStatus({ node, space } = {}) {
+  const base = await spaceBase({ node, space });
+  const run = (args) => new Promise((resolve) => {
+    const child = spawn('git', ['-C', base, ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; });
+    child.stderr.on('data', (d) => { out += d; });
+    child.on('close', (code) => resolve({ code, out }));
+    child.on('error', () => resolve({ code: -1, out: '' }));
+  });
+  const st = await run(['status', '--porcelain=v1', '-b']);
+  if (st.code !== 0) return { branch: '', ahead: 0, behind: 0, files: {}, changed: 0, commits: 0, error: st.out.slice(0, 200) };
+  const files = {};
+  let branch = '', ahead = 0, behind = 0;
+  st.out.split('\n').forEach((line) => {
+    if (!line) return;
+    if (line.startsWith('## ')) {
+      const head = line.slice(3);
+      const m = head.match(/^[^.\s]+/);
+      branch = m ? m[0] : '';
+      const a = head.match(/ahead (\d+)/); if (a) ahead = Number(a[1]);
+      const b = head.match(/behind (\d+)/); if (b) behind = Number(b[1]);
+      return;
+    }
+    const xy = line.slice(0, 2).trim();
+    let file = line.slice(3);
+    if (file.includes(' -> ')) file = file.split(' -> ').pop();
+    if (xy) files[file] = xy;
+  });
+  const hist = await run(['rev-list', '--count', 'HEAD']);
+  return { branch, ahead, behind, files, changed: Object.keys(files).length, commits: Number((hist.out || '').trim()) || 0 };
+}
+
 async function compileSpace({ node, space } = {}) {
   const r = await http(node, `/s/${encode(space)}/c/vimer/action/compile`, { method: 'POST', timeout: 120000 });
   return { status: r.status, out: String(r.text || '').slice(0, 4000) };
@@ -2542,6 +2575,7 @@ async function route(req, res) {
     if (op === 'health' || op === 'nodes') {
       return send(res, 200, { ok: true, data: { ctxRoot: ctxRoot(), nodes: await listNodes() } });
     }
+    if (op === 'git') return send(res, 200, { ok: true, data: await gitStatus({ node, space: body.space }) });
     if (op === 'origin') {
       let host = '';
       try { const a = server && server.address && server.address(); if (a && a.port) host = `${!a.address || a.address === '::' || a.address === '::1' ? '127.0.0.1' : a.address}:${a.port}`; } catch {}
