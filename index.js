@@ -2830,8 +2830,6 @@ main()
     socket.on('error', () => { try { child.kill(); } catch {} });
     socket.on('close', () => { try { child.kill(); } catch {} });
     if (head && head.length) feed(head);
-    // flush the shell prompt
-    try { child.stdin.write('\n'); } catch {}
   }
 
   const server = ctx.webServer || ctx.get('webServer');
