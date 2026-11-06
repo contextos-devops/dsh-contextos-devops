@@ -1422,7 +1422,7 @@ async function readFile({ node, space, path: p } = {}) {
   const n = (await listNodes()).find((x) => x.port === Number(node));
   if (!n) throw new Error(`node ${node} not found`);
   const base = baseDirOf(n, space);
-  const file = path.join(base, ...String(p || '').split('/').filter(Boolean));
+  const file = path.join(base, ...String(p || '').replace(/^\/+/, '').split('/').filter(Boolean));
   if (file !== base && !file.startsWith(base + path.sep)) throw new Error('path escapes the space');
   let content;
   try {
@@ -1437,7 +1437,7 @@ async function writeFile({ node, space, path: p, content = '' } = {}) {
   const n = (await listNodes()).find((x) => x.port === Number(node));
   if (!n) throw new Error(`node ${node} not found`);
   const base = baseDirOf(n, space);
-  const file = path.join(base, ...String(p || '').split('/').filter(Boolean));
+  const file = path.join(base, ...String(p || '').replace(/^\/+/, '').split('/').filter(Boolean));
   if (file !== base && !file.startsWith(base + path.sep)) throw new Error('path escapes the space');
   await fs.writeFile(file, content, 'utf8');
   return { node: Number(node), space, path: p || '', saved: true };
@@ -1452,7 +1452,7 @@ async function listTree({ node, space, path: p = '' } = {}) {
   const n = (await listNodes()).find((x) => x.port === Number(node));
   if (!n) throw new Error(`node ${node} not found`);
   const base = baseDirOf(n, space);
-  const dir = path.join(base, ...String(p || '').split('/').filter(Boolean));
+  const dir = path.join(base, ...String(p || '').replace(/^\/+/, '').split('/').filter(Boolean));
   if (dir !== base && !dir.startsWith(base + path.sep)) throw new Error('path escapes the space');
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const skip = new Set(['.git', 'var', 'bin', 'node_modules']);

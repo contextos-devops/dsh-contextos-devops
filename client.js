@@ -1485,6 +1485,7 @@ window.__ModuleLoader__.load({
     function DevWorkspace({ locale, node, space, bg, theme, active, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onActiveFile, requests, onPick }) {
       const zh = locale === 'zh';
       const sp = space || '';
+      const normPath = (v) => String(v || '').replace(/^\/+/, '');
       const [dirs, setDirs] = useState({});
       const [expanded, setExpanded] = useState({ '': true });
       const [tabs, setTabs] = useState([]);
@@ -1541,7 +1542,7 @@ window.__ModuleLoader__.load({
         const timer = setTimeout(() => {
         const t = tabs.find((x) => x.path === activePath);
         onActiveFile(t ? {
-          node, space, path: t.path, name: t.name, dirty: !!t.dirty,
+          node, space, path: String(t.path || '').replace(/^\/+/, ''), name: t.name, dirty: !!t.dirty,
           language: (() => { const e = (t.path.split('.').pop() || '').toLowerCase(); return ({ go: 'go', js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript', json: 'json', css: 'css', html: 'html', md: 'markdown', shy: 'shy', sh: 'shell', yml: 'yaml', yaml: 'yaml' })[e] || 'plaintext'; })(),
           content: String(t.content || '').slice(0, 1500),
         } : (node ? { node, space, path: '', name: '', dirty: false, language: '', content: '' } : null));
@@ -1671,7 +1672,8 @@ window.__ModuleLoader__.load({
           return { ...e, [p]: on };
         });
       };
-      const openFile = async (p) => {
+      const openFile = async (rawPath) => {
+        const p = normPath(rawPath);
         setStatus('');
         if (!tabsRef.current.some((t) => t.path === p)) {
           try {
@@ -1727,13 +1729,15 @@ window.__ModuleLoader__.load({
         let disposed = false;
         (async () => {
           const out = [];
-          for (const p of saved.tabs.slice(0, 12)) {
+          for (const raw of saved.tabs.slice(0, 12)) {
+            const p = String(raw || '').replace(/^\/+/, '');
+            if (!p) continue;
             try { const r = await api('readFile', { node, space: sp, path: p }); out.push({ path: p, name: p.split('/').pop(), content: r.content, dirty: false }); } catch { /* skip missing */ }
           }
           if (disposed) { restorePendingRef.current = false; return; }
           if (!out.length) { await openDefault(); restorePendingRef.current = false; return; }
           setTabs(out);
-          setActivePath(out.some((t) => t.path === saved.active) ? saved.active : (out[0] ? out[0].path : ''));
+          setActivePath(out.some((t) => t.path === String(saved.active || '').replace(/^\/+/, '')) ? String(saved.active || '').replace(/^\/+/, '') : (out[0] ? out[0].path : ''));
           restorePendingRef.current = false;
         })();
         return () => { disposed = true; };
@@ -2046,7 +2050,7 @@ window.__ModuleLoader__.load({
       };
       const renderDir = (p, depth) => sortEntries(dirs[p]).map((e) => {
         const isDir = e.type === 'dir';
-        const key = p + '/' + e.name;
+        const key = (p ? p + '/' : '') + e.name;
         const open = !!expanded[key];
         return h(React.Fragment, { key },
           h('div', { className: `cx-tree-item${activePath === e.path ? ' on' : ''}`, style: { paddingLeft: 6 + depth * 12 }, onClick: () => (isDir ? toggleDir(key) : openFile(e.path)), onContextMenu: (ev) => { ev.preventDefault(); ev.stopPropagation(); setTreeMenu({ x: ev.clientX, y: ev.clientY, entry: e }); }, title: e.path },
