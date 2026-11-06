@@ -1389,6 +1389,13 @@ window.__ModuleLoader__.load({
 .cx-drop-item .ck{width:12px;flex:none;font-size:10px;opacity:.9}
 /* 菜单类弹层与下拉保持同一套圆角/描边/阴影 */
 .cx-menu,.cx-tree-menu{border-radius:6px;background:var(--cx-surface-1);border:1px solid var(--cx-line2);box-shadow:0 14px 36px rgba(0,0,0,.5);padding:4px}
+
+/* 浅色主题：文件标签 */
+.cx-shell[data-theme="light"] .cx-dev .cx-tab{background:rgba(9,60,80,.06);color:var(--cx-text-dim);border-top-color:transparent}
+.cx-shell[data-theme="light"] .cx-dev .cx-tab:hover{background:rgba(9,60,80,.11);color:var(--cx-text)}
+.cx-shell[data-theme="light"] .cx-dev .cx-tab.on{background:transparent;border-top-color:var(--cx-accent);color:var(--cx-accent)}
+.cx-shell[data-theme="light"] .cx-dev .cx-tab.on .ico{color:var(--cx-accent)}
+.cx-shell[data-theme="light"] .cx-dev .cx-tab .ico{color:var(--cx-text-faint)}
 `;
 
     const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-event', { detail })); } catch {} };
