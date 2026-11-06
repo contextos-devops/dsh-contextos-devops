@@ -1192,7 +1192,7 @@ window.__ModuleLoader__.load({
 .cx-tree-item .fic{width:14px;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .cx-tree-item .chev{display:inline-flex;align-items:center;justify-content:center;color:var(--cx-text-faint)}
 .cx-tree-recent{border-bottom:1px solid var(--cx-line);padding-bottom:4px;margin-bottom:4px}
-.cx-tree-sect{display:flex;align-items:center;gap:6px;padding:6px 8px;margin:2px 0;border-radius:4px;cursor:pointer;font:600 11px var(--cx-font);letter-spacing:.02em;color:var(--cx-text-dim)}
+.cx-tree-sect{display:flex;align-items:center;gap:6px;padding:6px 8px;margin:2px 0;border-radius:4px;cursor:pointer;font:600 11px var(--cx-font);letter-spacing:.02em;color:var(--cx-text-dim);position:sticky;top:0;z-index:3;background:var(--cx-surface-1)}
 .cx-tree-sect:hover{background:var(--cx-accent-soft);color:var(--cx-accent)}
 .cx-tree-sect .chev{width:10px;display:inline-flex;align-items:center;justify-content:center;opacity:.7}
 .cx-crumb-sep{width:1px;height:12px;margin:0 4px;background:var(--cx-border)}
@@ -1851,10 +1851,7 @@ window.__ModuleLoader__.load({
               className: 'cx-editor-ta', ref: taRef, value: activeTab ? activeTab.content : '', spellCheck: false,
               onChange: (e) => { const v = e.target.value; setTabs((ts) => ts.map((t) => (t.path === activePath ? { ...t, content: v, dirty: true } : t))); },
             }) : null,
-            editorErr ? h('div', { className: 'cx-dev-status err' }, `${editorErr} · ${zh ? '已回退到基础编辑器' : 'fallback editor'}`) : null),
-          h('div', { className: 'cx-dev-statusbar' },
-            h('span', null, node ? `:${node}` : ''), h('span', null, space || ''),
-            h('button', { className: 'cx-btn', onClick: () => save() }, zh ? '保存' : 'SAVE'))),
+            editorErr ? h('div', { className: 'cx-dev-status err' }, `${editorErr} · ${zh ? '已回退到基础编辑器' : 'fallback editor'}`) : null)),
         h('section', { className: 'cx-dev-col cx-dev-preview' },
           h('button', { className: 'cx-pane-refresh', onClick: () => setPreviewNonce((v) => v + 1), title: T('刷新') }, '↻'),
           h('div', { className: 'cx-dev-b cx-preview-wrap' },
