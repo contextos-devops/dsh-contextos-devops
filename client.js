@@ -1194,7 +1194,8 @@ window.__ModuleLoader__.load({
 .cx-term-sessions{display:flex;gap:4px;align-items:center;margin-left:8px}
 .cx-term-sess{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border:1px solid var(--cx-border);border-radius:3px;font:9px var(--cx-mono);color:var(--cx-text-dim);cursor:pointer}
 .cx-term-sess.on{color:var(--cx-accent);border-color:var(--cx-accent)}
-.cx-term-sess .x{border:0;background:transparent;color:inherit;font-size:9px;cursor:pointer;padding:0}
+.cx-term-sess .x{border:0;background:transparent;color:inherit;font-size:9px;cursor:pointer;padding:0 0 0 4px;opacity:.35}
+.cx-term-sess:hover .x{opacity:1}
 .cx-term-add{border:1px solid var(--cx-border);background:transparent;color:var(--cx-text-dim);border-radius:3px;font-size:11px;line-height:1;padding:1px 6px;cursor:pointer}
 .cx-term-add:hover{color:var(--cx-accent);border-color:var(--cx-accent)}
 .cx-term-out{margin:0;padding:8px 10px;font:11px/1.6 var(--cx-mono);color:var(--cx-text-dim);white-space:pre-wrap}
