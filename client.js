@@ -437,7 +437,6 @@ window.__ModuleLoader__.load({
 .cx-hero-title{font-size:clamp(22px,3.2vw,38px);line-height:1.2;font-weight:900;letter-spacing:.02em;background:linear-gradient(135deg,#eaffff,#3ee7ff 55%,#42f5a7);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 40px rgba(62,231,255,.12)}
 .cx-hero-sub{font-size:11.5px;line-height:1.8;color:#8db5c8;margin-top:10px}
 .cx-msg{display:flex;gap:8px;align-items:flex-start;max-width:94%;padding:9px 11px;border-radius:14px;border:1px solid rgba(30,70,92,.75);background:linear-gradient(135deg,rgba(9,28,44,.92),rgba(6,17,28,.92));box-shadow:0 8px 26px rgba(0,0,0,.18);white-space:normal}
-.cx-msg{max-width:100%;width:100%}
 .cx-msg.ai{border-left:2px solid var(--cx-cyan)}
 .cx-msg.user{align-self:flex-end;flex-direction:row-reverse;border-color:rgba(66,245,167,.35);background:linear-gradient(135deg,rgba(8,38,33,.9),rgba(6,20,20,.92))}
 .cx-msg-avatar{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:8px;font-weight:800;flex:none;color:#041018;background:linear-gradient(135deg,var(--cx-cyan),var(--cx-green))}
