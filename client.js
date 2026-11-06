@@ -1100,6 +1100,7 @@ window.__ModuleLoader__.load({
 .cx-chat.full .cx-hint-panel{max-width:900px;width:calc(100% - 36px);padding:0}
 .cx-shell{--cx-pm-side-w:280px}
 .cx-chat-host{flex:1;min-height:0;display:flex;min-width:0;padding:10px 12px 12px}
+.cx-dev-host{flex:1;min-height:0;display:flex;min-width:0}
 .cx-chat-host.full{position:absolute;inset:0;z-index:500;padding:0}
 .cx-shell.host-chrome .cx-chat-host.full .cx-chat{padding-top:0}
 .cx-chat.dock{position:relative;inset:auto;width:100%;height:100%;flex:1;min-height:0;border:1px solid var(--cx-line);z-index:1;box-shadow:none}
@@ -1465,7 +1466,7 @@ window.__ModuleLoader__.load({
     }
 
     // 开发模式：VSCode 风格 IDE 的骨架（编辑器、终端、预览后续接入）
-    function DevWorkspace({ locale, node, space, bg, theme, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onPick }) {
+    function DevWorkspace({ locale, node, space, bg, theme, active, nodes, spaces, projects, activeKey, onSelectProject, onCloseProject, onSelectNode, onSelectSpace, onPick }) {
       const zh = locale === 'zh';
       const sp = space || '';
       const [dirs, setDirs] = useState({});
@@ -1504,6 +1505,15 @@ window.__ModuleLoader__.load({
       const [treeOpen, setTreeOpen] = useState(true);
       const [editorErr, setEditorErr] = useState('');
       const [termErr, setTermErr] = useState('');
+      useEffect(() => {
+        if (!active) return;
+        const t = setTimeout(() => {
+          Object.values(termMapRef.current).forEach((x) => { try { x.fit && x.fit.fit(); } catch {} });
+          const m = monacoRef.current;
+          if (m && editorRef.current) { try { editorRef.current.layout(); } catch {} }
+        }, 60);
+        return () => clearTimeout(t);
+      }, [active]);
       const [termTab, setTermTab] = useState('term');
       const [termIds, setTermIds] = useState([1]);
       const [termActive, setTermActive] = useState(1);
@@ -4787,7 +4797,7 @@ window.__ModuleLoader__.load({
             h('button', { className: 'cx-chip', onClick: () => setViewMode('chat'), title: `${t('scene')}: ${bg?.name || T('默认')}` }, h('span', { className: `dot${bg?.image ? ' on' : ''}` }), `${t('scene')} `, h('b', null, bg?.name || T('默认'))))),
         error ? h('div', { className: 'cx-err' }, error) : null,
         h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}`, style: viewMode === 'chat' ? null : { display: 'none' } }, h(ChatPanel, { ...chatProps, docked: !chatFull })),
-        viewMode === 'dev' ? h(DevWorkspace, { locale, node, space, bg, theme, nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onPick: openIde }) : null,
+        h('div', { className: 'cx-dev-host', style: viewMode === 'dev' ? null : { display: 'none' } }, h(DevWorkspace, { locale, node, space, bg, theme, active: viewMode === 'dev', nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onPick: openIde })),
         h('div', { className: 'cx-body', style: viewMode === 'manage' ? null : { display: 'none' } },
           h(Panel, {
             index: '01', title: tp('serve'), count: `${nodeRows.length}/${nodes.length} NODES`,
