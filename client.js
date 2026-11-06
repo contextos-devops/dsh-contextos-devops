@@ -1018,11 +1018,11 @@ window.__ModuleLoader__.load({
 /* 窗口模式：对话 / 管理 / 开发；右上角给 DSH 图标留白（2026-11-06） */
 .cx-shell{--cx-host-right:88px;--cx-host-left:168px;--cx-host-left-pad:0px;position:relative}
 .cx-header{padding-left:calc(16px + var(--cx-host-left-pad))}
-.cx-chat.full .cx-chat-hin{max-width:none}
-.cx-chat.full .cx-compose{max-width:none}
-.cx-chat.full .cx-chat-b{padding-left:18px;padding-right:18px}
-.cx-chat.full .cx-hint{max-width:none;width:calc(100% - 36px);padding:0}
-.cx-chat.full .cx-hint-panel{max-width:none;width:calc(100% - 36px);padding:0}
+.cx-chat.full .cx-chat-hin{max-width:900px}
+.cx-chat.full .cx-compose{max-width:900px}
+.cx-chat.full .cx-chat-b{padding-left:max(10px,calc((100% - 900px)/2));padding-right:max(10px,calc((100% - 900px)/2))}
+.cx-chat.full .cx-hint{max-width:900px;width:calc(100% - 36px);padding:0}
+.cx-chat.full .cx-hint-panel{max-width:900px;width:calc(100% - 36px);padding:0}
 .cx-shell{--cx-pm-side-w:280px}
 .cx-chat-host{flex:1;min-height:0;display:flex;min-width:0;padding:10px 12px 12px}
 .cx-chat-host.full{position:absolute;inset:0;z-index:500;padding:0}
