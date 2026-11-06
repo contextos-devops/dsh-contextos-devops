@@ -170,7 +170,7 @@ window.__ModuleLoader__.load({
 .cx-chat,.cx-chat-body,.cx-chat-center,.cx-chat-b{overflow-x:hidden!important;min-width:0}
 .cx-chat-b{overflow-y:auto;overscroll-behavior-x:none}
 .cx-hint{overflow:hidden}
-.cx-compose{overflow-x:hidden}
+.cx-compose{overflow:visible}
 .cx-msg-body,.cx-msg-main{min-width:0;overflow-wrap:anywhere}
 .cx-msg pre{max-width:100%;overflow-x:auto}
 .cx-chat-hin,.cx-compose{min-width:0}
@@ -1387,7 +1387,7 @@ window.__ModuleLoader__.load({
 .cx-drop-item{display:flex;align-items:center;gap:8px;width:100%;border:0;text-align:left;background:transparent;color:var(--cx-text);font:11px var(--cx-font);padding:6px 8px;border-radius:4px;cursor:pointer;white-space:nowrap}
 .cx-drop-item:hover{background:rgba(62,231,255,.12);color:var(--cx-accent)}
 .cx-drop-item.on{color:var(--cx-accent)}
-.cx-drop-item .ck{width:12px;flex:none;font-size:10px;opacity:.9}
+.cx-drop-item .ck{margin-left:auto;padding-left:12px;width:12px;flex:none;font-size:10px;opacity:.9;text-align:right}
 /* 菜单类弹层与下拉保持同一套圆角/描边/阴影 */
 .cx-menu,.cx-tree-menu{border-radius:6px;background:var(--cx-surface-1);border:1px solid var(--cx-line2);box-shadow:0 14px 36px rgba(0,0,0,.5);padding:4px}
 
@@ -1418,6 +1418,8 @@ window.__ModuleLoader__.load({
 .cx-req-detail .kv .v{color:var(--cx-text)}
 .cx-req-sect{font:600 10px var(--cx-font);color:var(--cx-accent);margin-top:4px}
 .cx-req-pre{margin:0;padding:8px;background:rgba(6,20,32,.6);border:1px solid var(--cx-line);border-radius:4px;font:10px/1.55 var(--cx-mono);color:var(--cx-text);white-space:pre-wrap;word-break:break-word;max-height:26vh;overflow:auto}
+
+.cx-chat-center{overflow:visible!important}
 `;
 
     const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-event', { detail })); } catch {} };
@@ -2226,10 +2228,12 @@ window.__ModuleLoader__.load({
       const [open, setOpen] = useState(false);
       const [pos, setPos] = useState(null);
       const btnRef = useRef(null);
+      const lbRef = useRef(null);
       const openMenu = (e) => {
         e.stopPropagation();
         const r = btnRef.current ? btnRef.current.getBoundingClientRect() : null;
-        setPos(r ? { left: r.left, top: r.bottom + 4, minWidth: r.width } : null);
+        const lr = lbRef.current ? lbRef.current.getBoundingClientRect() : null;
+        setPos(r ? { left: lr ? lr.left : r.left, top: r.bottom + 4, minWidth: r.width - (lr ? Math.max(0, lr.left - r.left) : 0) } : null);
         setOpen((v) => !v);
       };
       useEffect(() => {
@@ -2242,12 +2246,12 @@ window.__ModuleLoader__.load({
       const cur = (options || []).find((o) => o.value === value);
       return h('span', { className: `cx-drop${className ? ' ' + className : ''}` },
         h('button', { ref: btnRef, type: 'button', className: `cx-drop-btn${open ? ' on' : ''}`, title, onClick: openMenu },
-          h('span', { className: 'lb' }, cur ? cur.label : ''),
+          h('span', { className: 'lb', ref: lbRef }, cur ? cur.label : ''),
           h('span', { className: 'cv' }, '▾')),
         open && pos ? h('div', { className: 'cx-drop-pop', style: { left: pos.left, top: pos.top, minWidth: pos.minWidth }, onClick: (e) => e.stopPropagation() },
           (options || []).map((o) => h('button', { key: o.value, type: 'button', className: `cx-drop-item${o.value === value ? ' on' : ''}`, onClick: () => { setOpen(false); onChange(o.value); } },
-            h('span', { className: 'ck' }, o.value === value ? '✓' : ''),
-            h('span', { className: 'lb' }, o.label)))) : null);
+            h('span', { className: 'lb' }, o.label),
+            h('span', { className: 'ck' }, o.value === value ? '✓' : '')))) : null);
     }
 
     function MenuButton({ items, disabled }) {
