@@ -1162,6 +1162,18 @@ window.__ModuleLoader__.load({
 .cx-editor-host{flex:1;min-height:0;width:100%;min-height:220px}
 .cx-editor-ta{flex:1;width:100%;min-height:220px;border:0;resize:none;background:#1e1e1e;color:#d4d4d4;font:12px/1.6 Menlo,monospace;padding:10px;outline:none}
 .cx-term-wrap{display:flex;flex-direction:column;background:#04101a;overflow:hidden}
+.cx-term-h{padding:4px 8px;border-bottom:1px solid var(--cx-line)}
+.cx-term-tabs{display:flex;gap:4px;align-items:center}
+.cx-term-tab{border:0;border-bottom:2px solid transparent;background:transparent;color:var(--cx-text-dim);font:10px var(--cx-mono);padding:3px 8px;cursor:pointer}
+.cx-term-tab.on{color:var(--cx-accent);border-bottom-color:var(--cx-accent)}
+.cx-term-sessions{display:flex;gap:4px;align-items:center;margin-left:8px}
+.cx-term-sess{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border:1px solid var(--cx-border);border-radius:3px;font:9px var(--cx-mono);color:var(--cx-text-dim);cursor:pointer}
+.cx-term-sess.on{color:var(--cx-accent);border-color:var(--cx-accent)}
+.cx-term-sess .x{border:0;background:transparent;color:inherit;font-size:9px;cursor:pointer;padding:0}
+.cx-term-add{border:1px solid var(--cx-border);background:transparent;color:var(--cx-text-dim);border-radius:3px;font-size:11px;line-height:1;padding:1px 6px;cursor:pointer}
+.cx-term-add:hover{color:var(--cx-accent);border-color:var(--cx-accent)}
+.cx-term-out{margin:0;padding:8px 10px;font:11px/1.6 var(--cx-mono);color:var(--cx-text-dim);white-space:pre-wrap}
+
 .cx-term-host{flex:1;min-height:0;padding:4px}
 .cx-dev-status{font:9px var(--cx-mono);color:var(--cx-text-dim);padding:4px 8px;border-top:1px solid var(--cx-border)}
 .cx-dev-status.err{color:var(--cx-red)}
@@ -1303,13 +1315,16 @@ window.__ModuleLoader__.load({
       const [nameDlg, setNameDlg] = useState(null);
       const [editorErr, setEditorErr] = useState('');
       const [termErr, setTermErr] = useState('');
+      const [termTab, setTermTab] = useState('term');
+      const [termIds, setTermIds] = useState([1]);
+      const [termActive, setTermActive] = useState(1);
+      const [termOut, setTermOut] = useState('');
       const editorHostRef = useRef(null);
       const taRef = useRef(null);
-      const termHostRef = useRef(null);
+      const termHostsRef = useRef({});
       const editorRef = useRef(null);
       const monacoRef = useRef(null);
-      const termRef = useRef(null);
-      const wsRef = useRef(null);
+      const termMapRef = useRef({});
       const tabsRef = useRef(tabs); tabsRef.current = tabs;
       const activeRef = useRef(activePath); activeRef.current = activePath;
       const restorePendingRef = useRef(false);
@@ -1461,7 +1476,17 @@ window.__ModuleLoader__.load({
       }, [activePath, activeTab && activeTab.path]);
 
       useEffect(() => {
-        let disposed = false; let term = null; let ws = null;
+        Object.keys(termMapRef.current).forEach((id) => {
+          const x = termMapRef.current[id];
+          try { x.ws && x.ws.close(); } catch {}
+          try { x.term && x.term.dispose(); } catch {}
+        });
+        termMapRef.current = {};
+        termHostsRef.current = {};
+        setTermIds([1]); setTermActive(1); setTermErr(''); setTermTab('term');
+      }, [node, space]);
+      useEffect(() => {
+        let cancelled = false;
         (async () => {
           try {
             ensureCss('/contextos-devops-dsh/xterm/xterm.css');
@@ -1473,28 +1498,35 @@ window.__ModuleLoader__.load({
             if (!window.Terminal) await evalScript('/contextos-devops-dsh/xterm/xterm.js');
             if (!window.Terminal) throw new Error('xterm missing');
             if (!(window.FitAddon && window.FitAddon.FitAddon)) await evalScript('/contextos-devops-dsh/xterm/addon-fit.js').catch(() => {});
-            if (disposed || !termHostRef.current) return;
-            term = new window.Terminal({ fontSize: 12, fontFamily: 'Menlo, monospace', cursorBlink: true, convertEol: true, theme: { background: '#04101a', foreground: '#cfeff9', cursor: '#3ee7ff' } });
-            const fit = window.FitAddon && window.FitAddon.FitAddon ? new window.FitAddon.FitAddon() : null;
-            if (fit) term.loadAddon(fit);
-            term.open(termHostRef.current);
-            try { fit && fit.fit(); } catch {}
-            termRef.current = term;
-            term.onData((d) => { if (ws && ws.readyState === 1) ws.send(d); });
             const info = await api('spaceDir', { node, space }).catch(() => ({ dir: '' }));
-            const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-            ws = new WebSocket(`${proto}://${location.host}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(info.dir || '')}`);
-            wsRef.current = ws;
-            ws.onmessage = (ev) => { try { term.write(ev.data); } catch {} };
-            ws.onclose = () => { try { term.write('\r\n[terminal closed]\r\n'); } catch {} };
-            const onResize = () => { try { fit && fit.fit(); } catch {} };
-            window.addEventListener('resize', onResize);
-            setTermErr('');
-            setTimeout(onResize, 200);
-          } catch (e) { setTermErr(String(e?.message || e)); }
+            for (const id of termIds) {
+              if (termMapRef.current[id]) continue;
+              const host = termHostsRef.current[id];
+              if (!host) continue;
+              const term = new window.Terminal({ fontSize: 12, fontFamily: 'Menlo, monospace', cursorBlink: true, convertEol: true, theme: { background: '#04101a', foreground: '#cfeff9', cursor: '#42f5a7' } });
+              const fit = window.FitAddon && window.FitAddon.FitAddon ? new window.FitAddon.FitAddon() : null;
+              if (fit) term.loadAddon(fit);
+              term.open(host);
+              try { fit && fit.fit(); } catch {}
+              const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+              const ws = new WebSocket(`${proto}://${location.host}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(info.dir || '')}`);
+              term.onData((d) => { if (ws.readyState === 1) ws.send(d); });
+              ws.onmessage = (ev) => { try { term.write(ev.data); } catch {} };
+              ws.onclose = () => { try { term.write('\r\n[terminal closed]\r\n'); } catch {} };
+              termMapRef.current[id] = { term, ws, fit };
+              setTimeout(() => { try { fit && fit.fit(); } catch {} }, 150);
+            }
+            if (!cancelled) setTermErr('');
+          } catch (e) { if (!cancelled) setTermErr(String(e?.message || e)); }
         })();
-        return () => { disposed = true; try { ws && ws.close(); } catch {}; try { term && term.dispose(); } catch {} };
-      }, [node, space]);
+        const onResize = () => { Object.values(termMapRef.current).forEach((x) => { try { x.fit && x.fit.fit(); } catch {} }); };
+        window.addEventListener('resize', onResize);
+        return () => { cancelled = true; window.removeEventListener('resize', onResize); };
+      }, [termIds, node, space]);
+      useEffect(() => () => {
+        Object.values(termMapRef.current).forEach((x) => { try { x.ws && x.ws.close(); } catch {}; try { x.term && x.term.dispose(); } catch {} });
+        termMapRef.current = {};
+      }, []);
 
       const askName = (title, value = '') => new Promise((resolve) => setNameDlg({ title, value, resolve }));
       const fileColor = (name) => {
@@ -1544,6 +1576,17 @@ window.__ModuleLoader__.load({
         try { await api('removePath', { node, space, path: entry.path }); closeTab(entry.path); await reloadDir(dir); }
         catch (e) { setStatus(String(e?.message || e)); }
       };
+      const addTerm = () => { const id = Math.max(0, ...termIds) + 1; setTermIds([...termIds, id]); setTermActive(id); setTermTab('term'); };
+      const closeTerm = (id) => {
+        const x = termMapRef.current[id];
+        try { x && x.ws && x.ws.close(); } catch {}
+        try { x && x.term && x.term.dispose(); } catch {}
+        delete termMapRef.current[id];
+        const rest = termIds.filter((t) => t !== id);
+        const next = rest.length ? rest : [1];
+        setTermIds(next);
+        if (termActive === id) setTermActive(next[0]);
+      };
       const compile = async () => {
         if (!node || !space) return;
         setStatus(zh ? '编译中…' : 'compiling…');
@@ -1551,7 +1594,8 @@ window.__ModuleLoader__.load({
           const r = await api('compile', { node, space });
           const out = String(r?.out || '');
           setStatus(r?.status === 200 ? (zh ? '编译完成' : 'compiled') : (zh ? '编译失败' : 'compile failed'));
-          if (termRef.current) termRef.current.write(`\r\n$ compile\r\n${out}\r\n`);
+          setTermOut((prev) => `${prev}$ compile\n${out}\n\n`);
+          setTermTab('out');
         } catch (e) { setStatus(String(e?.message || e)); }
       };
       useEffect(() => {
@@ -1642,9 +1686,21 @@ window.__ModuleLoader__.load({
           h('div', { className: 'cx-dev-b cx-preview-wrap' },
             previewUrl ? h('iframe', { className: 'cx-preview-frame', src: previewUrl, title: 'preview' }) : h('div', { className: 'cx-empty' }, zh ? '选择节点/项目空间后显示预览' : 'Pick a node/space to preview'))),
         h('section', { className: 'cx-dev-col cx-dev-term' },
-          h('div', { className: 'cx-dev-h' }, 'TERMINAL', h('span', { className: 'cx-dev-hint' }, 'xterm')),
+          h('div', { className: 'cx-dev-h cx-term-h' },
+            h('div', { className: 'cx-term-tabs' },
+              h('button', { className: `cx-term-tab${termTab === 'term' ? ' on' : ''}`, onClick: () => setTermTab('term') }, zh ? '终端' : 'TERMINAL'),
+              h('button', { className: `cx-term-tab${termTab === 'out' ? ' on' : ''}`, onClick: () => setTermTab('out') }, zh ? '输出' : 'OUTPUT')),
+            h('span', { className: 'cx-dev-hint' }, `${node || ''} · ${space || ''}`),
+            h('div', { className: 'cx-term-sessions' },
+              termIds.map((id) => h('span', { key: id, className: `cx-term-sess${id === termActive && termTab === 'term' ? ' on' : ''}`,
+                onClick: () => { setTermActive(id); setTermTab('term'); setTimeout(() => { const x = termMapRef.current[id]; try { x && x.fit && x.fit.fit(); } catch {} }, 60); } },
+                h('span', { className: 'n' }, String(id)),
+                termIds.length > 1 ? h('button', { className: 'x', onClick: (ev) => { ev.stopPropagation(); closeTerm(id); } }, '×') : null)),
+              h('button', { className: 'cx-term-add', onClick: addTerm, title: zh ? '新建终端' : 'New terminal' }, '+'))),
           h('div', { className: 'cx-dev-b cx-term-wrap' },
-            h('div', { className: 'cx-term-host', ref: termHostRef }),
+            termTab === 'out'
+              ? h('pre', { className: 'cx-term-out' }, termOut || (zh ? '（暂无输出，点上方「编译」生成）' : 'no output'))
+              : termIds.map((id) => h('div', { key: id, className: 'cx-term-host', style: id === termActive ? null : { display: 'none' }, ref: (el) => { if (el) termHostsRef.current[id] = el; } })),
             termErr ? h('div', { className: 'cx-dev-status err' }, termErr) : null))),
         nameDlg ? h('div', { className: 'cx-namedlg' },
           h('div', { className: 't' }, nameDlg.title),
