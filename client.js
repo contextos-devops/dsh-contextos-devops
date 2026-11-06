@@ -1155,7 +1155,8 @@ window.__ModuleLoader__.load({
 .cx-crumb .sep{opacity:.45}
 .cx-crumb-actions{margin-left:auto;display:flex;gap:2px;flex:none}
 
-.cx-dev .cx-tab{background:transparent;border:0;border-top:2px solid transparent}
+.cx-dev .cx-tab{background:rgba(10,32,49,.65);border:0;border-top:2px solid transparent;border-radius:4px 4px 0 0;margin:0 2px 0 0}
+.cx-dev .cx-tab:hover{background:rgba(14,42,62,.8);color:var(--cx-text)}
 .cx-dev .cx-tab.on{background:transparent;border-top-color:var(--cx-accent);color:var(--cx-accent)}
 .cx-dev .cx-tab .x{color:inherit}
 .cx-menu-item .hint{margin-left:auto;padding-left:12px;opacity:.5;font-size:9px}
