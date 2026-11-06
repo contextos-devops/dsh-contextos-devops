@@ -1,0 +1,10 @@
+{
+  "meta": {
+    "title": "ContextOS DevOps",
+    "description": "部署 ContextOS 服务节点、创建项目空间与应用、写入并回读应用数据的一站式 DevOps 面板。"
+  },
+  "contextosDevops": {
+    "title": "ContextOS DevOps",
+    "subtitle": "节点 · 空间 · 应用 · 数据"
+  }
+}

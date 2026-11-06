@@ -1,0 +1,10 @@
+{
+  "meta": {
+    "title": "ContextOS DevOps",
+    "description": "Deploy ContextOS nodes, create project spaces and apps, and read/write app records from one panel."
+  },
+  "contextosDevops": {
+    "title": "ContextOS DevOps",
+    "subtitle": "Nodes · Spaces · Apps · Data"
+  }
+}
