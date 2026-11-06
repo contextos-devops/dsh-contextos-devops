@@ -2160,15 +2160,15 @@ window.__ModuleLoader__.load({
           h(MenuButton, { items: on ? [{ label: '停止', danger: true, action: () => onStop(s.name) }, { label: '删除', danger: true, action: () => onDelete(s.name) }] : [{ label: '删除', danger: true, action: () => onDelete(s.name) }] })));
     }
 
-    function ItemIcon({ item, name, size }) {
-      const src = String((item && (item.icons || item.icon || item.image)) || '').trim();
+    function ItemIcon({ item, name, size, src }) {
+      const iconSrc = String(src || (item && (item.icons || item.icon || item.image)) || '').trim();
       const label = String(name || (item && (item.title || item.name)) || '?').trim().slice(0, 1) || '?';
       let hue = 0;
       const sname = String((item && (item.name || item.command)) || label);
       for (let i = 0; i < sname.length; i += 1) hue = (hue * 31 + sname.charCodeAt(i)) % 360;
       const px = size || 26;
-      if (src && /^(https?:|\/)/.test(src)) {
-        return h('span', { className: 'cx-ai', style: { width: px, height: px } }, h('img', { src, alt: '' }));
+      if (iconSrc && /^(https?:|\/)/.test(iconSrc)) {
+        return h('span', { className: 'cx-ai', style: { width: px, height: px } }, h('img', { src: iconSrc, alt: '' }));
       }
       return h('span', { className: 'cx-ai', style: { width: px, height: px, background: `linear-gradient(135deg, hsl(${hue} 72% 42%), hsl(${(hue + 42) % 360} 70% 26%))` } }, label.toUpperCase());
     }
@@ -2176,7 +2176,7 @@ window.__ModuleLoader__.load({
     function AppRow({ a, active, onSelect, onOpen, locale }) {
       return h('div', { className: `cx-app${active ? ' on' : ''}`, onClick: () => onOpen(a) },
         h('div', { className: 'cx-app-top' },
-          h(ItemIcon, { item: a, name: a.title || a.name, size: 26 }),
+          h(ItemIcon, { item: a, name: a.title || a.name, size: 26, src: a.place_avatar || a.icon }),
           h('div', { style: { minWidth: 0 } },
             h('div', { className: 'an' }, a.title || a.name),
             h('div', { className: 'ac' }, [a.city_name, a.company_name, a.service_name].filter(Boolean).join(' · ') || a.command))),
@@ -2191,7 +2191,7 @@ window.__ModuleLoader__.load({
       const label = (x) => locale === 'zh' ? ({ create: '创建', online: '上架', offline: '下架', code: '编程', conf: '配置' }[x] || x) : ({ create: 'CREATE', online: 'Online', offline: 'Offline', code: 'Code', conf: 'Config' }[x] || x);
       return h('div', { className: 'cx-store' },
         h('div', { className: 'cx-store-main', onClick: () => !busy && onCreate(s) },
-          h(ItemIcon, { item: s, name: s.name, size: 26 }),
+          h(ItemIcon, { item: s, name: s.name, size: 26, src: s.icon }),
           h('div', { style: { flex: 1, minWidth: 0 } },
             h('div', { className: 'cx-store-titleline' },
               h('span', { className: 'sn' }, s.name),
