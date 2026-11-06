@@ -1104,7 +1104,11 @@ window.__ModuleLoader__.load({
 .cx-dev-preview{grid-column:3;grid-row:1}
 .cx-dev-term{grid-column:2/4;grid-row:2}
 .cx-preview-wrap{display:flex;flex-direction:column}
-.cx-preview-frame{flex:1;width:100%;border:0;background:#fff}.cx-dev .cx-dev-editor{background:transparent}
+.cx-preview-frame{flex:1;width:100%;border:0;background:#fff}
+.cx-dev-preview{position:relative}
+.cx-pane-refresh{position:absolute;top:6px;right:8px;z-index:3;width:20px;height:20px;border:1px solid var(--cx-border);border-radius:4px;background:rgba(6,20,32,.75);color:var(--cx-text-dim);cursor:pointer;font-size:11px;line-height:1}
+.cx-pane-refresh:hover{color:var(--cx-accent);border-color:var(--cx-accent)}
+.cx-dev .cx-dev-editor{background:transparent}
 .cx-dev .cx-editor-wrap,.cx-dev .cx-editor-host,.cx-dev .cx-editor-ta{background:transparent}
 .cx-dev .cx-editor-host .monaco-editor,.cx-dev .cx-editor-host .monaco-editor .margin,.cx-dev .cx-editor-host .monaco-editor-background,.cx-dev .cx-editor-host .monaco-editor .overflow-guard{background:transparent!important}
 .cx-dev .cx-dev-editor{border:0}
@@ -1336,8 +1340,9 @@ window.__ModuleLoader__.load({
       const [nameDlg, setNameDlg] = useState(null);
       const [crumbMenu, setCrumbMenu] = useState(null);
       const [showLeft, setShowLeft] = useState(true);
-      const [showRight, setShowRight] = useState(true);
-      const [showBottom, setShowBottom] = useState(true);
+      const [showRight, setShowRight] = useState(false);
+      const [showBottom, setShowBottom] = useState(false);
+      const [previewNonce, setPreviewNonce] = useState(0);
       const [recentOpen, setRecentOpen] = useState(true);
       const [treeOpen, setTreeOpen] = useState(true);
       const [editorErr, setEditorErr] = useState('');
@@ -1603,6 +1608,18 @@ window.__ModuleLoader__.load({
         try { await api('removePath', { node, space, path: entry.path }); closeTab(entry.path); await reloadDir(dir); }
         catch (e) { setStatus(String(e?.message || e)); }
       };
+      const readPanes = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide-panes') || '{}'); } catch { return {}; } };
+      useEffect(() => {
+        if (!node || !space) return;
+        const p = readPanes()[`${node}:${space}`];
+        setShowLeft(p ? !!p.left : true);
+        setShowRight(p ? !!p.right : false);
+        setShowBottom(p ? !!p.bottom : false);
+      }, [node, space]);
+      useEffect(() => {
+        if (!node || !space) return;
+        try { const all = readPanes(); all[`${node}:${space}`] = { left: showLeft, right: showRight, bottom: showBottom }; localStorage.setItem('contextos-devops-dsh:ide-panes', JSON.stringify(all)); } catch {}
+      }, [showLeft, showRight, showBottom, node, space]);
       const jumpLine = (line) => { const ed = editorRef.current; if (ed) { try { ed.revealLineInCenter(line); ed.setPosition({ lineNumber: line, column: 1 }); ed.focus(); } catch {} } };
       const symbolsOf = (text) => {
         const out = [];
@@ -1734,10 +1751,9 @@ window.__ModuleLoader__.load({
             h('span', null, node ? `:${node}` : ''), h('span', null, space || ''),
             h('button', { className: 'cx-btn', onClick: () => save() }, zh ? '保存' : 'SAVE'))),
         h('section', { className: 'cx-dev-col cx-dev-preview' },
-          h('div', { className: 'cx-dev-h' }, 'PREVIEW', h('span', { className: 'cx-dev-hint' }, previewUrl ? space : (zh ? '未选择空间' : 'NO SPACE')),
-            h('button', { className: 'cx-pm-refresh', style: { marginLeft: 'auto' }, onClick: () => { const f = document.querySelector('.cx-preview-frame'); if (f) { try { f.src = previewUrl; } catch {} } }, title: T('刷新') }, '↻')),
+          h('button', { className: 'cx-pane-refresh', onClick: () => setPreviewNonce((v) => v + 1), title: T('刷新') }, '↻'),
           h('div', { className: 'cx-dev-b cx-preview-wrap' },
-            previewUrl ? h('iframe', { className: 'cx-preview-frame', src: previewUrl, title: 'preview' }) : h('div', { className: 'cx-empty' }, zh ? '选择节点/项目空间后显示预览' : 'Pick a node/space to preview'))),
+            previewUrl ? h('iframe', { key: previewNonce, className: 'cx-preview-frame', src: previewUrl, title: 'preview' }) : h('div', { className: 'cx-empty' }, zh ? '选择节点/项目空间后显示预览' : 'Pick a node/space to preview'))),
         h('section', { className: 'cx-dev-col cx-dev-term' },
           h('div', { className: 'cx-dev-h cx-term-h' },
             h('div', { className: 'cx-term-tabs' },
