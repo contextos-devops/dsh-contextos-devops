@@ -1174,7 +1174,10 @@ window.__ModuleLoader__.load({
 .cx-tree-item .fic{width:14px;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .cx-tree-item .chev{display:inline-flex;align-items:center;justify-content:center;color:var(--cx-text-faint)}
 .cx-tree-recent{border-bottom:1px solid var(--cx-line);padding-bottom:4px;margin-bottom:4px}
-.cx-tree-sect{display:flex;align-items:center;gap:6px;padding:5px 8px 3px;font:9px var(--cx-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--cx-text-faint)}
+.cx-tree-sect{display:flex;align-items:center;gap:6px;padding:6px 8px;margin:2px 0;border-radius:4px;cursor:pointer;font:600 11px var(--cx-font);letter-spacing:.02em;color:var(--cx-text-dim)}
+.cx-tree-sect:hover{background:var(--cx-accent-soft);color:var(--cx-accent)}
+.cx-tree-sect .chev{width:10px;display:inline-flex;align-items:center;justify-content:center;opacity:.7}
+.cx-crumb-sep{width:1px;height:12px;margin:0 4px;background:var(--cx-border)}
 
 .cx-editor-wrap{position:relative;display:flex;flex-direction:column;overflow:hidden}
 .cx-editor-host{flex:1;min-height:0;width:100%;min-height:220px}
@@ -1335,6 +1338,8 @@ window.__ModuleLoader__.load({
       const [showLeft, setShowLeft] = useState(true);
       const [showRight, setShowRight] = useState(true);
       const [showBottom, setShowBottom] = useState(true);
+      const [recentOpen, setRecentOpen] = useState(true);
+      const [treeOpen, setTreeOpen] = useState(true);
       const [editorErr, setEditorErr] = useState('');
       const [termErr, setTermErr] = useState('');
       const [termTab, setTermTab] = useState('term');
@@ -1680,14 +1685,14 @@ window.__ModuleLoader__.load({
             !node || !space
               ? h('div', { className: 'cx-empty' }, zh ? '先在服务节点/项目空间上点「编程」打开项目。' : 'Pick a node/space and click CODE.')
               : h('div', { className: 'cx-tree' },
-                recentFiles.length ? h('div', { className: 'cx-tree-recent' },
-                  h('div', { className: 'cx-tree-sect' }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(true) }), zh ? '最近打开的文件' : 'RECENT'),
-                  recentFiles.slice(0, 8).map((p) => h('div', { key: 'r:' + p, className: `cx-tree-item${activePath === p ? ' on' : ''}`, style: { paddingLeft: 6 }, onClick: () => openFile(p) },
+                h('div', { className: 'cx-tree-recent' },
+                  h('div', { className: 'cx-tree-sect', onClick: () => setRecentOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(recentOpen) }), zh ? '最近打开的文件' : 'RECENT'),
+                  recentOpen && recentFiles.length ? recentFiles.slice(0, 8).map((p) => h('div', { key: 'r:' + p, className: `cx-tree-item${activePath === p ? ' on' : ''}`, style: { paddingLeft: 6 }, onClick: () => openFile(p) },
                     h('span', { className: 'chev' }),
                     h('span', { className: 'fic', dangerouslySetInnerHTML: fileIconHtml(p) }),
-                    h('span', { className: 'nm' }, p.split('/').pop()))),
-                  h('div', { className: 'cx-tree-sect' }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(true) }), zh ? '资源管理器' : 'WORKSPACE')) : null,
-                renderDir('', 0)),
+                    h('span', { className: 'nm' }, p.split('/').pop()))) : null),
+                h('div', { className: 'cx-tree-sect', onClick: () => setTreeOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(treeOpen) }), zh ? '资源管理器' : 'WORKSPACE'),
+                treeOpen ? renderDir('', 0) : null),
             status ? h('div', { className: 'cx-dev-status' }, status) : null)),
         h('section', { className: 'cx-dev-col cx-dev-editor' },
           h('div', { className: 'cx-dev-h' }, 'EDITOR', h('span', { className: 'cx-dev-hint' }, activeTab ? activeTab.path : (zh ? '双击左侧文件' : 'OPEN A FILE'))),
@@ -1713,12 +1718,13 @@ window.__ModuleLoader__.load({
               h('span', { className: 'seg', title: 'symbols', onClick: (ev) => { ev.stopPropagation(); const items = symbolsOf(activeTab.content); if (items.length) setCrumbMenu({ ...menuAt(ev.currentTarget), items }); } },
                 h('span', { className: 'ci' }, 'ƒ'), (symbolsOf(activeTab.content)[0] || {}).label || (zh ? '函数' : 'fn'))) : null,
             h('div', { className: 'cx-crumb-actions' },
-              h('button', { className: `cx-pm-op${showLeft ? ' on' : ''}`, onClick: () => setShowLeft((v) => !v), title: zh ? '左侧栏' : 'Left panel' }, '▌'),
-              h('button', { className: `cx-pm-op${showBottom ? ' on' : ''}`, onClick: () => setShowBottom((v) => !v), title: zh ? '输出栏' : 'Bottom panel' }, '▄'),
-              h('button', { className: `cx-pm-op${showRight ? ' on' : ''}`, onClick: () => setShowRight((v) => !v), title: zh ? '右侧栏' : 'Right panel' }, '▐'),
               h('button', { className: 'cx-pm-op', onClick: () => save(), title: zh ? '保存' : 'Save' }, '⤓'),
               h('button', { className: 'cx-pm-op', onClick: () => { if (activePath) reloadDir(''); }, title: zh ? '重新加载目录' : 'Reload' }, '↻'),
-              h('button', { className: 'cx-pm-op', onClick: () => { try { navigator.clipboard.writeText([node, space, activePath].filter(Boolean).join(' / ')); } catch {} setStatus(zh ? '路径已复制' : 'path copied'); }, title: zh ? '复制路径' : 'Copy path' }, '⧉'))),
+              h('button', { className: 'cx-pm-op', onClick: () => { try { navigator.clipboard.writeText([node, space, activePath].filter(Boolean).join(' / ')); } catch {} setStatus(zh ? '路径已复制' : 'path copied'); }, title: zh ? '复制路径' : 'Copy path' }, '⧉'),
+              h('span', { className: 'cx-crumb-sep' }),
+              h('button', { className: `cx-pm-op${showLeft ? ' on' : ''}`, onClick: () => setShowLeft((v) => !v), title: zh ? '左侧栏' : 'Left panel' }, '▌'),
+              h('button', { className: `cx-pm-op${showBottom ? ' on' : ''}`, onClick: () => setShowBottom((v) => !v), title: zh ? '输出栏' : 'Bottom panel' }, '▄'),
+              h('button', { className: `cx-pm-op${showRight ? ' on' : ''}`, onClick: () => setShowRight((v) => !v), title: zh ? '右侧栏' : 'Right panel' }, '▐'))),
           h('div', { className: 'cx-dev-b cx-editor-wrap' },
             h('div', { className: 'cx-editor-host', ref: editorHostRef, style: editorErr ? { display: 'none' } : null }),
             editorErr ? h('textarea', {
