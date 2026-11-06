@@ -1383,7 +1383,7 @@ window.__ModuleLoader__.load({
 .cx-drop-btn:hover{background:rgba(62,231,255,.10)}
 .cx-drop-btn.on{color:var(--cx-accent)}
 .cx-drop-btn .cv{opacity:.55;font-size:9px}
-.cx-drop-pop{position:fixed;z-index:950;padding:4px;border:1px solid var(--cx-line2);border-radius:6px;background:var(--cx-surface-1);box-shadow:0 14px 36px rgba(0,0,0,.5)}
+.cx-drop-pop{position:absolute;left:8px;top:100%;margin-top:4px;z-index:950;min-width:150px;padding:4px;border:1px solid var(--cx-line2);border-radius:6px;background:var(--cx-surface-1);box-shadow:0 14px 36px rgba(0,0,0,.5)}
 .cx-drop-item{display:flex;align-items:center;gap:8px;width:100%;border:0;text-align:left;background:transparent;color:var(--cx-text);font:11px var(--cx-font);padding:6px 8px;border-radius:4px;cursor:pointer;white-space:nowrap}
 .cx-drop-item:hover{background:rgba(62,231,255,.12);color:var(--cx-accent)}
 .cx-drop-item.on{color:var(--cx-accent)}
@@ -2229,13 +2229,7 @@ window.__ModuleLoader__.load({
       const [pos, setPos] = useState(null);
       const btnRef = useRef(null);
       const lbRef = useRef(null);
-      const openMenu = (e) => {
-        e.stopPropagation();
-        const r = btnRef.current ? btnRef.current.getBoundingClientRect() : null;
-        const lr = lbRef.current ? lbRef.current.getBoundingClientRect() : null;
-        setPos(r ? { left: lr ? lr.left : r.left, top: r.bottom + 4, minWidth: r.width - (lr ? Math.max(0, lr.left - r.left) : 0) } : null);
-        setOpen((v) => !v);
-      };
+      const openMenu = (e) => { e.stopPropagation(); setOpen((v) => !v); };
       useEffect(() => {
         if (!open) return;
         const close = () => setOpen(false);
@@ -2246,9 +2240,9 @@ window.__ModuleLoader__.load({
       const cur = (options || []).find((o) => o.value === value);
       return h('span', { className: `cx-drop${className ? ' ' + className : ''}` },
         h('button', { ref: btnRef, type: 'button', className: `cx-drop-btn${open ? ' on' : ''}`, title, onClick: openMenu },
-          h('span', { className: 'lb', ref: lbRef }, cur ? cur.label : ''),
+          h('span', { className: 'lb' }, cur ? cur.label : ''),
           h('span', { className: 'cv' }, '▾')),
-        open && pos ? h('div', { className: 'cx-drop-pop', style: { left: pos.left, top: pos.top, minWidth: pos.minWidth }, onClick: (e) => e.stopPropagation() },
+        open ? h('div', { className: 'cx-drop-pop', onClick: (e) => e.stopPropagation() },
           (options || []).map((o) => h('button', { key: o.value, type: 'button', className: `cx-drop-item${o.value === value ? ' on' : ''}`, onClick: () => { setOpen(false); onChange(o.value); } },
             h('span', { className: 'lb' }, o.label),
             h('span', { className: 'ck' }, o.value === value ? '✓' : '')))) : null);
