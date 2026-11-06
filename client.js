@@ -1422,6 +1422,14 @@ window.__ModuleLoader__.load({
 .cx-chat-center{overflow:visible!important}
 
 .cx-dev-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}
+
+.cx-scan-tabs{display:flex;gap:2px;margin:8px 0 4px;border-bottom:1px solid var(--cx-border)}
+.cx-scan-tab{border:0;border-bottom:2px solid transparent;background:transparent;color:var(--cx-text-dim);font:600 10px var(--cx-font);letter-spacing:.06em;padding:5px 10px;cursor:pointer}
+.cx-scan-tab:hover{background:rgba(62,231,255,.10);color:var(--cx-text)}
+.cx-scan-tab.on{color:var(--cx-accent);border-bottom-color:var(--cx-accent)}
+.cx-scan-tab .n{margin-left:5px;font-size:9px;color:var(--cx-text-faint)}
+.cx-scan-body{max-height:46vh;overflow:auto}
+.cx-empty-d{padding:14px;text-align:center;color:var(--cx-text-faint);font:10px var(--cx-mono)}
 `;
 
     const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-event', { detail })); } catch {} };
@@ -2691,6 +2699,7 @@ window.__ModuleLoader__.load({
       }, [node]);
       const [scanKind, setScanKind] = useState('');
       const [ssh, setSsh] = useState(null);
+      const [tab, setTab] = useState('hosts');
       const loadSsh = async () => { try { setSsh(await api('sshHosts')); } catch { /* no ssh */ } };
       const scan = async (kind) => {
         setScanKind(kind); setBusy(true); setErr('');
@@ -2720,47 +2729,52 @@ window.__ModuleLoader__.load({
             h('button', { className: `cx-btn xs${scanKind === 'wifi' ? ' on' : ''}`, onClick: () => scan('wifi') }, '扫描无线网络'),
             h('button', { className: `cx-btn xs${scanKind === 'bt' ? ' on' : ''}`, onClick: () => scan('bt') }, '扫描蓝牙设备'),
             h('button', { className: 'cx-btn xs', style: { marginLeft: 'auto' }, onClick: () => scan('') }, '重新扫描')),
-          Object.entries(groups).map(renderGroup),
-          (data.bluetoothNearby || []).length ? h('div', { key: 'btn' },
-            h('div', { className: 'oh', style: { marginTop: 8 } }, `蓝牙设备 · ${data.bluetoothNearby.length}`),
-            data.bluetoothNearby.map((d, i) => h('div', { className: 'cx-device', key: 'bt' + i },
-              h('span', { className: 'cx-led on' }),
-              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, d.name || d.address || 'BLE'), h('div', { className: 'dd' }, `${d.address || '—'}${d.rssi != null ? ` · ${d.rssi} dBm` : ''}`)),
-              h('span', { className: 'cx-tag cy' }, 'NEARBY'),
-              h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(d.address || d.name || ''); } catch {} } }, '复制')))) : null,
-          (data.wifiNetworks || []).length ? h('div', { key: 'wn' },
-            h('div', { className: 'oh', style: { marginTop: 8 } }, `WIFI 网络 · ${data.wifiNetworks.length}`),
-            data.wifiNetworks.slice(0, 20).map((n, i) => h('div', { className: 'cx-device', key: 'wn' + i },
-              h('span', { className: 'cx-led on' }),
-              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, n.ssid || '(隐藏)'), h('div', { className: 'dd' }, `${n.bssid || '—'} · ch ${n.channel || '—'}${n.rssi != null ? ` · ${n.rssi} dBm` : ''}`)),
-              h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(n.ssid || ''); } catch {} } }, '复制')))) : null,
-          (data.lanHosts || []).length ? h('div', { key: 'lan' },
-            h('div', { className: 'oh', style: { marginTop: 8 } }, `WIFI 设备 · ${data.lanHosts.length}`),
-            data.lanHosts.slice(0, 30).map((x, i) => h('div', { className: 'cx-device', key: 'lan' + i },
-              h('span', { className: 'cx-led on' }),
-              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name || x.ip), h('div', { className: 'dd' }, `${x.ip} · ${x.mac}`)),
-              h('button', { className: 'cx-btn xs', onClick: () => { try { window.open(`http://${x.ip}`, '_blank'); } catch {} } }, '打开'),
-              h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(x.ip || ''); } catch {} } }, '复制')))) : null,
-          (ssh && ((ssh.services || []).length + (ssh.knownHosts || []).length + (ssh.configHosts || []).length + (ssh.history || []).length)) ? h('div', { key: 'ssh' },
-            (ssh.services || []).length ? h('div', { key: 'svc' },
-              h('div', { className: 'oh', style: { marginTop: 8 } }, `远程主机 · ${ssh.services.length}`),
-              ssh.services.map((x, i) => h('div', { className: 'cx-device', key: 'svc' + i },
-                h('span', { className: 'cx-led on' }),
-                h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name), h('div', { className: 'dd' }, `${x.username ? x.username + '@' : ''}${x.host}:${x.port}${x.init ? ' · ' + x.init : ''}`)),
-                h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(`ssh ${x.username ? x.username + '@' : ''}${x.host} -p ${x.port}`); } catch {} } }, '复制')))) : null,
-            h('div', { className: 'oh', style: { marginTop: 8 } }, `known_hosts · ${(ssh.knownHosts || []).length}`),
-            (ssh.configHosts || []).map((c, i) => h('div', { className: 'cx-device', key: 'shc' + i },
-              h('span', { className: 'cx-led on' }),
-              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, c.name), h('div', { className: 'dd' }, `${c.user ? c.user + '@' : ''}${c.hostname || c.name}${c.port ? ':' + c.port : ''} · ~/.ssh/config`)),
-              h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(`ssh ${c.user ? c.user + '@' : ''}${c.hostname || c.name}${c.port ? ' -p ' + c.port : ''}`); } catch {} } }, '复制'))),
-            (ssh.knownHosts || []).slice(0, 20).map((x, i) => h('div', { className: 'cx-device', key: 'shk' + i },
-              h('span', { className: 'cx-led on' }),
-              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.host), h('div', { className: 'dd' }, x.hashed ? 'known_hosts · 哈希条目' : 'known_hosts')),
-              h('button', { className: 'cx-btn xs', disabled: x.hashed, onClick: () => { try { navigator.clipboard.writeText(`ssh ${x.host}`); } catch {} } }, '复制'))),
-            (ssh.history || []).slice(0, 10).map((x, i) => h('div', { className: 'cx-device', key: 'shh' + i },
-              h('span', { className: 'cx-led' }),
-              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.target), h('div', { className: 'dd' }, 'shell 历史')),
-              h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(x.raw || x.target); } catch {} } }, '复制')))) : null,
+          h('div', { className: 'cx-scan-tabs' },
+            [
+              { id: 'hosts', label: '远程主机', n: (ssh?.services || []).length },
+              { id: 'wifi', label: 'WIFI 网络', n: (data.wifiNetworks || []).length },
+              { id: 'lan', label: 'WIFI 设备', n: (data.lanHosts || []).length },
+              { id: 'bt', label: '蓝牙设备', n: (data.bluetoothNearby || []).length + (data.devices || []).filter((d) => d.kind === 'bluetooth').length },
+              { id: 'nodes', label: '节点', n: (data.devices || []).filter((d) => d.kind === 'contextos').length },
+            ].map((t) => h('button', { key: t.id, className: `cx-scan-tab${tab === t.id ? ' on' : ''}`, onClick: () => setTab(t.id) }, t.label, h('span', { className: 'n' }, t.n)))),
+          h('div', { className: 'cx-scan-body' },
+            tab === 'hosts' ? ((ssh?.services || []).length
+              ? ssh.services.map((x, i) => h('div', { className: 'cx-device', key: 'svc' + i },
+                  h('span', { className: 'cx-led on' }),
+                  h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name), h('div', { className: 'dd' }, `${x.username ? x.username + '@' : ''}${x.host}:${x.port}${x.init ? ' · ' + x.init : ''}`)),
+                  h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(`ssh ${x.username ? x.username + '@' : ''}${x.host} -p ${x.port}`); } catch {} } }, '复制')))
+              : h('div', { className: 'cx-empty-d' }, '没有读取到 ~/.ssh/host 服务'))
+            : null,
+            tab === 'wifi' ? ((data.wifiNetworks || []).length
+              ? data.wifiNetworks.slice(0, 30).map((n, i) => h('div', { className: 'cx-device', key: 'wn' + i },
+                  h('span', { className: 'cx-led on' }),
+                  h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, n.ssid || '(隐藏)'), h('div', { className: 'dd' }, `${n.bssid || '—'} · ch ${n.channel || '—'}${n.rssi != null ? ` · ${n.rssi} dBm` : ''}`)),
+                  h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(n.ssid || ''); } catch {} } }, '复制')))
+              : h('div', { className: 'cx-empty-d' }, '没有扫描到无线网络'))
+            : null,
+            tab === 'lan' ? ((data.lanHosts || []).length
+              ? data.lanHosts.slice(0, 40).map((x, i) => h('div', { className: 'cx-device', key: 'lan' + i },
+                  h('span', { className: 'cx-led on' }),
+                  h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name || x.ip), h('div', { className: 'dd' }, `${x.ip} · ${x.mac}`)),
+                  h('button', { className: 'cx-btn xs', onClick: () => { try { window.open(`http://${x.ip}`, '_blank'); } catch {} } }, '打开'),
+                  h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(x.ip || ''); } catch {} } }, '复制')))
+              : h('div', { className: 'cx-empty-d' }, '没有同网设备'))
+            : null,
+            tab === 'bt' ? (((data.bluetoothNearby || []).length || (data.devices || []).some((d) => d.kind === 'bluetooth'))
+              ? [(data.bluetoothNearby || []).map((d, i) => h('div', { className: 'cx-device', key: 'bt' + i },
+                  h('span', { className: 'cx-led on' }),
+                  h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, d.name || d.address || 'BLE'), h('div', { className: 'dd' }, `${d.address || '—'}${d.rssi != null ? ` · ${d.rssi} dBm` : ''} · 附近`)),
+                  h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(d.address || d.name || ''); } catch {} } }, '复制'))),
+                (data.devices || []).filter((d) => d.kind === 'bluetooth').map((d) => h('div', { className: 'cx-device', key: d.id },
+                  h('span', { className: 'cx-led on' }),
+                  h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, d.name), h('div', { className: 'dd' }, `${d.address || '—'} · ${d.status || 'paired'}`)),
+                  h('span', { className: 'cx-tag cy' }, 'PAIRED')))]
+              : h('div', { className: 'cx-empty-d' }, '没有蓝牙设备（附近扫描需安装 blueutil）'))
+            : null,
+            tab === 'nodes' ? (data.devices || []).filter((d) => d.kind === 'contextos').map((d) => h('div', { className: 'cx-device', key: d.id },
+              h('span', { className: `cx-led${['running', 'online'].includes(d.status) ? ' on' : ''}` }),
+              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, d.name), h('div', { className: 'dd' }, `${d.address} · ${d.status}`)),
+              h('button', { className: 'cx-btn xs', onClick: () => { try { window.open(`http://127.0.0.1:${String(d.address).split(':').pop()}`, '_blank'); } catch {} } }, '打开'))) : null),
           h('div', { className: 'desc' }, data.note || '')) : null);
     }
 
