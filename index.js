@@ -770,6 +770,50 @@ function walkBluetooth(value, out) {
   }
 }
 
+async function scanWifiNetworks() {
+  const candidates = [
+    '/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -s 2>/dev/null',
+    'airport -s 2>/dev/null',
+  ];
+  for (const cmd of candidates) {
+    const r = await runShell(cmd, process.cwd(), { timeoutMs: 8000 }).catch(() => null);
+    if (!r || r.code !== 0 || !String(r.out || '').trim()) continue;
+    const rows = [];
+    for (const line of r.out.split('\n').slice(1)) {
+      const t = line.trim();
+      if (!t) continue;
+      const m = /^(.*?)\s+([0-9a-f:]{17})\s+(-?\d+)\s+(\d+)(?:\s+.*)?$/i.exec(t);
+      if (m) rows.push({ ssid: m[1].trim(), bssid: m[2].toLowerCase(), rssi: Number(m[3]), channel: Number(m[4]) });
+    }
+    if (rows.length) return rows;
+  }
+  return [];
+}
+
+async function scanBluetoothNearby() {
+  const r = await runShell('blueutil --inquiry 5 --format json 2>/dev/null', process.cwd(), { timeoutMs: 12000 }).catch(() => null);
+  if (r && r.code === 0 && String(r.out || '').trim()) {
+    try {
+      const arr = JSON.parse(r.out);
+      if (Array.isArray(arr)) return arr.map((d) => ({ name: d.name || d.address || 'BLE', address: d.address || '', rssi: d.rssi ?? null, nearby: true }));
+    } catch { /* fall through */ }
+  }
+  return [];
+}
+
+async function scanLanHosts() {
+  const r = await runShell('/usr/sbin/arp -a 2>/dev/null', process.cwd(), { timeoutMs: 4000 }).catch(() => null);
+  const hosts = [];
+  if (r && r.code === 0) {
+    for (const line of String(r.out || '').split('\n')) {
+      const m = /^(\S+)\s+\(([^)]+)\)\s+at\s+([0-9a-f:]+)/i.exec(line.trim());
+      if (!m) continue;
+      hosts.push({ ip: m[2], mac: m[3], name: m[1] === '?' ? '' : m[1] });
+    }
+  }
+  return hosts;
+}
+
 async function discoverDevices({ node } = {}) {
   const devices = [];
   const adapters = DEVICE_ADAPTERS.map((x) => ({ ...x }));
@@ -819,7 +863,12 @@ async function discoverDevices({ node } = {}) {
     const a = adapters.find((x) => x.kind === 'bluetooth');
     if (a) { a.reason = bt ? '蓝牙不可用或超时' : '蓝牙扫描失败'; }
   }
-  return { adapters, devices, scannedAt: new Date().toISOString(), note: 'Discovery scaffold: control adapters are not implemented yet; ContextOS nodes are controllable.' };
+  const [wifiNetworks, btNearby, lanHosts] = await Promise.all([scanWifiNetworks(), scanBluetoothNearby(), scanLanHosts()]);
+  return {
+    adapters, devices, wifiNetworks, bluetoothNearby: btNearby, lanHosts,
+    scannedAt: new Date().toISOString(),
+    note: 'Bluetooth nearby needs blueutil; WiFi nearby needs the airport tool; LAN lists arp neighbors. ContextOS nodes are controllable.',
+  };
 }
 
 function baseUrl(port) {
@@ -2217,6 +2266,8 @@ async function chatWithDSH({ message, history = [], context = {}, provider = '',
     '- CONCEPT ORDER (use consistently): serve/node, space/pod, place/app, avatar, scene/background, mode, view, web, editor.',
     '- Aliases: 服务节点=serve=node; 项目空间=space=pod; 应用实例=place=app; 数字分身=avatar; 赛博世界=scene=background; 工作模式=mode (factory/avatar/iot); 视图模式=view (chat/manage/dev); 网页界面=web; 源码编程=editor.',
     '- When the user says 节点/serve/node use context.serve; 空间/pod use context.space; 应用实例/place use context.place; 赛博世界/scene use context.scene; 视图/view use context.view; 网页 use context.web; 文件/代码 use context.editor.',
+    '- WORK MODES: avatar mode only creates app instances and adds data (no node/space/codegen); factory mode deploys nodes, creates project spaces and generates app code; iot (cyber world) mode discovers nearby devices — bluetooth scan, wifi scan (nearby networks + same-LAN devices) and IoT actions.',
+    '- In avatar mode refuse node deployment, space creation and code generation with a short explanation; in factory mode prefer deploy/space/autogen actions; in iot mode prefer devices/scan actions and report bluetooth/wifi/lan findings.',
     '- context.editor is the file currently open in the dev editor: {node, space, path, language, dirty, content (truncated)}. When the user says "this file"/"这个文件"/asks about the open code, use context.editor.path and context.editor.content.',
     '- createSpace name regex [a-zA-Z][a-zA-Z0-9_]*; autogen name/place same regex.',
     '- Standard spaces: community=云社区, enterprise=云办公, operation=云研发, knowledge=云知识, education=云教育, healthy=云健康, tourism=云文旅, charity=云公益, industry=云工业, agriculture=云农业.',

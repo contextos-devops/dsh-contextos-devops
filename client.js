@@ -150,7 +150,7 @@ window.__ModuleLoader__.load({
     const CHAT_MODES = [
       { id: 'avatar', name: '数字分身', intro: '数字分身模式：当前分身的 user.uid/公司/城市会用于创建实例；说「创建员工管理」「给最近应用添加数据」「查看项目进度」。', quick: ['创建员工管理', '最近应用', '查看项目进度', '拆解目标'], introEn: 'Digital avatar mode: the active avatar user.uid/company/city are used when creating instances. Say "create employee management", "add data to recent app", "check project progress".', quickEn: ['Create employee management', 'Recent apps', 'Check project progress', 'Break down a goal'] },
       { id: 'factory', name: '软件工厂', intro: '软件工厂模式：说「部署 9188 节点」「创建空间 demo」「生成员工管理」「修改应用代码」。', quick: ['部署 9188 节点', '创建空间 demo', '生成员工管理', '修改应用代码'], introEn: 'Software factory mode: say "deploy node 9188", "create space demo", "generate employee management", "edit app code".', quickEn: ['Deploy node 9188', 'Create space demo', 'Generate employee management', 'Edit app code'] },
-      { id: 'iot', name: '赛博世界', intro: '赛博世界模式：说「切换场景」「上传背景照片」「设置场景时间地点」，用场景承载对话环境与数字分身的外观。', quick: ['切换场景', '上传背景照片', '设置场景时间地点', '打开应用'], introEn: 'Cyber world mode: say "switch scene", "upload background", "set scene time and location" to shape the conversation environment.', quickEn: ['Switch scene', 'Upload background', 'Set scene time/location', 'Open app'] },
+      { id: 'iot', name: '赛博世界', intro: '赛博世界模式：说「切换场景」「上传背景照片」「设置场景时间地点」，用场景承载对话环境与数字分身的外观。', quick: ['扫描周边设备', '切换场景', '上传背景照片', '设置场景时间地点'], introEn: 'Cyber world mode: say "switch scene", "upload background", "set scene time and location" to shape the conversation environment.', quickEn: ['Switch scene', 'Upload background', 'Set scene time/location', 'Open app'] },
     ];
 
     const reportError = (msg) => {
@@ -2698,8 +2698,25 @@ window.__ModuleLoader__.load({
         busy ? h('div', { className: 'desc' }, '扫描中…') : null,
         err ? h('div', { className: 'cx-err' }, err) : null,
         data ? h('div', { className: 'cx-devices' },
-          h('div', { className: 'cx-adapter' }, (data.adapters || []).map((a) => h('span', { key: a.kind, className: `cx-tag ${a.supported ? 'gr' : ''}` }, `${a.kind}${a.supported ? '' : ' ✕'}`))),
+          h('div', { className: 'cx-adapter' }, (data.adapters || []).map((a) => h('span', { key: a.kind, className: `cx-tag ${a.supported ? 'gr' : ''}` }, `${a.kind}${a.supported ? '' : ' ✕'}`)),
+            h('button', { className: 'cx-btn xs', style: { marginLeft: 'auto' }, onClick: () => { setBusy(true); api('devices', { node }).then((d) => setData(d)).catch((e) => setErr(String(e?.message || e))).finally(() => setBusy(false)); } }, '重新扫描')),
           Object.entries(groups).map(renderGroup),
+          (data.bluetoothNearby || []).length ? h('div', { key: 'btn' },
+            h('div', { className: 'oh', style: { marginTop: 8 } }, `BLUETOOTH · 附近 ${data.bluetoothNearby.length}`),
+            data.bluetoothNearby.map((d, i) => h('div', { className: 'cx-device', key: 'bt' + i },
+              h('span', { className: 'cx-led on' }),
+              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, d.name || d.address || 'BLE'), h('div', { className: 'dd' }, `${d.address || '—'}${d.rssi != null ? ` · ${d.rssi} dBm` : ''}`)),
+              h('span', { className: 'cx-tag cy' }, 'NEARBY')))) : null,
+          (data.wifiNetworks || []).length ? h('div', { key: 'wn' },
+            h('div', { className: 'oh', style: { marginTop: 8 } }, `WIFI · 附近网络 ${data.wifiNetworks.length}`),
+            data.wifiNetworks.slice(0, 20).map((n, i) => h('div', { className: 'cx-device', key: 'wn' + i },
+              h('span', { className: 'cx-led on' }),
+              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, n.ssid || '(隐藏)'), h('div', { className: 'dd' }, `${n.bssid || '—'} · ch ${n.channel || '—'}${n.rssi != null ? ` · ${n.rssi} dBm` : ''}`))))) : null,
+          (data.lanHosts || []).length ? h('div', { key: 'lan' },
+            h('div', { className: 'oh', style: { marginTop: 8 } }, `LAN · 同网设备 ${data.lanHosts.length}`),
+            data.lanHosts.slice(0, 30).map((x, i) => h('div', { className: 'cx-device', key: 'lan' + i },
+              h('span', { className: 'cx-led on' }),
+              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name || x.ip), h('div', { className: 'dd' }, `${x.ip} · ${x.mac}`))))) : null,
           h('div', { className: 'desc' }, data.note || '')) : null);
     }
 
