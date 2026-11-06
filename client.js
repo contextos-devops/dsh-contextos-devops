@@ -122,6 +122,19 @@ window.__ModuleLoader__.load({
     const css = String.raw`
 :root{--cx-bg:#050a12;--cx-panel:#08131f;--cx-panel2:#0b1b2b;--cx-line:#16384d;--cx-line2:#1d4d66;--cx-cyan:#3ee7ff;--cx-cyan2:#18b6d8;--cx-green:#42f5a7;--cx-orange:#ffb454;--cx-red:#ff5c7a;--cx-text:#d9f4ff;--cx-muted:#6f9bb3;--cx-font:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .cx-shell{height:100%;min-height:0;display:flex;flex-direction:column;background:radial-gradient(1100px 500px at 15% -10%,rgba(62,231,255,.12),transparent 55%),radial-gradient(900px 400px at 95% 0%,rgba(66,245,167,.07),transparent 50%),var(--cx-bg);color:var(--cx-text);font-family:var(--cx-font);overflow:hidden}
+
+.cx-shell{overflow-x:hidden}
+.cx-chat-b,.cx-pm-side,.cx-dev-b,.cx-sel-menu,.cx-console-main,.cx-webmask{overflow-x:hidden}
+.cx-shell,.cx-shell *{scrollbar-width:thin;scrollbar-color:rgba(62,231,255,.22) transparent}
+.cx-shell::-webkit-scrollbar,.cx-shell ::-webkit-scrollbar{width:8px;height:8px}
+.cx-shell::-webkit-scrollbar-track,.cx-shell ::-webkit-scrollbar-track{background:transparent}
+.cx-shell::-webkit-scrollbar-thumb,.cx-shell ::-webkit-scrollbar-thumb{background:rgba(62,231,255,.22);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+.cx-shell::-webkit-scrollbar-thumb:hover,.cx-shell ::-webkit-scrollbar-thumb:hover{background:rgba(62,231,255,.42);background-clip:content-box}
+.cx-shell ::-webkit-scrollbar-corner{background:transparent}
+.cx-shell[data-theme="light"]{scrollbar-color:rgba(11,127,159,.28) transparent}
+.cx-shell[data-theme="light"] ::-webkit-scrollbar-thumb{background:rgba(11,127,159,.28);background-clip:content-box}
+.cx-shell[data-theme="light"] ::-webkit-scrollbar-thumb:hover{background:rgba(11,127,159,.45);background-clip:content-box}
+
 .cx-shell *{box-sizing:border-box}
 .cx-header{display:flex;align-items:center;gap:16px;padding:12px 16px;border-bottom:1px solid var(--cx-line);background:linear-gradient(180deg,rgba(9,24,38,.96),rgba(5,10,18,.9));position:relative}
 .cx-header:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--cx-cyan),transparent);opacity:.55}
