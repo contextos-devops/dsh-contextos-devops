@@ -2682,13 +2682,16 @@ window.__ModuleLoader__.load({
       const [err, setErr] = useState('');
       useEffect(() => {
         let alive = true;
+        loadSsh();
         api('devices', { node }).then((d) => { if (alive) { setData(d); setBusy(false); } }).catch((e) => { if (alive) { setErr(String(e?.message || e)); setBusy(false); } });
         return () => { alive = false; };
       }, [node]);
       const [scanKind, setScanKind] = useState('');
+      const [ssh, setSsh] = useState(null);
+      const loadSsh = async () => { try { setSsh(await api('sshHosts')); } catch { /* no ssh */ } };
       const scan = async (kind) => {
         setScanKind(kind); setBusy(true); setErr('');
-        try { setData(await api('devices', { node })); }
+        try { setData(await api('devices', { node })); await loadSsh(); }
         catch (e) { setErr(String(e?.message || e)); }
         finally { setBusy(false); }
       };
@@ -2735,6 +2738,20 @@ window.__ModuleLoader__.load({
               h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name || x.ip), h('div', { className: 'dd' }, `${x.ip} · ${x.mac}`)),
               h('button', { className: 'cx-btn xs', onClick: () => { try { window.open(`http://${x.ip}`, '_blank'); } catch {} } }, '打开'),
               h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(x.ip || ''); } catch {} } }, '复制')))) : null,
+          (ssh && (ssh.knownHosts || []).length + (ssh.configHosts || []).length + (ssh.history || []).length) ? h('div', { key: 'ssh' },
+            h('div', { className: 'oh', style: { marginTop: 8 } }, `SSH · 登录过的设备 ${(ssh.knownHosts || []).length}`),
+            (ssh.configHosts || []).map((c, i) => h('div', { className: 'cx-device', key: 'shc' + i },
+              h('span', { className: 'cx-led on' }),
+              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, c.name), h('div', { className: 'dd' }, `${c.user ? c.user + '@' : ''}${c.hostname || c.name}${c.port ? ':' + c.port : ''} · ~/.ssh/config`)),
+              h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(`ssh ${c.user ? c.user + '@' : ''}${c.hostname || c.name}${c.port ? ' -p ' + c.port : ''}`); } catch {} } }, '复制'))),
+            (ssh.knownHosts || []).slice(0, 20).map((x, i) => h('div', { className: 'cx-device', key: 'shk' + i },
+              h('span', { className: 'cx-led on' }),
+              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.host), h('div', { className: 'dd' }, x.hashed ? 'known_hosts · 哈希条目' : 'known_hosts')),
+              h('button', { className: 'cx-btn xs', disabled: x.hashed, onClick: () => { try { navigator.clipboard.writeText(`ssh ${x.host}`); } catch {} } }, '复制'))),
+            (ssh.history || []).slice(0, 10).map((x, i) => h('div', { className: 'cx-device', key: 'shh' + i },
+              h('span', { className: 'cx-led' }),
+              h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.target), h('div', { className: 'dd' }, 'shell 历史')),
+              h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(x.raw || x.target); } catch {} } }, '复制')))) : null,
           h('div', { className: 'desc' }, data.note || '')) : null);
     }
 
@@ -3782,6 +3799,14 @@ window.__ModuleLoader__.load({
         const args = action.args && typeof action.args === 'object' ? action.args : {};
         const ctxApp = app || null;
         const ctxSpace = space || ctxApp?.space || '';
+        if (op === 'sshHosts') {
+          return run('SSH HOSTS', async () => {
+            const r = await api('sshHosts');
+            const hs = (r && r.knownHosts) || [];
+            ai(`找到 ${hs.length} 台 SSH 登录过的设备${hs.length ? '：' + hs.slice(0, 8).map((x) => x.host).join('、') : ''}`);
+            return r;
+          });
+        }
         if (op === 'sysControl') {
           const act = String(args.action || '').toLowerCase();
           const val = args.value == null ? '' : args.value;

@@ -839,6 +839,61 @@ async function scanLanHosts() {
   return hosts;
 }
 
+async function sshHosts() {
+  const home = os.homedir();
+  const read = async (p) => { try { return await fs.readFile(p, 'utf8'); } catch { return ''; } };
+  const known = await read(path.join(home, '.ssh', 'known_hosts'));
+  const hosts = [];
+  for (const line of known.split('\n')) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const parts = t.split(/\s+/);
+    const addr = parts[0];
+    if (!addr) continue;
+    for (const h of addr.split(',')) {
+      const plain = h.replace(/^\[/, '').replace(/\]:\d+$/, '');
+      hosts.push({ host: /^\|1\|/.test(h) ? '(hashed)' : plain, address: h, hashed: /^\|1\|/.test(h) });
+    }
+  }
+  const cfg = await read(path.join(home, '.ssh', 'config'));
+  const configHosts = [];
+  let cur = null;
+  for (const line of cfg.split('\n')) {
+    const m = /^\s*Host\s+(.+)$/i.exec(line);
+    if (m) {
+      const name = m[1].trim();
+      if (/[*?]/.test(name)) { cur = null; continue; }
+      cur = { name, hostname: '', user: '', port: '' };
+      configHosts.push(cur);
+      continue;
+    }
+    if (!cur) continue;
+    const hn = /^\s*HostName\s+(.+)$/i.exec(line); if (hn) cur.hostname = hn[1].trim();
+    const u = /^\s*User\s+(.+)$/i.exec(line); if (u) cur.user = u[1].trim();
+    const pt = /^\s*Port\s+(\d+)/i.exec(line); if (pt) cur.port = pt[1];
+  }
+  const hist = await read(path.join(home, '.zsh_history')) + '\n' + await read(path.join(home, '.bash_history'));
+  const cmds = [];
+  for (const line of hist.split('\n')) {
+    const m = /(?:^|;)\s*(ssh\s+[^\n]+)$/.exec(line);
+    if (!m) continue;
+    const raw = m[1].trim();
+    const tm = /ssh\s+(?:-\S+\s+(?:\S+\s+)?)*([^\s]+)/.exec(raw);
+    if (!tm) continue;
+    const target = tm[1].replace(/["']/g, '');
+    if (!target || /^[#-]/.test(target) || !/^[A-Za-z0-9_.@:-]+$/.test(target)) continue;
+    cmds.push({ target, raw: raw.slice(0, 200) });
+  }
+  const keys = await read(path.join(home, '.ssh', 'authorized_keys'));
+  const uniq = (arr, key) => [...new Map(arr.map((x) => [x[key], x])).values()];
+  return {
+    knownHosts: uniq(hosts, 'address').slice(0, 100),
+    configHosts: uniq(configHosts, 'name').slice(0, 50),
+    history: uniq(cmds, 'target').slice(0, 60),
+    authorizedKeys: keys.split('\n').filter((l) => l.trim() && !l.startsWith('#')).length,
+  };
+}
+
 async function sysControl({ action, value } = {}) {
   const a = String(action || '').toLowerCase();
   const v = value == null ? '' : String(value);
@@ -2316,7 +2371,7 @@ function extractAction(text) {
 const MODE_ACTIONS = {
   avatar: ['createInstance', 'createStoreInstance', 'readData', 'writeData', 'listApps', 'storeApps', 'projectStatus', 'pmList', 'pmCreate', 'pmModify', 'pmRemove', 'planProject', 'createAvatar', 'openApp'],
   factory: ['deploy', 'start', 'stop', 'delete', 'createSpace', 'officialSpaces', 'initSpace', 'spaceStart', 'spaceStop', 'spaceBuild', 'autogenApp', 'code', 'buildSpace', 'compile', 'dockerDeploy', 'remoteDeploy', 'remoteLogin', 'createInstance', 'createStoreInstance', 'listApps', 'storeApps'],
-  iot: ['devices', 'sysControl', 'updateBackground', 'createBackground', 'openApp', 'openNode', 'listApps', 'projectStatus', 'pmList'],
+  iot: ['devices', 'sshHosts', 'sysControl', 'updateBackground', 'createBackground', 'openApp', 'openNode', 'listApps', 'projectStatus', 'pmList'],
 };
 
 async function chatWithDSH({ message, history = [], context = {}, provider = '', model = '', mode = 'factory' } = {}) {
@@ -2361,6 +2416,7 @@ async function chatWithDSH({ message, history = [], context = {}, provider = '',
     '- CONCEPT ORDER (use consistently): serve/node, space/pod, place/app, avatar, scene/background, mode, view, web, editor.',
     '- Aliases: 服务节点=serve=node; 项目空间=space=pod; 应用实例=place=app; 数字分身=avatar; 赛博世界=scene=background; 工作模式=mode (factory/avatar/iot); 视图模式=view (chat/manage/dev); 网页界面=web; 源码编程=editor.',
     '- When the user says 节点/serve/node use context.serve; 空间/pod use context.space; 应用实例/place use context.place; 赛博世界/scene use context.scene; 视图/view use context.view; 网页 use context.web; 文件/代码 use context.editor.',
+    '- sshHosts args: {}; lists ~/.ssh/known_hosts hosts, ~/.ssh/config entries and shell history ssh commands (hashed known_hosts entries are shown as hashed).',
     '- sysControl args: {action, value}. actions: volume (value 0-100, empty=read), mute (on/off), clipboard (empty=read, text=write), screenshot, open (http(s)/absolute path), wifi (on/off/empty=status), sleep, lock, wallpaper (absolute image path), shortcut (name), shortcuts (list), info (battery/disk/displays). Only in iot mode; ask before sleep/lock.',
     '- context.editor is the file currently open in the dev editor: {node, space, path, language, dirty, content (truncated)}. When the user says "this file"/"这个文件"/asks about the open code, use context.editor.path and context.editor.content.',
     '- createSpace name regex [a-zA-Z][a-zA-Z0-9_]*; autogen name/place same regex.',
@@ -2742,6 +2798,7 @@ async function route(req, res) {
     if (op === 'health' || op === 'nodes') {
       return send(res, 200, { ok: true, data: { ctxRoot: ctxRoot(), nodes: await listNodes() } });
     }
+    if (op === 'sshHosts') return send(res, 200, { ok: true, data: await sshHosts() });
     if (op === 'sysControl') return send(res, 200, { ok: true, data: await sysControl({ action: body.action, value: body.value }) });
     if (op === 'git') return send(res, 200, { ok: true, data: await gitStatus({ node, space: body.space }) });
     if (op === 'origin') {
