@@ -1375,6 +1375,20 @@ window.__ModuleLoader__.load({
 .cx-shell :is(.cx-node,.cx-space,.cx-app,.cx-avatar,.cx-hint-card,.cx-cal-day):hover {
   background: rgba(62,231,255,.07);
 }
+
+/* ── 统一下拉：所有选择器同一套外观 ───────────────────────────────── */
+.cx-drop{position:relative;display:inline-flex;align-items:center}
+.cx-drop-btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 8px;border:1px solid var(--cx-line2);border-radius:4px;background:var(--cx-surface-2);color:var(--cx-text);font:10px var(--cx-font);cursor:pointer}
+.cx-drop-btn:hover{background:rgba(62,231,255,.10)}
+.cx-drop-btn.on{color:var(--cx-accent)}
+.cx-drop-btn .cv{opacity:.55;font-size:9px}
+.cx-drop-pop{position:fixed;z-index:950;padding:4px;border:1px solid var(--cx-line2);border-radius:6px;background:var(--cx-surface-1);box-shadow:0 14px 36px rgba(0,0,0,.5)}
+.cx-drop-item{display:flex;align-items:center;gap:8px;width:100%;border:0;text-align:left;background:transparent;color:var(--cx-text);font:11px var(--cx-font);padding:6px 8px;border-radius:4px;cursor:pointer;white-space:nowrap}
+.cx-drop-item:hover{background:rgba(62,231,255,.12);color:var(--cx-accent)}
+.cx-drop-item.on{color:var(--cx-accent)}
+.cx-drop-item .ck{width:12px;flex:none;font-size:10px;opacity:.9}
+/* 菜单类弹层与下拉保持同一套圆角/描边/阴影 */
+.cx-menu,.cx-tree-menu{border-radius:6px;background:var(--cx-surface-1);border:1px solid var(--cx-line2);box-shadow:0 14px 36px rgba(0,0,0,.5);padding:4px}
 `;
 
     const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-event', { detail })); } catch {} };
@@ -2132,6 +2146,35 @@ window.__ModuleLoader__.load({
           h('button', { className: 'cx-menu-item danger', onClick: () => { const t = treeMenu.entry; setTreeMenu(null); removeEntry(t); } }, zh ? '删除' : 'Delete')) : null);
     }
 
+    // 统一下拉：按钮 + 固定定位弹层，所有选择器共用一套样式
+    function DropSelect({ value, onChange, options, title, className }) {
+      const [open, setOpen] = useState(false);
+      const [pos, setPos] = useState(null);
+      const btnRef = useRef(null);
+      const openMenu = (e) => {
+        e.stopPropagation();
+        const r = btnRef.current ? btnRef.current.getBoundingClientRect() : null;
+        setPos(r ? { left: r.left, top: r.bottom + 4, minWidth: r.width } : null);
+        setOpen((v) => !v);
+      };
+      useEffect(() => {
+        if (!open) return;
+        const close = () => setOpen(false);
+        window.addEventListener('click', close);
+        window.addEventListener('scroll', close, true);
+        return () => { window.removeEventListener('click', close); window.removeEventListener('scroll', close, true); };
+      }, [open]);
+      const cur = (options || []).find((o) => o.value === value);
+      return h('span', { className: `cx-drop${className ? ' ' + className : ''}` },
+        h('button', { ref: btnRef, type: 'button', className: `cx-drop-btn${open ? ' on' : ''}`, title, onClick: openMenu },
+          h('span', { className: 'lb' }, cur ? cur.label : ''),
+          h('span', { className: 'cv' }, '▾')),
+        open && pos ? h('div', { className: 'cx-drop-pop', style: { left: pos.left, top: pos.top, minWidth: pos.minWidth }, onClick: (e) => e.stopPropagation() },
+          (options || []).map((o) => h('button', { key: o.value, type: 'button', className: `cx-drop-item${o.value === value ? ' on' : ''}`, onClick: () => { setOpen(false); onChange(o.value); } },
+            h('span', { className: 'ck' }, o.value === value ? '✓' : ''),
+            h('span', { className: 'lb' }, o.label)))) : null);
+    }
+
     function MenuButton({ items, disabled }) {
       const [open, setOpen] = useState(false);
       return h('span', { className: 'cx-menu-wrap' },
@@ -2158,10 +2201,8 @@ window.__ModuleLoader__.load({
       return h(Modal, { title: '赛博世界设置 / CYBER WORLD', desc: '这些参数属于当前赛博世界：切换赛博世界会自动跟随；没设置的用系统默认。', onClose },
         h('div', { className: 'cx-form' },
           h('label', { className: 'cx-field full' }, '名称', h('input', { className: 'cx-input', value: name, placeholder: '例如 我的赛博世界', onChange: (e) => setName(e.target.value) })),
-          h('label', { className: 'cx-field full' }, '主题', h('select', { className: 'cx-select', value: theme, onChange: (e) => setTheme(e.target.value) },
-            h('option', { value: 'system' }, '跟随系统'), h('option', { value: 'light' }, '浅色'), h('option', { value: 'dark' }, '深色'))),
-          h('label', { className: 'cx-field full' }, '语言', h('select', { className: 'cx-select', value: lang, onChange: (e) => setLang(e.target.value) },
-            h('option', { value: 'system' }, '跟随系统'), h('option', { value: 'zh' }, '中文'), h('option', { value: 'en' }, 'English'))),
+          h('label', { className: 'cx-field full' }, '主题', h(DropSelect, { value: theme, onChange: setTheme, options: [{ value: 'system', label: '跟随系统' }, { value: 'light', label: '浅色' }, { value: 'dark', label: '深色' }] })),
+          h('label', { className: 'cx-field full' }, '语言', h(DropSelect, { value: lang, onChange: setLang, options: [{ value: 'system', label: '跟随系统' }, { value: 'zh', label: '中文' }, { value: 'en', label: 'English' }] })),
           h('label', { className: 'cx-field full' }, '时区', h('input', { className: 'cx-input', value: timezone, placeholder: tzDefault, onChange: (e) => setTimezone(e.target.value) })),
           h('label', { className: 'cx-field full' }, '地点', h('input', { className: 'cx-input', value: location, placeholder: '例如 深圳市', onChange: (e) => setLocation(e.target.value) }))),
         h('div', { className: 'cx-foot' },
@@ -3957,10 +3998,8 @@ window.__ModuleLoader__.load({
                   h('div', { className: 'cx-chat-copy' }, h('div', { className: 'cx-chat-title' }, 'CONTEXTOS COPILOT'), h('div', { className: 'cx-chat-sub' }, `${tt('avatar')} · ${tt('factory')} · ${tt('iot')}`))),
                 h('div', { className: 'cx-chat-actions' },
                   ...(!docked ? [
-                    h('select', { className: 'cx-select', value: themeMode, title: tt('light') + ' / ' + tt('dark'), onChange: (e) => setThemeMode(e.target.value) },
-                      h('option', { value: 'system' }, tt('system')), h('option', { value: 'light' }, tt('light')), h('option', { value: 'dark' }, tt('dark'))),
-                    h('select', { className: 'cx-select', value: langMode, title: tt('chinese') + ' / English', onChange: (e) => setLangMode(e.target.value) },
-                      h('option', { value: 'system' }, tt('system')), h('option', { value: 'zh' }, '中文'), h('option', { value: 'en' }, 'English')),
+                    h(DropSelect, { value: themeMode, title: tt('light') + ' / ' + tt('dark'), onChange: setThemeMode, options: [{ value: 'system', label: tt('system') }, { value: 'light', label: tt('light') }, { value: 'dark', label: tt('dark') }] }),
+                    h(DropSelect, { value: langMode, title: tt('chinese') + ' / English', onChange: setLangMode, options: [{ value: 'system', label: tt('system') }, { value: 'zh', label: '中文' }, { value: 'en', label: 'English' }] }),
                     h('button', { className: 'cx-btn xs cx-icon-btn', onClick: onInit, title: 'Initialize' }, '⚡'),
                   ] : []),
                   h('button', { className: 'cx-btn xs cx-icon-btn', onClick: onToggleFull, title: (full && !docked) ? tt('restore') : tt('maximize') }, (full && !docked) ? '❐' : '⛶'),
@@ -4710,10 +4749,8 @@ window.__ModuleLoader__.load({
             [['chat', locale === 'zh' ? '对话' : 'CHAT'], ['manage', locale === 'zh' ? '管理' : 'MANAGE'], ['dev', locale === 'zh' ? '开发' : 'DEV']].map(([k, label]) =>
               h('button', { key: k, className: `cx-view${viewMode === k ? ' on' : ''}`, onClick: () => setViewMode(k), title: label }, label))),
           h('div', { className: 'cx-actions' },
-            h('select', { className: 'cx-select', value: themeMode, title: t('light') + ' / ' + t('dark'), onChange: (e) => setThemeMode(e.target.value) },
-              h('option', { value: 'system' }, t('system')), h('option', { value: 'light' }, t('light')), h('option', { value: 'dark' }, t('dark'))),
-            h('select', { className: 'cx-select', value: langMode, title: t('chinese') + ' / English', onChange: (e) => setLangMode(e.target.value) },
-              h('option', { value: 'system' }, t('system')), h('option', { value: 'zh' }, '中文'), h('option', { value: 'en' }, 'English')),
+            h(DropSelect, { value: themeMode, title: t('light') + ' / ' + t('dark'), onChange: setThemeMode, options: [{ value: 'system', label: t('system') }, { value: 'light', label: t('light') }, { value: 'dark', label: t('dark') }] }),
+            h(DropSelect, { value: langMode, title: t('chinese') + ' / English', onChange: setLangMode, options: [{ value: 'system', label: t('system') }, { value: 'zh', label: '中文' }, { value: 'en', label: 'English' }] }),
             h('button', { className: 'cx-btn cx-icon-btn', onClick: refreshAll, disabled: !!busy, title: t('refresh') }, busy ? '…' : '↻'),
             h('button', { className: 'cx-btn pri cx-icon-btn', onClick: () => setModal('deploy'), title: t('deploy') }, '+'),
             h('button', { className: 'cx-btn', onClick: openInit, disabled: !!initState?.running, title: t('initialize') }, t('initialize')))),
