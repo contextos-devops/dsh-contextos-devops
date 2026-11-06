@@ -1065,7 +1065,11 @@ window.__ModuleLoader__.load({
 .cx-preview-frame{flex:1;width:100%;border:0;background:#fff}.cx-dev .cx-dev-editor{background:transparent}
 .cx-dev .cx-editor-wrap,.cx-dev .cx-editor-host,.cx-dev .cx-editor-ta{background:transparent}
 .cx-dev .cx-editor-host .monaco-editor,.cx-dev .cx-editor-host .monaco-editor .margin,.cx-dev .cx-editor-host .monaco-editor-background,.cx-dev .cx-editor-host .monaco-editor .overflow-guard{background:transparent!important}
-.cx-dev .cx-tabs{background:transparent;border-bottom:0}
+.cx-dev .cx-dev-editor{border:0}
+.cx-dev .cx-dev-editor .cx-dev-h{border-bottom:0}
+.cx-dev .cx-tabs{background:transparent;border:0}
+.cx-dev .cx-editor-wrap,.cx-dev .cx-editor-host,.cx-dev .cx-editor-ta{border:0}
+.cx-dev .cx-tab{border-right:0}
 .cx-dev .cx-tab{background:transparent;border:0;border-top:2px solid transparent}
 .cx-dev .cx-tab.on{background:transparent;border-top-color:var(--cx-accent);color:var(--cx-accent)}
 .cx-dev .cx-tab .x{color:inherit}
