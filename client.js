@@ -1027,7 +1027,7 @@ window.__ModuleLoader__.load({
 .cx-shell{--cx-pm-side-w:280px}
 .cx-chat-host{flex:1;min-height:0;display:flex;min-width:0;padding:10px 12px 12px}
 .cx-chat-host.full{position:absolute;inset:0;z-index:500;padding:0}
-.cx-shell.host-chrome .cx-chat-host.full .cx-chat{padding-top:46px}
+.cx-shell.host-chrome .cx-chat-host.full .cx-chat{padding-top:0}
 .cx-chat.dock{position:relative;inset:auto;width:100%;height:100%;flex:1;min-height:0;border:1px solid var(--cx-line);z-index:1;box-shadow:none}
 .cx-header{padding-right:calc(16px + var(--cx-host-right))}
 .cx-header>.cx-actions{margin-left:auto}
