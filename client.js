@@ -1083,6 +1083,7 @@ window.__ModuleLoader__.load({
 .cx-tree-item .nm{overflow:hidden;text-overflow:ellipsis}
 .cx-editor-wrap{position:relative;display:flex;flex-direction:column;overflow:hidden}
 .cx-editor-host{flex:1;min-height:0;width:100%;min-height:220px}
+.cx-editor-ta{flex:1;width:100%;min-height:220px;border:0;resize:none;background:#1e1e1e;color:#d4d4d4;font:12px/1.6 Menlo,monospace;padding:10px;outline:none}
 .cx-term-wrap{display:flex;flex-direction:column;background:#04101a;overflow:hidden}
 .cx-term-host{flex:1;min-height:0;padding:4px}
 .cx-dev-status{font:9px var(--cx-mono);color:var(--cx-text-dim);padding:4px 8px;border-top:1px solid var(--cx-border)}
@@ -1224,6 +1225,7 @@ window.__ModuleLoader__.load({
       const [editorErr, setEditorErr] = useState('');
       const [termErr, setTermErr] = useState('');
       const editorHostRef = useRef(null);
+      const taRef = useRef(null);
       const termHostRef = useRef(null);
       const editorRef = useRef(null);
       const monacoRef = useRef(null);
@@ -1288,10 +1290,11 @@ window.__ModuleLoader__.load({
       const save = async () => {
         const t = tabsRef.current.find((x) => x.path === activeRef.current);
         const ed = editorRef.current;
-        if (!t || !ed) return;
+        if (!t) return;
+        const value = ed ? ed.getValue() : (taRef.current ? taRef.current.value : t.content);
         try {
-          await api('writeFile', { node, space, path: t.path, content: ed.getValue() });
-          setTabs((ts) => ts.map((x) => x.path === t.path ? { ...x, content: ed.getValue(), dirty: false } : x));
+          await api('writeFile', { node, space, path: t.path, content: value });
+          setTabs((ts) => ts.map((x) => x.path === t.path ? { ...x, content: value, dirty: false } : x));
           setStatus(zh ? `已保存 ${t.path}` : `saved ${t.path}`);
         } catch (e) { setStatus(String(e?.message || e)); }
       };
@@ -1319,6 +1322,11 @@ window.__ModuleLoader__.load({
               setTabs((ts) => ts.map((t) => (t.path === p && t.content !== v ? { ...t, content: v, dirty: true } : t)));
             });
             ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => saveRef.current());
+            const cur = tabsRef.current.find((t) => t.path === activeRef.current);
+            if (cur) {
+              ed.setValue(cur.content);
+              try { if (ed.getModel()) monaco.editor.setModelLanguage(ed.getModel(), 'plaintext'); } catch {}
+            }
             setEditorErr('');
           } catch (e) { setEditorErr(String(e?.message || e)); }
         })();
@@ -1410,8 +1418,12 @@ window.__ModuleLoader__.load({
             h('span', null, t.name + (t.dirty ? ' ●' : '')),
             h('button', { className: 'x', onClick: (e) => { e.stopPropagation(); closeTab(t.path); } }, '×')))),
           h('div', { className: 'cx-dev-b cx-editor-wrap' },
-            h('div', { className: 'cx-editor-host', ref: editorHostRef }),
-            editorErr ? h('div', { className: 'cx-dev-status err' }, editorErr) : null),
+            h('div', { className: 'cx-editor-host', ref: editorHostRef, style: editorErr ? { display: 'none' } : null }),
+            editorErr ? h('textarea', {
+              className: 'cx-editor-ta', ref: taRef, value: activeTab ? activeTab.content : '', spellCheck: false,
+              onChange: (e) => { const v = e.target.value; setTabs((ts) => ts.map((t) => (t.path === activePath ? { ...t, content: v, dirty: true } : t))); },
+            }) : null,
+            editorErr ? h('div', { className: 'cx-dev-status err' }, `${editorErr} · ${zh ? '已回退到基础编辑器' : 'fallback editor'}`) : null),
           h('div', { className: 'cx-dev-statusbar' },
             h('span', null, node ? `:${node}` : ''), h('span', null, space || ''),
             h('button', { className: 'cx-btn', onClick: () => save() }, zh ? '保存' : 'SAVE'))),
