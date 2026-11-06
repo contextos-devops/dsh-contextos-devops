@@ -2738,8 +2738,14 @@ window.__ModuleLoader__.load({
               h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name || x.ip), h('div', { className: 'dd' }, `${x.ip} · ${x.mac}`)),
               h('button', { className: 'cx-btn xs', onClick: () => { try { window.open(`http://${x.ip}`, '_blank'); } catch {} } }, '打开'),
               h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(x.ip || ''); } catch {} } }, '复制')))) : null,
-          (ssh && (ssh.knownHosts || []).length + (ssh.configHosts || []).length + (ssh.history || []).length) ? h('div', { key: 'ssh' },
-            h('div', { className: 'oh', style: { marginTop: 8 } }, `SSH · 登录过的设备 ${(ssh.knownHosts || []).length}`),
+          (ssh && ((ssh.services || []).length + (ssh.knownHosts || []).length + (ssh.configHosts || []).length + (ssh.history || []).length)) ? h('div', { key: 'ssh' },
+            (ssh.services || []).length ? h('div', { key: 'svc' },
+              h('div', { className: 'oh', style: { marginTop: 8 } }, `SSH 服务 · ${ssh.services.length}`),
+              ssh.services.map((x, i) => h('div', { className: 'cx-device', key: 'svc' + i },
+                h('span', { className: 'cx-led on' }),
+                h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, x.name), h('div', { className: 'dd' }, `${x.username ? x.username + '@' : ''}${x.host}:${x.port}${x.init ? ' · ' + x.init : ''}`)),
+                h('button', { className: 'cx-btn xs', onClick: () => { try { navigator.clipboard.writeText(`ssh ${x.username ? x.username + '@' : ''}${x.host} -p ${x.port}`); } catch {} } }, '复制')))) : null,
+            h('div', { className: 'oh', style: { marginTop: 8 } }, `known_hosts · ${(ssh.knownHosts || []).length}`),
             (ssh.configHosts || []).map((c, i) => h('div', { className: 'cx-device', key: 'shc' + i },
               h('span', { className: 'cx-led on' }),
               h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { className: 'dn' }, c.name), h('div', { className: 'dd' }, `${c.user ? c.user + '@' : ''}${c.hostname || c.name}${c.port ? ':' + c.port : ''} · ~/.ssh/config`)),
@@ -3803,7 +3809,8 @@ window.__ModuleLoader__.load({
           return run('SSH HOSTS', async () => {
             const r = await api('sshHosts');
             const hs = (r && r.knownHosts) || [];
-            ai(`找到 ${hs.length} 台 SSH 登录过的设备${hs.length ? '：' + hs.slice(0, 8).map((x) => x.host).join('、') : ''}`);
+            const sv = (r && r.services) || [];
+            ai(`找到 ${sv.length} 个 SSH 服务${sv.length ? '（' + sv.slice(0, 6).map((x) => x.name).join('、') + '…）' : ''}，${hs.length} 台连接过的设备`);
             return r;
           });
         }

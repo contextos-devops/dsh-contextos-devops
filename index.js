@@ -885,8 +885,27 @@ async function sshHosts() {
     cmds.push({ target, raw: raw.slice(0, 200) });
   }
   const keys = await read(path.join(home, '.ssh', 'authorized_keys'));
+  const services = [];
+  try {
+    const dir = path.join(home, '.ssh', 'host');
+    const names = await fs.readdir(dir);
+    for (const f of names.sort()) {
+      if (!f.endsWith('.json')) continue;
+      try {
+        const d = JSON.parse(await fs.readFile(path.join(dir, f), 'utf8'));
+        services.push({
+          name: f.replace(/\.json$/, ''),
+          username: d.username || '',
+          host: d.host || '',
+          port: d.port || '22',
+          init: d.init || '',
+        });
+      } catch { /* skip broken json */ }
+    }
+  } catch { /* no host dir */ }
   const uniq = (arr, key) => [...new Map(arr.map((x) => [x[key], x])).values()];
   return {
+    services,
     knownHosts: uniq(hosts, 'address').slice(0, 100),
     configHosts: uniq(configHosts, 'name').slice(0, 50),
     history: uniq(cmds, 'target').slice(0, 60),
@@ -2416,7 +2435,7 @@ async function chatWithDSH({ message, history = [], context = {}, provider = '',
     '- CONCEPT ORDER (use consistently): serve/node, space/pod, place/app, avatar, scene/background, mode, view, web, editor.',
     '- Aliases: 服务节点=serve=node; 项目空间=space=pod; 应用实例=place=app; 数字分身=avatar; 赛博世界=scene=background; 工作模式=mode (factory/avatar/iot); 视图模式=view (chat/manage/dev); 网页界面=web; 源码编程=editor.',
     '- When the user says 节点/serve/node use context.serve; 空间/pod use context.space; 应用实例/place use context.place; 赛博世界/scene use context.scene; 视图/view use context.view; 网页 use context.web; 文件/代码 use context.editor.',
-    '- sshHosts args: {}; lists ~/.ssh/known_hosts hosts, ~/.ssh/config entries and shell history ssh commands (hashed known_hosts entries are shown as hashed).',
+    '- sshHosts args: {}; lists ~/.ssh/host/*.json services (name, username, host, port, init — these are the user\'s SSH services), ~/.ssh/known_hosts hosts, ~/.ssh/config entries and shell history ssh commands (hashed known_hosts entries are shown as hashed). Prefer context from sshHosts.services when the user asks about their services.',
     '- sysControl args: {action, value}. actions: volume (value 0-100, empty=read), mute (on/off), clipboard (empty=read, text=write), screenshot, open (http(s)/absolute path), wifi (on/off/empty=status), sleep, lock, wallpaper (absolute image path), shortcut (name), shortcuts (list), info (battery/disk/displays). Only in iot mode; ask before sleep/lock.',
     '- context.editor is the file currently open in the dev editor: {node, space, path, language, dirty, content (truncated)}. When the user says "this file"/"这个文件"/asks about the open code, use context.editor.path and context.editor.content.',
     '- createSpace name regex [a-zA-Z][a-zA-Z0-9_]*; autogen name/place same regex.',
