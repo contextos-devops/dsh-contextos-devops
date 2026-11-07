@@ -4261,7 +4261,8 @@ window.__ModuleLoader__.load({
     function Page() {
       const bootSelRef = useRef(null);
       if (bootSelRef.current === null) { try { bootSelRef.current = JSON.parse(localStorage.getItem('contextos-devops-dsh:sel') || 'null') || {}; } catch { bootSelRef.current = {}; } }
-      const [nodes, setNodes] = useState([]);
+      const [nodes, setNodes] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:nodes') || '[]') || []; } catch { return []; } });
+      const nodesRef = useRef(nodes); nodesRef.current = nodes;
       const [node, setNode] = useState(() => bootSelRef.current?.node ?? null);
       const [spaces, setSpaces] = useState([]);
       const [space, setSpace] = useState(() => bootSelRef.current?.space ?? null);
@@ -4357,7 +4358,7 @@ window.__ModuleLoader__.load({
         return () => { if (ro) ro.disconnect(); window.removeEventListener('resize', check); clearTimeout(t); };
       }, []);
       const [initState, setInitState] = useState(null);
-      const [nodesLoaded, setNodesLoaded] = useState(false);
+      const [nodesLoaded, setNodesLoaded] = useState(() => { try { return (JSON.parse(localStorage.getItem('contextos-devops-dsh:nodes') || '[]') || []).length > 0; } catch { return false; } });
       const autoInitRef = useRef(false);
       const initBusyRef = useRef(false);
       const [showDevices, setShowDevices] = useState(false);
@@ -4488,6 +4489,7 @@ window.__ModuleLoader__.load({
         const list = d.nodes || [];
         setNodes(list);
         setNodesLoaded(true);
+        try { localStorage.setItem('contextos-devops-dsh:nodes', JSON.stringify(list)); } catch {}
         try { api('stateSet', { name: 'nodesCache', value: list }).catch(() => {}); } catch {}
         setNode((cur) => cur != null ? (list.some((n) => n.port === cur) ? cur : list[0]?.port ?? null) : (list.find((n) => n.state === 'running')?.port ?? list[0]?.port ?? null));
         return list;
@@ -4645,6 +4647,7 @@ window.__ModuleLoader__.load({
       }, [locale]);
 
       useEffect(() => {
+        if (nodesRef.current.length) return;
         let alive = true;
         (async () => {
           try {
@@ -4652,6 +4655,7 @@ window.__ModuleLoader__.load({
             const cached = st && st.nodesCache;
             if (alive && Array.isArray(cached) && cached.length) {
               setNodes(cached); setNodesLoaded(true);
+              try { localStorage.setItem('contextos-devops-dsh:nodes', JSON.stringify(cached)); } catch {}
               setNode((cur) => (cur != null ? cur : (cached.find((n) => n.state === 'running')?.port ?? cached[0].port)));
               return;
             }
