@@ -84,7 +84,7 @@ window.__ModuleLoader__.load({
         create: '创建', refresh: '刷新', maximize: '最大化', restore: '恢复', close: '关闭', initialize: '初始化',
         deploy: '部署', devices: '设备', scan: '扫描', store: '应用商店', template: '模板',
         target: '目标', plan: '计划', task: '任务', report: '报告', feedback: '反馈',
-        status: '状态', type: '类型', all: '全部', search: '搜索', online: '上架', offline: '下架', code: '编程', config: '配置', data: '数据',
+        status: '状态', type: '类型', all: '全部', stopped: '已停止', missing: '缺失', starting: '启动中', search: '搜索', online: '上架', offline: '下架', code: '编程', config: '配置', data: '数据',
         system: '跟随系统', light: '浅色', dark: '深色', chinese: '中文', english: 'English',
         idle: '空闲', workspace: '项目空间', applications: '应用', running: '运行中', offline: '离线', chat: '对话', manage: '管理', dev: '开发',
       },
@@ -95,7 +95,7 @@ window.__ModuleLoader__.load({
         create: 'Create', refresh: 'Refresh', maximize: 'Maximize', restore: 'Restore', close: 'Close', initialize: 'INIT',
         deploy: 'Deploy', devices: 'Devices', scan: 'Scan', store: 'Store', template: 'Template',
         target: 'Targets', plan: 'Plans', task: 'Tasks', report: 'Reports', feedback: 'Feedback',
-        status: 'Status', type: 'Type', all: 'All', search: 'Search', online: 'Online', offline: 'Offline', code: 'Code', config: 'Config', data: 'Data',
+        status: 'Status', type: 'Type', all: 'All', stopped: 'Stopped', missing: 'Missing', starting: 'Starting', search: 'Search', online: 'Online', offline: 'Offline', code: 'Code', config: 'Config', data: 'Data',
         system: 'System', light: 'Light', dark: 'Dark', chinese: '中文', english: 'English',
         idle: 'IDLE', workspace: 'Workspace', applications: 'Applications', running: 'Running', offline: 'Offline', chat: 'CHAT', manage: 'MANAGE', dev: 'DEV',
       },
@@ -4488,6 +4488,7 @@ window.__ModuleLoader__.load({
         const list = d.nodes || [];
         setNodes(list);
         setNodesLoaded(true);
+        try { api('stateSet', { name: 'nodesCache', value: list }).catch(() => {}); } catch {}
         setNode((cur) => cur != null ? (list.some((n) => n.port === cur) ? cur : list[0]?.port ?? null) : (list.find((n) => n.state === 'running')?.port ?? list[0]?.port ?? null));
         return list;
       }, []);
@@ -4643,7 +4644,22 @@ window.__ModuleLoader__.load({
         try { const d = await api('storeApps', { node: port, lang: locale }); setStore(d || []); return d || []; } catch { setStore([]); return []; }
       }, [locale]);
 
-      useEffect(() => { act('LOAD NODES', loadNodes); }, [act, loadNodes]);
+      useEffect(() => {
+        let alive = true;
+        (async () => {
+          try {
+            const st = await api('stateGet');
+            const cached = st && st.nodesCache;
+            if (alive && Array.isArray(cached) && cached.length) {
+              setNodes(cached); setNodesLoaded(true);
+              setNode((cur) => (cur != null ? cur : (cached.find((n) => n.state === 'running')?.port ?? cached[0].port)));
+              return;
+            }
+          } catch { /* fall back to load */ }
+          if (alive) act('LOAD NODES', loadNodes);
+        })();
+        return () => { alive = false; };
+      }, [act, loadNodes]);
       const firstNodeEffectRef = useRef(true);
       useEffect(() => { const keep = firstNodeEffectRef.current && bootSelRef.current?.node; firstNodeEffectRef.current = false; if (!keep) { setSpace(null); setApps([]); setApp(null); } setAppMode('recent'); if (node) { act('LOAD SPACES', () => loadSpaces(node)); act('LOAD AVATARS', async () => { const a = await loadAvatars(node); await loadApps(node, null, a?.uid || ''); }); act('LOAD BACKGROUNDS', () => loadBackgrounds(node)); } }, [node, act, loadSpaces, loadApps, loadAvatars]);
       const prevSelSpaceRef = useRef(space);
@@ -4908,7 +4924,8 @@ window.__ModuleLoader__.load({
       const spaceRows = spaces.filter((s) => !spaceStatusFilter.length || spaceStatusFilter.includes(s.status));
       const appRows = apps.filter((a) => !appSpaceFilter.length || appSpaceFilter.includes(a.space || space || ''));
       const appSpaceOptions = [...new Set(apps.map((a) => a.space || space).filter(Boolean))].map((v) => ({ value: v, label: v }));
-      const nodeStatusOptions = [...new Set(nodes.map((n) => n.state).filter(Boolean))].map((v) => ({ value: v, label: v === 'running' ? t('running') : v === 'offline' ? t('offline') : v }));
+      const stateLabel = (v) => ({ running: t('running'), stopped: t('stopped'), offline: t('offline'), missing: t('missing'), starting: t('starting') })[v] || v;
+      const nodeStatusOptions = [...new Set(nodes.map((n) => n.state).filter(Boolean))].map((v) => ({ value: v, label: stateLabel(v) }));
       const spaceStatusOptions = [...new Set(spaces.map((s) => s.status).filter(Boolean))].map((v) => ({ value: v, label: v === 'start' ? t('running') : v === 'stop' ? t('offline') : v }));
       const storeRows = store.filter((s) => !storeSpaceFilter.length || storeSpaceFilter.includes(s.space));
       const storeSpaceOptions = [...new Set(store.map((s) => s.space).filter(Boolean))].map((v) => ({ value: v, label: v }));
