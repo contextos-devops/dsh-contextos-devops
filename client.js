@@ -1735,6 +1735,20 @@ window.__ModuleLoader__.load({
       saveRef.current = save;
 
       const ideKey = `${node || ''}:${space || ''}`;
+      const [ideVersion, setIdeVersion] = useState(0);
+      useEffect(() => {
+        (async () => {
+          try {
+            const st = await api('stateGet');
+            const remote = st && st.ideOpen;
+            if (!remote || typeof remote !== 'object') return;
+            const local = readIdeOpen();
+            let changed = false;
+            for (const k of Object.keys(remote)) { if (!local[k]) { local[k] = remote[k]; changed = true; } }
+            if (changed) { localStorage.setItem('contextos-devops-dsh:ide-open', JSON.stringify(local)); setIdeVersion((v) => v + 1); }
+          } catch {}
+        })();
+      }, []);
       const readIdeOpen = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide-open') || '{}'); } catch { return {}; } };
       useEffect(() => {
         if (!node) return;
@@ -1774,13 +1788,14 @@ window.__ModuleLoader__.load({
           restorePendingRef.current = false;
         })();
         return () => { disposed = true; };
-      }, [node, space]);
+      }, [node, space, ideVersion]);
       useEffect(() => {
         if (!node || restorePendingRef.current) return;
         try {
           const all = readIdeOpen();
           all[ideKey] = { tabs: tabs.map((t) => t.path), active: activePath };
           localStorage.setItem('contextos-devops-dsh:ide-open', JSON.stringify(all));
+          try { api('stateSet', { name: 'ideOpen', value: all }).catch(() => {}); } catch {}
         } catch {}
       }, [tabs, activePath, node, space]);
 
@@ -3706,7 +3721,8 @@ window.__ModuleLoader__.load({
       const modeIntro = (m) => (m ? (locale === 'zh' ? m.intro : (m.introEn || m.intro)) : '');
       const modeQuick = (m) => (m ? (locale === 'zh' ? m.quick : (m.quickEn || m.quick)) : []);
       const [msgs, setMsgs] = useState([{ role: 'ai', text: modeIntro(CHAT_MODES[0]) }]);
-      const [input, setInput] = useState('');
+      const [input, setInput] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:draft') || ''; } catch { return ''; } });
+      useEffect(() => { const t = setTimeout(() => { try { localStorage.setItem('contextos-devops-dsh:draft', input); } catch {} }, 400); return () => clearTimeout(t); }, [input]);
       const [step, setStep] = useState(null);
       const [busy, setBusy] = useState(false);
       useEffect(() => { if (!busy) return; const t = setInterval(() => setTick((x) => x + 1), 400); return () => clearInterval(t); }, [busy]);
@@ -3740,6 +3756,21 @@ window.__ModuleLoader__.load({
       const reportTypeOptions = [...new Set(allReports.map((r) => r.type_name).filter(Boolean))].map((v) => ({ value: v, label: allReports.find((r) => r.type_name === v)?.type_label || v }));
       const feedbackStatusOptions = [...new Set(allFeedbacks.map((f) => f.status_name).filter(Boolean))].map((v) => ({ value: v, label: allFeedbacks.find((f) => f.status_name === v)?.status_label || v }));
       const sessionKey = `contextos-devops-dsh:chat:${avatar?.uid || 'anon'}:${activePlan?.uid || 'none'}`;
+      useEffect(() => {
+        (async () => {
+          try {
+            let local = null;
+            try { local = JSON.parse(localStorage.getItem(sessionKey) || 'null'); } catch {}
+            if (Array.isArray(local) && local.length) return;
+            const st = await api('stateGet');
+            const remote = st && st['chat:' + sessionKey];
+            if (Array.isArray(remote) && remote.length) {
+              setMsgs(remote);
+              try { localStorage.setItem(sessionKey, JSON.stringify(remote)); } catch {}
+            }
+          } catch {}
+        })();
+      }, [sessionKey]);
       const chatReady = !!avatar?.project && !!pm?.project;
       const chatWebTab = chatTab !== 'chat' ? (webTabs || []).find((t) => t.id === chatTab) : null;
       const [addr, setAddr] = useState('');
@@ -3786,6 +3817,7 @@ window.__ModuleLoader__.load({
         if (!cur.ready) { cur.ready = true; cur.msgs = msgs; return; }
         cur.msgs = msgs;
         try { localStorage.setItem(sessionKey, JSON.stringify(msgs)); } catch {}
+        try { api('stateSet', { name: 'chat:' + sessionKey, value: msgs.slice(-100).map((m) => ({ role: m.role, text: String(m.text || '').slice(0, 4000), t: m.t || '' })) }).catch(() => {}); } catch {}
       }, [msgs, sessionKey, open]);
 
       const push = (role, text, meta) => setMsgs((xs) => [...xs, { role, text, ...(meta || {}), t: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
@@ -4329,9 +4361,22 @@ window.__ModuleLoader__.load({
       const [reqLog, setReqLog] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:reqlog') || '[]') || []; } catch { return []; } });
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:reqlog', JSON.stringify(reqLog.slice(-50))); } catch {} }, [reqLog]);
       const pushReq = (e) => { try { setReqLog((l) => [...l, e].slice(-50)); } catch {} };
+      const saveRemote = (name, value) => { try { api('stateSet', { name, value }).catch(() => {}); } catch {} };
+      useEffect(() => { const t = setTimeout(() => { if (reqLog.length) saveRemote('reqlog', reqLog); }, 900); return () => clearTimeout(t); }, [reqLog]);
+      useEffect(() => { const t = setTimeout(() => { if (Object.keys(selMap).length) saveRemote('selMap', selMap); }, 900); return () => clearTimeout(t); }, [selMap]);
+      useEffect(() => {
+        (async () => {
+          try {
+            const st = await api('stateGet');
+            if (!st) return;
+            if (Array.isArray(st.reqlog) && st.reqlog.length) setReqLog((cur) => (cur.length >= st.reqlog.length ? cur : st.reqlog));
+            if (st.selMap && typeof st.selMap === 'object') setSelMap((cur) => (Object.keys(cur).length ? cur : st.selMap));
+          } catch {}
+        })();
+      }, []);
       const [consoleHeight, setConsoleHeight] = useState(Number(bootConsole.height) || 190);
       const [events, setEvents] = useState([]);
-      const [sort, setSort] = useState({ key: '', dir: 1 });
+      const [sort, setSort] = useState(() => { try { const v = JSON.parse(localStorage.getItem('contextos-devops-dsh:console') || 'null') || {}; return v.sort && v.sort.key ? v.sort : { key: '', dir: 1 }; } catch { return { key: '', dir: 1 }; } });
       const [detail, setDetail] = useState(null);
       const parseDebug = (m) => {
         const text = String(m || '').trim().replace(/^↳\s*/, '');
@@ -4339,11 +4384,16 @@ window.__ModuleLoader__.load({
         return mm ? { method: mm[1].toUpperCase(), url: mm[2], rest: mm[3], raw: text } : { method: '', url: text, rest: '', raw: text };
       };
       const [files, setFiles] = useState(null);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:console', JSON.stringify({ open: consoleOpen, tab: consoleTab, height: consoleHeight })); } catch {} }, [consoleOpen, consoleTab, consoleHeight]);
-      const [nodeStatusFilter, setNodeStatusFilter] = useState([]);
-      const [spaceStatusFilter, setSpaceStatusFilter] = useState([]);
-      const [appSpaceFilter, setAppSpaceFilter] = useState([]);
-      const [storeSpaceFilter, setStoreSpaceFilter] = useState([]);
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:console', JSON.stringify({ open: consoleOpen, tab: consoleTab, height: consoleHeight, sort })); } catch {} }, [consoleOpen, consoleTab, consoleHeight, sort]);
+      const loadPref = (k, d) => { try { const v = JSON.parse(localStorage.getItem('contextos-devops-dsh:' + k) || 'null'); return v == null ? d : v; } catch { return d; } };
+      const [nodeStatusFilter, setNodeStatusFilter] = useState(() => loadPref('filter-node', []));
+      const [spaceStatusFilter, setSpaceStatusFilter] = useState(() => loadPref('filter-space', []));
+      const [appSpaceFilter, setAppSpaceFilter] = useState(() => loadPref('filter-app', []));
+      const [storeSpaceFilter, setStoreSpaceFilter] = useState(() => loadPref('filter-store', []));
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:filter-node', JSON.stringify(nodeStatusFilter)); } catch {} }, [nodeStatusFilter]);
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:filter-space', JSON.stringify(spaceStatusFilter)); } catch {} }, [spaceStatusFilter]);
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:filter-app', JSON.stringify(appSpaceFilter)); } catch {} }, [appSpaceFilter]);
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:filter-store', JSON.stringify(storeSpaceFilter)); } catch {} }, [storeSpaceFilter]);
       const t = useCallback((key) => term(locale, key), [locale]);
       const tp = useCallback((key) => locale === 'zh' ? `${term('zh', key)} / ${term('en', key)}` : term('en', key), [locale]);
       useEffect(() => {
