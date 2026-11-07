@@ -3727,7 +3727,27 @@ window.__ModuleLoader__.load({
       const [busy, setBusy] = useState(false);
       useEffect(() => { if (!busy) return; const t = setInterval(() => setTick((x) => x + 1), 400); return () => clearInterval(t); }, [busy]);
       const endRef = useRef(null);
-      useEffect(() => { if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight; }, [msgs, busy, open]);      const loadPm = useCallback(async () => {
+      const scrollKeyOf = () => `contextos-devops-dsh:scroll:${sessionKey}`;
+      const scrollRestorePendingRef = useRef(true);
+      const scrollSaveTimer = useRef(null);
+      useEffect(() => { scrollRestorePendingRef.current = true; }, [sessionKey]);
+      useEffect(() => {
+        const el = endRef.current;
+        if (!el) return;
+        if (scrollRestorePendingRef.current) {
+          scrollRestorePendingRef.current = false;
+          try { const v = Number(localStorage.getItem(scrollKeyOf()) || '0'); el.scrollTop = v > 0 ? v : el.scrollHeight; }
+          catch { el.scrollTop = el.scrollHeight; }
+          return;
+        }
+        el.scrollTop = el.scrollHeight;
+      }, [msgs, busy, open]);
+      const onMsgScroll = (e) => {
+        const el = e.currentTarget;
+        clearTimeout(scrollSaveTimer.current);
+        scrollSaveTimer.current = setTimeout(() => { try { localStorage.setItem(scrollKeyOf(), String(Math.round(el.scrollTop))); } catch {} }, 300);
+      };
+      const loadPm = useCallback(async () => {
         if (!node || !avatar?.uid) { setPm(null); return; }
         try { const d = await api('pmList', { node, uid: avatar.uid, lang: locale }); setPm(d || null); } catch { setPm(null); }
       }, [node, avatar?.uid, locale]);
@@ -4261,7 +4281,7 @@ window.__ModuleLoader__.load({
             h('div', { className: 'cx-chat-webframes', style: chatTab === 'chat' ? { display: 'none' } : null },
               (webTabs || []).map((t) => h('iframe', { key: t.id, src: t.url, title: t.title || 'web', allow: 'clipboard-read; clipboard-write', onLoad: () => setChatLoaded((m) => (m[t.id] ? m : { ...m, [t.id]: 1 })), style: chatTab === t.id ? null : { display: 'none' } })),
               chatWebTab && !chatLoaded[chatWebTab.id] ? h('div', { className: 'cx-webmask' }, T('加载中…')) : null),
-            h('div', { className: 'cx-chat-b', ref: endRef, style: chatTab !== 'chat' ? { display: 'none' } : null, onContextMenu: (e) => { if (e.target.closest('.cx-msg, button, a, input, textarea, select, .cx-sel, .cx-hint, .cx-suggest')) return; openCtx(e, 'bg'); } },
+            h('div', { className: 'cx-chat-b', ref: endRef, onScroll: onMsgScroll, style: chatTab !== 'chat' ? { display: 'none' } : null, onContextMenu: (e) => { if (e.target.closest('.cx-msg, button, a, input, textarea, select, .cx-sel, .cx-hint, .cx-suggest')) return; openCtx(e, 'bg'); } },
           h('div', { className: `cx-world${msgs.some((m) => m.role === 'user') ? ' gone' : ''}` },
             h('div', { className: 'cx-world-kicker' }, 'WELCOME TO'),
             h('div', { className: 'cx-world-name' }, 'CONTEXTOS WORLD!'),
