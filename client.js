@@ -2368,7 +2368,7 @@ window.__ModuleLoader__.load({
     }
 
     function AppRow({ a, active, onSelect, onOpen, locale, node }) {
-      return h('div', { className: `cx-app${active ? ' on' : ''}`, onClick: () => onOpen(a) },
+      return h('div', { className: `cx-app${active ? ' on' : ''}`, onClick: () => (onSelect ? onSelect(a) : onOpen(a)) },
         h('div', { className: 'cx-app-top' },
           h(ItemIcon, { item: a, name: a.title || a.name, size: 26, src: a.place_avatar || a.icon, port: node }),
           h('div', { style: { minWidth: 0 } },
@@ -4263,6 +4263,11 @@ window.__ModuleLoader__.load({
       if (bootSelRef.current === null) { try { bootSelRef.current = JSON.parse(localStorage.getItem('contextos-devops-dsh:sel') || 'null') || {}; } catch { bootSelRef.current = {}; } }
       const [nodes, setNodes] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:nodes') || '[]') || []; } catch { return []; } });
       const nodesRef = useRef(nodes); nodesRef.current = nodes;
+      const [selMap, setSelMap] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:sel-map') || '{}') || {}; } catch { return {}; } });
+      const selMapRef = useRef(selMap); selMapRef.current = selMap;
+      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:sel-map', JSON.stringify(selMap)); } catch {} }, [selMap]);
+      const rememberSel = (port, patch) => { if (!port) return; setSelMap((m) => ({ ...m, [port]: { ...(m[port] || {}), ...patch } })); };
+      const appKeyOf = (a) => (a ? `${a.space || ''}:${a.command || ''}:${a.place_uid || a.name || ''}` : '');
       const [node, setNode] = useState(() => bootSelRef.current?.node ?? null);
       const [spaces, setSpaces] = useState([]);
       const [space, setSpace] = useState(() => bootSelRef.current?.space ?? null);
@@ -4664,8 +4669,40 @@ window.__ModuleLoader__.load({
         })();
         return () => { alive = false; };
       }, [act, loadNodes]);
+      const autoSpaceRef = useRef({});
+      useEffect(() => {
+        if (!node || !spaces.length) return;
+        if (autoSpaceRef.current[node]) return;
+        autoSpaceRef.current[node] = true;
+        const saved = selMapRef.current[node] || {};
+        const pick = (saved.space && spaces.some((x) => x.name === saved.space)) ? saved.space : (spaces.find((x) => x.status === 'start')?.name || spaces[0].name);
+        setSpace(pick);
+        rememberSel(node, { space: pick });
+      }, [node, spaces]);
+      const autoAppRef = useRef({});
+      useEffect(() => {
+        if (!node || !space || !apps.length) return;
+        const k = `${node}:${space}`;
+        if (autoAppRef.current[k]) return;
+        autoAppRef.current[k] = true;
+        const saved = (selMapRef.current[node] || {}).appKey || '';
+        const pick = apps.find((a) => appKeyOf(a) === saved) || apps[0];
+        setApp(pick);
+        rememberSel(node, { appKey: appKeyOf(pick) });
+      }, [node, space, apps]);
       const firstNodeEffectRef = useRef(true);
       useEffect(() => { const keep = firstNodeEffectRef.current && bootSelRef.current?.node; firstNodeEffectRef.current = false; if (!keep) { setSpace(null); setApps([]); setApp(null); } setAppMode('recent'); if (node) { act('LOAD SPACES', () => loadSpaces(node)); act('LOAD AVATARS', async () => { const a = await loadAvatars(node); await loadApps(node, null, a?.uid || ''); }); act('LOAD BACKGROUNDS', () => loadBackgrounds(node)); } }, [node, act, loadSpaces, loadApps, loadAvatars]);
+      const selectSpace = (name) => {
+        if (!node) return;
+        if (space === name) { setSpace(null); setApp(null); rememberSel(node, { space: null, appKey: null }); return; }
+        setSpace(name); setApp(null);
+        rememberSel(node, { space: name, appKey: null });
+      };
+      const selectApp = (a) => {
+        const key = appKeyOf(a);
+        if (app && appKeyOf(app) === key) { setApp(null); rememberSel(node, { appKey: null }); return; }
+        setApp(a); rememberSel(node, { appKey: key });
+      };
       const prevSelSpaceRef = useRef(space);
       useEffect(() => { const changed = prevSelSpaceRef.current !== space; prevSelSpaceRef.current = space; if (changed) setApp(null); if (node) act('LOAD RECENT', () => loadApps(node, space, avatar?.uid || '')); }, [node, space, avatar?.uid, act, loadApps]);
       useEffect(() => {
@@ -5002,7 +5039,7 @@ window.__ModuleLoader__.load({
           }, !node
             ? h('div', { className: 'cx-empty' }, '先选择左侧服务节点。')
             : h(React.Fragment, null,
-                spaceRows.length ? spaceRows.map((s) => h(SpaceCard, { key: s.name, s, node, active: space === s.name, onSelect: setSpace, onOpen: openSpace, onStart: startSpace, onStop: stopSpace, onDelete: deleteSpace, onIde: openIde, locale })) : h('div', { className: 'cx-empty' }, '该节点还没有项目空间。创建空空间后自动 git init。'),
+                spaceRows.length ? spaceRows.map((s) => h(SpaceCard, { key: s.name, s, node, active: space === s.name, onSelect: selectSpace, onOpen: openSpace, onStart: startSpace, onStop: stopSpace, onDelete: deleteSpace, onIde: openIde, locale })) : h('div', { className: 'cx-empty' }, '该节点还没有项目空间。创建空空间后自动 git init。'),
                 h(OfficialSpaces, { node, onDeploy: deployOfficial, locale }))),
           h(Panel, {
             index: '03',
@@ -5014,7 +5051,7 @@ window.__ModuleLoader__.load({
           },
             appMode === 'store'
               ? (storeRows.length ? storeRows.map((s) => h(StoreRow, { key: `${s.space}:${s.command}:${s.uid}`, s, onCreate: openStoreCreate, busy: !!busy, onAction: storeAct, onCode: storeCode, onConfig: storeConfig, locale, node })) : h('div', { className: 'cx-empty' }, '应用商店加载中，或当前节点没有 service。'))
-              : (!node ? h('div', { className: 'cx-empty' }, '先选择左侧服务节点。') : appRows.length ? appRows.map((a) => h(AppRow, { key: `${a.space}:${a.command}:${a.place_uid || a.name}`, a, active: app?.place_uid === a.place_uid, onOpen: openApp, locale, node })) : h('div', { className: 'cx-empty' }, '该用户最近还没有应用。用「应用商店」创建，或 AI 生成模板。'))),
+              : (!node ? h('div', { className: 'cx-empty' }, '先选择左侧服务节点。') : appRows.length ? appRows.map((a) => h(AppRow, { key: `${a.space}:${a.command}:${a.place_uid || a.name}`, a, active: app?.place_uid === a.place_uid, onSelect: selectApp, onOpen: openApp, locale, node })) : h('div', { className: 'cx-empty' }, '该用户最近还没有应用。用「应用商店」创建，或 AI 生成模板。'))),
           h(Panel, {
             index: '04', title: tp('web'), count: webTabs.length ? `${webTabs.length} TABS` : 'NO TAB',
           },
