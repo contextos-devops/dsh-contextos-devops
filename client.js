@@ -1523,7 +1523,7 @@ window.__ModuleLoader__.load({
       };
       const [git, setGit] = useState(null);
       const [gitOpen, setGitOpen] = useState(true);
-      const [gitHistOpen, setGitHistOpen] = useState(true);
+      const [gitHistOpen, setGitHistOpen] = useState(false);
       const [cursor, setCursor] = useState({ line: 1, column: 1 });
       const refreshGit = async () => {
         if (!node) return;
@@ -1532,6 +1532,27 @@ window.__ModuleLoader__.load({
       useEffect(() => { refreshGit(); }, [node, space]);
       const [recentOpen, setRecentOpen] = useState(true);
       const [treeOpen, setTreeOpen] = useState(true);
+      const readTreeFolds = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:tree-folds') || '{}'); } catch { return {}; } };
+      const treeFoldsKey = `${node || ''}:${space || ''}`;
+      const skipTreeFoldSaveRef = useRef(false);
+      useEffect(() => {
+        if (!node) return;
+        skipTreeFoldSaveRef.current = true;
+        const f = readTreeFolds()[treeFoldsKey] || {};
+        setRecentOpen(f.recent !== false);
+        setTreeOpen(f.tree !== false);
+        setGitOpen(f.git !== false);
+        setGitHistOpen(f.gitHist === true);
+      }, [node, space]);
+      useEffect(() => {
+        if (skipTreeFoldSaveRef.current) { skipTreeFoldSaveRef.current = false; return; }
+        if (!node) return;
+        try {
+          const all = readTreeFolds();
+          all[treeFoldsKey] = { recent: recentOpen, tree: treeOpen, git: gitOpen, gitHist: gitHistOpen };
+          localStorage.setItem('contextos-devops-dsh:tree-folds', JSON.stringify(all));
+        } catch {}
+      }, [recentOpen, treeOpen, gitOpen, gitHistOpen, node, space]);
       const [editorErr, setEditorErr] = useState('');
       const [termErr, setTermErr] = useState('');
       useEffect(() => {
@@ -2112,7 +2133,7 @@ window.__ModuleLoader__.load({
                     h('span', { className: 'nm' }, fp.split('/').pop()),
                     h('span', { className: `cx-git-badge ${gitClass(git.files[fp])}` }, git.files[fp] === '??' ? 'U' : git.files[fp]))) : null) : null,
                 git && git.history && git.history.length ? h('div', { className: 'cx-tree-recent' },
-                  h('div', { className: 'cx-tree-sect', onClick: () => setGitHistOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(gitHistOpen) }), zh ? 'GIT 历史' : 'GIT HISTORY',
+                  h('div', { className: 'cx-tree-sect cx-tree-sect-top', onClick: () => setGitHistOpen((v) => !v) }, h('span', { className: 'chev', dangerouslySetInnerHTML: chevHtml(gitHistOpen) }), zh ? 'GIT 历史' : 'GIT HISTORY',
                     h('span', { className: 'cx-git-count' }, String(git.history.length))),
                   gitHistOpen ? git.history.slice(0, 30).map((c) => h('div', { key: 'h:' + c.hash, className: 'cx-tree-item cx-git-log', style: { paddingLeft: 6 }, title: `${c.hash} ${c.subject} · ${c.author} · ${c.when}`, onClick: () => { try { navigator.clipboard.writeText(c.hash); } catch {} setStatus(`${c.hash} ${c.subject}`); } },
                     h('span', { className: 'h' }, c.hash),
