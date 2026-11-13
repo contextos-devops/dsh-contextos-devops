@@ -257,3 +257,20 @@ gate added so the same bug cannot return silently
   (or month/term/festival) and the footer shows 干支+生肖+月日+星座.
 - Gate: ui-check requires `CX_LUNAR` and `.cx-cal-lunar`; rendered-screen check
   at 2026-11 shows 廿三/立冬/小雪 and `丙午 马年 十月初五 天蝎座`.
+
+## 2026-11-13 — render crash from hook dependency order (TDZ)
+
+- Symptom: after adding prefs hydration, the whole plugin turned into
+  “界面出现错误” (white screen). `useEffect(..., [themeMode, langMode, ...])`
+  was declared before `const [langMode] = useState(...)`, so the dependency
+  array evaluated a `let`-like binding in its TDZ and threw on render.
+- Why gates missed it: `build:client` only runs static gates
+  (gate/ui-check/i18n/context); a TDZ is a runtime error and only appears when
+  React actually renders the component.
+- Fix: move the effect below all state declarations; add
+  `scripts/hook-order-check.mjs` (a static scan that fails when a hook's
+  dependency array references an identifier declared later in the same file)
+  and wire it into `build:client` before the other checks.
+- Lesson: for any client change, static gates are not enough — either run
+  `npm run verify:ui` against a real browser, or add a gate that encodes the
+  runtime failure mode; do not claim done on build-only evidence.
