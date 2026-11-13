@@ -169,6 +169,7 @@
               version: String(CLIENT_CSS).split('?v=')[1] || '',
               fontSize: cs.fontSize,
               lineHeight: cs.lineHeight,
+              placeholder: (() => { try { return window.getComputedStyle(el, '::placeholder').fontSize; } catch { return ''; } })(),
               rev: String(CLIENT_CSS),
             } }).catch(() => {});
           } catch {}

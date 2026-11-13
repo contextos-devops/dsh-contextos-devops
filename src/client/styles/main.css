@@ -2435,7 +2435,7 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-textarea,
 .cx-shell .cx-addr-input,
 .cx-shell .cx-addr-input::placeholder,
-.cx-shell .cx-compose-input::placeholder{font-size:var(--fs-12)!important}
+.cx-shell .cx-compose-input::placeholder{font-size:13px!important}
 
 /* 特效筛选（下拉选项 / 菜单项）文字放大到 14px */
 .cx-shell .cx-drop-pop .cx-drop-item,
