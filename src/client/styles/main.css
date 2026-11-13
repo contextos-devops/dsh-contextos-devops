@@ -2839,8 +2839,8 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-pm-side.right{display:flex!important;flex-direction:column}
 .cx-pm-side.right .cx-mapsec:not(.max){margin-top:auto!important;position:sticky!important;bottom:0!important}
 
-/* 地图标题栏：去掉左侧多余空白 */
-.cx-pm-side.right .cx-mapsec:not(.max) .cx-pm-h{padding-left:0!important}
+/* 地图标题栏：与其它分栏一致，左侧留出内边距 */
+.cx-pm-side.right .cx-mapsec:not(.max) .cx-pm-h{padding-left:10px!important}
 .cx-pm-side.right .cx-mapsec:not(.max) .cx-pm-h>:first-child{margin-left:0!important;padding-left:0!important}
 .cx-pm-side.right .cx-mapsec:not(.max) .cx-pm-titleline{gap:6px}
 
