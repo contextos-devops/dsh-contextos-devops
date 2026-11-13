@@ -1,0 +1,20 @@
+.cx-section{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cx-section-h{font-size:var(--cx-fs);font-weight:600;color:var(--cx-cyan);letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.cx-btn.cx-sm{padding:2px 7px;font-size:var(--cx-fs)}
+.cx-btn.cx-primary{border-color:var(--cx-cyan);color:var(--cx-bg);background:var(--cx-cyan)}
+.cx-btn.cx-danger{border-color:var(--cx-red);color:var(--cx-red)}
+.cx-btn.cx-ghost{border-color:transparent;background:transparent}
+.cx-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.cx-tab.on{border-color:var(--cx-cyan);color:var(--cx-cyan)}
+/* accessibility / native controls */
+.cx-shell{color-scheme:dark}
+.cx-shell[data-theme="light"]{color-scheme:light}
+.cx-shell button:focus-visible,.cx-shell select:focus-visible,.cx-shell input:focus-visible,.cx-shell textarea:focus-visible,.cx-shell [tabindex]:focus-visible{outline:2px solid var(--cx-accent);outline-offset:2px}
+.cx-shell .leaflet-container:focus-visible{outline:2px solid var(--cx-accent);outline-offset:-2px}
+@media (prefers-reduced-motion: reduce){
+  .cx-shell *, .cx-shell *::before, .cx-shell *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+.cx-error-pane{padding:24px;border:1px solid var(--cx-border);background:var(--cx-surface-1);color:var(--cx-text);margin:16px;border-radius:8px}
+.cx-error-title{font-size:var(--cx-fs-title);font-weight:700;color:var(--cx-danger,var(--cx-red));margin-bottom:8px}
+.cx-error-msg{font:var(--cx-fs)/1.6 var(--cx-mono);color:var(--cx-text-dim);white-space:pre-wrap;max-height:180px;overflow:auto;margin-bottom:12px}
+.cx-error-actions{display:flex;gap:8px}

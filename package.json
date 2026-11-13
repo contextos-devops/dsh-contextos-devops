@@ -1,6 +1,6 @@
 {
   "name": "@local/contextos-devops-dsh",
-  "version": "1.22.2",
+  "version": "1.43.1",
   "private": true,
   "type": "module",
   "description": "ContextOS DevOps for DeepSeek Harness: tech dashboard for cluster nodes, project spaces, platform apps and data.",
@@ -13,13 +13,17 @@
   "files": [
     "index.js",
     "client.js",
+    "lib/",
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
     "README.md",
     "vendor/xterm/*",
     "vendor/three/*",
-    "vendor/leaflet/*"
+    "vendor/leaflet/*",
+    "src/client/**",
+    "build/**",
+    "assets/**"
   ],
   "dsh": {
     "bundle": {
@@ -33,5 +37,15 @@
         "@deepseek-ai/dsh-client-ui-sidebar"
       ]
     }
+  },
+  "scripts": {
+    "build:client": "node build/client.mjs && node scripts/gate.mjs && node scripts/ui-check.mjs && node scripts/i18n-check.mjs && node scripts/context-check.mjs",
+    "watch:client": "node build/client.mjs --watch",
+    "check:ui": "node scripts/ui-check.mjs",
+    "check:context": "node scripts/context-check.mjs",
+    "check:i18n": "node scripts/i18n-check.mjs",
+    "gate": "node scripts/gate.mjs",
+    "verify:ui": "node scripts/ui-verify.mjs",
+    "release": "npm run build:client && node scripts/ui-verify.mjs"
   }
 }

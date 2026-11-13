@@ -1,0 +1,48 @@
+{
+  "root": "../../..",
+  "documents": [
+    {
+      "path": "AGENTS.md",
+      "sections": [
+        "三、开发铁律",
+        "五、反模式与避坑"
+      ]
+    },
+    {
+      "path": "SPEC-CODE.md",
+      "sections": [
+        "2.3",
+        "2.4"
+      ]
+    },
+    {
+      "path": "USER-VIEW.md",
+      "sections": [
+        "〇、总则",
+        "一、布局",
+        "二、组件",
+        "三、标签"
+      ]
+    },
+    {
+      "path": "CONTEXT.md",
+      "sections": [
+        "七",
+        "十一"
+      ]
+    },
+    {
+      "path": "SPEC-API.md",
+      "sections": []
+    }
+  ],
+  "plugin": [
+    "docs/ARCHITECTURE.md",
+    "docs/UI-ACCEPTANCE.md",
+    "docs/AI-CONTEXT.md",
+    "docs/MEMORY.md",
+    "docs/CODE-MAP.md",
+    "docs/RSI-CONSTITUTION.md",
+    "docs/DESIGN-SYSTEM.md"
+  ]
+}

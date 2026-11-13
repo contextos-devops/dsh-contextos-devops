@@ -1,0 +1,29 @@
+    // Persisted PM selection. The component only owns rendering; restoring and
+    // saving the five selected ids is one concern, so it lives here.
+    function usePmSelection({ avatarUid }) {
+      const [targetId, setTargetId] = useState('');
+      const [planId, setPlanId] = useState('');
+      const [taskId, setTaskId] = useState('');
+      const [reportId, setReportId] = useState('');
+      const [feedbackId, setFeedbackId] = useState('');
+      const ownerRef = useRef('');
+      useEffect(() => {
+        const uid = avatarUid || '';
+        if (!uid || ownerRef.current === uid) return;
+        ownerRef.current = uid;
+        let saved = {};
+        try { saved = (JSON.parse(localStorage.getItem('contextos-devops-dsh:pm') || '{}'))[uid] || {}; } catch {}
+        setTargetId(saved.target || ''); setPlanId(saved.plan || ''); setTaskId(saved.task || ''); setReportId(saved.report || ''); setFeedbackId(saved.feedback || '');
+      }, [avatarUid]);
+      useEffect(() => {
+        const uid = avatarUid || '';
+        if (!uid || ownerRef.current !== uid) return;
+        if (!targetId && !planId && !taskId && !reportId && !feedbackId) return;
+        try {
+          const all = JSON.parse(localStorage.getItem('contextos-devops-dsh:pm') || '{}');
+          all[uid] = { target: targetId, plan: planId, task: taskId, report: reportId, feedback: feedbackId };
+          localStorage.setItem('contextos-devops-dsh:pm', JSON.stringify(all));
+        } catch {}
+      }, [avatarUid, targetId, planId, taskId, reportId, feedbackId]);
+      return { targetId, setTargetId, planId, setPlanId, taskId, setTaskId, reportId, setReportId, feedbackId, setFeedbackId };
+    }
