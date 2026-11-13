@@ -3034,3 +3034,8 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-pm-side.right .cx-mapsec:not(.max){height:var(--cx-sec-h)!important;display:flex!important;flex-direction:column!important}
 .cx-pm-side.right .cx-mapsec:not(.max) .cx-taskmap{flex:1 1 auto!important;min-height:0!important;display:flex;flex-direction:column}
 .cx-pm-side.right .cx-mapsec:not(.max) .cx-taskmap-leaflet{flex:1 1 auto!important;height:auto!important;min-height:0!important}
+
+/* 2026-11-13: gantt rows share the fixed section height so every plan stays visible */
+.cx-shell .cx-gantt-body{display:flex;flex-direction:column;gap:4px}
+.cx-shell .cx-gantt-row{padding:0!important}
+.cx-shell .cx-gantt-track{min-height:0!important}

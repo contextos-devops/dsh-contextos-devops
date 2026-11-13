@@ -31,11 +31,16 @@
         const left = pct(pb ?? min), right = pct(pe ?? max);
         const width = Math.max(2, right - left);
         const isActive = p.uid === activeUid;
-        const tasks = (p.tasks || []).slice(0, isActive ? 6 : 2);
-        /* 选中的计划保持高一些，未选中的压矮，腾出可视空间 */
-        const step = isActive ? 14 : 11;
-        const top0 = isActive ? 8 : 6;
-        const rowH = Math.max(isActive ? 30 : 18, top0 + tasks.length * step + (isActive ? 6 : 4));
+        /* 按计划数量均分 218px 的可视高度，保证所有计划一屏显示 */
+        const n = rows.length;
+        const avail = 168;                       /* 218 - 标题 34 - 轴 16 */
+        const gap = 4;
+        const unit = Math.max(10, Math.floor((avail - gap * n) / (n + 0.45)));
+        const rowH = Math.round(isActive ? Math.min(56, unit * 1.45) : Math.min(40, unit));
+        const step = rowH >= 34 ? 11 : rowH >= 24 ? 9 : 7;
+        const top0 = Math.max(2, Math.floor((rowH - (step * 2)) / 2));
+        const maxTasks = Math.max(1, Math.min(isActive ? 6 : 3, Math.floor((rowH - top0) / step)));
+        const tasks = (p.tasks || []).slice(0, maxTasks);
         return h('div', { className: `cx-gantt-row${isActive ? ' on' : ''}`, key: p.uid },
           h('div', { className: 'cx-gantt-track', style: { height: rowH + 'px', minHeight: rowH + 'px' } },
             h('div', { className: `cx-gantt-plan${isActive ? ' on' : ''}`, style: { left: left + '%', width: width + '%', height: rowH + 'px' } },
@@ -51,7 +56,7 @@
                   key: t.uid || i,
                   className: `cx-gantt-task ${t.status_name || 'created'}`,
                   title: `${t.title || ''} · ${t.status_name || ''}`,
-                  style: { left: lp + '%', width: Math.min(100 - lp, wp) + '%', top: (top0 + i * step) + 'px', height: (isActive ? 10 : 8) + 'px' },
+                  style: { left: lp + '%', width: Math.min(100 - lp, wp) + '%', top: (top0 + i * step) + 'px', height: Math.max(3, Math.min(8, Math.round(rowH / 7))) + 'px' },
                 });
               }))));
       }))
