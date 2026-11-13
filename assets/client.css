@@ -3027,7 +3027,7 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 
 /* 2026-11-13: map header aligns with other sections; gantt matches map height */
 .cx-mapsec .cx-pm-h{padding-left:10px;padding-right:8px}
-.cx-gantt{min-height:180px}
+.cx-shell .cx-gantt{min-height:180px}
 .cx-section{display:flex;flex-direction:column;gap:8px;min-width:0}
 .cx-section-h{font-size:var(--cx-fs);font-weight:600;color:var(--cx-cyan);letter-spacing:.06em;text-transform:uppercase;opacity:.85}
 .cx-btn.cx-sm{padding:2px 7px;font-size:var(--cx-fs)}
