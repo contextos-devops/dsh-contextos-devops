@@ -644,6 +644,7 @@
         onSelect: onClick, onAction: (action) => runPmAction(kind, item, action),
       });
       const leftPanel = h('aside', { className: `cx-pm-side${pmRefreshing ? ' refreshing' : ''}` },
+        h('div', { className: 'cx-pm-scroll' },
         h(PmSectionHead, { icon: 'target', title: sectionTitle(tt('target'), 'TARGETS'), count: targets.length, folded: fold('targets'), onToggle: () => setFolds((f) => ({ ...f, targets: !f.targets })), onRefresh: () => loadPm('target'), tools: pmOps('target') }),
         pmError ? h('div', { className: 'cx-pm-empty err' }, pmError) : null,
         !pm && !pmError ? h('div', { className: 'cx-pm-empty' }, T('加载中…')) : null,
@@ -651,6 +652,7 @@
         h(PmSectionHead, { icon: 'plan', title: sectionTitle(tt('plan'), 'PLANS'), count: plans.length, folded: fold('plans'), style: { marginTop: 12 }, onToggle: () => setFolds((f) => ({ ...f, plans: !f.plans })), onRefresh: () => loadPm('plan'), tools: pmOps('plan') }),
         fold('plans') ? null : (planStatusOptions.length > 1 ? h(PmFilter, { label: tt('status'), options: planStatusOptions, value: planStatusFilter, onChange: setPlanStatusFilter }) : null),
         fold('plans') ? null : plans.length ? h(UiCardList, { items: plans, render: (p) => pmItem(p, activePlan?.uid === p.uid, () => { setPlanId(p.uid); setTaskId(''); setReportId(''); setFeedbackId(''); }, `${p.tasks?.length || 0} 任务`, 'plan') }) : h(PmEmpty, { label: T('创建计划'), onCreate: activeTarget && pmCanCreate('plan') ? () => openPm('plan') : null }, activeTarget ? T('该目标下还没有计划') : T('选择目标后显示计划')),
+        ),
         h('div', { className: `cx-gantt-sec${fold('gantt') ? ' folded' : ''}` },
           h(PmSectionHead, { icon: 'clock', title: sectionTitle('进度', 'PROGRESS'), count: plans.filter((p) => p.status_name === 'process').length, folded: fold('gantt'), onToggle: () => setFolds((f) => ({ ...f, gantt: !f.gantt })) }),
           fold('gantt') ? null : h(Gantt, { plans, activeUid: activePlan?.uid })));

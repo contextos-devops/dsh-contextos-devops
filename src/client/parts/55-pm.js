@@ -19,6 +19,10 @@
       if (!Number.isFinite(min) || max <= min) return h('div', { className: 'cx-gantt-empty' }, T('计划缺少起止时间'));
       const span = max - min;
       const pct = (t) => Math.max(0, Math.min(100, ((t - min) / span) * 100));
+      /* 行高与任务间距按“计划数 + 任务总数”自适应，目标是把所有计划和任务都放进 168px 可视区 */
+      const rowCount = rows.length;
+      const totalTasks = rows.reduce((a, p) => a + Math.min(8, (p.tasks || []).length), 0);
+      const step = Math.max(4, Math.min(11, Math.floor((168 - rowCount * 10 - (rowCount - 1) * 3) / Math.max(1, totalTasks))));
       const label = (t) => { const d = new Date(t); return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
       const now = Date.now();
       const nowPct = Math.max(0, Math.min(100, ((now - min) / span) * 100));   /* 超出范围时贴边显示 */
@@ -31,16 +35,9 @@
         const left = pct(pb ?? min), right = pct(pe ?? max);
         const width = Math.max(2, right - left);
         const isActive = p.uid === activeUid;
-        /* 按计划数量均分 218px 的可视高度，保证所有计划一屏显示 */
-        const n = rows.length;
-        const avail = 168;                       /* 218 - 标题 34 - 轴 16 */
-        const gap = 4;
-        const unit = Math.max(10, Math.floor((avail - gap * n) / (n + 0.45)));
-        const rowH = Math.round(isActive ? Math.min(56, unit * 1.45) : Math.min(40, unit));
-        const step = rowH >= 34 ? 11 : rowH >= 24 ? 9 : 7;
-        const top0 = Math.max(2, Math.floor((rowH - (step * 2)) / 2));
-        const maxTasks = Math.max(1, Math.min(isActive ? 6 : 3, Math.floor((rowH - top0) / step)));
-        const tasks = (p.tasks || []).slice(0, maxTasks);
+        const tasks = (p.tasks || []).slice(0, 8);
+        const top0 = 5;
+        const rowH = Math.max(18, top0 + tasks.length * step + 4 + (isActive ? 4 : 0));
         return h('div', { className: `cx-gantt-row${isActive ? ' on' : ''}`, key: p.uid },
           h('div', { className: 'cx-gantt-track', style: { height: rowH + 'px', minHeight: rowH + 'px' } },
             h('div', { className: `cx-gantt-plan${isActive ? ' on' : ''}`, style: { left: left + '%', width: width + '%', height: rowH + 'px' } },
@@ -56,7 +53,7 @@
                   key: t.uid || i,
                   className: `cx-gantt-task ${t.status_name || 'created'}`,
                   title: `${t.title || ''} · ${t.status_name || ''}`,
-                  style: { left: lp + '%', width: Math.min(100 - lp, wp) + '%', top: (top0 + i * step) + 'px', height: Math.max(3, Math.min(8, Math.round(rowH / 7))) + 'px' },
+                  style: { left: lp + '%', width: Math.min(100 - lp, wp) + '%', top: (top0 + i * step) + 'px', height: Math.max(3, Math.min(6, step - 3)) + 'px' },
                 });
               }))));
       }))

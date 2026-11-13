@@ -3039,3 +3039,8 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-gantt-body{display:flex;flex-direction:column;gap:4px}
 .cx-shell .cx-gantt-row{padding:0!important}
 .cx-shell .cx-gantt-track{min-height:0!important}
+
+/* 2026-11-13: left panel keeps the progress block visible; the plan list scrolls above it */
+.cx-pm-side:not(.right){display:flex!important;flex-direction:column;overflow:hidden;min-height:0;height:100%}
+.cx-pm-side:not(.right) .cx-pm-scroll{flex:1 1 auto;min-height:0;overflow:auto;overflow-x:hidden}
+.cx-pm-side:not(.right) .cx-gantt-sec{flex:none}
