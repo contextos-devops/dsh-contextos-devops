@@ -160,6 +160,19 @@
           el.style.setProperty('font-size', '13px', 'important');
           el.style.setProperty('line-height', '1.65', 'important');
         } catch {}
+        /* 把真实渲染结果回报给服务端，便于核对当前加载的 bundle 与计算字号 */
+        setTimeout(() => {
+          try {
+            const cs = window.getComputedStyle(el);
+            api('stateSet', { name: 'clientCheck', value: {
+              at: new Date().toISOString(),
+              version: String(CLIENT_CSS).split('?v=')[1] || '',
+              fontSize: cs.fontSize,
+              lineHeight: cs.lineHeight,
+              rev: String(CLIENT_CSS),
+            } }).catch(() => {});
+          } catch {}
+        }, 300);
       }, [sessionKey]);
       useEffect(() => {
         if (!open) return;

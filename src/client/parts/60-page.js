@@ -167,6 +167,31 @@
         const tmr = setTimeout(() => { try { api('stateSet', { name: 'prefs', value: { theme: themeMode, lang: langMode, view: viewMode, work: workMode } }).catch(() => {}); } catch {} }, 800);
         return () => clearTimeout(tmr);
       }, [themeMode, langMode, viewMode, workMode]);
+
+      useEffect(() => {
+        /* 实测回报：把真实 DOM 的计算字号与 bundle 版本写入服务端，便于核对 */
+        let tries = 0;
+        const timer = setInterval(() => {
+          tries += 1;
+          const el = document.querySelector('.cx-compose-input');
+          if (!el && tries < 10) return;
+          clearInterval(timer);
+          try {
+            const cs = el ? window.getComputedStyle(el) : null;
+            api('stateSet', { name: 'clientCheck', value: {
+              at: new Date().toISOString(),
+              version: String(CLIENT_CSS).split('?v=')[1] || '',
+              found: !!el,
+              count: document.querySelectorAll('.cx-compose-input').length,
+              fontSize: cs ? cs.fontSize : '',
+              lineHeight: cs ? cs.lineHeight : '',
+              inline: el ? (el.style.getPropertyValue('font-size') || '') : '',
+              dpr: window.devicePixelRatio || 1,
+            } }).catch(() => {});
+          } catch {}
+        }, 400);
+        return () => clearInterval(timer);
+      }, []);
       const [locale, setLocale] = useState(() => { try { const m = localStorage.getItem('contextos-devops-dsh:lang') || 'system'; return m === 'system' ? browserLang() : m; } catch { return browserLang(); } });
       CURRENT_LANG = locale === 'zh' ? 'zh' : 'en';
       const bootConsole = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:console') || 'null') || {}; } catch { return {}; } })();
