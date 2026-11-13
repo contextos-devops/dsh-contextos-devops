@@ -73,27 +73,7 @@
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:work-mode', workMode); } catch {} }, [workMode]);
       const [chatFull, setChatFull] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:chatfull'); return v === null ? true : v === '1'; } catch { return true; } });
       const [themeMode, setThemeMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:theme') || 'system'; } catch { return 'system'; } });
-      const prefsReadyRef = useRef(false);
-      useEffect(() => {
-        (async () => {
-          try {
-            const st = await api('stateGet');
-            const p = st && st.prefs;
-            if (p && typeof p === 'object') {
-              if (p.theme) { setThemeMode(p.theme); try { localStorage.setItem('contextos-devops-dsh:theme', p.theme); } catch {} }
-              if (p.lang) { setLangMode(p.lang); try { localStorage.setItem('contextos-devops-dsh:lang', p.lang); } catch {} }
-              if (p.view) setViewMode(p.view);
-              if (p.work) setWorkMode(p.work);
-            }
-          } catch {}
-          prefsReadyRef.current = true;
-        })();
-      }, []);
-      useEffect(() => {
-        if (!prefsReadyRef.current) return;
-        const tmr = setTimeout(() => { try { api('stateSet', { name: 'prefs', value: { theme: themeMode, lang: langMode, view: viewMode, work: workMode } }).catch(() => {}); } catch {} }, 800);
-        return () => clearTimeout(tmr);
-      }, [themeMode, langMode, viewMode, workMode]);
+
       const [opFx, setOpFx] = useState(null);
       const [pipeMenu, setPipeMenu] = useState(null);
       const [sidebarHidden, setSidebarHidden] = useState(false);
@@ -166,6 +146,27 @@
       const [theme, setTheme] = useState(() => { const sys = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark'; try { const m = localStorage.getItem('contextos-devops-dsh:theme') || 'system'; return m === 'system' ? sys : m; } catch { return sys; } });
       const lightTheme = themeMode === 'light' || theme === 'light';
       const [langMode, setLangMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:lang') || 'system'; } catch { return 'system'; } });
+      const prefsReadyRef = useRef(false);
+      useEffect(() => {
+        (async () => {
+          try {
+            const st = await api('stateGet');
+            const p = st && st.prefs;
+            if (p && typeof p === 'object') {
+              if (p.theme) { setThemeMode(p.theme); try { localStorage.setItem('contextos-devops-dsh:theme', p.theme); } catch {} }
+              if (p.lang) { setLangMode(p.lang); try { localStorage.setItem('contextos-devops-dsh:lang', p.lang); } catch {} }
+              if (p.view) setViewMode(p.view);
+              if (p.work) setWorkMode(p.work);
+            }
+          } catch {}
+          prefsReadyRef.current = true;
+        })();
+      }, []);
+      useEffect(() => {
+        if (!prefsReadyRef.current) return;
+        const tmr = setTimeout(() => { try { api('stateSet', { name: 'prefs', value: { theme: themeMode, lang: langMode, view: viewMode, work: workMode } }).catch(() => {}); } catch {} }, 800);
+        return () => clearTimeout(tmr);
+      }, [themeMode, langMode, viewMode, workMode]);
       const [locale, setLocale] = useState(() => { try { const m = localStorage.getItem('contextos-devops-dsh:lang') || 'system'; return m === 'system' ? browserLang() : m; } catch { return browserLang(); } });
       CURRENT_LANG = locale === 'zh' ? 'zh' : 'en';
       const bootConsole = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:console') || 'null') || {}; } catch { return {}; } })();
