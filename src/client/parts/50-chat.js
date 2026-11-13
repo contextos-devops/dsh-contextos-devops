@@ -101,6 +101,7 @@
         try { inputRef.current?.focus({ preventScroll: true }); } catch {}
       }, [busy, open]);
       const endRef = useRef(null);
+
       const { targetId, setTargetId, planId, setPlanId, taskId, setTaskId, reportId, setReportId, feedbackId, setFeedbackId } = usePmSelection({ avatarUid: avatar?.uid || '' });
       const pmNode = node || (nodes || []).find((n) => n.state === 'running')?.port || (nodes || [])[0]?.port || 0;
       const [traceIds, setTraceIds] = useState([]);
@@ -151,6 +152,15 @@
       const feedbackStatusOptions = pmFilterOptions(allFeedbacks, 'status_name');
       const calOnChange = useCallback((a, b) => { setCalStart(a); setCalEnd(b); }, []);
       const sessionKey = `contextos-devops-dsh:chat:${avatar?.uid || 'anon'}:${activePlan?.uid || 'none'}`;
+      useEffect(() => {
+        /* 兜底：即使加载到旧样式（!important 12px），也强制输入框为 13px */
+        const el = inputRef.current;
+        if (!el) return;
+        try {
+          el.style.setProperty('font-size', '13px', 'important');
+          el.style.setProperty('line-height', '1.65', 'important');
+        } catch {}
+      }, [sessionKey]);
       useEffect(() => {
         if (!open) return;
         const t = setTimeout(() => { try { inputRef.current?.focus({ preventScroll: true }); } catch {} }, 60);
