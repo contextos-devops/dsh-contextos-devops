@@ -352,7 +352,7 @@
 .cx-chat.full .cx-chat-i .cx-input{height:38px;font-size:var(--cx-fs);border:0;background:transparent}
 .cx-chat.full .cx-chat-i .cx-btn{padding:9px 16px}
 .cx-compose{width:calc(100% - 36px);max-width:1080px;margin:8px auto 18px;border:1px solid rgba(var(--cx-hue-rgb),.28);border-radius:16px;background:rgba(5,15,25,.92);box-shadow:0 0 32px rgba(var(--cx-hue-rgb),.08),inset 0 0 20px rgba(var(--cx-hue-rgb),.03);flex:none;position:relative}
-.cx-compose-input{display:block;width:100%;min-height:84px;box-sizing:border-box;resize:none;border:0;outline:none;background:transparent;color:#dff8ff;font:var(--cx-fs)/1.65 var(--cx-font);padding:12px 14px 4px}
+.cx-compose-input{display:block;width:100%;min-height:84px;box-sizing:border-box;resize:none;border:0;outline:none;background:transparent;color:#dff8ff;font:13px/1.65 var(--cx-font);padding:12px 14px 4px}
 .cx-compose-input::placeholder{color:#557a8d}
 .cx-compose-tools{display:flex;align-items:center;gap:5px;padding:6px 8px;min-height:44px;overflow:visible}
 .cx-compose-plus{width:32px;height:32px;border-radius:50%;border:1px solid var(--cx-line2);background:rgba(8,25,40,.9);color:var(--cx-cyan);font:var(--cx-fs-title)/30px var(--cx-font);cursor:pointer;flex:none;padding:0}
@@ -700,7 +700,7 @@
 .cx-shell .cx-pm-h{font-size:var(--cx-fs)}
 .cx-shell .cx-md-p,.cx-shell .cx-md-list li{font-size:var(--cx-fs)}
 .cx-shell .cx-hint-text{font-size:var(--cx-fs)}
-.cx-shell .cx-compose-input{font-size:var(--cx-fs)}
+.cx-shell .cx-compose-input{font-size:13px}
 .cx-shell .cx-sel-btn .v{font-size:var(--cx-fs)}
 
 .cx-shell[data-theme="dark"]{--cx-bg:#050b12;--cx-surface-0:#03080e;--cx-surface-1:#08141f;--cx-surface-2:#0b1c2a;--cx-surface-3:#102738;--cx-glass:rgba(6,18,29,.9);--cx-text-strong:#effcff;--cx-text:#c6e5f1;--cx-text-dim:#7fa5b6;--cx-text-faint:#54788a;--cx-border:rgba(42,92,116,.55);--cx-border-strong:rgba(var(--cx-hue-rgb),.38);--cx-accent:var(--cx-cyan);--cx-accent-soft:rgba(var(--cx-hue-rgb),.09);--cx-shadow:0 18px 48px rgba(0,0,0,.45)}
@@ -2857,7 +2857,7 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-compose-right>.cx-compose-send{margin-left:10px!important}
 
 /* 输入框：字号 12，提示词标签化 */
-.cx-shell .cx-compose-input{font-size:12px!important;line-height:1.6!important}
+.cx-shell .cx-compose-input{font-size:13px!important;line-height:1.65!important}
 .cx-shell .cx-suggest{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
 .cx-shell .cx-suggest-tag{
   border:1px solid rgba(var(--cx-hue-rgb),.32);
@@ -3044,3 +3044,11 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-pm-side:not(.right){display:flex!important;flex-direction:column;overflow:hidden;min-height:0;height:100%}
 .cx-pm-side:not(.right) .cx-pm-scroll{flex:1 1 auto;min-height:0;overflow:auto;overflow-x:hidden}
 .cx-pm-side:not(.right) .cx-gantt-sec{flex:none}
+
+/* 2026-11-13: message hover toolbar */
+.cx-msg-tools{margin-left:auto;display:flex;align-items:center;gap:6px;opacity:0;transform:translateY(-2px);transition:opacity .12s ease,transform .12s ease}
+.cx-msg:hover .cx-msg-tools,.cx-msg:focus-within .cx-msg-tools{opacity:1;transform:none}
+.cx-msg-tool{border:0;background:transparent;color:var(--cx-muted);font:var(--cx-fs-body)/1 var(--cx-font);cursor:pointer;padding:1px 4px;border-radius:3px;letter-spacing:.06em}
+.cx-msg-tool:hover{color:var(--cx-cyan);background:rgba(var(--cx-hue-rgb),.12)}
+.cx-msg-tool.danger:hover{color:#ff7b7b}
+@media (hover:none){.cx-msg-tools{opacity:1;transform:none}}

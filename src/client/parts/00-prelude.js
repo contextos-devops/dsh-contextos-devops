@@ -165,7 +165,7 @@ window.__ModuleLoader__.load({
     };
     let CURRENT_LANG = 'zh';
     const EN_TEXT = {
-      '取消': 'Cancel', '保存': 'Save', '关闭': 'Close', '删除': 'Delete', '编辑': 'Edit', '停止': 'Stop',
+      '取消': 'Cancel', '保存': 'Save', '关闭': 'Close', '删除': 'Delete', '引用': 'Quote', '编辑': 'Edit', '停止': 'Stop',
       '发送': 'Send', '保存并编译': 'Save + build', '创建中…': 'Creating…', '保存中…': 'Saving…', '复制': 'Copy', '新建': 'New', '界面出现错误': 'UI error', '重试': 'Retry', '刷新页面': 'Reload', '返回': 'Back', '更多': 'More', '收起': 'Less', '清除': 'Clear', '展开': 'Expand', '折叠': 'Collapse',
       '上传头像照片': 'Upload avatar photo', '修改分身…': 'Edit avatar…', '切换分身': 'Switch avatar', '新建分身…': 'New avatar…',
       '上传背景照片': 'Upload background photo', '赛博世界设置…': 'Cyber World settings…', '切换赛博世界': 'Switch Cyber World', '新建赛博世界': 'New Cyber World',
