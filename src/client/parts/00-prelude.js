@@ -171,7 +171,7 @@ window.__ModuleLoader__.load({
       '上传背景照片': 'Upload background photo', '赛博世界设置…': 'Cyber World settings…', '切换赛博世界': 'Switch Cyber World', '新建赛博世界': 'New Cyber World',
       '初始化': 'Initialize', '进入': 'Enter', '稍后': 'Later', '添加文件': 'Attach file', '确认': 'Confirm',
       '放大': 'Zoom in', '缩小': 'Zoom out', '定位': 'Locate', '全屏': 'Fullscreen', '退出全屏': 'Exit fullscreen',
-      '长期': 'Long', '年': 'Year', '月': 'Month', '周': 'Week', '全部日期': 'All dates',
+      '长期': 'Long', '年': 'Year', '月': 'Month', '周': 'Week', '全部日期': 'All dates', '今天': 'Today',
       '提交': 'Submit', '通过': 'Approve', '驳回': 'Reject', '开始': 'Start', '完成': 'Finish', '交接': 'Handover',
       '+ 计划': '+ Plan', '+ 任务': '+ Task', '+ 报告': '+ Report', '+ 反馈': '+ Feedback',
       '赛博世界': 'Cyber World', '默认赛博世界': 'Default Cyber World', '默认': 'Default', '刷新': 'Refresh', '应用商店': 'Store', '部署': 'Deploy',

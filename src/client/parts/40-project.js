@@ -316,6 +316,7 @@
       }
       const key = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const firstKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+      const todayKey = key(new Date());
       const lastKey = (d) => key(new Date(d.getFullYear(), d.getMonth() + 1, 0));
       const inRange = (a, b) => start && a <= (end || start) && b >= start;
       const lunar = (d) => {
@@ -367,7 +368,7 @@
               const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i), k = key(d), on = inRange(k, k);
               return h('button', { key: k, className: `cx-cal-day${on ? ' on' : ''}${k === start ? ' start' : ''}${k === (end || start) ? ' end' : ''}`, onClick: () => pick(k, k) },
                 counts[k] ? h('span', { className: 'n' }, counts[k]) : h('span', { className: 'n empty' }, ''),
-                h('span', { className: 'd' }, d.getDate()),
+                h('span', { className: `d${k === todayKey ? ' today' : ''}` }, d.getDate()),
                 h('span', { className: `l${lunarSpecial(d) ? ' accent' : ''}` }, lunar(d)));
             })));
       }
@@ -385,7 +386,11 @@
             return CX_LUNAR.line(d);
           } catch { return ''; }
         })()),
-        h('div', { className: 'cx-cal-f' }, h('span', null, start ? `${start} → ${end || start}` : T('全部日期')), h('button', { onClick: () => onChange('', '') }, T('清除'))));
+        h('div', { className: 'cx-cal-f' },
+          h('span', null, start ? `${start} → ${end || start}` : T('全部日期')),
+          h('div', { className: 'cx-cal-f-r' },
+            h('button', { onClick: () => { const now = new Date(); setCursor(now); onChange(todayKey, todayKey); } }, T('今天')),
+            h('button', { onClick: () => onChange('', '') }, T('清除')))));
     });
 
     function MultiFilter({ label, options, value, onChange, align = 'left' }) {

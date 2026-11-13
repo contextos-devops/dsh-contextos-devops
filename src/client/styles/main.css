@@ -3016,3 +3016,9 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 /* 顶部下拉：中间列保底宽度，避免 1fr 塌成 0 */
 .cx-shell .cx-drop-pop{min-width:240px!important}
 .cx-shell .cx-drop-pop .cx-menu-3col{grid-template-columns:18px minmax(120px,1fr) 18px!important}
+
+/* 2026-11-13: today ring + full-screen year/long views fill the panel */
+.cx-cal-day .d.today{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border:1px solid var(--cx-cyan);border-radius:50%;color:var(--cx-cyan);font-weight:600}
+.cx-cal-f-r{display:flex;align-items:center;gap:12px}
+.cx-calsec.max .cx-cal-years,.cx-calsec.max .cx-cal-months{flex:1!important;grid-auto-rows:1fr!important}
+.cx-calsec.max .cx-cal-years>button,.cx-calsec.max .cx-cal-months>button{height:100%!important;min-height:0!important;display:flex;flex-direction:column;align-items:center;justify-content:center}
