@@ -30,11 +30,15 @@
         const pb = ts(p.begin_time), pe = ts(p.end_time);
         const left = pct(pb ?? min), right = pct(pe ?? max);
         const width = Math.max(2, right - left);
-        const tasks = (p.tasks || []).slice(0, 6);
-        const rowH = Math.max(30, 12 + tasks.length * 14);
-        return h('div', { className: 'cx-gantt-row', key: p.uid },
+        const isActive = p.uid === activeUid;
+        const tasks = (p.tasks || []).slice(0, isActive ? 6 : 2);
+        /* 选中的计划保持高一些，未选中的压矮，腾出可视空间 */
+        const step = isActive ? 14 : 11;
+        const top0 = isActive ? 8 : 6;
+        const rowH = Math.max(isActive ? 30 : 18, top0 + tasks.length * step + (isActive ? 6 : 4));
+        return h('div', { className: `cx-gantt-row${isActive ? ' on' : ''}`, key: p.uid },
           h('div', { className: 'cx-gantt-track', style: { height: rowH + 'px', minHeight: rowH + 'px' } },
-            h('div', { className: `cx-gantt-plan${p.uid === activeUid ? ' on' : ''}`, style: { left: left + '%', width: width + '%', height: rowH + 'px' } },
+            h('div', { className: `cx-gantt-plan${isActive ? ' on' : ''}`, style: { left: left + '%', width: width + '%', height: rowH + 'px' } },
               tasks.map((t, i) => {
                 const tb = ts(t.begin_time) ?? ts(t.created_at) ?? pb ?? min;
                 const done = t.status_name === 'finished' || t.status_name === 'canceled';
@@ -47,7 +51,7 @@
                   key: t.uid || i,
                   className: `cx-gantt-task ${t.status_name || 'created'}`,
                   title: `${t.title || ''} · ${t.status_name || ''}`,
-                  style: { left: lp + '%', width: Math.min(100 - lp, wp) + '%', top: (8 + i * 14) + 'px' },
+                  style: { left: lp + '%', width: Math.min(100 - lp, wp) + '%', top: (top0 + i * step) + 'px', height: (isActive ? 10 : 8) + 'px' },
                 });
               }))));
       }))
