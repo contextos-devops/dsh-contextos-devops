@@ -369,3 +369,26 @@ gate added so the same bug cannot return silently
   app reload to pick up `v1.45.93`; do not call it verified before that.
 - Lesson: when a screenshot looks like duplicated text, inspect the computed
   flex axis first; “two copies” can be two columns of one message.
+
+## 2026-11-15 — architecture pass: OPS registry, store, docs index
+
+- Symptom: `index.js` grew a 700-line `route()` with ~100 inline op branches;
+  duplicate op handling hid two dead endpoints (`seedProject` never routed,
+  `llmInfo` calling an unexported `chatProviders` → guaranteed ReferenceError);
+  `client.js` had 96 raw `localStorage` calls with no schema; docs had three
+  overlapping acceptance files, no entry index, and a 46-line code map covering
+  only PM.
+- Fix: (1) `lib/core/ops.js` is the single op registry (`method`/`noUser`/`run`),
+  `index.js` only dispatches; `scripts/op-check.mjs` asserts client `api()` ↔ ops
+  and that no op branch returns to `index.js`. (2) `src/client/parts/08-store.js`
+  is the only persistence door with `CX_STORE_SCHEMA`; `scripts/store-check.mjs`
+  is a ratchet (direct `localStorage` only shrinks) plus helper/kind consistency.
+  (3) `docs/INDEX.md` is the router; `scripts/docs-check.mjs` fails on orphan
+  docs, dead links, stale generated docs, or a resurrected merged file.
+  (4) `scripts/docs-index.mjs` generates `docs/CODE-INDEX.md` + `docs/STATE.md`
+  from code, so the index cannot drift. (5) `50-chat.js` split: message-level
+  components moved to `49-msg.js` (1536 → 1364 lines).
+- Evidence: `npm run build:client` green end-to-end (gate ERR=0 WARN=0, 102 ops,
+  88 ui-check, i18n, context, docs). `node --check client.js` passes.
+- Lesson: an index that a human must remember to update is not an index; make
+  the generator + the check the same script, and let the gate fail on drift.

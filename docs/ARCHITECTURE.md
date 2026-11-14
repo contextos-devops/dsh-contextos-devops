@@ -10,7 +10,7 @@
    `<table>`/`<button>` markup.
 3. **Domain** — `lib/core/*` owns ContextOS calls, status rules and action
    matrix. The client only renders `item.actions` and calls `pmAct/pmCreate/...`.
-4. **Specs** — `docs/UI-ACCEPTANCE.md` + root `USER-VIEW.md`.
+4. **Specs** — `docs/ACCEPTANCE.md` §12（UI 硬规则）+ root `USER-VIEW.md`.
 5. **Gate** — `npm run check:ui` runs on every `build:client`.
 
 ## Rules

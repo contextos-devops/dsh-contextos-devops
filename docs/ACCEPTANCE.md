@@ -1,8 +1,8 @@
 # 验收规范 / ACCEPTANCE
 
 > 一句话：**没有证据 = 未验收；无法验收 = 不算完成。**
-> 本文件是插件交付的唯一验收口径；`UI-ACCEPTANCE.md` 和 `USABILITY-GATE.md`
-> 是它的 UI 子集与工具说明。任何“完成”结论都必须能落到下面的证据表。
+> 本文件是插件交付的**唯一**验收口径：分级（L0–L3）、强制流程、证据表、
+> UI 硬规则、可用性门禁（`verify:ui`）都在这里。任何“完成”结论都必须能落到证据表。
 
 ## 1. 验收分级（四级，缺一不可）
 
@@ -166,3 +166,78 @@ node scripts/accept-factory.mjs --url http://127.0.0.1:<当前DSH端口> --node 
 脚本会创建一次性空间、生成 `web.chat.devops.verifyapp`、写读一条记录、
 打印 `ACCEPT factory: PASS`，并在 finally 中删除空间。失败退出码 1；
 清理失败退出码 2；**不要用 `2` 当通过**。
+
+## 12. UI 硬规则与视觉检查
+
+> 产品口径以根目录 `USER-VIEW.md` 为准；这里只记插件额外加的机器可查项。
+
+**硬规则**
+
+- 4px 间距刻度；不出现随意空白带。
+- 不重复标题（页签文字已经表达含义）。
+- 滚动容器用 sticky 分区/页签头。
+- 不被强制撑满高度的侧栏；高度跟内容，除非内容必须滚动。
+- 表格固定布局，首列稳定。
+- 长 URL/选项/日志换行（`overflow-wrap:anywhere`），不撑宽面板。
+- 空态、加载、错误三态都有明确文案。
+- 单一数据源；不要在渲染组件挂载前预取。
+- 危险操作在上下文菜单；主操作只在卡片行。
+- 状态驱动的按钮来自 `lib/core/project.js` 的代码规则，客户端不自造状态机。
+
+**上屏前必须看的**（当前桌面尺寸的真实截图）
+
+- 页签横排一行、滚动时 sticky；
+- 头部 KEY/VALUE 列对齐；
+- 长值不溢出；
+- 没有任意空白带；
+- 空态/错误态可见。
+
+**初始化向导**
+
+- 端口有探测动作，且绝不占用已存在的节点/监听端口。
+- 标准词：`Digital Avatar & Cyber World` / `Cyber World`（标题大小写）。
+- 第 3 步收集目标与计划描述，不是任务列表。
+- 运行视图是滚动表格：时间、耗时、操作、影响/接口、状态。
+- 失败步骤有重试；重试保留既有节点/分身上下文。
+- 中英文案都有；`check:i18n` 校验必需键与 Cyber World 大小写。
+
+## 13. 可用性门禁（verify:ui / release）
+
+> 判据不是我说了算，是 `npm run release` 的退出码。
+
+**铁律**
+
+1. 任何 UI 改动，`npm run release` 退出码 = 0 才允许说「完成」。
+2. 退出码 2（无法验证）不算完成：先开浏览器再验证。
+3. 报告必须贴 verify 输出（metrics + PASS/FAIL），不接受「应该没问题」。
+4. 失败项先修，不许「下次再改」。
+5. 新增 UI 面（新页面/新组件）必须同步在 `scripts/ui-verify.mjs` 加断言。
+
+**检查项**
+
+| 类别 | 断言 |
+| --- | --- |
+| 可打开 | 能进入插件页，`.cx-shell` 存在 |
+| 结构 | 顶栏、流程条、输入框、右栏、模式切换都存在 |
+| 无错误 | 没有 `.cx-error-pane`，运行时无 console error |
+| 尺寸 | 顶栏 padding=20、控件高=28、chip 高=28 |
+| 字号 | 控件 ∈ {10,12,14}、标题=14、正文=10 |
+| 图标 | 宽度 ∈ {14,18} |
+| 基线 | 关键数值与 `scripts/ui-baseline.json` 对比，偏差报警 |
+| 留证 | 每次生成 `/tmp/ui-verify.png` 截图 |
+
+**流程**
+
+```sh
+npm run release     # 构建 + 门禁 + 可用性验证，必须 exit 0
+```
+
+浏览器前置（只需一次）：
+
+```sh
+"/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge" \
+  --user-data-dir=/tmp/edge-ui --remote-debugging-port=9223 about:blank
+```
+
+**例外**：纯文档改动可只跑 `npm run build:client`；宿主 `lib/*.js` 改动仍需
+重启应用后跑 `npm run verify:ui`，否则视为未验证。

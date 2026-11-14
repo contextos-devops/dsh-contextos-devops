@@ -37,9 +37,9 @@
     }
   ],
   "plugin": [
+    "docs/INDEX.md",
     "docs/ARCHITECTURE.md",
     "docs/ACCEPTANCE.md",
-    "docs/UI-ACCEPTANCE.md",
     "docs/AI-CONTEXT.md",
     "docs/MEMORY.md",
     "docs/CODE-MAP.md",

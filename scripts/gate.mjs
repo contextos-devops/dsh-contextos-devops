@@ -99,11 +99,6 @@ if (!/URL-SPEC/.test(read('docs/URL-SPEC.md'))) err('URL 规范：docs/URL-SPEC.
   }
 }
 
-const ok = ERR.length === 0;
-console.log(`gate: ${ok ? 'PASS' : 'FAIL'}  ERR=${ERR.length} WARN=${WARN.length}`);
-for (const e of ERR) console.log(`  ERR  ${e}`);
-for (const w of WARN) console.log(`  WARN ${w}`);
-process.exit(ok ? 0 : 1);
 
 // 9) 平台数据接口只认三条 URL：dataPath 必须存在，文档必须写清楚
 {
@@ -124,3 +119,17 @@ process.exit(ok ? 0 : 1);
   const data = read('lib/core/data.js');
   if (!/method:\s*'DELETE'/.test(data)) err('lib/core/data.js: removeData must use DELETE');
 }
+
+// 10) AGENTS 契约：DSH 工作流 + 对话流程必须写清楚
+{
+  const t = read('AGENTS.md');
+  for (const k of ['铁律', 'DSH 工作流', '对话流程', 'npm run build:client', 'plugin_manager', 'usr/local/WorkBuddy/dsh-reports']) {
+    if (!t.includes(k)) err(`AGENTS.md: missing ${k}`);
+  }
+}
+
+const ok = ERR.length === 0;
+console.log(`gate: ${ok ? 'PASS' : 'FAIL'}  ERR=${ERR.length} WARN=${WARN.length}`);
+for (const e of ERR) console.log(`  ERR  ${e}`);
+for (const w of WARN) console.log(`  WARN ${w}`);
+process.exit(ok ? 0 : 1);

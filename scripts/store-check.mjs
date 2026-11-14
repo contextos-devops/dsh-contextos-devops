@@ -28,12 +28,21 @@ for (const f of files) {
   if (n > allowed) err(`${f} 直接用了 localStorage ${n} 次（上限 ${allowed}）：改走 cxRead/cxWrite`);
 }
 
-// 字面量键必须登记进 schema
+// 字面量键必须登记进 schema，且读写用的 helper 要和登记的 kind 一致
+const schemaKind = new Map();
+for (const m of store.matchAll(/^ {2}'?([A-Za-z0-9:_-]+)'?: \{ kind: '(text|json)'/gm)) schemaKind.set(m[1], m[2]);
 const literal = new Map();
 for (const f of files) {
   const text = fs.readFileSync(path.join(dir, f), 'utf8');
-  for (const m of text.matchAll(/\bcx(?:Read|ReadText|Write|WriteText|Remove|Pref)\(\s*'([^']+)'/g)) {
-    literal.set(m[1], f);
+  for (const m of text.matchAll(/\bcx(Read|ReadText|Write|WriteText|Remove|Pref)\(\s*'([^']+)'/g)) {
+    const [, fn, key] = m;
+    literal.set(key, f);
+    const kind = schemaKind.get(key);
+    if (!kind) continue;
+    if (fn === 'Remove' || fn === 'Pref') continue;   // 无类型语义
+    const wantsText = fn === 'ReadText' || fn === 'WriteText';
+    const isTextKey = kind === 'text';
+    if (wantsText !== isTextKey) err(`${f} 的 '${key}' 登记为 ${kind}，却用了 cx${fn}（应为 cx${isTextKey ? 'ReadText/cxWriteText' : 'Read/cxWrite'}）`);
   }
 }
 for (const [key, f] of literal) {

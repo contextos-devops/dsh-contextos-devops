@@ -12,7 +12,8 @@ const page = read('src/client/parts/60-page.js');
 const mainCss = read('src/client/styles/main.css');
 const tokens = read('src/client/styles/tokens.css');
 const debug = read('src/client/parts/12-debug.js');
-const chat = read('src/client/parts/50-chat.js');
+// 对话由两个片段组成：49 消息组件、50 会话面板；断言跨两个文件
+const chat = read('src/client/parts/49-msg.js') + read('src/client/parts/50-chat.js');
 const pm = read('src/client/parts/55-pm.js');
 const pmdata = read('src/client/parts/52-pmdata.js');
 const pmsel = read('src/client/parts/51-pmselection.js');

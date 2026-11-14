@@ -21,7 +21,7 @@ only routes the relevant sections and records plugin-specific hard rules.
 | --- | --- |
 | `docs/ARCHITECTURE.md` | tokens, UI kit, PM data/card, UID contract |
 | `docs/ACCEPTANCE.md` | **canonical four-level acceptance contract: static, API, rendered DOM, human evidence** |
-| `docs/UI-ACCEPTANCE.md` | visual acceptance and screenshot gate |
+| `docs/ACCEPTANCE.md` §12/§13 | UI 硬规则 + 可用性门禁（verify:ui） |
 | `scripts/ui-check.mjs` | executable static gate |
 | `scripts/context-check.mjs` | verifies this context pack stays valid |
 
