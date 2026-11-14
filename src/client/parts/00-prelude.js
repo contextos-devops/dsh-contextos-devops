@@ -22,14 +22,26 @@ window.__ModuleLoader__.load({
     let CX_LAYOUT = null;
     const API = '/contextos-devops-dsh/api';
     const CLIENT_CSS = '/contextos-devops-dsh/assets/client.css?v=__CLIENT_CSS_VERSION__';
+    const CLIENT_BUILD = '__CLIENT_BUILD__';
     const CRITICAL_CSS = '.cx-shell{height:100%;min-height:0;display:flex;flex-direction:column;background:#050a12;color:#d9f4ff;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow:hidden}';
-    if (typeof document !== 'undefined' && !document.querySelector('link[data-cx-client-css]')) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = CLIENT_CSS;
-      link.dataset.cxClientCss = '1';
-      document.head.appendChild(link);
-      activity('加载插件样式 ' + CLIENT_CSS.split('?')[0], 'info');
+    // 样式随版本走：旧 link（上次插件实例注入的 v=旧版本）必须被改写，
+    // 否则会出现「新 JS + 旧 CSS」——布局按旧规则算，看起来像回归。
+    if (typeof document !== 'undefined') {
+      const sel = 'link[data-cx-client-css]';
+      let link = document.querySelector(sel);
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.id = 'cx-client-css';
+        link.dataset.cxClientCss = '1';
+        link.href = CLIENT_CSS;
+        document.head.appendChild(link);
+        activity('加载插件样式 ' + CLIENT_CSS.split('?')[0], 'info');
+      } else if (link.getAttribute('href') !== CLIENT_CSS) {
+        const from = String(link.getAttribute('href') || '');
+        link.setAttribute('href', CLIENT_CSS);
+        activity('刷新插件样式 ' + from.split('?v=')[1] + ' → ' + CLIENT_CSS.split('?v=')[1], 'info');
+      }
     }
     // ACTIVITY 通道：模块级埋点，Page 挂载后把缓冲刷进 ACTIVITY 面板。
     const ACTIVITY = { fn: null, buf: [] };

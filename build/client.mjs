@@ -41,6 +41,7 @@ function build() {
   out += '\n';
 
   out = out.replaceAll('__CLIENT_CSS_VERSION__', pkg.version);
+  out = out.replaceAll('__CLIENT_BUILD__', srcHash);
   fs.writeFileSync(path.join(root, 'client.js'), out);
   console.log(`[client] built client.js (${(Buffer.byteLength(out) / 1024).toFixed(1)} KB, ${parts.length} fragments)`);
 }

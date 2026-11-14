@@ -197,6 +197,17 @@
               lineHeight: cs ? cs.lineHeight : '',
               inline: el ? (el.style.getPropertyValue('font-size') || '') : '',
               dpr: window.devicePixelRatio || 1,
+              build: CLIENT_BUILD,
+              css: Array.from(document.querySelectorAll('link[data-cx-client-css]')).map((l) => String(l.getAttribute('href') || '')),
+              /* 布局自检：新 JS 配旧 CSS 时，下面几项会立刻暴露（如 main=flex/row、tools 无边距） */
+              layout: (() => {
+                try {
+                  const m = document.querySelector('.cx-msg');
+                  if (!m) return 'no-message';
+                  const pick = (sel) => { const n = m.querySelector(sel); if (!n) return '-'; const c = window.getComputedStyle(n); return `${c.display}/${c.flexDirection}/${c.marginLeft}`; };
+                  return `main=${pick('.cx-msg-main')} meta=${pick('.cx-msg-meta')} tools=${pick('.cx-msg-tools')}`;
+                } catch { return 'err'; }
+              })(),
             } }).catch(() => {});
           } catch {}
         }, 400);

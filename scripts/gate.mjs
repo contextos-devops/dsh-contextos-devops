@@ -144,9 +144,16 @@ if (!/URL-SPEC/.test(read('docs/URL-SPEC.md'))) err('URL 规范：docs/URL-SPEC.
 // 11) README 必须能当「快速了解项目」的入口：结构齐全 + 版本不写死过期值
 {
   const readme = read('README.md');
-  for (const k of ['60 秒上手', '能力矩阵', '智能体', 'RSI', 'docs/INDEX.md', 'npm run build:client']) {
-    if (!readme.includes(k)) err(`README.md: missing ${k}`);
-  }
+  // 断言的是「README 是否回答了这几个问题」，不是某一种措辞（多种等价写法都算过）。
+  const need = [
+    ['上手路径', /60 秒上手|快速开始|Quick start/],
+    ['能力清单', /能力矩阵|^##+ 功能|^##+ 能力/m],
+    ['智能体契约入口', /智能体|AGENTS\.md/],
+    ['RSI 循环', /RSI/],
+    ['文档入口', /docs\/INDEX\.md/],
+    ['构建命令', /npm run build:client/],
+  ];
+  for (const [k, re] of need) if (!re.test(readme)) err(`README.md: missing ${k}`);
   if (readme.split('\n').length > 400) err('README.md: 超过 400 行，概览应拆分到 docs/PRODUCT-DESIGN.md');
   const pkg = JSON.parse(read('package.json'));
   const claimed = /\|\s*版本\s*\|[^\n]*?(\d+\.\d+\.\d+)/.exec(readme);
