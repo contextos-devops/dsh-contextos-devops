@@ -392,3 +392,22 @@ gate added so the same bug cannot return silently
   88 ui-check, i18n, context, docs). `node --check client.js` passes.
 - Lesson: an index that a human must remember to update is not an index; make
   the generator + the check the same script, and let the gate fail on drift.
+
+## 2026-11-15 · 插件根本加载不出来：构建片段清单漂移
+
+- Symptom: 用户报「ContextOS 的插件怎么没有加载成功」——侧栏有入口，点进去空白/不渲染。
+  `~/.dsh/contextos-devops-dsh/client-errors.log` 没有新记录（插件自己都还没跑起来，写不进日志）。
+- Root cause: `build/client.mjs` 与 `scripts/gate.mjs` 各有一份**硬编码**的 `parts` 列表，
+  新增的 `src/client/parts/08-store.js`、`49-msg.js` 没进列表 → 产物缺 `cxRead/cxWrite`，
+  factory 顶层执行 `ctxCfgLoad()` 时抛 `ReferenceError: cxRead is not defined`，整个模块加载失败。
+  静态门禁（gate/ui-check/i18n/context）全绿也发现不了：它们只读文本，从没执行过产物。
+- Fix: (1) 片段列表改为**目录推导**（`readdirSync` + 字典序），build 与 gate 共用同一规则；
+  (2) 产物头部写 `// @parts <file>:<sha8>,…` 清单；
+  (3) 新增 `scripts/load-check.mjs`：清单 vs 目录逐项比对 + 在模拟宿主（React/DOM/localStorage 桩）
+  里 vm 执行 `client.js`、调用 `factory(require)`、断言导出 `apply`/`inject`；
+  (4) 接入 `build:client`（gate 之后），新增 `npm run check:load`。
+- Evidence: 修复前 `node scripts/load-check.mjs` → `factory() 抛错：cxRead is not defined`（可复现）；
+  修复后 `PASS client bundle 可加载（24 片段、factory 正常导出 apply/inject）`；
+  全链 gate PASS / load-check PASS / ui-check 88 / i18n / context / docs 全绿；版本 1.48.1。
+- Lesson: **凡是「列表」就必须由目录或注册表推导，不能手抄**；凡是「产物」就必须被**执行**过一次，
+  文本断言替代不了加载测试。静态门禁全绿 ≠ 能加载。

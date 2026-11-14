@@ -10,12 +10,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (f) => fs.readFileSync(path.join(root, f), 'utf8');
 const exists = (f) => fs.existsSync(path.join(root, f));
 const pkg = JSON.parse(read('package.json'));
-const parts = [
-  '00-prelude.js','05-bootstrap.js','10-ui.js','12-debug.js','15-layout.js','20-devworkspace.js',
-  '25-editor-ui.js','30-modals.js','32-cards.js','34-forms.js','36-data.js','40-project.js',
-  '45-map.js','46-pm.js','47-three.js','50-chat.js','51-pmselection.js','52-pmdata.js',
-  '55-pm.js','58-config.js','59-monitor.js','60-page.js',
-];
+// 片段列表唯一来源 = src/client/parts 目录（与 build/client.mjs 同规则）。
+// 硬编码列表曾漏掉 08-store.js / 49-msg.js，产物缺代码 → 插件加载失败。
+const parts = fs.readdirSync(path.join(root, 'src/client/parts'))
+  .filter((f) => f.endsWith('.js'))
+  .sort((a, b) => a.localeCompare(b, 'en'));
 const ERR = [], WARN = [];
 const err = (m) => ERR.push(m);
 const warn = (m) => WARN.push(m);

@@ -93,6 +93,7 @@
 | `scripts/gate.mjs` | 构建门禁：产物哈希/语法/CSS 版本/规范断言 |
 | `scripts/hook-order-check.mjs` | hook 依赖数组的 TDZ |
 | `scripts/i18n-check.mjs` | 中英文案键与大小写 |
+| `scripts/load-check.mjs` | — |
 | `scripts/op-check.mjs` | OPS ↔ 客户端 api() 契约 |
 | `scripts/store-check.mjs` | 持久化唯一出口 + schema 登记 |
 | `scripts/ui-check.mjs` | UI 结构与组件复用断言 |
@@ -121,6 +122,6 @@
 | `docs/MONITOR.md` | 80 | 人写 |
 | `docs/PRODUCT-DESIGN.md` | 1663 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 108 | 人写 |
-| `docs/RSI-LEDGER.md` | 395 | 人写 |
+| `docs/RSI-LEDGER.md` | 414 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 240 | 人写 |

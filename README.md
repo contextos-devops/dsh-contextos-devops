@@ -6,7 +6,7 @@
 | 事实 | 值 |
 | --- | --- |
 | 包名 | `@local/contextos-devops-dsh`（local bundle，`link:` 安装） |
-| 版本 | 以 `package.json` 为准（`npm run build:client` 会把它写进 CSS 版本与 `@build-hash`） |
+| 版本 | `1.48.1`（以 `package.json` 为准） |
 | 规模 | 客户端 `client.js` ≈ 7.2k 行（由 24 个片段拼成）、宿主 `lib/` ≈ 20 个模块、`index.js` ≈ 350 行 |
 | 接口 | `POST /contextos-devops-dsh/api?op=<op>`，**102** 个 op 只在 `lib/core/ops.js` 注册 |
 | 门禁 | `npm run build:client` 串联 9 道（见 §八），全绿才算完成 |
@@ -20,7 +20,7 @@
 cd usr/dsh-plugins/contextos-devops-dsh
 
 # 1) 改版本（每次改动都要，缓存键来自它）
-node -e "const p=require('./package.json');p.version='1.48.0';require('fs').writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+npm version patch --no-git-tag-version   # 或手动改 package.json 的 version
 
 # 2) 构建 + 全部门禁（任何一项红都不许交付）
 npm run build:client
