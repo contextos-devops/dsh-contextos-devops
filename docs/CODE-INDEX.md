@@ -22,7 +22,7 @@
 | `lib/core/avatar.js` | 290 | `avatarsFile()` `readAvatars()` `writeAvatars()` `defaultAvatar()` `listAvatars()` `createProjectForAvatar()` `ensureProject()` `createAvatar()` …20 个 |
 | `lib/core/backup.js` | 106 | `backupRoot()` `backupSpace()` `listBackups()` `sampleNodes()` `monitorQuery()` |
 | `lib/core/codegen.js` | 402 | `codegenCond()` `codegenList()` `codegenRender()` `codegenMerge()` `codegenPath()` `codegenWrite()` `detectClass()` `moduleInfo()` …13 个 |
-| `lib/core/copilot.js` | 418 | `setLlm()` `getLlm()` `chatProviders()` `chatWithDSH()` `llmJson()` `appFunctionPlan()` `codegenPlan()` `resolveWrite()` …12 个 |
+| `lib/core/copilot.js` | 420 | `setLlm()` `getLlm()` `chatProviders()` `chatWithDSH()` `llmJson()` `appFunctionPlan()` `codegenPlan()` `resolveWrite()` …12 个 |
 | `lib/core/data.js` | 158 | `writeData()` `readData()` `removeData()` |
 | `lib/core/device.js` | 149 | `discoverDevices()` |
 | `lib/core/files.js` | 153 | `listDir()` `readFile()` `writeFile()` `listTree()` `makeDir()` `renamePath()` `removePath()` `gitStatus()` |
@@ -111,13 +111,15 @@
 | `docs/CODE-MAP.md` | 78 | 人写 |
 | `docs/CONTEXTOS-SUMMARY.md` | 225 | 人写 |
 | `docs/DESIGN-SYSTEM.md` | 255 | 人写 |
+| `docs/DOCTRINE.md` | 105 | 人写 |
 | `docs/DSH-COS.md` | 111 | 人写 |
 | `docs/FORM-FIELDS.md` | 38 | 人写 |
 | `docs/IAM.md` | 148 | 人写 |
-| `docs/INDEX.md` | 75 | 索引 |
+| `docs/INDEX.md` | 78 | 索引 |
 | `docs/INTERFACE.md` | 407 | 人写 |
 | `docs/MEMORY.md` | 63 | 人写 |
 | `docs/MONITOR.md` | 80 | 人写 |
+| `docs/PRODUCT-DESIGN.md` | 1663 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 108 | 人写 |
 | `docs/RSI-LEDGER.md` | 395 | 人写 |
 | `docs/STATE.md` | — | 生成 |

@@ -120,12 +120,38 @@ if (!/URL-SPEC/.test(read('docs/URL-SPEC.md'))) err('URL 规范：docs/URL-SPEC.
   if (!/method:\s*'DELETE'/.test(data)) err('lib/core/data.js: removeData must use DELETE');
 }
 
+// 9c) 三纲五常：理念必须落成文档与提示词
+{
+  const doc = read('docs/DOCTRINE.md');
+  for (const k of ['三纲', '五常', '四件套', '抽象递减']) {
+    if (!doc.includes(k)) err(`docs/DOCTRINE.md: missing ${k}`);
+  }
+  const agents = read('AGENTS.md');
+  for (const k of ['三纲', '五常', '四件套']) {
+    if (!agents.includes(k)) err(`AGENTS.md: missing ${k}`);
+  }
+  const copilot = read('lib/core/copilot.js');
+  if (!copilot.includes('三纲五常')) err('lib/core/copilot.js: doctrine not injected into prompt');
+}
+
 // 10) AGENTS 契约：DSH 工作流 + 对话流程必须写清楚
 {
   const t = read('AGENTS.md');
   for (const k of ['铁律', 'DSH 工作流', '对话流程', 'npm run build:client', 'plugin_manager', 'usr/local/WorkBuddy/dsh-reports']) {
     if (!t.includes(k)) err(`AGENTS.md: missing ${k}`);
   }
+}
+
+// 11) README 必须能当「快速了解项目」的入口：结构齐全 + 版本不写死过期值
+{
+  const readme = read('README.md');
+  for (const k of ['60 秒上手', '能力矩阵', '智能体', 'RSI', 'docs/INDEX.md', 'npm run build:client']) {
+    if (!readme.includes(k)) err(`README.md: missing ${k}`);
+  }
+  if (readme.split('\n').length > 400) err('README.md: 超过 400 行，概览应拆分到 docs/PRODUCT-DESIGN.md');
+  const pkg = JSON.parse(read('package.json'));
+  const claimed = /\|\s*版本\s*\|[^\n]*?(\d+\.\d+\.\d+)/.exec(readme);
+  if (claimed && claimed[1] !== pkg.version) err(`README.md: 版本 ${claimed[1]} 与 package.json ${pkg.version} 不一致`);
 }
 
 const ok = ERR.length === 0;

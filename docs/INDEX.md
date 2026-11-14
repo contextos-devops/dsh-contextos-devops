@@ -16,6 +16,7 @@
 
 | 我要做的事 | 读这份 | 章节 |
 | --- | --- | --- |
+| 搞清方向：三纲五常 / 每轮四件套 / 抽象递减 | `DOCTRINE.md` | 全册 |
 | 改界面：布局/组件/主题/图标/文字 | `DESIGN-SYSTEM.md`；根 `USER-VIEW.md` | 全册 / §〇–§三 |
 | 新页面/新组件，别造第二套样式 | `DESIGN-SYSTEM.md`、`FORM-FIELDS.md` | 组件清单 / 字段形态 |
 | 加接口、调接口、对报文 | `INTERFACE.md`、`URL-SPEC.md` | 五形态 / 两类 URL + 禁止清单 |
@@ -29,6 +30,7 @@
 | 部署/环境/DSH 本体机制 | `DSH-COS.md` | 宿主能力与边界 |
 | 交付前验收 | `ACCEPTANCE.md` | L0–L3、证据表、UI 硬规则、可用性门禁 |
 | 看产品全貌（对外讲） | `CONTEXTOS-SUMMARY.md` | 一页读懂 |
+| 看完整产品/技术设计稿 | `PRODUCT-DESIGN.md` | 全册（目标形态与路线图） |
 | 架构分层与目录职责 | `ARCHITECTURE.md` | 五层与边界 |
 | 找某个文件/组件/op 在哪 | `CODE-INDEX.md`（生成） | §1–§6 |
 | 复盘历史坑与决策 | `RSI-LEDGER.md` | 按日期 |
@@ -52,6 +54,7 @@
 | `IAM.md` | 权限与身份模型 | 涉及 user.uid/角色 |
 | `DSH-COS.md` | DSH 宿主能力与 ContextOS 的边界 | 判断能不能做到 |
 | `CONTEXTOS-SUMMARY.md` | 产品全貌（对外讲） | 写材料/介绍 |
+| `PRODUCT-DESIGN.md` | 深度设计稿：产品逻辑、AI-first、DSH 联动、协议与数据 | 要做方案/查历史设计取舍 |
 | `ACCEPTANCE.md` | 唯一验收口径：L0–L3 + 证据表 + UI 硬规则 + verify:ui | 说「完成」之前 |
 | `RSI-CONSTITUTION.md` | 十二条运行期法则（注入 Copilot 提示词） | 任何 AI 对话 |
 | `RSI-LEDGER.md` | 踩坑与决策台账 | 复盘/避免重复 |
