@@ -7,7 +7,7 @@
 - 客户端入口：`client.js`
 - 本地状态：`$DSH_HOME/contextos-devops-dsh/`
 - API：`POST /contextos-devops-dsh/api`
-- 当前版本：`1.30.2`
+- 当前版本：`1.30.5`
 
 ---
 

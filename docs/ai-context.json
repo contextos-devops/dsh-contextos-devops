@@ -38,6 +38,7 @@
   ],
   "plugin": [
     "docs/ARCHITECTURE.md",
+    "docs/ACCEPTANCE.md",
     "docs/UI-ACCEPTANCE.md",
     "docs/AI-CONTEXT.md",
     "docs/MEMORY.md",

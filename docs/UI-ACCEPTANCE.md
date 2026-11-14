@@ -1,5 +1,8 @@
 # UI acceptance gate
 
+> Canonical delivery contract: `docs/ACCEPTANCE.md` (L0/L1/L2/L3 + evidence table).
+> This file is the UI-specific checklist and static gate reference.
+
 Canonical product rules: `USER-VIEW.md` at the ContextOS root. This plugin adds
 machine checks for the regressions that reached the UI.
 

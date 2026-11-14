@@ -18,6 +18,9 @@ Page state (node/avatar)
 | `index.js` | HTTP op routing and body UID aliases | contain PM business rules |
 | `lib/core/project.js` | PM API, UID validation, status→action matrix | read SQLite directly |
 | `lib/core/copilot.js` | LLM prompt, action allowlist, PM create/action | invent UI markup |
+| `lib/core/gobuild.js` | local Go resolution, `go mod tidy` + `go build` | assume host PATH has Go |
+| `lib/core/apps.js` | app scaffold, autogen value files, generated CRUD, `createApp` | duplicate Go build logic |
+| `lib/core/spaces.js` | space lifecycle, `buildSpace`, `restartSpace` | copy node binary as a fake app build |
 | `10-ui.js` | tokens-driven primitives, UID aliases | know PM entities |
 | `12-debug.js` | DebugDetail inspector | fetch business data |
 | `52-pmdata.js` | one PM loader | render cards |
@@ -32,7 +35,7 @@ Page state (node/avatar)
 - UID: 32-char hash; canonical `target_uid/plan_uid/task_uid/report_uid/feedback_uid`.
 - Action methods: create→PUT, remove→DELETE, other→POST; GET `/action/` only login/run/command.
 - UI: `--cx-*` tokens; `10-ui.js` primitives; no page-local replacement.
-- Delivery: `npm run check:ui` + `npm run check:context` + API read-back + rendered check.
+- Delivery: `npm run check:ui` + `npm run check:context` + API read-back + rendered check; see `docs/ACCEPTANCE.md`.
 
 ## Change routing
 

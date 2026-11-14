@@ -106,6 +106,13 @@
       image: ['M3 4h10v8H3z', 'M5 9l2-2 2 2 2-2 2 2', 'M5 6.5h.01'],
       factory: ['M3 13V7l3 2V7l3 2V5h3v8z', 'M5 13v-2h2v2', 'M9 13v-2h2v2'],
       layers: ['M8 2l5 3-5 3-5-3z', 'M3 8l5 3 5-3', 'M3 11l5 3 5-3'],
+      home: ['M3 7l5-4 5 4v6H3z', 'M6.5 13V9h3v4'],
+      pulse: ['M2 8.5h3l1.8-4.2 2.4 8 1.8-4.6h2.4'],
+      lock: ['M4.6 7.2V5.4a3.4 3.4 0 0 1 6.8 0v1.8', 'M3.4 7.2h9.2v6.2H3.4z', 'M8 9.6v1.8'],
+      setting: ['M8 5.6a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8', 'M8 1.6v1.8', 'M8 12.6v1.8', 'M1.6 8h1.8', 'M12.6 8h1.8'],
+      terminal: ['M3 4h10v8H3z', 'M5.5 7l2 2-2 2', 'M9 11h2'],
+      stop: ['M4.5 4.5h7v7h-7z'],
+      trash: ['M4 5h8', 'M6.2 5V3.2h3.6V5', 'M5.2 5l.5 8h4.6l.5-8'],
     };
     function UiIcon({ name, size = 16 }) {
       const paths = UI_ICONS[name] || UI_ICONS.chevronRight;
@@ -115,7 +122,7 @@
     function IconButton({ name, title, onClick, className = '', size = 16, disabled = false, ...rest }) {
       return h(UiAffordance, { as: 'button', icon: name, iconSize: size, mode: 'icon', className: `cx-icon ${className}`.trim(), title, disabled, onClick, ...rest });
     }
-    function EntityTitle({ image, icon = 'app', type, title, status, statusTone = '', meta, onClick, active = false, className = '', children }) {
+    function EntityTitle({ image, icon = 'app', type, title, status, statusTone = '', meta, after, onClick, active = false, className = '', children }) {
       const cls = `cx-entity${active ? ' on' : ''}${className ? ' ' + className : ''}`;
       return h('div', { className: cls, onClick, role: onClick ? 'button' : null },
         h('div', { className: 'cx-entity-pic' }, image
@@ -124,9 +131,10 @@
         h('div', { className: 'cx-entity-copy' },
           h('div', { className: 'cx-entity-head' },
             type ? h('span', { className: 'cx-entity-type' }, type) : null,
-            h('span', { className: 'cx-entity-name' }, title || ''),
+            h('span', { className: 'cx-entity-name', title: title || '' }, title || ''),
+            after ? h('span', { className: 'cx-entity-time' }, after) : null,
             status ? h('span', { className: `cx-entity-status ${statusTone}` }, status) : null),
-          h('div', { className: 'cx-entity-meta' }, meta || ''),
+          h('div', { className: 'cx-entity-meta', title: typeof meta === 'string' ? meta : '' }, meta || ''),
           children || null));
     }
     function UiAffordance({ icon, zh, en, mode = 'full', active = false, onClick, className = '', title, disabled = false, children, as = 'span', iconSize = 14, ...rest }) {

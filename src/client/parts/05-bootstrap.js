@@ -10,7 +10,11 @@ const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-e
       })();
       const QUERY_OPS = new Set(['health', 'nodes', 'spaces', 'apps', 'storeApps', 'avatars', 'backgrounds', 'devices', 'sshHosts', 'pmList', 'pmTree', 'projectStatus', 'fieldOptions', 'listDir', 'tree', 'readFile', 'readData', 'git', 'origin', 'stateGet', 'llmInfo', 'files', 'file']);
       const method = QUERY_OPS.has(op) ? 'GET' : (op === 'pmCreate' ? 'PUT' : 'POST');
-      const query = method === 'GET' ? '?' + new URLSearchParams(Object.entries(body).map(([k, v]) => [k, typeof v === 'object' ? JSON.stringify(v) : String(v ?? '')])).toString() : '';
+      // GET 一律不走浏览器缓存：否则 /api?op=nodes 这类地址会被缓存在磁盘上，
+      // 插件重启、页面刷新都还是旧数据（曾导致节点编译时间永远显示 —）
+      const qs = new URLSearchParams(Object.entries(body).map(([k, v]) => [k, typeof v === 'object' ? JSON.stringify(v) : String(v ?? '')]));
+      if (method === 'GET') qs.set('_', String(Date.now()));
+      const query = method === 'GET' ? '?' + qs.toString() : '';
       const endpoint = method === 'GET' ? `${API}${query}` : API;
 
       const longOps = new Set(['deploy', 'dockerDeploy', 'remoteDeploy', 'remoteLogin', 'pipeline', 'buildSpace', 'initSpace', 'compile', 'chat']);
@@ -19,7 +23,7 @@ const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-e
       let res, text = '';
       try {
         res = await fetch(endpoint, method === 'GET'
-          ? { method, signal: controller.signal }
+          ? { method, signal: controller.signal, cache: 'no-store' }
           : { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: controller.signal });
         text = await res.text();
       } catch (e) {

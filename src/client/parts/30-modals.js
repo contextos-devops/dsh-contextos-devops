@@ -32,7 +32,7 @@
             y: Math.round(Math.min(r.bottom + 4, (window.innerHeight || 800) - 300)),
             title: '更多',
             icon: 'more',
-            items: (items || []).map((it) => ({ label: T(it.label), on: false, go: () => it.action() })),
+            items: (items || []).map((it) => (it.sep ? { sep: true } : { label: T(it.label), icon: it.icon || 'chevronRight', url: it.url || '', danger: !!it.danger, open: !!it.open, openable: !!it.openable, go: () => it.action() })),
           } }));
         } catch {}
       };

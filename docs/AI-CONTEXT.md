@@ -20,6 +20,7 @@ only routes the relevant sections and records plugin-specific hard rules.
 | File | Content |
 | --- | --- |
 | `docs/ARCHITECTURE.md` | tokens, UI kit, PM data/card, UID contract |
+| `docs/ACCEPTANCE.md` | **canonical four-level acceptance contract: static, API, rendered DOM, human evidence** |
 | `docs/UI-ACCEPTANCE.md` | visual acceptance and screenshot gate |
 | `scripts/ui-check.mjs` | executable static gate |
 | `scripts/context-check.mjs` | verifies this context pack stays valid |
@@ -53,6 +54,7 @@ only routes the relevant sections and records plugin-specific hard rules.
 [ ] run check:ui + check:context
 [ ] verify API read-back
 [ ] verify rendered UI (empty/loading/error/long text)
+[ ] fill the evidence table in `docs/ACCEPTANCE.md` (L0/L1/L2/L3)
 ```
 
 

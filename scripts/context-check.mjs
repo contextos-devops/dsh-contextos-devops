@@ -25,6 +25,11 @@ check(fs.readFileSync(path.join(root, 'docs/AI-CONTEXT.md'), 'utf8').includes('R
 const copilot = fs.readFileSync(path.join(root, 'lib/core/copilot.js'), 'utf8');
 check(copilot.includes('FACTORY CODE RULES'), 'factory code rules are in the runtime prompt');
 check(fs.existsSync(path.join(root, 'docs/RSI-CONSTITUTION.md')), 'RSI constitution exists');
+check(fs.existsSync(path.join(root, 'docs/ACCEPTANCE.md')), 'acceptance contract exists');
+const accept = fs.readFileSync(path.join(root, 'docs/ACCEPTANCE.md'), 'utf8');
+check(accept.includes('没有证据 = 未验收'), 'acceptance defines evidence rule');
+check(accept.includes('L0') && accept.includes('L1') && accept.includes('L2') && accept.includes('L3'), 'acceptance defines all four levels');
+check(accept.includes('browser_console') && accept.includes('browser_screenshot'), 'acceptance names rendered-browser evidence');
 check(copilot.includes('RSI IRON LAW'), 'RSI iron law is injected into the runtime prompt');
 if (failed) { console.error(`context-check: ${failed} failed`); process.exit(1); }
 console.log('context-check: passed');

@@ -1,5 +1,7 @@
 # 可用性门禁（强制约束）
 
+> 总验收口径见 `docs/ACCEPTANCE.md`；本文件是 `npm run release` 的 UI 执行说明。
+
 > 目的：杜绝「构建通过、界面坏了」这种交付。
 > 判据不是我说了算，是 `npm run release` 的退出码。
 

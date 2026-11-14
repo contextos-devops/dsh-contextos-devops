@@ -9,23 +9,26 @@ import { fileURLToPath } from 'node:url';
 import { openBrowser as platformOpenBrowser, openTerminalAt as platformOpenTerminal, sqliteBin, ptySupported, platformTriple } from './lib/base/platform.js';
 import { runShell } from './lib/misc/shell.js';
 import { HOME, ctxRoot, stateDir } from './lib/base/env.js';
-import { registryPath, readRegistry, writeRegistry, portOnDisk, scanLocalNodes, binExists, pidAlive, listNodes } from './lib/base/registry.js';
+import { registryPath, readRegistry, writeRegistry, portOnDisk, scanLocalNodes, binExists, pidAlive, listNodes, refreshNodes } from './lib/base/registry.js';
 import { decodeCell, parseTable } from './lib/base/table.js';
 import { fieldSegments } from './lib/base/field.js';
 import { writeData, readData, removeData } from './lib/core/data.js';
 import { discoverDevices } from './lib/core/device.js';
-import { storeApps, storeAction, createStoreInstance, listApps, scanApps, autogenApp, createInstance, createApp } from './lib/core/apps.js';
+import { codegenList, codegenRender, codegenWrite, codegenPath, codegenMerge, moduleInfo, renderFields, renderModel, detectClass, modelFields as modelFields_ } from './lib/core/codegen.js';
+import { codegenPlan } from './lib/core/copilot.js';
+import { checkField, checkAction } from './lib/core/vocab.js';
+import { storeApps, storeAction, createStoreInstance, listApps, scanApps, autogenApp, autogenService, autogenSpec, uniqueAppName, createInstance, createApp, appFields, isCommandReady } from './lib/core/apps.js';
 import { loadUsers, saveUsers, ensureUser } from './lib/core/users.js';
 import { pmList, pmLog, freePort, fieldOptions, pmCreateItem, pmModifyItem, pmRemoveItem, pmActItem, seedProject, projectStatus } from './lib/core/project.js';
 import { avatarsFile, readAvatars, writeAvatars, defaultAvatar, listAvatars, createProjectForAvatar, ensureProject, createAvatar, setAvatar, updateAvatar, deleteAvatar, backgroundsFile, readBackgrounds, writeBackgrounds, listBackgrounds, createBackground, setBackground, updateBackground, deleteBackground, saveUserMedia } from './lib/core/avatar.js';
-import { chatWithDSH, llmJson, planProject, setLlm, getLlm } from './lib/core/copilot.js';
+import { chatWithDSH, llmJson, planProject, setLlm, getLlm, appFunctionPlan, resolveWrite } from './lib/core/copilot.js';
 import { listDir, readFile, writeFile, listTree, makeDir, renamePath, removePath, gitStatus } from './lib/core/files.js';
 import { deployNode, startNode, stopNode, openNode, openSpace, openTerminalAt, nodeTerminal, spaceTerminal, deleteNode, deleteSpace, deployOfficialSpaces, dockerDeploy, remoteDeploy, remoteLogin, runPipeline, sshHosts, sysControl } from './lib/core/nodes.js';
 import { listDataFiles, readDataFile, migrateStateOnce } from './lib/base/state.js';
 import { makeStatic } from './lib/misc/static.js';
 import { terminalUpgrade } from './lib/core/terminal2.js';
 import { waitFor } from './lib/misc/async.js';
-import { baseDirOf, spaceBase, spaceDir, startSpace, stopSpace, compileSpace, listSpaces, initSpace, buildSpace, ensureSpaceProcess } from './lib/core/spaces.js';
+import { baseDirOf, spaceBase, spaceDir, startSpace, stopSpace, compileSpace, listSpaces, createSpace, initSpace, buildSpace, openTerminal, ensureSpaceProcess } from './lib/core/spaces.js';
 import { USER_CACHE, HTTP_DEBUG, baseUrl, encode, envelopeRows, http, probe, portFree } from './lib/base/http.js';
 
 /**
@@ -53,7 +56,7 @@ const tools = [
   {
     name: 'contextos_deploy_node',
     description:
-      'Deploy a local ContextOS service node. mode=copy (default, copy a local bin/ice.bin), mode=download (fetch ice.<os>.<arch> from a /publish source), mode=source (git clone + source etc/miss.sh build). Then bin/ice.bin forever start port <p>, and verify /c/version + /v/index.css.',
+      'Deploy a local ContextOS service node. mode=copy (default, copy a local bin/ice.bin), mode=download (fetch ice.<os>.<arch> from a /publish source), mode=source (git clone + source etc/miss.sh build). Then bin/ice.bin forever start port <p>, and verify /c/runtime + /v/index.css.',
     parameters: {
       type: 'object',
       properties: {
@@ -98,7 +101,7 @@ const tools = [
   },
   {
     name: 'contextos_start_node',
-    description: "Start a stopped ContextOS node: ./bin/ice.bin forever start port <p> in its directory, then wait for /c/version.",
+    description: "Start a stopped ContextOS node: ./bin/ice.bin forever start port <p> in its directory, then wait for /c/runtime.",
     parameters: { type: 'object', properties: { port: { type: 'number', description: 'Node port.' } }, required: ['port'] },
     async execute(args) { return startNode({ port: args.port }); },
   },
@@ -153,18 +156,17 @@ const tools = [
   {
     name: 'contextos_create_space',
     description:
-      'Create a project space with PUT /c/dream/action/create, wait for the dated name to appear in /c/dream, and wait until the space serves /c/version.',
+      'Create a project space with PUT /c/dream/action/create, wait for the dated name to appear in /c/dream, and wait until the space serves /c/runtime.',
     parameters: {
       type: 'object',
       properties: {
         node: { type: 'number', description: 'Node port.' },
         name: { type: 'string', description: 'Short space name, [a-zA-Z0-9_-]+.' },
-        repos: { type: 'string', description: 'Optional git repository URL (sync clone).' },
       },
       required: ['node', 'name'],
     },
     async execute(args) {
-      return createSpace({ node: args.node, name: args.name, repos: args.repos ?? '' });
+      return createSpace({ node: args.node, name: args.name });
     },
   },
   {
@@ -277,6 +279,11 @@ async function route(req, res) {
     if (op === 'health' || op === 'nodes') {
       return send(res, 200, { ok: true, data: { ctxRoot: ctxRoot(), nodes: await listNodes() } });
     }
+    // 强制重扫所有节点（/c/runtime）并写回 ~/.contextos/nodes.json
+    if (op === 'refreshNodes') {
+      const nodes = await refreshNodes();
+      return send(res, 200, { ok: true, data: { count: nodes.length, nodes, file: registryPath() } });
+    }
     if (op === 'sshHosts') return send(res, 200, { ok: true, data: await sshHosts() });
     if (op === 'sysControl') return send(res, 200, { ok: true, data: await sysControl({ action: body.action, value: body.value }) });
     if (op === 'git') return send(res, 200, { ok: true, data: await gitStatus({ node, space: body.space }) });
@@ -383,23 +390,222 @@ async function route(req, res) {
         data: await createInstance({ node, space: body.space, command: body.command, place: body.place || '', name: body.name || '我的应用', city: body.city || '深圳市', company: body.company || '云轩领航', uid: body.uid || '' }),
       });
     }
-    if (op === 'initSpace') return send(res, 200, { ok: true, data: await initSpace({ node, space: body.space }) });
+    if (op === 'initSpace') {
+      const repos = body.repos || '';
+      return send(res, 200, { ok: true, data: await initSpace({ node, space: body.space, repos }) });
+    }
+    if (op === 'nameCheck') {
+      const { node, space, name } = body || {};
+      return send(res, 200, { ok: true, data: await uniqueAppName({ node, space, name }) });
+    }
+    if (op === 'codegenList') {
+      // 代码生成模板清单
+      return send(res, 200, { ok: true, data: codegenList() });
+    }
+    if (op === 'codegenRender') {
+      // 按模板 + 变量渲染代码（不落盘）
+      try {
+        return send(res, 200, { ok: true, data: codegenRender({ template: body.template, vars: body.vars || {} }) });
+      } catch (e) {
+        return send(res, 200, { ok: false, error: e.message });
+      }
+    }
+    if (op === 'codegenInspect') {
+      // 读模块，判断系统级(ice.Hash)还是平台级(db.Table)，列出字段与动作
+      try {
+        const hit = (await listNodes()).find((n) => Number(n.port) === Number(body.node));
+        const root = (hit && hit.dir) || ctxRoot();
+        const file = `${body.zone || 'devops'}/${body.module}.go`;
+        const src = await fs.readFile(codegenPath({ root, space: body.space, file }), 'utf8');
+        const info = moduleInfo(src);
+        let modelFields = [];
+        if (info.class === 'platform') {
+          const mf = `${body.zone || 'devops'}/model/model.go`;
+          try {
+            const msrc = await fs.readFile(codegenPath({ root, space: body.space, file: mf }), 'utf8');
+            modelFields = modelFields_(msrc);
+          } catch (e) { modelFields = []; }
+        }
+        return send(res, 200, { ok: true, data: { ...info, file, modelFields } });
+      } catch (e) {
+        return send(res, 200, { ok: false, error: e.message });
+      }
+    }
+    if (op === 'codegenPlan') {
+      // 解析「工具栏加个驳回键」「当状态=待审时显示通过键」→ 模板 + 变量
+      try {
+        return send(res, 200, { ok: true, data: await codegenPlan({ text: body.text || '', module: body.module || '', fields: body.fields || [] }) });
+      } catch (e) {
+        return send(res, 200, { ok: false, error: e.message });
+      }
+    }
+    if (op === 'codegenApply') {
+      // 渲染 + 落盘（只允许 <space>/src/<zone>/<file>.go），可选编译
+      try {
+        const rawVars = { ...(body.vars || {}) };
+        if (body.field && !rawVars.field) rawVars.field = body.field;
+        // 字段名先按框架词表归一，再进模板校验
+        if (body.template === 'field') {
+          const cf0 = checkField(rawVars.field || body.field);
+          if (!cf0.ok) throw new Error(`字段名「${rawVars.field || body.field}」不在框架通用词表里，请改用：${cf0.suggest}`);
+          rawVars.field = cf0.name;
+          body.field = cf0.name;
+        }
+        if (body.type && !rawVars.type) rawVars.type = body.type;
+        if (!rawVars.type) rawVars.type = 'string';
+        if (!rawVars.class) {
+          try { rawVars.class = detectClass(await fs.readFile(codegenPath({ root, space: body.space, file: `${rawVars.zone || 'devops'}/${rawVars.module}.go` }), 'utf8')); } catch (e) { rawVars.class = 'system'; }
+        }
+        if (body.zone && !rawVars.zone) rawVars.zone = body.zone;
+        if (body.module && !rawVars.module) rawVars.module = body.module;
+        for (const k of ['role', 'style', 'icon', 'help', 'label', 'Action', 'action', 'params']) {
+          if (body[k] && !rawVars[k]) rawVars[k] = body[k];
+        }
+        const out = codegenRender({ template: body.template, vars: rawVars });
+        if (!out.file) throw new Error('this template has no file; paste the snippet manually');
+        const hit = (await listNodes()).find((n) => Number(n.port) === Number(body.node));
+        const root = (hit && hit.dir) || ctxRoot();
+        const target = codegenPath({ root, space: body.space, file: out.file });
+        let existing = '';
+        try { existing = await fs.readFile(target, 'utf8'); } catch { existing = ''; }
+        let content;
+        if (out.template === 'field') {
+          // 字段：系统级改 field data 标签；平台级改 fields + model/model.go
+          if (!existing) throw new Error(`module file not found: ${out.file}`);
+          const want = body.field || out.field;
+          const cf = checkField(want);
+          if (!cf.ok) throw new Error(`字段名「${want}」不在框架通用词表里，请改用：${cf.suggest}`);
+          const fname = cf.name;
+          const cls = detectClass(existing);
+          content = renderFields(existing, fname, cls);
+          const w = await codegenWrite({ root, space: body.space, file: out.file, content });
+          let modelChanged = false;
+          if (cls === 'platform') {
+            const modelFile = `${(out.file || '').split('/')[0]}/model/model.go`;
+            try {
+              const mp = codegenPath({ root, space: body.space, file: modelFile });
+              const msrc = await fs.readFile(mp, 'utf8');
+              const next = renderModel(msrc, fname, body.type || 'string', body.module || (out.file || '').split('/')[1]?.replace(/\.go$/, '') || '');
+              if (next !== msrc) { await codegenWrite({ root, space: body.space, file: modelFile, content: next }); modelChanged = true; }
+            } catch (e) { modelChanged = false; }
+          }
+          let built = false; let buildNote = '';
+          if (body.build !== false) {
+            try { await buildSpace({ node: body.node, space: body.space }); built = true; } catch (e) { buildNote = e.message; }
+          }
+          return send(res, 200, { ok: true, data: { file: out.file, bytes: w.bytes, class: cls, field: fname, renamed: !!cf.renamed, fields: moduleInfo(content).fields, modelChanged, built, buildNote } });
+        }
+        if (!existing) {
+          content = (out.body || '') + (out.actionMethod || '') + (out.method || '');
+        } else if (out.whole) {
+          throw new Error(`refuse to overwrite existing file: ${out.file}`);
+        } else {
+          content = codegenMerge({ existing, decl: out.body, methods: (out.actionMethod || '') + (out.method || '') });
+        }
+        const w = await codegenWrite({ root, space: body.space, file: out.file, content });
+        let build = null;
+        if (body.build !== false) build = await buildSpace({ node: body.node, space: body.space });
+        return send(res, 200, { ok: true, data: { ...w, template: out.template, built: !!(build && build.rebuilt), build } });
+      } catch (e) {
+        return send(res, 200, { ok: false, error: e.message });
+      }
+    }
+    if (op === 'autogenSpec') {
+      // 创建应用的参数表直接来自 service autogen 的 role 定义
+      return send(res, 200, { ok: true, data: await autogenSpec({ node }) });
+    }
+    if (op === 'appPlan') {
+      // 生成应用前：AI 调研需求与竞品，给出五个功能及依赖，供用户确认/修改。
+      return send(res, 200, { ok: true, data: await appFunctionPlan({ name: body.name || '', help: body.help || '', text: body.text || '' }) });
+    }
+    if (op === 'resolveWrite') {
+      // 写数据前：在最近应用里认出「哪个应用 + 哪个功能 + 能抽到的字段值」
+      return send(res, 200, { ok: true, data: await resolveWrite({ text: body.text || '', apps: body.apps || [], mode: body.mode === 'read' ? 'read' : 'write' }) });
+    }
     if (op === 'autogenApp') {
-      return send(res, 200, {
-        ok: true,
-        data: await autogenApp({ node, space: body.space, name: body.name, help: body.help || '', place: body.place || 'profile', value: body.value || 'profile', trans: body.trans || '' }),
-      });
+      // 生成应用模板优先调云社区服务 autogen；服务不可用时退回本地 Go 生成。
+      const args = { node, space: body.space, name: body.name, help: body.help || '', place: body.place || body.name, value: body.value || 'profile', trans: body.trans || '' };
+      let data = null;
+      try { data = await autogenService(args); } catch (e) { data = null; }
+      if (!data || !data.created) data = await autogenApp(args);
+      return send(res, 200, { ok: true, data });
     }
     if (op === 'deleteNode') return send(res, 200, { ok: true, data: await deleteNode({ port: body.port }) });
     if (op === 'deleteSpace') return send(res, 200, { ok: true, data: await deleteSpace({ node, space: body.space }) });
     if (op === 'officialSpaces') return send(res, 200, { ok: true, data: await deployOfficialSpaces({ node, keys: body.keys || [] }) });
     if (op === 'storeAction') return send(res, 200, { ok: true, data: await storeAction({ node, space: body.space || '20240724-community', serviceUid: body.service_uid || '', action: body.action || '' }) });
     if (op === 'storeApps') return send(res, 200, { ok: true, data: await storeApps({ node, lang: body.lang || 'zh' }) });
+    if (op === 'spaceReady') return send(res, 200, { ok: true, data: { ready: await isCommandReady({ node, space: body.space, command: body.command }) } });
+    if (op === 'storageCheck') { const { storageReady } = await import('./lib/core/spaces.js'); return send(res, 200, { ok: true, data: await storageReady({ node }) }); }
+    if (op === 'backupSpace') { const { backupSpace } = await import('./lib/core/backup.js'); return send(res, 200, { ok: true, data: await backupSpace({ node, space: body.space, tag: body.tag || '' }) }); }
+    if (op === 'backups') { const { listBackups } = await import('./lib/core/backup.js'); return send(res, 200, { ok: true, data: await listBackups({ limit: Number(body.limit) || 20 }) }); }
+    if (op === 'sampleNodes') { const { sampleNodes } = await import('./lib/core/backup.js'); return send(res, 200, { ok: true, data: await sampleNodes() }); }
+    if (op === 'monitorQuery') { const { monitorQuery } = await import('./lib/core/backup.js'); return send(res, 200, { ok: true, data: await monitorQuery({ node, space: body.space || '', command: body.command, action: body.action || '', params: body.params || {} }) }); }
     if (op === 'createStoreInstance') return send(res, 200, { ok: true, data: await createStoreInstance({ node, service: body.service || {}, name: body.name || '', city: body.city || '深圳市', company: body.company || '云轩领航' }) });
     if (op === 'createSpace') {
-      return send(res, 200, { ok: true, data: await createSpace({ node, name: body.name, repos: body.repos || '' }) });
+      const wanted = body.repos || '';
+      return send(res, 200, { ok: true, data: await createSpace({ node, name: body.name, repos: wanted }) });
     }
     if (op === 'buildSpace') return send(res, 200, { ok: true, data: await buildSpace({ node, space: body.space }) });
+    if (op === 'commandStyle') {
+      // 按钮样式来自命令自省：meta._style[action] === 'danger' 就是危险操作
+      const r = await http(node, `/c/command/${body.command || 'dream'}`, { timeout: 8000 });
+      let style = {};
+      try {
+        const env = JSON.parse(r.text);
+        style = JSON.parse((env.meta || [])[0] || '{}')._style || {};
+      } catch { style = {}; }
+      return send(res, 200, { ok: true, data: { command: body.command || 'dream', style } });
+    }
+    if (op === 'iamList') {
+      const { iamList } = await import('./lib/core/iam.js');
+      return send(res, 200, { ok: true, data: await iamList({ node, level: body.level || 'system', kind: body.kind || 'user', space: body.space || '', mod: body.mod || '', uid: body.uid || '' }) });
+    }
+    if (op === 'iamCall') {
+      const { iamCall } = await import('./lib/core/iam.js');
+      return send(res, 200, { ok: true, data: await iamCall({ node, level: body.level || 'system', kind: body.kind || 'user', space: body.space || '', mod: body.mod || '', action: body.action || 'create', fields: body.fields || {}, args: body.args || [], uid: body.uid || '' }) });
+    }
+    if (op === 'iamSubjects') {
+      // 五种主体 + 资金三类，逐个查命令是否存在（不猜）
+      const { SUBJECTS, FUND, commandExists, subjectEndpoints } = await import('./lib/core/iam.js');
+      const space = body.space || '20240724-community';
+      const subjects = await Promise.all(SUBJECTS.map(async (x) => ({ ...x, exists: await commandExists({ node, space, command: x.command }), url: `http://127.0.0.1:${node}/s/${space}/c/${x.command}` })));
+      const funds = await Promise.all(FUND.map(async (x) => ({ ...x, exists: await commandExists({ node, space, command: x.command }), url: `http://127.0.0.1:${node}/s/${space}/c/${x.command}` })));
+      return send(res, 200, { ok: true, data: { space, subjects, funds } });
+    }
+    if (op === 'iamEndpoints') {
+      const { iamEndpoints } = await import('./lib/core/iam.js');
+      return send(res, 200, { ok: true, data: iamEndpoints({ node, space: body.space || '20240724-community', mod: body.mod || '' }) });
+    }
+    if (op === 'nodeAuth') {
+      // 远程 / 容器节点：取 token 或 sessid（本机节点免登录，不需要）
+      const { ensureNodeAuth, peekNodeAuth, appSessid, adminSessid, toolToken } = await import('./lib/core/auth.js');
+      if (body.kind === 'admin') {
+        try { return send(res, 200, { ok: true, data: { node: Number(node), kind: 'admin', sessid: await adminSessid({ node, username: body.username || '' }) } }); }
+        catch (e) { return send(res, 200, { ok: false, error: String(e?.message || e) }); }
+      }
+      if (body.kind === 'tool') {
+        try { return send(res, 200, { ok: true, data: { node: Number(node), kind: 'tool', token: await toolToken({ node }) } }); }
+        catch (e) { return send(res, 200, { ok: false, error: String(e?.message || e) }); }
+      }
+      if (body.kind === 'app') {
+        // 应用级 sessid：/s/<space>/c/web.team.gonganxitong.sess/action/create
+        try {
+          const { appSession } = await import('./lib/core/auth.js');
+          const s0 = await appSession({ node, space: body.space || '20240724-community', userUid: body.userUid || body.uid || '' });
+          return send(res, 200, { ok: true, data: { node: Number(node), space: body.space || '20240724-community', sessid: s0.sessid, cookie: s0.cookie, kind: 'app' } });
+        } catch (e) {
+          return send(res, 200, { ok: false, error: String(e?.message || e) });
+        }
+      }
+      try {
+        const data = body.peek ? peekNodeAuth({ node }) : await ensureNodeAuth({ node, username: body.username || '', force: !!body.force });
+        return send(res, 200, { ok: true, data });
+      } catch (e) {
+        return send(res, 200, { ok: false, error: String(e?.message || e) });
+      }
+    }
+    if (op === 'openTerminal') return send(res, 200, { ok: true, data: await openTerminal({ node, space: body.space || '' }) });
     if (op === 'createApp') {
       return send(res, 200, {
         ok: true,
@@ -407,12 +613,17 @@ async function route(req, res) {
       });
     }
     if (op === 'readData') {
-      return send(res, 200, { ok: true, data: await readData({ node, space: body.space, command: body.command }) });
+      const sc = body.scope || {};
+      const inst = String(body.inst || sc.system_uid || sc.project_uid || Object.entries(sc).find(([k, v]) => /_uid$/.test(k) && k !== 'user_uid' && v)?.[1] || '');
+      const actor = String(body.uid || sc['user.uid'] || sc.user_uid || '');
+      const query = { ...(actor ? { 'user.uid': actor } : {}) };
+      return send(res, 200, { ok: true, data: await readData({ node, space: body.space, command: body.command, query, inst, record: String(body.record || '') }) });
     }
+    if (op === 'appFields') return send(res, 200, { ok: true, data: await appFields({ node, space: body.space, command: body.command || '' }) });
     if (op === 'writeData') {
       return send(res, 200, {
         ok: true,
-        data: await writeData({ node, space: body.space, command: body.command, fields: body.fields || {} }),
+        data: await writeData({ node, space: body.space, command: body.command, fields: body.fields || {}, scope: body.scope || {} }),
       });
     }
     if (op === 'removeData') return send(res, 200, { ok: true, data: await removeData(body) });

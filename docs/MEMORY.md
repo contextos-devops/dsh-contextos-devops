@@ -30,11 +30,27 @@ then by `created_at` descending within the same status.
 
 ## UI invariants
 
+- Chat message layout is `avatar | main(meta above body)`. `.cx-msg-main` is a
+  column flex; never let the host make it a row. Body is full-width.
+- Chat request context has one scene source: `scene`; strip `background`/`bg`
+  aliases at the send boundary.
+
 - Four debug tabs in one row; tab bar sticky.
 - Header tables: fixed layout, stable KEY column, long values wrap.
 - Detail panel height follows content; no forced full-height band.
 - No duplicate section heading (e.g. REQUEST above a “请求信息” tab).
 - Loading / empty / error / long-text states are always explicit.
+
+## Software factory
+
+- `createApp`: scaffold + generated CRUD + `ensureGoMod` + local Go build; returns
+  `web.chat.<zone>.<name>`.
+- `autogenApp`: community autogen + `ensureGoMod` + missing value files +
+  `goTidyBuild` (`go build ... ./src`) + space restart. A build failure must throw;
+  never return `{built:false}` as success.
+- `value` is an ASCII Go identifier list; `trans` is the Chinese display list.
+- Probe spaces must be deleted after acceptance (`deleteSpace`); never leave
+  `factorycheck*`/`uiprobe*` in the node.
 
 ## Verification
 

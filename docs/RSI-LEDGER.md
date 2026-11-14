@@ -274,3 +274,98 @@ gate added so the same bug cannot return silently
 - Lesson: for any client change, static gates are not enough — either run
   `npm run verify:ui` against a real browser, or add a gate that encodes the
   runtime failure mode; do not claim done on build-only evidence.
+
+## 2026-11-13 — createSpace action
+
+- Symptom: AI actions reported `createSpace is not defined` when creating random spaces.
+- Cause: action dispatch referenced a helper whose client scope was not present in the executed bundle.
+- Fix: inline the create-space flow in `executeAction` (`api createSpace → initSpace → refresh → select`), removing the fragile helper reference.
+- Gate: ui-check forbids `return createSpace(` and requires the inline action.
+
+## 2026-11-13 — software factory actions
+
+- Added AI action `createApp` / alias `generateAppCode`: generates a Go module and compiles it.
+- Factory allowlist now includes both; deploy action uses `mode:auto` (clone→build→copy→download).
+- `createSpace` action is fully inline, so no helper-scope ReferenceError.
+
+## 2026-11-13 — createSpace import root cause
+
+- Real root cause of `createSpace is not defined` was backend, not client scope: `index.js` route called `createSpace` but did not import it from `lib/core/spaces.js`.
+- Fix: add `createSpace` to the `spaces.js` import; gate asserts it.
+- Verification must call the plugin API, not infer from UI text.
+
+
+## 2026-11-13 — 行为纠正：禁止重启代替修复
+
+- 事故：用多次重启试图加载 `createSpace` 修复，导致用户正在进行的回合被 `Task stopped`，且真正根因（`index.js` 未导入 `createSpace`）未被先验证。
+- 新硬规则（根 `AGENTS.md` 11/12）：任务中不重启宿主；先 API/DOM 复现；一次只改一个根因；修复后用同一 API 回读。
+- 验证：`POST /contextos-devops-dsh/api {"op":"createSpace"...}` 返回 `ok:true`，创建的探针空间已用 `deleteSpace` 清理。
+
+
+## 2026-11-13 — acceptance plugin + four-level contract
+
+- Installed `dsh-preview` 0.1.1 into profile `desktop`; it exposes `browser_open/console/read/interact/screenshot/close` and the `frontend-verify` skill. It hot-loaded into the running host; no restart was used.
+- Added `docs/ACCEPTANCE.md`: four evidence levels (L0 static, L1 API read-back, L2 rendered DOM/console, L3 human screenshot), evidence table, exit-code semantics (0/1/2), PM/factory matrices.
+- Wired `context-check` and `ui-check` to fail when the acceptance contract or browser evidence requirement disappears.
+- Lesson: an acceptance plugin without a written evidence contract turns into another “looks fine”; the doc + gates are the actual acceptance mechanism.
+
+## 2026-11-13 — software factory: local Go build
+
+- Symptom: `createApp` timed out; generated command never registered. Space error log:
+  `go build ... err: exec: "go": executable file not found in $PATH`.
+- Cause: the node process PATH does not contain `/usr/local/go/bin`; `vimer/compile`
+  only warns and returns, so the timeout surfaced far from the root.
+- Fix: `lib/core/gobuild.js` resolves `GO` → `<ctx>/usr/local/go/bin/go` →
+  `/usr/local/go/bin/go`, runs `go mod tidy` + `go build`, and
+  `spaces.js::restartSpace` stops/starts the space to load the new binary.
+  `buildSpace` and `createApp` share it; no copied node binary on build failure.
+- Evidence: disposable `20261113-factorycheck2`, command `web.chat.devops.accept2`,
+  record `acceptance2/probe2` read back `count:"1x5"`; browser page 0 console errors;
+  screenshot `page-3-1794556134011.png`; probe deleted.
+- Gate: `ui-check` requires `goTidyBuild` + `restartSpace` + `createApp → buildSpace`.
+
+
+## 2026-11-13 — autogen: half-written app tree
+
+- Symptom: AI reported `autogenApp` success, then “编译未完成：go mod tidy failed”;
+  generated `staff/model/model.go` contained `���工管理` identifiers.
+- Cause chain: `autogenApp` did not call `ensureGoMod`, so the skeleton only had
+  `module <short>` and no `require shylinux.com/x/ice v1.6.6`; Go tried to fetch
+  `ice/devops` as its own module. It also swallowed `buildSpace` errors, and the
+  character service omits the per-value `.go` files that `portal.go` instantiates.
+  The model supplied Chinese labels as `value`, which are Go identifiers.
+- Fix: `ensureGoMod` before build; `goTidyBuild` builds `./src` (no hard-coded
+  `version.go`); `ensureAutogenValues` writes missing value files from the
+  validated ASCII list; `autogenApp` throws on build failure; `value` validated
+  as ASCII identifiers; client falls back to the preset fields and keeps labels
+  in `trans`.
+- Evidence: disposable `20261113-factorycheck6`, autogen `employee` →
+  `built:true`, command `web.team.employee.portal`, browser page 0 console errors;
+  probe deleted. `ui-check` 84 passed; `context-check` passed.
+- Lesson: “build warning” in a factory result is a failure, not a footnote.
+## 2026-11-13 — createSpace: name-only contract
+
+- Symptom: the UI debug row showed `PUT /c/dream/action/create?name=...&space.noecho=true&binary=...&user.uid=...`; the user required “只需要指定项目名称，其它参数都不需要”.
+- Cause: `createSpace` added a defensive `binary` + `space.noecho`; `http()` also injected `user.uid` for every call. The extra parameters were internal guesses, not ContextOS requirements.
+- Fix: `createSpace` query is now only `new URLSearchParams({ name: fullName })`; `http()` accepts `auth:false`, and the create call uses it. `repos` was removed from the MCP route/schema and the project initializer call site.
+- Evidence: direct module run created `20261113-onlyapi164912` with request `PUT http://127.0.0.1:9197/c/dream/action/create?name=20261113-onlyapi164912` (HTTP 200, `status:start`); probe deleted. `ui-check` 85 passed; `context-check` passed.
+- Lesson: do not add “defensive” query parameters to ContextOS actions; the smallest valid request is the contract.
+
+## 2026-11-14 — chat: two-column message body + duplicated scene alias
+
+- Symptom: AI message showed `COPILOT / time / tokens` in a left column and the
+  reply text in a right column, looking “double/mixed”; request context also
+  appeared to carry both `scene` and `background`.
+- Cause: the message markup is `avatar + main(meta + body)`, but the host/legacy
+  CSS could make `.cx-msg-main` a horizontal flex row. The client context only
+  has `scene`; stale sessions or earlier payloads can still carry a
+  `background`/`bg` alias at the request boundary.
+- Fix: force `.cx-shell .cx-msg .cx-msg-main` to `flex-direction:column` with
+  `!important`, make `.cx-msg-body` full-width, and strip `background`/`bg`
+  from the outgoing `requestContext` before `api('chat')`; the trace records the
+  same sanitized object.
+- Evidence: rendered test page confirms `display:flex;flex-direction:column`;
+  `ui-check` 88 passed, `context-check` passed. Live plugin still needs one
+  app reload to pick up `v1.45.93`; do not call it verified before that.
+- Lesson: when a screenshot looks like duplicated text, inspect the computed
+  flex axis first; “two copies” can be two columns of one message.

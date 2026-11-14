@@ -165,7 +165,6 @@
 .cx-chat-i{display:flex;gap:5px;padding:8px;border-top:1px solid var(--cx-line);background:rgba(4,12,20,.9)}
 .cx-chat-i input{flex:1;min-width:0}
 .cx-chat-i button{flex:none}
-.cx-chat-typing{font-size:var(--cx-fs-body);color:var(--cx-orange);padding:2px 10px 6px}
 .cx-official{border-top:1px solid var(--cx-line);padding:9px 10px;background:rgba(4,14,24,.75)}
 .cx-official .oh{font-size:var(--cx-fs-body);letter-spacing:.12em;color:var(--cx-cyan);margin-bottom:6px}
 .cx-official label{display:flex;align-items:center;gap:6px;font-size:var(--cx-fs-body);color:var(--cx-muted);padding:3px 0;cursor:pointer}
@@ -467,7 +466,7 @@
 .cx-addrbar .nav:disabled{opacity:.35;cursor:default}
 .cx-addr-input{flex:1;min-width:0;height:26px;padding:0 10px;border:1px solid var(--cx-border);border-radius:6px;background:var(--cx-surface-2);color:var(--cx-text);font:var(--cx-fs) var(--cx-mono)}
 .cx-addr-input:focus{outline:none;border-color:var(--cx-accent)}
-.cx-chat.webmax .cx-chat-h,.cx-chat.webmax .cx-chat-tabs,.cx-chat.webmax .cx-hint,.cx-chat.webmax .cx-compose,.cx-chat.webmax .cx-pm-side{display:none}
+.cx-chat.webmax .cx-pm-side,.cx-chat.webmax .cx-compose,.cx-chat.webmax .cx-hint{display:none}
 
 .cx-chat-webframes{flex:1;min-height:0;position:relative;display:flex}
 .cx-chat-webframes iframe{flex:1;width:100%;height:100%;border:0;background:var(--cx-surface-1)}
@@ -564,12 +563,15 @@
 .cx-gate-actions{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 @media(max-width:760px){.cx-pm-side{display:none}}
 
-.cx-msg-main{flex:1;min-width:0}
-.cx-msg-meta{display:flex;align-items:center;gap:8px;font-size:var(--cx-fs-body);letter-spacing:.1em;color:var(--cx-muted);margin-bottom:4px}
+.cx-msg-main{flex:1;min-width:0;width:100%;display:flex;flex-direction:column;align-items:stretch;gap:2px}
+/* 宿主/旧样式可能把消息主体变成横向 flex；列向是唯一合法布局，必须压住。 */
+.cx-shell .cx-msg .cx-msg-main{display:flex!important;flex-direction:column!important;align-items:stretch!important;width:100%!important}
+.cx-shell .cx-msg .cx-msg-body{width:100%!important;min-width:0}
+.cx-msg-meta{display:flex;align-items:center;gap:8px;width:100%;font-size:var(--cx-fs-body);letter-spacing:.1em;color:var(--cx-muted);margin-bottom:4px}
 .cx-msg-copy{margin-left:auto;border:0;background:transparent;color:var(--cx-muted);font:var(--cx-fs-body)/1 var(--cx-font);cursor:pointer;letter-spacing:.08em}
 .cx-msg-copy:hover{color:var(--cx-cyan)}
 .cx-msg-metrics{color:var(--cx-text-faint);font-size:var(--cx-fs-body);letter-spacing:.04em}
-.cx-msg-body{font-size:var(--cx-fs);line-height:1.75;color:#d9f4ff}
+.cx-msg-body{width:100%;min-width:0;font-size:var(--cx-fs);line-height:1.75;color:#d9f4ff;overflow-wrap:anywhere}
 .cx-msg.user .cx-msg-body{color:#e9fff8}
 .cx-md-p{margin:2px 0}
 .cx-md-h{font-weight:800;color:#eaffff;margin:8px 0 3px;font-size:var(--cx-fs)}
@@ -586,7 +588,7 @@
 .cx-md-code{margin:0;padding:8px 10px;overflow:auto;font:var(--cx-fs-body)/1.65 var(--cx-mono);color:#bfe9f8}
 .cx-sysline{display:flex;align-items:center;justify-content:center;gap:6px;font-size:var(--cx-fs-body);letter-spacing:.12em;color:#4f7a8c;text-transform:uppercase}
 .cx-sysdot{width:4px;height:4px;border-radius:50%;background:var(--cx-cyan);box-shadow:0 0 8px var(--cx-cyan)}
-.cx-chat-typing{font-size:var(--cx-fs-body);color:var(--cx-cyan);letter-spacing:.1em;padding:4px 0 4px 30px}
+.cx-chat-typing{width:calc(100% - 36px);max-width:1080px;box-sizing:border-box;margin:0 auto;font-size:var(--cx-fs-body);color:var(--cx-cyan);letter-spacing:.1em;padding:4px 14px 2px}
 @media(max-width:1250px){.cx-body{grid-template-columns:1fr 1fr;overflow:auto}.cx-panel{min-height:260px}.cx-shell{overflow:auto}}
 @media(max-width:1000px){.cx-chat{width:calc(100vw - 12px);right:6px;bottom:6px;height:calc(100vh - 20px)}.cx-compose{max-width:none}.cx-compose-tools{display:flex;flex-wrap:wrap}.cx-compose .cx-sel{flex:0 1 auto;max-width:calc(50% - 18px)}.cx-compose .cx-sel-btn{max-width:100%}.cx-compose-right{margin-left:auto;flex-wrap:wrap;justify-content:flex-end}.cx-body{grid-template-columns:1fr;overflow:auto}.cx-panel{min-height:240px}.cx-shell{overflow:auto}.cx-log{min-height:110px}}
 @media(max-width:760px){.cx-compose-tools{gap:4px}.cx-compose .cx-sel{flex:1 1 calc(33% - 14px);max-width:none}.cx-compose-right{flex:1 1 100%;margin-left:0;justify-content:flex-end;order:5}.cx-compose .cx-sel-btn{max-width:100%}}
@@ -3052,3 +3054,230 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-msg-tool:hover{color:var(--cx-cyan);background:rgba(var(--cx-hue-rgb),.12)}
 .cx-msg-tool.danger:hover{color:#ff7b7b}
 @media (hover:none){.cx-msg-tools{opacity:1;transform:none}}
+
+/* 应用实例回执卡（参考管理视图 APP 卡片） */
+.cx-app-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--cx-line);border-radius:8px;background:var(--cx-panel-2);min-width:280px;max-width:420px}
+.cx-app-card-ico{width:34px;height:34px;flex:none;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(var(--cx-hue-rgb),.55),rgba(var(--cx-hue-rgb),.18));border:1px solid rgba(var(--cx-hue-rgb),.45)}
+.cx-app-card-ico img{width:100%;height:100%;object-fit:cover}
+.cx-app-card-ico .ph{font-size:14px;font-weight:600;color:#fff}
+.cx-app-card-main{flex:1;min-width:0}
+.cx-app-card-title{font-size:14px;font-weight:600;color:var(--cx-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-app-card-sub{font-size:10px;color:var(--cx-text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.cx-app-card-open{flex:none;height:24px;padding:0 10px;border-radius:4px;border:1px solid rgba(var(--cx-hue-rgb),.5);background:rgba(var(--cx-hue-rgb),.12);color:var(--cx-cyan);font-size:10px;letter-spacing:.08em;cursor:pointer}
+.cx-app-card-open:hover{background:rgba(var(--cx-hue-rgb),.22)}
+
+/* 消息列表里的数据表单 */
+.cx-wform{border:1px solid var(--cx-line);border-radius:8px;background:var(--cx-panel-2);padding:12px 14px;width:100%;max-width:720px}
+.cx-wform-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.cx-wform-h .t{font-size:12px;font-weight:600;color:var(--cx-text)}
+.cx-wform-h .s{font-size:10px;color:var(--cx-text-3)}
+.cx-wform-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.cx-wform-row .k{width:96px;flex:none;font-size:10px;color:var(--cx-text-2)}
+.cx-wform-input{flex:1;height:26px;padding:0 8px;border-radius:4px;border:1px solid var(--cx-line);background:var(--cx-panel);color:var(--cx-text);font-size:12px;outline:0}
+.cx-wform-input:focus{border-color:rgba(var(--cx-hue-rgb),.6)}
+.cx-wform-acts{display:flex;justify-content:flex-end;margin-top:8px}
+.cx-wform-submit{height:26px;padding:0 14px;border-radius:4px;border:1px solid rgba(var(--cx-hue-rgb),.55);background:rgba(var(--cx-hue-rgb),.18);color:var(--cx-cyan);font-size:12px;cursor:pointer}
+.cx-wform-submit:hover{background:rgba(var(--cx-hue-rgb),.3)}
+.cx-wform-submit:disabled{opacity:.6;cursor:default}
+
+/* 表单里的实例/功能信息 + 错误提示 */
+.cx-wform-meta{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 10px;font-size:10px;color:var(--cx-text-3)}
+
+/* 参数确认表单（创建空间 / 应用模板）：标题、参数名、脚注 */
+.cx-wform-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.cx-wform-title{font-size:12px;font-weight:600;color:var(--cx-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-wform-count{flex:none;font-size:10px;color:var(--cx-text-3)}
+.cx-wform-note{margin:0 0 10px;font-size:10px;line-height:1.6;color:var(--cx-text-2);word-break:break-word}
+.cx-wform-label{width:96px;flex:none;font-size:10px;color:var(--cx-text-2)}
+.cx-wform-label .req{color:#ff6b6b;font-style:normal;margin-left:2px}
+.cx-wform-foot{display:flex;justify-content:flex-end;margin-top:8px}
+.cx-wform-err{margin-top:8px;padding:6px 8px;border-radius:4px;border:1px solid rgba(255,90,90,.5);background:rgba(255,90,90,.12);color:#ff9a9a;font-size:10px;word-break:break-word}
+
+/* 表单顶部的实例卡 */
+.cx-wform-app{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cx-wform-app .ico{width:28px;height:28px;flex:none;display:grid;place-items:center;border-radius:6px;background:rgba(var(--cx-hue-rgb),.18);color:var(--cx-cyan)}
+.cx-wform-app .body{display:flex;flex-direction:column;min-width:0}
+.cx-wform-app .name{font-size:12px;font-weight:600;color:var(--cx-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-wform-app .sub{font-size:10px;color:var(--cx-text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 表单实例卡可点击 */
+.cx-wform-app.link{cursor:pointer;border-radius:6px;margin-left:-4px;padding:4px}
+.cx-wform-app.link:hover{background:rgba(var(--cx-hue-rgb),.12)}
+
+/* 提交成功后的「查看详情」 */
+.cx-wform-open{height:26px;padding:0 14px;border-radius:4px;border:1px solid rgba(var(--cx-hue-rgb),.55);background:rgba(var(--cx-hue-rgb),.16);color:var(--cx-cyan);font-size:12px;cursor:pointer}
+.cx-wform-open:hover{background:rgba(var(--cx-hue-rgb),.3)}
+.cx-wform.done{border-color:rgba(var(--cx-green,80,220,160),.45)}
+
+/* 已提交：字段置灰只读 */
+.cx-wform-row.ro{opacity:.62}
+.cx-wform-row.ro .v{flex:1;height:26px;line-height:26px;padding:0 8px;border-radius:4px;border:1px solid var(--cx-line);background:var(--cx-panel);font-size:12px;color:var(--cx-text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 必填标记 */
+.cx-wform-row .k .req{font-style:normal;color:#ff7b7b;margin-left:2px}
+
+/* 全局统一结果卡片：节点 / 空间 / 实例 / 模板 / 数据 */
+.cx-msg .cx-rc,.cx-rc{
+  display:flex!important;flex-direction:row!important;align-items:center!important;
+  gap:12px;white-space:normal!important;font-family:var(--cx-font,system-ui,sans-serif);
+  margin:8px 0;padding:12px;border:1px solid var(--cx-line);
+  border-left:3px solid rgba(var(--cx-hue-rgb),.85);border-radius:8px;
+  background:linear-gradient(180deg,rgba(var(--cx-hue-rgb),.07),rgba(0,0,0,0));
+  background-color:var(--cx-panel);
+}
+.cx-msg .cx-rc-ico,.cx-rc-ico{
+  flex:0 0 40px!important;width:40px;height:40px;border-radius:10px;overflow:hidden;
+  display:flex!important;align-items:center;justify-content:center;
+  background:rgba(var(--cx-hue-rgb),.16);border:1px solid rgba(var(--cx-hue-rgb),.35);color:var(--cx-cyan);
+}
+.cx-rc-ico img{width:100%;height:100%;object-fit:cover}
+.cx-msg .cx-rc-main,.cx-rc-main{flex:1 1 auto!important;min-width:0;display:block!important}
+.cx-msg .cx-rc-head,.cx-rc-head{display:flex!important;align-items:center;gap:8px;white-space:nowrap;overflow:hidden}
+.cx-msg .cx-rc-kind,.cx-rc-kind{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cx-cyan);opacity:.75;flex:0 0 auto}
+.cx-msg .cx-rc-title,.cx-rc-title{font-size:14px!important;font-weight:600;color:var(--cx-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-msg .cx-rc-badge,.cx-rc-badge{flex:0 0 auto;font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid rgba(var(--cx-hue-rgb),.5);color:var(--cx-cyan);background:rgba(var(--cx-hue-rgb),.1)}
+.cx-rc-badge.ok{border-color:rgba(90,220,160,.5);color:#5adca0;background:rgba(90,220,160,.1)}
+.cx-msg .cx-rc-sub,.cx-rc-sub{font-size:10px!important;line-height:16px;color:var(--cx-text-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-msg .cx-rc-meta,.cx-rc-meta{display:flex!important;flex-wrap:wrap;gap:4px 10px;margin-top:5px;font-size:10px;color:var(--cx-text-2);opacity:.85}
+.cx-msg .cx-rc-acts,.cx-rc-acts{flex:0 0 auto!important;display:flex!important;flex-direction:row!important;gap:6px;align-self:center}
+.cx-msg .cx-rc-btn,.cx-rc-btn{
+  height:26px!important;min-height:26px;padding:0 12px!important;border-radius:5px;
+  border:1px solid rgba(var(--cx-hue-rgb),.55)!important;background:rgba(var(--cx-hue-rgb),.14)!important;
+  color:var(--cx-cyan)!important;font-size:10px!important;line-height:24px;cursor:pointer;white-space:nowrap;
+  box-shadow:none!important;
+}
+.cx-msg .cx-rc-btn:hover,.cx-rc-btn:hover{background:rgba(var(--cx-hue-rgb),.3)!important}
+
+/* 失败后的常用调试工具条（编程 / 节点 / 空间 / 开发模式） */
+.cx-toolrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 8px}
+.cx-toolsel{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--cx-dim)}
+.cx-toolsel select{height:28px;padding:0 8px;border-radius:4px;border:1px solid var(--cx-line);background:var(--cx-panel);color:var(--cx-fg);font-size:12px}
+.cx-toolrow .cx-btn.sm{height:28px;padding:0 10px;font-size:12px}
+
+/* 网页最大化：强制收起左右两栏（覆盖文件中部所有 display:flex!important） */
+.cx-shell .cx-chat.webmax .cx-pm-side,
+.cx-shell .cx-chat.webmax .cx-pm-side:not(.right),
+.cx-shell .cx-chat.webmax .cx-pm-side.right{display:none!important;width:0!important;min-width:0!important;padding:0!important;border:0!important}
+.cx-shell .cx-chat.webmax .cx-chat-b{max-width:none!important}
+
+/* 网页聚焦：shell 级收起左右两栏（不依赖组件内部状态） */
+.cx-shell[data-webfocus="1"] .cx-pm-side{display:none!important;width:0!important;min-width:0!important;padding:0!important;border:0!important;overflow:hidden!important}
+/* 网页最大化：连对话框标题栏一起收起，只留标签栏 + 地址栏 */
+.cx-shell[data-webfocus="1"] .cx-chat-h{display:none!important}
+
+/* 写数据的四步拆解 */
+.cx-step{display:flex;align-items:center;gap:6px;margin:4px 0 4px 34px;font-size:var(--cx-fs-body);color:var(--cx-text-faint,rgba(180,220,235,.6));letter-spacing:.04em}
+.cx-step::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--cx-cyan,#3fd0d8);opacity:.75;flex:none}
+.cx-shell[data-theme="light"] .cx-step{color:#5e7f8d}
+
+/* 应用/功能只读表格 */
+.cx-dtable{border:1px solid var(--cx-line,rgba(120,200,220,.18));border-radius:8px;overflow:hidden;margin:6px 0;background:rgba(8,24,34,.35)}
+.cx-dtable-h{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;font-size:var(--cx-fs-body);color:var(--cx-text-dim,#9fc4d2);border-bottom:1px solid var(--cx-line,rgba(120,200,220,.14))}
+.cx-dtable-h .n{color:var(--cx-cyan,#3fd0d8)}
+.cx-dtable-wrap{max-height:320px;overflow:auto}
+.cx-dtable table{width:100%;border-collapse:collapse;font-size:var(--cx-fs-body)}
+.cx-dtable th,.cx-dtable td{padding:6px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid rgba(120,200,220,.08)}
+.cx-dtable th{color:var(--cx-text-faint,rgba(180,220,235,.6));font-weight:400;position:sticky;top:0;background:rgba(8,24,34,.9)}
+.cx-shell[data-theme="light"] .cx-dtable{background:#fff}
+.cx-shell[data-theme="light"] .cx-dtable th{background:#f4fafc}
+
+/* 含表单的消息：整条铺满，参数不被气泡挤窄 */
+.cx-msg:has(.cx-wform),
+.cx-chat.full .cx-msg:has(.cx-wform){max-width:100%!important;width:100%!important}
+.cx-msg:has(.cx-wform) .cx-msg-main,
+.cx-msg:has(.cx-wform) .cx-msg-body{width:100%!important;min-width:0}
+.cx-msg .cx-wform{width:100%!important;max-width:none!important}
+.cx-wform-row .k{width:120px;flex:none}
+.cx-wform-row .cx-wform-input,.cx-wform-row input,.cx-wform-row textarea,.cx-wform-row select{min-width:0;flex:1;width:auto}
+
+/* 含表单的消息：右边留白，不贴满 */
+.cx-msg:has(.cx-wform),
+.cx-chat.full .cx-msg:has(.cx-wform){max-width:calc(100% - 32px)!important;width:calc(100% - 32px)!important;margin-right:32px}
+
+/* 统一消息最大宽度：表单与普通消息同宽，表单占满该消息 */
+.cx-msg,
+.cx-chat.full .cx-msg,
+.cx-msg:has(.cx-wform),
+.cx-chat.full .cx-msg:has(.cx-wform){max-width:92%!important;width:auto!important;margin-right:0!important}
+.cx-msg:has(.cx-wform),
+.cx-chat.full .cx-msg:has(.cx-wform){width:92%!important}
+.cx-msg .cx-wform{width:100%!important;max-width:none!important}
+
+/* 执行状态行：与输入框同一容器、同一左基线 */
+.cx-chat-typing{width:calc(100% - 36px);max-width:1080px;box-sizing:border-box;margin:0 auto;padding:2px 15px 4px}
+
+/* 上下文菜单右侧的「是否已打开」状态点 */
+.cx-menu-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(var(--cx-hue-rgb),.28)}
+.cx-menu-dot.open{background:var(--cx-green,#42f5a7);box-shadow:0 0 6px rgba(66,245,167,.6)}
+
+/* 菜单分隔线：常用工具与危险操作之间 */
+.cx-menu-sep{height:1px;margin:4px 8px;background:rgba(var(--cx-hue-rgb),.18)}
+.cx-menu-item.danger .cx-menu-lbl{color:#ff6b6b}
+.cx-menu-item.danger svg{color:#ff6b6b}
+
+/* 节点/空间卡：加宽一档；标题与副标题都只占一行，超出省略，悬停看完整 */
+/* 服务节点与项目空间等宽，两边都能完整显示副标题 */
+.cx-body{grid-template-columns:minmax(320px,1fr) minmax(320px,1fr) minmax(250px,.92fr) minmax(360px,1.6fr)}
+.cx-node .cx-entity-meta,.cx-space .cx-entity-meta{height:14px;white-space:nowrap;text-overflow:ellipsis;display:block;overflow:hidden}
+.cx-node .cx-entity-name,.cx-space .cx-entity-name{white-space:nowrap;text-overflow:ellipsis;display:block;overflow:hidden}
+
+/* 标题后面的时间（最近应用） */
+.cx-entity-time{flex:none;margin-left:6px;font-size:10px;color:var(--cx-muted);letter-spacing:.02em;white-space:nowrap}
+
+/* 详情：键值两列 */
+.cx-dtable-kv th{width:150px;text-align:left;font-weight:500;color:var(--cx-mut);white-space:nowrap}
+.cx-dtable-kv td{color:var(--cx-fg)}
+
+/* ===== 监控看板（Grafana 风格面板） ===== */
+.cx-mon-board{margin:0 0 14px}
+.cx-mon-board-h{display:flex;align-items:center;gap:10px;padding:0 0 8px}
+.cx-mon-board-h .t{font-size:12px;letter-spacing:.12em;color:var(--cx-cyan)}
+.cx-mon-board-h .s{font-size:10px;color:var(--cx-mut)}
+.cx-mon-board-h .cx-btn{margin-left:auto}
+.cx-mon-board-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px}
+.cx-mon-bo{min-height:120px}
+.cx-mon-bo-act{margin-left:auto;display:flex;gap:4px}
+.cx-mon-bo-body{padding:8px 4px 2px;min-height:64px}
+.cx-mon-stat{display:flex;align-items:baseline;gap:8px}
+.cx-mon-stat b{font-size:22px;color:var(--cx-fg);font-variant-numeric:tabular-nums}
+.cx-mon-stat b.sm{font-size:12px;font-weight:500}
+.cx-mon-stat span{font-size:10px;color:var(--cx-mut)}
+.cx-mon-tbl .h,.cx-mon-tbl .r{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;font-size:10px;padding:3px 0;border-bottom:1px solid rgba(var(--cx-hue-rgb),.10)}
+.cx-mon-tbl .h{color:var(--cx-mut);text-transform:uppercase;letter-spacing:.06em}
+.cx-mon-tbl .r{color:var(--cx-fg);white-space:nowrap;overflow:hidden}
+.cx-mon-kv div{display:flex;justify-content:space-between;font-size:10px;padding:2px 0;border-bottom:1px solid rgba(var(--cx-hue-rgb),.08)}
+.cx-mon-kv span{color:var(--cx-mut)}
+.cx-mon-kv b{color:var(--cx-fg);font-weight:500;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-mon-frame{width:100%;height:220px;border:1px solid rgba(var(--cx-hue-rgb),.18);border-radius:6px;background:#fff}
+.cx-mon-empty.err{color:var(--cx-rose)}
+.cx-mon-ed{position:fixed;right:24px;bottom:24px;width:340px;max-height:70vh;overflow:auto;z-index:4000;padding:12px;border-radius:8px;background:var(--cx-panel);border:1px solid rgba(var(--cx-hue-rgb),.35);box-shadow:0 16px 48px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:8px}
+.cx-mon-ed-h{font-size:12px;color:var(--cx-cyan);letter-spacing:.08em}
+.cx-mon-ed label{display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--cx-mut)}
+.cx-mon-ed input,.cx-mon-ed select{height:28px;padding:0 8px;font-size:12px;border-radius:4px;border:1px solid rgba(var(--cx-hue-rgb),.3);background:var(--cx-bg);color:var(--cx-fg);outline:0}
+.cx-mon-ed-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cx-mon-ed-f{display:flex;justify-content:flex-end;gap:6px;margin-top:4px}
+
+/* 输入框上方：可点击的提示词 */
+.cx-hint{flex-wrap:nowrap}
+.cx-hint-name{flex:none;font-size:var(--cx-fs-body);color:var(--cx-cyan);letter-spacing:.06em;max-width:32%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-hint-quick{flex:1;min-width:0;display:flex;gap:6px;overflow:hidden}
+.cx-hint-chip{flex:none;height:24px;padding:0 9px;border:1px solid rgba(0,212,255,.28);background:rgba(0,212,255,.07);color:#bfe9f7;border-radius:12px;font-family:var(--cx-font);font-size:10px;line-height:22px;cursor:pointer;white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.cx-hint-chip:hover{border-color:var(--cx-cyan);background:rgba(0,212,255,.16);color:#eafcff}
+
+/* 实时过程行 */
+.cx-live{display:flex;align-items:center;gap:8px;padding:6px 2px;color:#8fc7da;font-size:10px;letter-spacing:.04em}
+.cx-live-dot{width:6px;height:6px;border-radius:50%;background:var(--cx-cyan);box-shadow:0 0 8px var(--cx-cyan);animation:cx-pulse 1.1s ease-in-out infinite}
+@keyframes cx-pulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+.cx-live-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 请求上下文面板 */
+.cx-trace-mask{position:fixed;inset:0;background:rgba(2,10,16,.62);backdrop-filter:blur(2px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:24px}
+.cx-trace{width:min(980px,94vw);max-height:86vh;display:flex;flex-direction:column;background:#05121c;border:1px solid rgba(0,212,255,.28);border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.cx-trace-h{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(0,212,255,.18);font-size:12px;color:#dff6ff}
+.cx-trace-sub{flex:1;font-size:10px;color:#7d9bb0}
+.cx-trace-x{border:0;background:transparent;color:#8fc7da;cursor:pointer;font-size:12px}
+.cx-trace-b{flex:1;overflow:auto;padding:6px 14px 12px}
+.cx-trace-sec{margin-top:8px}
+.cx-trace-k{font-size:10px;color:var(--cx-cyan);letter-spacing:.08em;margin-bottom:4px}
+.cx-trace-code{margin:0;padding:8px 10px;background:#04101a;border:1px solid rgba(0,212,255,.14);border-radius:6px;font-size:10px;line-height:1.55;color:#bfe9f7;white-space:pre-wrap;word-break:break-all;max-height:260px;overflow:auto}
+.cx-trace-f{display:flex;justify-content:flex-end;padding:8px 14px;border-top:1px solid rgba(0,212,255,.18)}

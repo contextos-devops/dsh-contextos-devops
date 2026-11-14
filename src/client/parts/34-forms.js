@@ -142,7 +142,7 @@
       const [err, setErr] = useState('');
       const go = async () => {
         setBusy(true); setErr('');
-        try { const r = await api('createInstance', { node, space, command: app.command, place: app.place || '', name, city, company, uid: avatar?.uid || '' }); onDone(r); }
+        try { const r = await api('createInstance', { node, space, command: app.command, place: app.place || '', name, city, company, uid: cxActorUid(avatar) }); onDone(r); }
         catch (e) { setErr(String(e?.message || e)); } finally { setBusy(false); }
       };
       return h(Modal, { title: `创建应用实例 / ${app.title || app.name}`, desc: `在 ${space} 用 ${app.command} 建实例；实例行会出现在该用户的 recent 列表。`, onClose },

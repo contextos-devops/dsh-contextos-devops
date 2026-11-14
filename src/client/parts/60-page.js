@@ -27,25 +27,34 @@
       const [dataPulse, setDataPulse] = useState(0);
       const bootSelRef = useRef(null);
       if (bootSelRef.current === null) { try { bootSelRef.current = JSON.parse(localStorage.getItem('contextos-devops-dsh:sel') || 'null') || {}; } catch { bootSelRef.current = {}; } }
-      const [nodes, setNodes] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:nodes') || '[]') || []; } catch { return []; } });
+      // 上次退出时的整套状态：节点/空间/实例/工作模式/视图/网页标签
+      const bootRef = useRef(null);
+      if (bootRef.current === null) bootRef.current = cxSessionGet() || {};
+      const boot = bootRef.current;
+      const restored = !!boot.view;
+      const nodeFresh = (x) => !!x && !!(x.builtAt || x.sizeText || (x.runtime && x.runtime.builtAt));
+      const [nodes, setNodes] = useState(() => { try { return (JSON.parse(localStorage.getItem('contextos-devops-dsh:nodes') || '[]') || []).filter(nodeFresh); } catch { return []; } });
       const nodesRef = useRef(nodes); nodesRef.current = nodes;
+      const bootedRef = useRef(false);
       const [selMap, setSelMap] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:sel-map') || '{}') || {}; } catch { return {}; } });
       const selMapRef = useRef(selMap); selMapRef.current = selMap;
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:sel-map', JSON.stringify(selMap)); } catch {} }, [selMap]);
       const rememberSel = (port, patch) => { if (!port) return; setSelMap((m) => ({ ...m, [port]: { ...(m[port] || {}), ...patch } })); };
       const appKeyOf = (a) => (a ? `${a.space || ''}:${a.command || ''}:${a.place_uid || a.name || ''}` : '');
-      const [node, setNode] = useState(() => bootSelRef.current?.node ?? null);
+      const [node, setNode] = useState(() => boot.node ?? bootSelRef.current?.node ?? null);
       const [spaces, setSpaces] = useState([]);
-      const [space, setSpace] = useState(() => bootSelRef.current?.space ?? null);
+      const [space, setSpace] = useState(() => boot.space ?? bootSelRef.current?.space ?? null);
       const [apps, setApps] = useState([]);
-      const [app, setApp] = useState(() => bootSelRef.current?.app || null);
+      const [app, setApp] = useState(() => boot.app ?? bootSelRef.current?.app ?? null);
       const [modal, setModal] = useState(null);
+      // 消息列表里的数据表单请求（替代 DATA 弹窗）
+      const [formReq, setFormReq] = useState(null);
       const [appMode, setAppMode] = useState('recent');
       const [store, setStore] = useState([]);
       const [storeService, setStoreService] = useState(null);
       const [webTabs, setWebTabs] = useState(() => {
         try {
-          const saved = JSON.parse(localStorage.getItem(WEBTABS_KEY) || 'null');
+          const saved = Array.isArray(boot.tabs) && boot.tabs.length ? { tabs: boot.tabs, active: boot.active } : JSON.parse(localStorage.getItem(WEBTABS_KEY) || 'null');
           if (!saved || !Array.isArray(saved.tabs)) return [];
           return saved.tabs.filter((t) => t && (t.base || t.url)).slice(0, 8).map((t, i) => ({
             id: t.id || `w${Date.now().toString(36)}${i}`,
@@ -59,9 +68,10 @@
       const [webMenu, setWebMenu] = useState(null);
       useEffect(() => { if (!webMenu) return; const close = () => setWebMenu(null); window.addEventListener('mousedown', close); return () => window.removeEventListener('mousedown', close); }, [webMenu]);
       const [activeWeb, setActiveWeb] = useState(() => {
+        if (boot.active) return boot.active;
         try { const saved = JSON.parse(localStorage.getItem(WEBTABS_KEY) || 'null'); return saved?.active || null; } catch { return null; }
       });
-      const [viewMode, setViewMode] = useState('chat');
+      const [viewMode, setViewMode] = useState(() => boot.view || 'chat');
       const [intro, setIntro] = useState(null);
       const [devMounted, setDevMounted] = useState(viewMode === 'dev');
       useEffect(() => {
@@ -69,7 +79,7 @@
         const t = setTimeout(() => setDevMounted(true), 160);   /* 先出过场，再挂载重型编辑器 */
         return () => clearTimeout(t);
       }, [viewMode, devMounted]);
-      const [workMode, setWorkMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:work-mode') || 'avatar'; } catch { return 'avatar'; } });
+      const [workMode, setWorkMode] = useState(() => boot.mode || (() => { try { return localStorage.getItem('contextos-devops-dsh:work-mode') || 'avatar'; } catch { return 'avatar'; } })());
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:work-mode', workMode); } catch {} }, [workMode]);
       const [chatFull, setChatFull] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:chatfull'); return v === null ? true : v === '1'; } catch { return true; } });
       const [themeMode, setThemeMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:theme') || 'system'; } catch { return 'system'; } });
@@ -273,8 +283,10 @@
         return () => window.removeEventListener?.('languagechange', apply);
       }, [langMode]);
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:theme', themeMode); } catch {} }, [themeMode]);
+      const restoredRef = useRef(restored);
       useEffect(() => {
         if (lightTheme) return;                   /* 浅色主题不播过场 */
+        if (restoredRef.current) { restoredRef.current = false; return; }   /* 从快照恢复：直接进界面，不播过场 */
         if (MODE_INTRO_SEEN.has(viewMode)) return;
         MODE_INTRO_SEEN.add(viewMode);
         setIntro(viewMode);
@@ -422,6 +434,16 @@
       const [bgData, setBgData] = useState({ active: '', items: [] });
       const [bg, setBg] = useState(null);
       const [avatar, setAvatar] = useState(null);
+      // 任一状态变化都写回整份快照（节流 400ms，pagehide 兜底 flush）
+      useEffect(() => {
+        cxSessionSave({
+          node, space, app, view: viewMode, mode: workMode,
+          tabs: webTabs.map((t) => ({ base: t.base || t.url, title: t.title, app: t.app || null })),
+          active: activeWeb,
+          avatar: avatar?.uid || '', world: bg?.id || '',
+          chatFull, console: { open: consoleOpen, tab: consoleTab, height: consoleHeight },
+        });
+      }, [node, space, app, viewMode, workMode, webTabs, activeWeb, avatar, bg, chatFull, consoleOpen, consoleTab, consoleHeight]);
       const [showAvatars, setShowAvatars] = useState(false);
       const [busy, setBusy] = useState('');
       const [error, setError] = useState('');
@@ -611,8 +633,13 @@
       }, []);
       const appsSeqRef = useRef(0);
       const appsCacheRef = useRef({ key: '', at: 0, data: null, promise: null });
+      const actorUid = avatar?.uid || '';
+      const actorRef = useRef('');
+      actorRef.current = actorUid;
       const loadApps = useCallback(async (port, sp, uid = '') => {
-        if (!port || !uid) { setApps([]); return []; }
+        const who = uid || actorRef.current;
+        if (!port || !who) { setApps([]); return []; }
+        uid = who;
         const key = `${port}:${sp || ''}:${uid || ''}`;
         const cache = appsCacheRef.current;
         if (cache.key === key && cache.promise) return cache.promise;
@@ -636,7 +663,8 @@
           const d = await api('avatars', { node: port });
           setAvatarData(d || { active: '', items: [] });
           activity(`加载数字分身 ${(d?.items || []).length} 个`, 'ok');
-          const a = (d?.items || []).find((x) => x.uid === d?.active) || d?.items?.[0] || null;
+          const want = (cxSessionGet() || {}).avatar || '';
+          const a = (d?.items || []).find((x) => x.uid === want) || (d?.items || []).find((x) => x.uid === d?.active) || d?.items?.[0] || null;
           setAvatar(a);
           return a;
         } catch { setAvatarData({ active: '', items: [] }); setAvatar(null); return null; }
@@ -652,7 +680,8 @@
           const d = await api('backgrounds', { node: port });
           setBgData(d || { active: '', items: [] });
           activity(`加载赛博场景 ${(d?.items || []).length} 个`, 'ok');
-          const b = (d?.items || []).find((x) => x.id === d?.active) || d?.items?.[0] || null;
+          const wantBg = (cxSessionGet() || {}).world || '';
+          const b = (d?.items || []).find((x) => x.id === wantBg) || (d?.items || []).find((x) => x.id === d?.active) || d?.items?.[0] || null;
           setBg(b);
           applyScene(b);
           return b;
@@ -784,7 +813,7 @@
           await loadSpaces(nodePort);
           const active = await loadAvatars(nodePort);
           await loadBackgrounds(nodePort).catch(() => null);
-          await loadApps(nodePort, '', active?.uid || '');
+          await loadApps(nodePort, '', actorUid);
           try { localStorage.setItem('contextos-devops-dsh:init', '1'); } catch {}
           setViewMode('chat');
           setChatFull(true);
@@ -821,19 +850,11 @@
       }, [locale]);
 
       useEffect(() => {
-        if (nodesRef.current.length) return;
+        if (bootedRef.current) return;
+        bootedRef.current = true;
         let alive = true;
         (async () => {
-          try {
-            const st = await api('stateGet');
-            const cached = st && st.nodesCache;
-            if (alive && Array.isArray(cached) && cached.length) {
-              setNodes(cached); setNodesLoaded(true);
-              try { localStorage.setItem('contextos-devops-dsh:nodes', JSON.stringify(cached)); } catch {}
-              setNode((cur) => (cur != null ? cur : (cached.find((n) => n.state === 'running')?.port ?? cached[0].port)));
-              return;
-            }
-          } catch { /* fall back to load */ }
+          // 节点信息一律现查 /c/runtime（缓存只用于首屏占位），保证 version/builtAt/sizeText 是最新的
           if (alive) act('LOAD NODES', loadNodes);
         })();
         return () => { alive = false; };
@@ -867,8 +888,10 @@
         setAppMode('recent');
         if (!node) return;
         act('LOAD CONTEXT', async () => {
-          const [a] = await Promise.all([loadAvatars(node), loadSpaces(node), loadBackgrounds(node)]);
-          await loadApps(node, null, a?.uid || '');
+          // boot order: node → active avatar → spaces → data; nothing asks the
+          // node for data before the identity is known.
+          await loadAvatars(node);
+          await Promise.all([loadSpaces(node), loadBackgrounds(node)]);
         });
       }, [node, act, loadSpaces, loadApps, loadAvatars, loadBackgrounds]);
       const selectSpace = (name) => {
@@ -883,7 +906,7 @@
         setApp(a); rememberSel(node, { appKey: key });
       };
       const prevSelSpaceRef = useRef(space);
-      useEffect(() => { const changed = prevSelSpaceRef.current !== space; prevSelSpaceRef.current = space; if (changed) setApp(null); if (node) act('LOAD RECENT', () => loadApps(node, space, avatar?.uid || '')); }, [node, space, avatar?.uid, act, loadApps]);
+      useEffect(() => { const changed = prevSelSpaceRef.current !== space; prevSelSpaceRef.current = space; if (changed) setApp(null); if (node && actorUid) act('LOAD RECENT', () => loadApps(node, space, actorUid)); }, [node, space, actorUid, act, loadApps]);
       useEffect(() => {
         if (!avatar?.project?.place_uid) return;
         const tick = async () => {
@@ -912,33 +935,52 @@
         await loadNodes();
         if (!node) return;
         const [a] = await Promise.all([loadAvatars(node), loadSpaces(node)]);
-        await loadApps(node, space, a?.uid || avatar?.uid || '');
+        await loadApps(node, space, actorUid);
         if (appMode === 'store') await loadStore(node);
       });
       const openUrl = (url) => { try { window.open(url, '_blank', 'noopener'); } catch {} };
+      const withActor = (raw) => {
+        try {
+          const u = new URL(raw, window.location.origin);
+          if (!/^(127\.0\.0\.1|localhost)$/.test(u.hostname)) return raw;
+          if (u.searchParams.has('sessid')) return raw;
+          // 统一去掉项目空间路径末尾的 /（/s/<space>/ → /s/<space>）
+          if (/^\/s\/[^/]+\/$/.test(u.pathname)) u.pathname = u.pathname.slice(0, -1);
+          // user.uid 只对「应用级」命令有意义：/s/<pod>/c/web.team.<mod>.portal 及其子命令。
+          // 系统级命令（/c/dream、/c/xterm、/c/vimer、/s/<pod>/c/runtime …）不认它，带上只会污染日志。
+          const appLevel = /^\/s\/[^/]+\/c\/web\.team\.[^/]+\.[^/]+/.test(u.pathname);
+          let actor = avatar?.uid || '';
+          if (!actor) { try { actor = localStorage.getItem('contextos-devops-dsh:actor') || ''; } catch { actor = ''; } }
+          if (appLevel && actor) u.searchParams.set('user.uid', actor);
+          return u.toString();
+        } catch { return raw; }
+      };
       const withView = (raw) => {
         try {
           const u = new URL(raw, window.location.origin);
+          if (/^\/s\/[^/]+\/$/.test(u.pathname)) u.pathname = u.pathname.slice(0, -1);
           u.searchParams.set('theme', theme);
           u.searchParams.set('language', locale === 'zh' ? 'zh' : 'en');
           return u.toString();
         } catch { return raw; }
       };
+      useEffect(() => { if (avatar?.uid) { try { localStorage.setItem('contextos-devops-dsh:actor', avatar.uid); } catch {} } }, [avatar?.uid]);
       const webTabsRef = useRef([]);
       webTabsRef.current = webTabs;
       const openWeb = (url, title, appMeta) => {
         if (!url) return '';
         setDebug((ds) => [...ds.slice(-200), { t: new Date().toLocaleTimeString(), m: `OPEN ${url}` }]);
-        const found = webTabsRef.current.find((t) => (t.base || t.url) === url);
+        const base0 = withActor(url);
+        const found = webTabsRef.current.find((t) => (t.base || t.url) === base0);
         if (found) { setActiveWeb(found.id); return found.id; }
         const id = `w${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
         setActiveWeb(id);
-        setWebTabs((tabs) => [...tabs, { id, base: url, url: withView(url), title: title || url, reload: 0, app: appMeta || null }]);
+        setWebTabs((tabs) => [...tabs, { id, base: base0, url: withView(base0), title: title || url, reload: 0, app: appMeta || null }]);
         return id;
       };
       useEffect(() => {
-        setWebTabs((tabs) => tabs.length ? tabs.map((t) => ({ ...t, url: withView(t.base || t.url) })) : tabs);
-      }, [theme, locale]);
+        setWebTabs((tabs) => tabs.length ? tabs.map((t) => { const b = withActor(t.base || t.url); return { ...t, base: b, url: withView(b) }; }) : tabs);
+      }, [theme, locale, avatar?.uid]);
       useEffect(() => {
         try {
           localStorage.setItem('contextos-devops-dsh:sel', JSON.stringify({
@@ -969,7 +1011,7 @@
       useEffect(() => { if (!webMax) return; return cxMaxApply(webBoxRef.current); }, [webMax]);
       useEffect(() => { setWebAddr(activeTab?.base || activeTab?.url || ''); }, [activeTab?.id, activeTab?.base]);
       useEffect(() => { if (!activeTab) return; const u = activeTab.base || activeTab.url; setWebHist((h) => (h[activeTab.id] ? h : { ...h, [activeTab.id]: { list: [u], idx: 0 } })); }, [activeTab?.id]);
-      const setWebUrl = (id, url) => setWebTabs((tabs) => tabs.map((t) => t.id === id ? { ...t, base: url, url: withView(url), title: url, reload: (t.reload || 0) + 1 } : t));
+      const setWebUrl = (id, url) => setWebTabs((tabs) => tabs.map((t) => { if (t.id !== id) return t; const b = withActor(url); return { ...t, base: b, url: withView(b), title: b, reload: (t.reload || 0) + 1 }; }));
       const goBack = () => { const cur = activeTab && webHist[activeTab.id]; if (!cur || cur.idx <= 0) return; const idx = cur.idx - 1; setWebHist((h) => ({ ...h, [activeTab.id]: { ...cur, idx } })); setWebUrl(activeTab.id, cur.list[idx]); };
       const goFwd = () => { const cur = activeTab && webHist[activeTab.id]; if (!cur || cur.idx >= cur.list.length - 1) return; const idx = cur.idx + 1; setWebHist((h) => ({ ...h, [activeTab.id]: { ...cur, idx } })); setWebUrl(activeTab.id, cur.list[idx]); };
       const tabIcon = (t) => {
@@ -1002,7 +1044,8 @@
       const navWeb = (id, url) => {
         const raw = String(url || '').trim();
         if (!raw) return;
-        const full = /^https?:\/\//i.test(raw) ? raw : `http://${raw}`;
+        const full0 = /^https?:\/\//i.test(raw) ? raw : `http://${raw}`;
+        const full = withActor(full0);
         setWebHist((h) => { const cur = h[id] || { list: [], idx: -1 }; const list = cur.list.slice(0, cur.idx + 1); list.push(full); return { ...h, [id]: { list, idx: list.length - 1 } }; });
         setWebTabs((tabs) => tabs.map((t) => t.id === id ? { ...t, base: full, url: withView(full), title: full, reload: (t.reload || 0) + 1 } : t));
         setActiveWeb(id);
@@ -1012,7 +1055,7 @@
       const openExternal = () => { if (activeTab?.url) openUrl(activeTab.url); };
       const selectCreated = async (r) => {
         setAppMode('recent');
-        const list = await loadApps(node, space, avatar?.uid || '');
+        const list = await loadApps(node, space, actorUid);
         const found = (r?.place_uid && list.find((a) => a.place_uid === r.place_uid))
           || (r?.command ? { name: (r.command.split('.')[2] || r.name), title: r.name, command: r.command, space: r.space, place_uid: r.place_uid, city_name: r.city, company_name: r.company, service_name: r.service?.name || '', place: r.place, functions: [] } : null);
         if (found) setApp(found);
@@ -1022,7 +1065,7 @@
         try {
           await api('setAvatar', { node, uid: a.uid });
           setAvatar(a);
-          await loadApps(node, space, a.uid);
+          await loadApps(node, space, actorUid);
         } catch (e) { log(`切换分身失败：${String(e?.message || e)}`, 'err'); }
       };
       useEffect(() => {
@@ -1106,17 +1149,18 @@
         } catch (e) { log(`修改分身失败：${String(e?.message || e)}`, 'err'); }
       };
       const openNode = (port) => { setApp(null); openWeb(`http://127.0.0.1:${port}/`, `node :${port}`); };
-      const openSpace = (sp) => { setApp(null); openWeb(`http://127.0.0.1:${node}/s/${encodeURIComponent(sp)}`, sp); };
-      const appUrl = (a) => {
-        const sp = a.space || space || '';
-        const tail = a.place_uid ? `/${encodeURIComponent(a.place_uid)}` : '';
-        const uid = a.user_uid ? `?user.uid=${encodeURIComponent(a.user_uid)}` : '';
-        return `http://127.0.0.1:${node}/s/${encodeURIComponent(sp)}/c/${a.command}${tail}${uid}`;
-      };
-      const openApp = (a) => { if (a) { setApp(a); openWeb(appUrl(a), a.title || a.name, a); } };
-      const buildApp = (a) => act(`BUILD ${a.name}`, async () => { await api('buildSpace', { node, space: a.space || space }); await loadApps(node, space, avatar?.uid || ''); });
+      const [webFocus, setWebFocus] = useState(false);
+      const openSpace = (sp) => { if (!sp) return ''; setApp(null); return openWeb(`http://${CX_HOST}:${node}/s/${encodeURIComponent(sp)}`, sp); };
+      // 应用实例的界面地址：system_uid 走查询参数（框架用它定位实例），
+      // 路径段留空，避免被节点当成数据接口返回 JSON。
+      const appUrl = (a) => cxWebUrl({
+        node, pod: a.space || space || '', command: a.command, place: a.place || 'system',
+        placeUid: a.place_uid || a['system_uid'] || '', uid: avatar?.uid || a.user_uid || '',
+      });
+      const openApp = (a) => { if (!a) return ''; setApp(a); return openWeb(appUrl(a), a.title || a.name, a); };
+      const buildApp = (a) => act(`BUILD ${a.name}`, async () => { await api('buildSpace', { node, space: a.space || space }); await loadApps(node, space, actorUid); });
       const initSpace = (sp) => act(`INIT ${sp}`, async () => { await api('initSpace', { node, space: sp }); log(`skeleton ready: ${sp}`); });
-      const buildSpace = (sp) => act(`BUILD ${sp}`, async () => { await api('buildSpace', { node, space: sp }); await loadApps(node, sp, avatar?.uid || ''); });
+      const buildSpace = (sp) => act(`BUILD ${sp}`, async () => { await api('buildSpace', { node, space: sp }); await loadApps(node, sp, actorUid); });
       const startNode = (port) => act(`START :${port}`, async () => { await api('start', { port }); await loadNodes(); });
       const stopNode = (port) => act(`STOP :${port}`, async () => { await api('stop', { port }); await loadNodes(); });
       const deleteNode = (port) => {
@@ -1127,27 +1171,45 @@
       const stopSpace = (sp) => act(`STOP ${sp}`, async () => { await api('spaceStop', { node, space: sp }); await loadSpaces(node); });
       const deleteSpace = (sp) => {
         if (!window.confirm(`删除项目空间 ${sp}？目录和记录都会删除。`)) return;
-        act(`DELETE ${sp}`, async () => { await api('deleteSpace', { node, space: sp }); await loadSpaces(node); await loadApps(node, '', avatar?.uid || ''); });
+        act(`DELETE ${sp}`, async () => { await api('deleteSpace', { node, space: sp }); await loadSpaces(node); await loadApps(node, '', actorUid); });
       };
       const deployOfficial = (keys) => act(`DEPLOY OFFICIAL ${keys.join(',')}`, async () => {
         const out = await api('officialSpaces', { node, keys });
-        await loadSpaces(node); await loadApps(node, '', avatar?.uid || '');
+        await loadSpaces(node); await loadApps(node, '', actorUid);
         log(`official: ${out.map((x) => x.space || x.key).join(', ')}`);
         return out;
       });
       const showStore = () => { setAppMode('store'); act('LOAD STORE', () => loadStore(node)); };
-      const backRecent = () => { setAppMode('recent'); act('LOAD RECENT', () => loadApps(node, space, avatar?.uid || '')); };
+      const backRecent = () => { setAppMode('recent'); act('LOAD RECENT', () => loadApps(node, space, actorUid)); };
       const openStoreCreate = (service) => { setStoreService(service); setModal('storeInstance'); };
       const storeAct = (service, action) => act(`STORE ${action} ${service.name}`, async () => {
         await api('storeAction', { node, space: service.space || '20240724-community', service_uid: service.uid, action });
         await loadStore(node);
       });
+      // 商店模板的「编程」：vimer 直接定位到该模块的 portal.go
+      // 远程 / 容器节点：取 token 或 sessid（本机节点免登录，取到的只是本机票据）
+      const nodeAuth = (port) => act('NODE AUTH ' + port, async () => {
+        const r = await api('nodeAuth', { node: port });
+        if (!r || r.ok === false) {
+          window.dispatchEvent(new CustomEvent('cx-toast', { detail: { text: '取凭证失败：' + (r && r.error || '未知错误'), kind: 'err' } }));
+          return;
+        }
+        const d = r.data || r;
+        const who = d.sessid ? `sessid ${String(d.sessid).slice(0, 12)}…` : `token ${String(d.token).slice(0, 12)}…`;
+        try { await navigator.clipboard.writeText(d.sessid || d.token || ''); window.dispatchEvent(new CustomEvent('cx-toast', { detail: { text: '已复制 ' + who } })); }
+        catch { window.dispatchEvent(new CustomEvent('cx-toast', { detail: { text: '已获取 ' + who } })); }
+      });
       const storeCode = (service) => {
-        const synthetic = { name: service.name, title: service.title || service.name, command: service.command, space: service.space, path: `src/${service.name}/portal.json`, place: service.place || '', functions: [], recent: false };
-        setApp(synthetic); setModal('code');
+        const mod = String(service.command || '').split('.')[2] || service.name;
+        const url = `http://${CX_HOST}:${node}/s/${encodeURIComponent(service.space)}/c/vimer`
+          + `?file=${encodeURIComponent(`${mod}/portal.go`)}&path=${encodeURIComponent('src/')}&debug=true`
+          + `#src/:${mod}/portal.go:1`;
+        openCardTool(url, service.title || service.name);
       };
+      // 商店模板的「配置」：门户表视图
       const storeConfig = (service) => {
-        openWeb(`http://127.0.0.1:${node}/s/${encodeURIComponent(service.space)}/c/${service.command}`, service.title || service.name);
+        const url = `http://${CX_HOST}:${node}/s/${encodeURIComponent(service.space)}/c/${service.command}?view=table&debug=true`;
+        openCardTool(url, service.title || service.name);
       };
 
       const startConsoleResize = (e) => {
@@ -1180,6 +1242,24 @@
       useEffect(() => { const key = `${node}:${space}`; if (ideProjects.some((x) => x.key === key)) setIdeActive(key); }, [node, space]);
       const selectIdeProject = (key) => { const p = ideProjects.find((x) => x.key === key); if (!p) return; setIdeActive(key); setNode(p.node); setSpace(p.space); };
       const closeIdeProject = (key) => { setIdeProjects((ps) => ps.filter((x) => x.key !== key)); if (ideActive === key) setIdeActive(''); };
+      // 节点/空间右键常用工具：一律开在聊天框自带的网页标签里
+      const openCardTool = (url, title) => { const id = openWeb(url, title || url); if (id) setChatTab(id); return id; };
+      // 首页由节点/空间自身的代码决定，插件只打开根地址，不写入任何配置
+      // 某个工具页是否已经在网页标签里打开
+      const isOpenUrl = (url) => (webTabs || []).some((t) => String(t.url || '') === String(url || ''));
+      // 危险按键来自命令自省 meta._style（dream 的 stop/remove 等）
+      const [actionStyle, setActionStyle] = useState({});
+      useEffect(() => {
+        if (!node) return;
+        api('commandStyle', { node, command: 'dream' })
+          .then((r) => setActionStyle((r && r.style) || {}))
+          .catch(() => setActionStyle({}));
+      }, [node]);
+      const tone = (a) => actionStyle[a] || '';
+      const openHome = (sp) => openCardTool(
+        `http://127.0.0.1:${node}${sp ? `/s/${encodeURIComponent(sp)}` : ''}`,
+        sp ? `${sp} · home` : 'home',
+      );
       const openIde = async (port, sp) => {
         const n = Number(port);
         setNode(n);
@@ -1195,14 +1275,20 @@
           setIdeActive(key);
         }
       };
-      const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, view: viewMode, mode: workMode, onModeChange: setWorkMode, onRequest: pushReq, fx, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, ideFile, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onNavWebTab: navWeb, onReloadWebTab: reloadTab, onManageWebTab: manageWeb, onRefresh: refreshAll, onOpenApp: openApp, onData: () => app && setModal('data'), onStore: showStore, onDevices: () => setShowDevices(true), avatar };
-      return h('div', { className: 'cx-shell', 'data-theme': theme, 'data-color': fx.color, 'data-light': fx.light, 'data-style': fx.style, 'data-view': viewMode, ref: shellRef },
+      const chatProps = { open: true, booted: nodesLoaded, full: true, theme, locale, themeMode, setThemeMode, langMode, setLangMode, view: viewMode, mode: workMode, onModeChange: setWorkMode, onRequest: pushReq, fx, onToggleFull: () => setChatFull((v) => !v), onInit: openInit, onClose: () => setViewMode('manage'), nodes, node, spaces, space, apps, app, onSelectNode: setNode, onSelectSpace: setSpace, onSelectApp: (a) => { setApp(a); openApp(a); }, ideFile, onSelectAvatar: chooseAvatar, avatars: avatarData.items, backgrounds: bgData.items, bg, onSelectBg: chooseBg, onCreateBg: createBg, onUploadBg: upBgImage, onUploadAvatar: upAvatarImage, onUpdateScene: updateScene, onUpdateAvatar: updateAvatarProfile, onCreateAvatar: () => setShowAvatars(true), webTabs, onOpenWebTab: openWeb, onCloseWebTab: closeWeb, onNavWebTab: navWeb, onReloadWebTab: reloadTab, onManageWebTab: manageWeb, onRefresh: () => refreshAll(), onOpenApp: openApp, onData: () => app && (setViewMode('chat'), setFormReq({ app, at: Date.now() })), formReq, onStore: showStore, onDevices: () => setShowDevices(true), avatar, cards: {
+          selectNode: setNode, startNode, stopNode, deleteNode, openNode, openIde,
+          openTerminal: (a) => api('openTerminal', { node: a?.node || node, space: a?.space || space }).then(() => true),
+          rebuild: (a) => api('buildSpace', { node: a?.node || node, space: a?.space }).then((r) => { refreshAll(); return r; }),
+          selectSpace, openSpace, startSpace, stopSpace, deleteSpace, selectApp, openApp, openCardTool, openHome, isOpenUrl, tone,
+        }, onOpenDev: () => setViewMode('dev') };
+      return h('div', { className: 'cx-shell', 'data-theme': theme, 'data-color': fx.color, 'data-light': fx.light, 'data-style': fx.style, 'data-view': viewMode, 'data-webfocus': webFocus ? '1' : '0', ref: shellRef },
         h('style', null, CRITICAL_CSS),
         h('div', { className: 'cx-water', 'aria-hidden': 'true' }, Array.from({ length: 3 }, (_, i) => h('i', { key: i, style: { left: ['18%', '62%', '84%'][i], top: ['72%', '26%', '58%'][i], animationDelay: `${i * 2.2}s` } }))),
         h(CursorComet),
         pipeMenu ? h('div', { className: 'cx-pipe-menu-fixed', style: pipeMenu.right != null ? { right: pipeMenu.right, top: pipeMenu.y } : { left: pipeMenu.x, top: pipeMenu.y }, onClick: (e) => e.stopPropagation() },
           pipeMenu.title ? h('div', { className: 'cx-pipe-menu-title' }, pipeMenu.title) : null,
-          h(MenuList, { items: pipeMenu.items || [], onPick: () => setPipeMenu(null) })) : null,
+          // 菜单开着的时候网页标签也可能变化（如「关闭所有网页」），这里实时计算打开状态
+          h(MenuList, { items: (pipeMenu.items || []).map((it) => (it && it.url ? { ...it, open: isOpenUrl(it.url) } : it)), onPick: () => setPipeMenu(null) })) : null,
         h('div', { className: 'cx-cursor-ring', 'aria-hidden': 'true' }),
         opFx ? h('div', { key: opFx.key, className: `cx-op-fx cx-op-${opFx.kind}`, 'aria-hidden': 'true' }) : null,
         intro && !lightTheme ? h(ModeIntro, { key: intro, mode: intro, onDone: () => setIntro(null) }) : null,
@@ -1235,7 +1321,7 @@
             h(UiAffordance, { as: 'button', icon: 'factory', zh: t('mode'), mode: 'short', onClick: (e) => openPipe(e, t('mode'), CHAT_MODES.map((m) => ({ label: pipeModeLabel(m.id), on: m.id === workMode, go: () => setWorkMode(m.id) })), 'factory'), className: 'cx-chip', title: t('mode') }, h('b', null, pipeModeLabel(workMode))),
             h(UiAffordance, { as: 'button', icon: 'layers', zh: t('view'), mode: 'short', onClick: (e) => openPipe(e, t('view'), [['chat', '对话'], ['manage', '管理'], ['dev', '开发']].map(([k, zh]) => ({ label: pipeViewLabel(k), on: k === viewMode, go: () => setViewMode(k) })), 'layers'), className: 'cx-chip', title: t('view') }, h('b', null, pipeViewLabel(viewMode))))),
         error ? h('div', { className: 'cx-err' }, error) : null,
-        h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}`, style: viewMode === 'chat' ? null : { display: 'none' } }, h(ChatPanel, { ...chatProps, docked: !chatFull })),
+        h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}`, style: viewMode === 'chat' ? null : { display: 'none' } }, h(ChatPanel, { ...chatProps, docked: !chatFull, onWebFocus: setWebFocus })),
         devMounted ? h('div', { className: 'cx-dev-host', style: viewMode === 'dev' ? null : { display: 'none' } }, h(DevWorkspace, { locale, node, space, bg, theme, active: viewMode === 'dev', nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onActiveFile: setIdeFile, requests: reqLog, onPick: openIde })) : null,
         viewMode === 'monitor' ? h('div', { className: 'cx-monitor-host' },
           h(MonitorView, { nodes, spaces, apps, events, logs, reqLog, locale, onRefresh: () => loadNodes() })) : null,
@@ -1243,14 +1329,14 @@
           h(Panel, {
             icon: 'server', title: tp('serve'), count: `${nodeRows.length}/${nodes.length} NODES`,
             tools: [h(MultiFilter, { key: 'f', label: t('status'), options: nodeStatusOptions, value: nodeStatusFilter, onChange: setNodeStatusFilter }), h('span', { key: 'sp', className: 'cx-tools-spacer' }), h(IconButton, { name: 'refresh', key: 'r', className: 'cx-btn xs cx-icon-btn cx-tool-refresh', onClick: () => act('REFRESH NODES', loadNodes), title: t('refresh') }), h(IconButton, { name: 'plus', key: 'd', className: 'cx-btn xs pri cx-icon-btn', onClick: () => setModal('deploy'), title: t('create') })],
-          }, nodeRows.length ? nodeRows.map((n) => h(NodeCard, { key: n.dir || n.port, n, active: node === n.port, busy: !!busy, locale, onSelect: setNode, onStart: startNode, onStop: stopNode, onDelete: deleteNode, onOpen: openNode, onIde: openIde })) : h('div', { className: 'cx-empty' }, '还没有节点。先部署一个：copy / download / source。')),
+          }, nodeRows.length ? nodeRows.map((n) => h(NodeCard, { key: n.dir || n.port, n, active: node === n.port, busy: !!busy, locale, onSelect: setNode, onStart: startNode, onStop: stopNode, onDelete: deleteNode, onOpen: openNode, onIde: openIde, onTool: openCardTool, onHome: () => openHome(''), onAuth: nodeAuth, isOpen: isOpenUrl, tone })) : h('div', { className: 'cx-empty' }, '还没有节点。先部署一个：copy / download / source。')),
           h(Panel, {
             icon: 'space', title: tp('space'), count: node ? `${spaceRows.length}/${spaces.length} SPACES` : t('serve'),
             tools: [h(MultiFilter, { key: 'f', label: t('status'), options: spaceStatusOptions, value: spaceStatusFilter, onChange: setSpaceStatusFilter }), h('span', { key: 'sp', className: 'cx-tools-spacer' }), h(IconButton, { name: 'refresh', key: 'r', className: 'cx-btn xs cx-icon-btn cx-tool-refresh', disabled: !node, onClick: () => act('REFRESH SPACES', () => loadSpaces(node)), title: t('refresh') }), h(IconButton, { name: 'plus', key: 'c', className: 'cx-btn xs pri cx-icon-btn', disabled: !node, onClick: () => setModal('space'), title: t('create') })],
           }, !node
             ? h('div', { className: 'cx-empty' }, '先选择左侧服务节点。')
             : h(React.Fragment, null,
-                spaceRows.length ? spaceRows.map((s) => h(SpaceCard, { key: s.name, s, node, active: space === s.name, busy: !!busy, onSelect: selectSpace, onOpen: openSpace, onStart: startSpace, onStop: stopSpace, onDelete: deleteSpace, onIde: openIde, locale })) : h('div', { className: 'cx-empty' }, '该节点还没有项目空间。创建空空间后自动 git init。'),
+                spaceRows.length ? spaceRows.map((s) => h(SpaceCard, { key: s.name, s, node, active: space === s.name, busy: !!busy, onSelect: selectSpace, onOpen: openSpace, onStart: startSpace, onStop: stopSpace, onDelete: deleteSpace, onIde: openIde, onTool: openCardTool, onHome: () => openHome(s.name), isOpen: isOpenUrl, tone, locale })) : h('div', { className: 'cx-empty' }, '该节点还没有项目空间。创建空空间后自动 git init。'),
                 h(OfficialSpaces, { node, onDeploy: deployOfficial, locale }))),
           h(Panel, {
             icon: 'app',
@@ -1258,7 +1344,7 @@
             count: appMode === 'store' ? `${store.length} SERVICES` : (node ? `${appRows.length}/${apps.length} APPS` : 'SELECT NODE'),
             tools: appMode === 'store'
               ? [h(MultiFilter, { key: 'f', label: t('space'), options: storeSpaceOptions, value: storeSpaceFilter, onChange: setStoreSpaceFilter }), h('button', { key: 'b', className: 'cx-btn xs pri', onClick: backRecent }, '← ' + t('recent')), h('span', { key: 'sp', className: 'cx-tools-spacer' }), h(IconButton, { name: 'refresh', key: 'r', className: 'cx-btn xs cx-icon-btn cx-tool-refresh', disabled: !node, onClick: () => act('REFRESH STORE', () => loadStore(node)), title: t('refresh') }), h(IconButton, { name: 'plus', key: 't', className: 'cx-btn xs cx-icon-btn', disabled: !space, onClick: () => setModal('app'), title: t('create') + ' ' + t('template') })]
-              : [h(MultiFilter, { key: 'f', label: t('space'), options: appSpaceOptions, value: appSpaceFilter, onChange: setAppSpaceFilter }), h('button', { key: 's', className: 'cx-btn xs pri', disabled: !node, onClick: showStore }, t('store')), h('span', { key: 'sp', className: 'cx-tools-spacer' }), h(IconButton, { name: 'refresh', key: 'r', className: 'cx-btn xs cx-icon-btn cx-tool-refresh', disabled: !node, onClick: () => act('REFRESH RECENT', () => loadApps(node, space, avatar?.uid || '')), title: t('refresh') }), h(IconButton, { name: 'plus', key: 'c', className: 'cx-btn xs cx-icon-btn', disabled: !space, onClick: () => setModal('app'), title: t('create') + ' ' + t('template') })],
+              : [h(MultiFilter, { key: 'f', label: t('space'), options: appSpaceOptions, value: appSpaceFilter, onChange: setAppSpaceFilter }), h('button', { key: 's', className: 'cx-btn xs pri', disabled: !node, onClick: showStore }, t('store')), h('span', { key: 'sp', className: 'cx-tools-spacer' }), h(IconButton, { name: 'refresh', key: 'r', className: 'cx-btn xs cx-icon-btn cx-tool-refresh', disabled: !node, onClick: () => act('REFRESH RECENT', () => loadApps(node, space, actorUid)), title: t('refresh') }), h(IconButton, { name: 'plus', key: 'c', className: 'cx-btn xs cx-icon-btn', disabled: !space, onClick: () => setModal('app'), title: t('create') + ' ' + t('template') })],
           },
             appMode === 'store'
               ? (storeRows.length ? storeRows.map((s) => h(StoreRow, { key: `${s.space}:${s.command}:${s.uid}`, s, onCreate: openStoreCreate, busy: !!busy, onAction: storeAct, onCode: storeCode, onConfig: storeConfig, locale, node })) : h('div', { className: 'cx-empty' }, '应用商店加载中，或当前节点没有 service。'))
@@ -1337,11 +1423,11 @@
           [['关闭', () => closeWeb(webMenu.id)], ['关闭其它标签', () => closeOthers(webMenu.id)], ['关闭全部标签', closeAll], ['刷新', () => reloadTab(webMenu.id)], ['外部打开', () => openUrl(webMenu.tab?.url || '')]].map(([label, action]) => h('button', { key: label, onClick: () => { setWebMenu(null); action(); } }, T(label))),
           webMenu.tab?.app ? h(React.Fragment, null,
             h('button', { onClick: () => { setWebMenu(null); setApp(webMenu.tab.app); setModal('code'); } }, T('编辑代码')),
-            h('button', { onClick: () => { setWebMenu(null); setApp(webMenu.tab.app); setModal('data'); } }, T('添加数据')),
+            h('button', { onClick: () => { setWebMenu(null); setApp(webMenu.tab.app); setViewMode('chat'); setFormReq({ app: webMenu.tab.app, at: Date.now() }); } }, T('添加数据')),
             h('button', { onClick: () => { setWebMenu(null); setApp(webMenu.tab.app); setModal('instance'); } }, T('创建应用实例'))) : null) : null,
         modal === 'deploy' ? h(DeployModal, { onClose: () => setModal(null), onDone: () => { setModal(null); act('LOAD NODES', loadNodes); }, onScan: () => { setModal(null); setShowDevices(true); } }) : null,
         modal === 'space' ? h(SpaceModal, { node, onClose: () => setModal(null), onDone: (name) => { setModal(null); act('LOAD SPACES', async () => { await loadSpaces(node); setSpace(name); }); } }) : null,
-        modal === 'app' ? h(AppModal, { node, space, onClose: () => setModal(null), onDone: (r) => { setModal(null); const synthetic = { name: r.name, title: r.help, command: r.command, space: r.space, path: r.path, place: r.place || '', functions: [], recent: false }; setApps((xs) => [synthetic, ...xs.filter((a) => !(a.name === synthetic.name && a.command === synthetic.command))]); setApp(synthetic); openApp(synthetic); act('LOAD RECENT', () => loadApps(node, space, avatar?.uid || '')); } }) : null,
+        modal === 'app' ? h(AppModal, { node, space, onClose: () => setModal(null), onDone: (r) => { setModal(null); const synthetic = { name: r.name, title: r.help, command: r.command, space: r.space, path: r.path, place: r.place || '', functions: [], recent: false }; setApps((xs) => [synthetic, ...xs.filter((a) => !(a.name === synthetic.name && a.command === synthetic.command))]); setApp(synthetic); openApp(synthetic); act('LOAD RECENT', () => loadApps(node, space, actorUid)); } }) : null,
         modal === 'data' && currentApp ? h(DataModal, { node, space: currentApp.space || space, app: currentApp, onClose: () => setModal(null) }) : null,
         modal === 'code' && currentApp ? h(CodeModal, { node, space: currentApp.space || space, app: currentApp, onClose: () => setModal(null) }) : null,
         modal === 'instance' && currentApp ? h(InstanceModal, { node, space: currentApp.space || space, app: currentApp, avatar, onClose: () => setModal(null), onDone: (r) => { setModal(null); act('LOAD RECENT', () => selectCreated(r)); } }) : null,

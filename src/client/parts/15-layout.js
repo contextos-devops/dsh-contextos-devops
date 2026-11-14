@@ -54,14 +54,18 @@
       return h('div', { className: 'cx-menu-list' },
         hint.top ? h('div', { className: 'cx-menu-hint top', 'aria-hidden': 'true' }, '▲') : null,
         h('div', { className: 'cx-menu-scroll', ref, onScroll: update },
-          list.length ? list.map((it, i) => h('button', {
+          list.length ? list.map((it, i) => (it.sep ? h('div', { key: `sep${i}`, className: 'cx-menu-sep' })
+            : h('button', {
             key: i, type: 'button',
-            className: `cx-menu-item cx-menu-3col${it.on ? ' on' : ''}`,
+            className: `cx-menu-item cx-menu-3col${it.on ? ' on' : ''}${it.danger ? ' danger' : ''}`,
             onClick: () => { try { it.go(); } catch {} onPick && onPick(it); },
           },
             h(UiIcon, { name: it.icon || 'dot', size: 14 }),
             h('span', { className: 'cx-menu-lbl' }, it.label),
-            h('span', { className: 'cx-menu-chk' }, it.on ? h(UiIcon, { name: 'check', size: 12 }) : '')))
+            h('span', { className: 'cx-menu-chk' },
+              it.on ? h(UiIcon, { name: 'check', size: 12 })
+                : it.open ? h('i', { className: 'cx-menu-dot open', title: '已打开' })
+                  : it.openable ? h('i', { className: 'cx-menu-dot' }) : '')))) 
             : h('div', { className: 'cx-menu-item empty' }, '—')),
         hint.bottom ? h('div', { className: 'cx-menu-hint bottom', 'aria-hidden': 'true' }, '▼') : null);
     }

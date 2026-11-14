@@ -3,6 +3,21 @@ window.__ModuleLoader__.load({
   factory(require) {
     const React = require('react');
     const h = React.createElement;
+    // 页面所在 host：cookie 只对同一 host 生效，localhost 与 127.0.0.1 不能混用。
+    // 网页 URL（只给浏览器打开）：/s/<pod>/c/<portal>?debug=true&<place>_uid=<实例>#<实例>:<cmd>:<记录>
+    // 接口 URL 在宿主 lib/base/url.js；两者形状不同，见 docs/URL-SPEC.md
+    const cxPlaceKey = (place) => `${String(place || 'system').replace(/_(uid|name)$/, '') || 'system'}_uid`;
+    const cxWebUrl = ({ node, pod, command, place = 'system', placeUid = '', recordUid = '', uid = '', host = '' }) => {
+      if (!node || !pod || !command) return '';
+      const portal = /^web\./.test(String(command)) && String(command).split('.').length >= 3
+        ? String(command).split('.').slice(0, -1).join('.') + '.portal'
+        : String(command);
+      const q = new URLSearchParams({ debug: 'true', [cxPlaceKey(place)]: placeUid || '' });
+      if (uid) q.set('user.uid', uid);
+      const hash = recordUid ? `#${placeUid || ''}:${command}:${recordUid}` : '';
+      return `http://${host || CX_HOST}:${node}/s/${encodeURIComponent(pod)}/c/${portal}?${q}${hash}`;
+    };
+    const CX_HOST = (typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) ? location.hostname : '127.0.0.1';
     const { useState, useEffect, useCallback, useRef } = React;
     let CX_LAYOUT = null;
     const API = '/contextos-devops-dsh/api';
@@ -122,6 +137,25 @@ window.__ModuleLoader__.load({
     } catch {}
     let OPEN_LINK = null;
     const WEBTABS_KEY = 'contextos-devops-dsh:webtabs';
+
+    /* ── 统一会话快照 ────────────────────────────────────────────────
+       启动时一次性恢复「当前节点 / 空间 / 应用实例 / 工作模式 / 视图 /
+       网页标签」，直接进入上次的界面，不再逐项读取、不再闪回默认界面。 */
+    const SESSION_KEY = 'contextos-devops-dsh:session';
+    let cxSessionMem = null, cxSessionTimer = 0;
+    const cxSessionGet = () => {
+      if (cxSessionMem) return cxSessionMem;
+      try { const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); cxSessionMem = s && s.v === 2 ? s : null; } catch { cxSessionMem = null; }
+      return cxSessionMem;
+    };
+    const cxSessionFlush = () => { try { if (cxSessionMem) localStorage.setItem(SESSION_KEY, JSON.stringify(cxSessionMem)); } catch {} };
+    const cxSessionSave = (patch) => {
+      const next = { ...(cxSessionGet() || {}), ...(patch || {}), v: 2, updatedAt: Date.now() };
+      cxSessionMem = next;
+      if (cxSessionTimer) return;
+      cxSessionTimer = setTimeout(() => { cxSessionTimer = 0; cxSessionFlush(); }, 400);
+    };
+    if (typeof window !== 'undefined') window.addEventListener('pagehide', cxSessionFlush);
     const NS = 'contextosDevops';
     const OFFICIAL = [['community','云社区','20240724-community','20240724'],['enterprise','云办公','20240724-enterprise','20240724'],['operation','云研发','20240903-operation','20240903'],['knowledge','云知识','20250520-knowledge','20250520'],['education','云教育','20240724-education','20240724'],['healthy','云健康','20250520-healthy','20250520'],['tourism','云文旅','20250520-tourism','20250520'],['charity','云公益','20250520-charity','20250520'],['industry','云工业','20250520-industry','20250520'],['agriculture','云农业','20250520-agriculture','20250520']];
     const OFFICIAL_KEY = Object.fromEntries(OFFICIAL.flatMap(([k, n]) => [[k, k], [n, k]]));
@@ -163,8 +197,19 @@ window.__ModuleLoader__.load({
         idle: 'IDLE', workspace: 'Workspace', applications: 'Applications', running: 'Running', offline: 'Offline', chat: 'CHAT', manage: 'MANAGE', dev: 'DEV',
       },
     };
-    let CURRENT_LANG = 'zh';
+    // 语言在模块加载时就定下来，避免首帧（表单等 T() 文案）先按中文渲染
+    let CURRENT_LANG = (() => {
+      try {
+        const m = localStorage.getItem('contextos-devops-dsh:lang') || 'system';
+        const nav = String((typeof navigator !== 'undefined' && navigator.language) || 'en').toLowerCase();
+        const v = m === 'system' ? (nav.startsWith('zh') ? 'zh' : 'en') : m;
+        return v === 'zh' ? 'zh' : 'en';
+      } catch { return 'zh'; }
+    })();
     const EN_TEXT = {
+  '创建流程': 'Create flow', '创建流程申请': 'Create request', '修改流程': 'Modify flow',
+  '个字段': 'fields', '已提交': 'Submitted', '提交': 'Submit', '查看详情': 'View details',
+
       '取消': 'Cancel', '保存': 'Save', '关闭': 'Close', '删除': 'Delete', '引用': 'Quote', '编辑': 'Edit', '停止': 'Stop',
       '发送': 'Send', '保存并编译': 'Save + build', '创建中…': 'Creating…', '保存中…': 'Saving…', '复制': 'Copy', '新建': 'New', '界面出现错误': 'UI error', '重试': 'Retry', '刷新页面': 'Reload', '返回': 'Back', '更多': 'More', '收起': 'Less', '清除': 'Clear', '展开': 'Expand', '折叠': 'Collapse',
       '上传头像照片': 'Upload avatar photo', '修改分身…': 'Edit avatar…', '切换分身': 'Switch avatar', '新建分身…': 'New avatar…',
@@ -220,9 +265,9 @@ window.__ModuleLoader__.load({
         introEn: 'Digital avatar mode: the active avatar user.uid/company/city are used when creating instances. Say "create employee management", "add data to recent app", "check project progress".',
         quickEn: ['Create instance "Employee"', 'Add one record to "Employee"', 'View app data of "Employee"', 'Break a goal into plans and tasks'] },
       { id: 'factory', name: '软件工厂', intro: '软件工厂模式：持续部署服务节点、创建项目空间、生成应用代码并编译上线；说「部署 9188 节点」「创建空间 demo」「生成员工管理」「修改应用代码」。',
-        quick: ['部署服务节点 :9198', '创建项目空间 demo', '生成应用模板「员工管理」', '生成应用代码「员工管理」', '编译并上线「员工管理」'],
+        quick: ['创建项目空间 demo', '生成应用模板「员工管理」', '添加应用代码「员工管理」'],
         introEn: 'Software factory mode: say "deploy node 9188", "create space demo", "generate employee management", "edit app code".',
-        quickEn: ['Deploy node :9198', 'Create space demo', 'Generate app template "Employee"', 'Generate app code "Employee"', 'Compile and publish "Employee"'] },
+        quickEn: ['Create space demo', 'Generate app template "Employee"', 'Add app code "Employee"'] },
       { id: 'iot', name: '赛博世界', intro: '赛博世界模式：发现周边设备——蓝牙扫描附近设备、WiFi 扫描附近网络与同网设备，实现万物互联；也可切换场景与背景。',
         quick: ['扫描周边设备', '连接周边设备', '控制周边设备「灯光」', '切换赛博世界场景'],
         introEn: 'Cyber World mode: scan, connect and control nearby devices over Bluetooth/WiFi, and switch the cyber scene.',
@@ -236,3 +281,10 @@ window.__ModuleLoader__.load({
       window.addEventListener('error', (e) => reportError(String(e?.message || e?.error || '')));
       window.addEventListener('unhandledrejection', (e) => reportError(String(e?.reason?.message || e?.reason || '')));
     }
+
+/** The single identity used for every request: the active avatar, else the last
+ * one we saw (survives reloads before `avatars` finishes loading). */
+function cxActorUid(avatar) {
+  if (avatar && avatar.uid) return avatar.uid;
+  try { return localStorage.getItem('contextos-devops-dsh:actor') || ''; } catch { return ''; }
+}

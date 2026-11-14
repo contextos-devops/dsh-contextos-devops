@@ -60,8 +60,67 @@ if (/cx-taskmap\$\{[^}]*' full'/.test(built)) err('TaskMap 又用上了 `.full` 
 const maxImpl = (built.match(/function cxMaxApply/g) || []).length;
 if (maxImpl !== 1) err(`cxMaxApply 应只有 1 处实现，当前 ${maxImpl}`);
 
+// 7) URL 规范（docs/URL-SPEC.md）：两类 URL 只许走 lib/base/url.js / cxWebUrl
+const srcCode = parts.map((f) => read(`src/client/parts/${f}`)).join('\n');
+const libCode = fs.readdirSync(path.join(root, 'lib/base'))
+  .filter((f) => f.endsWith('.js'))
+  .map((f) => read(`lib/base/${f}`)).join('\n');
+if (/space_uid|space\['uid'\]/.test(srcCode + libCode)) err('URL 规范：禁止使用空间 uid，空间只用 pod 名称');
+if (!/apiPath/.test(read('lib/core/data.js'))) err('URL 规范：lib/core/data.js 必须用 apiPath 构造接口 URL');
+if (/debug=true&system_uid=/.test(srcCode)) err('URL 规范：禁止手拼网页 URL，请用 cxWebUrl');
+if (!/cxWebUrl/.test(srcCode)) err('URL 规范：客户端必须提供 cxWebUrl');
+if (!/URL-SPEC/.test(read('docs/URL-SPEC.md'))) err('URL 规范：docs/URL-SPEC.md 缺失');
+// 7b) user.uid 只能发给应用级命令（/s/<pod>/c/web.team.*.portal…），系统命令不带
+{
+  const page = read('src/client/parts/60-page.js');
+  if (!page.includes('appLevel')) err('URL 规范：withActor 缺少 appLevel 判断（user.uid 不得发给 /c/dream 等系统命令）');
+  const spec = read('docs/URL-SPEC.md');
+  if (!/仅应用级命令/.test(spec) || !/全局通用/.test(spec)) err('URL 规范：docs/URL-SPEC.md 未写明 debug / user.uid 的作用范围');
+  const httpSrc = read('lib/base/http.js');
+  if (!/const appLevel = /.test(httpSrc)) err('URL 规范：宿主 http() 必须只在应用级路径自动附加 user.uid');
+  if (!/本机免登录/.test(spec)) err('URL 规范：docs/URL-SPEC.md 未写明本机免登录 / 远程必须 sessid');
+  if (!/一切皆/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 缺失或未写明「一切皆命令」');
+  const iface = read('docs/INTERFACE.md');
+  if (!/方法语义/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 未写明 GET/PUT/POST/DELETE 方法语义');
+  if (!/列表与详情/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 未写明返回数据只有列表与详情两种形态');
+  if (!/_process/.test(read('docs/INTERFACE.md')) || !/响应报文/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 未写明响应报文（append/option/detail/result/_process）');
+  if (!/usr\/intshell/.test(read('docs/INTERFACE.md')) || !/usr\/volcanos/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 未写明两个调用方（usr/intshell、usr/volcanos）');
+  if (!/action\/upload/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 未写明文件上传接口（<cmd>/action/upload）');
+  if (!/20240903-operation/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 未写明文件存储依赖云研发空间（20240903-operation）');
+  if (!/面板可加/.test(read('docs/MONITOR.md'))) err('监控规范：docs/MONITOR.md 缺失或未写「面板可加，数据源可配」');
+  if (!/monitorQuery/.test(read('index.js'))) err('监控规范：index.js 缺少 monitorQuery 取数入口');
+  if (!/web\.chat\.action/.test(read('docs/INTERFACE.md')) || !/sess\.daemon/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 未写明 web.chat.action 转发与 sess.daemon 网页空间');
+  if (!/export async function upload/.test(read('lib/base/http.js'))) err('接口规范：lib/base/http.js 缺少 upload()');
+  if (!/export function envelopeShape/.test(read('lib/base/http.js'))) err('接口规范：lib/base/http.js 缺少 envelopeShape');
+  if (!/m\.Push\(\)/.test(iface) || !/m\.Option\(\)/.test(iface)) err('接口规范：docs/INTERFACE.md 未写明命令契约（arg / m.Option / m.Push / m.Echo）');
+  const urlSrc = read('lib/base/url.js');
+  for (const fn of ['systemUrl', 'spaceUrl', 'platformUrl', 'commandForms']) {
+    if (!new RegExp('export function ' + fn).test(urlSrc)) err('接口规范：lib/base/url.js 缺少 ' + fn);
+  }
+}
+
 const ok = ERR.length === 0;
 console.log(`gate: ${ok ? 'PASS' : 'FAIL'}  ERR=${ERR.length} WARN=${WARN.length}`);
 for (const e of ERR) console.log(`  ERR  ${e}`);
 for (const w of WARN) console.log(`  WARN ${w}`);
 process.exit(ok ? 0 : 1);
+
+// 9) 平台数据接口只认三条 URL：dataPath 必须存在，文档必须写清楚
+{
+  const url = read('lib/base/url.js');
+  if (!/export function dataPath\s*\(/.test(url)) err('lib/base/url.js: missing dataPath()');
+  const doc = read('docs/URL-SPEC.md');
+  for (const s of ['action/run/<index_cmd>/action/create', 'action/run/<index_cmd>/<place_uid>', 'action/run/<index_cmd>/<place_uid>/<uid>']) {
+    if (!doc.includes(s)) err(`docs/URL-SPEC.md: missing data url form ${s}`);
+  }
+}
+
+// 9b) 修改 modify(POST) / 删除 remove(DELETE)
+{
+  const doc = read('docs/URL-SPEC.md');
+  for (const s of ['action/modify/<k0>', 'DELETE /s/<pod>/c/<portal>/action/run/<index_cmd>/action/remove']) {
+    if (!doc.includes(s)) err(`docs/URL-SPEC.md: missing modify/remove form ${s}`);
+  }
+  const data = read('lib/core/data.js');
+  if (!/method:\s*'DELETE'/.test(data)) err('lib/core/data.js: removeData must use DELETE');
+}

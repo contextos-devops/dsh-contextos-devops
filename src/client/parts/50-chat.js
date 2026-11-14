@@ -9,7 +9,166 @@
       return h('span', null, `${(value / 1000).toFixed(1)}s`);
     }
 
-    function ChatPanel({ open, booted, fx, onClose, nodes, node, spaces, space, apps, app, avatar, ideFile, view, mode, onModeChange, onRequest, webTabs, onOpenWebTab, onCloseWebTab, onNavWebTab, onReloadWebTab, onManageWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices }) {
+    // 请求上下文只允许一个场景来源：scene。旧会话/旧选择可能把同一份配置
+    // 同时塞进 background、bg，甚至嵌在 selection 里；发送前递归剥掉别名。
+    function stripSceneAliases(value) {
+      if (Array.isArray(value)) return value.map(stripSceneAliases);
+      if (!value || typeof value !== 'object') return value;
+      const out = {};
+      for (const [key, item] of Object.entries(value)) {
+        if (key === 'background' || key === 'bg') continue;
+        out[key] = stripSceneAliases(item);
+      }
+      return out;
+    }
+
+    // 消息列表里的数据表单：字段来自应用模块的 portal.json
+    // 操作 + 功能的中文名，拼成表单标题（如「创建流程」）
+    const FN_LABEL = { flow: '流程', request: '流程申请', apply: '申请', allow: '审批', notice: '通知', event: '事件', member: '成员', setting: '设置', auth: '权限', node: '节点', credit: '积分', qrcode: '扫码', message: '消息', service: '服务', market: '市场', portal: '应用' };
+    const ACT_LABEL = { create: '创建', modify: '修改', update: '修改', remove: '删除' };
+    const FN_LABEL_EN = { flow: 'Flow', request: 'Request', apply: 'Apply', allow: 'Approve', notice: 'Notice', event: 'Event', member: 'Member', setting: 'Settings', auth: 'Auth', node: 'Node', credit: 'Credit', qrcode: 'QR', message: 'Message', service: 'Service', market: 'Market', portal: 'App' };
+    const ACT_LABEL_EN = { create: 'Create', modify: 'Modify', update: 'Modify', remove: 'Delete' };
+    // 常见字段名的中英对照（后端 _trans 没给时兜底）
+    const FIELD_ZH = { title: '标题', content: '内容', name: '名称', system_uid: '系统', uid: '编号', index: '序号', icons: '图标', begin_time: '开始时间', end_time: '结束时间', status: '状态', status_uid: '状态', remark: '备注', desc: '描述', description: '描述', phone: '手机号', email: '邮箱', address: '地址', city_name: '城市', company_name: '公司', project_name: '项目名称', report_type: '报告类型', feedback_status: '反馈状态', score: '评分', image: '图片', video: '视频', url: '链接', key: '键', value: '值', type: '类型', field: '字段', sub: '子项' };
+    const FIELD_EN = { title: 'Title', content: 'Content', name: 'Name', system_uid: 'System', uid: 'ID', index: 'Index', icons: 'Icon', begin_time: 'Begin', end_time: 'End', status: 'Status', status_uid: 'Status', remark: 'Remark', desc: 'Description', description: 'Description', phone: 'Phone', email: 'Email', address: 'Address', city_name: 'City', company_name: 'Company', project_name: 'Project', report_type: 'Report type', feedback_status: 'Feedback', score: 'Score', image: 'Image', video: 'Video', url: 'URL', key: 'Key', value: 'Value', type: 'Type', field: 'Field', sub: 'Sub' };
+    // 全局统一的结果卡片：服务节点 / 项目空间 / 应用实例 / 应用模板 / 数据记录
+    const KIND_META = {
+      node: { icon: 'server', zh: '服务节点', en: 'Node' },
+      space: { icon: 'space', zh: '项目空间', en: 'Space' },
+      app: { icon: 'app', zh: '应用实例', en: 'App' },
+      service: { icon: 'market', zh: '应用模板', en: 'Template' },
+      data: { icon: 'report', zh: '数据记录', en: 'Record' },
+    };
+    function CxEntityCard({ e, lang, onOpen }) {
+      const L = (zh, en) => (lang === 'zh' ? zh : en);
+      const km = KIND_META[e.kind] || KIND_META.app;
+      return h('div', { className: `cx-rc cx-rc-${e.kind || 'app'}` },
+        h('div', { className: 'cx-rc-ico' },
+          e.icon ? h('img', { src: e.icon, alt: '' }) : h(Icon, { name: km.icon, size: 18 })),
+        h('div', { className: 'cx-rc-main' },
+          h('div', { className: 'cx-rc-head' },
+            h('span', { className: 'cx-rc-kind' }, L(km.zh, km.en)),
+            e.title ? h('span', { className: 'cx-rc-title' }, e.title) : null,
+            e.status ? h('span', { className: `cx-rc-badge${e.statusKind ? ' ' + e.statusKind : ''}` }, e.status) : null),
+          e.sub ? h('div', { className: 'cx-rc-sub' }, e.sub) : null,
+          Array.isArray(e.meta) && e.meta.length
+            ? h('div', { className: 'cx-rc-meta' }, e.meta.filter(Boolean).map((x, i) => h('span', { key: i }, x)))
+            : null),
+        Array.isArray(e.actions) && e.actions.length
+          ? h('div', { className: 'cx-rc-acts' }, e.actions.map((a, i) => h('button', {
+            key: i,
+            className: 'cx-rc-btn',
+            onClick: () => { if (a.url && typeof onOpen === 'function') onOpen(a.url, a.title || e.title || ''); if (typeof a.onClick === 'function') a.onClick(); },
+          }, a.label)))
+          : null);
+    }
+    const FORM_STATE_KEY = 'contextos-devops-dsh:formstate';
+    const readFormState = (fk) => { try { return (JSON.parse(localStorage.getItem(FORM_STATE_KEY) || '{}') || {})[fk] || null; } catch { return null; } };
+    const writeFormState = (fk, v) => {
+      if (!fk) return;
+      try {
+        const all = JSON.parse(localStorage.getItem(FORM_STATE_KEY) || '{}') || {};
+        all[fk] = { ...(all[fk] || {}), ...v };
+        localStorage.setItem(FORM_STATE_KEY, JSON.stringify(all));
+      } catch {}
+    };
+    function CxWriteForm({ msg, onSubmit, onOpen, onDone, lang }) {
+      // 直接用当前语言渲染，避免 T() 依赖全局语言初始化时机
+      const L = (zh, en) => (lang === 'zh' ? zh : en);
+      const fLabel = (f) => (lang === 'zh'
+        ? (FIELD_ZH[f.name] || (f.label && f.label !== f.name ? f.label : f.name))
+        : (f.labelEn || FIELD_EN[f.name] || f.label || f.name));
+      const fields = msg.fields || [];
+      // 已提交过的表单：参数与状态都从持久表恢复，刷新后仍是只读 + 原值
+      const saved = (typeof readFormState === 'function' ? readFormState(msg.fk) : null) || {};
+      const savedVals = saved.values || msg.values || null;
+      const init = {};
+      for (const f of fields) {
+        init[f.name] = savedVals && savedVals[f.name] != null
+          ? savedVals[f.name]
+          : (f.options && f.options.length ? f.options[0].value : (f.value || ''));
+      }
+      const [vals, setVals] = useState(init);
+      const [busy, setBusy] = useState(false);
+      const [done, setDone] = useState(() => !!msg.done || !!saved.done);
+      const [err, setErr] = useState('');
+      const [link, setLink] = useState(() => msg.link || saved.link || '');
+      const set = (k, v) => setVals((x) => ({ ...x, [k]: v }));
+      const a = msg.app || {};
+      const title = L(`${ACT_LABEL[msg.action || 'create'] || '创建'}${FN_LABEL[msg.fn] || msg.fn || ''}`, `${ACT_LABEL_EN[msg.action || 'create'] || 'Create'} ${FN_LABEL_EN[msg.fn] || msg.fn || ''}`.trim());
+      const home = msg.home || '';
+      return h('div', { className: `cx-wform${done ? ' done' : ''}` },
+        h('div', { className: 'cx-wform-h' },
+          h('span', { className: 't' }, title),
+          h('span', { className: 's' }, done ? L('已提交', 'Submitted') : `${fields.length} ${L('个字段', 'fields')}`)),
+        h('div', {
+          className: `cx-wform-app${home ? ' link' : ''}`,
+          title: home ? '打开实例首页' : '',
+          onClick: home ? () => onOpen?.(home, a.title || a.name || '应用') : undefined,
+        },
+          h('span', { className: 'ico' }, h(Icon, { name: 'app', size: 16 })),
+          h('span', { className: 'body' },
+            h('span', { className: 'name' }, a.title || a.name || '应用'),
+            h('span', { className: 'sub' }, [a.city_name || a.city, a.company_name || a.company, a.template || a.service_name, a.space].filter(Boolean).join(' · ')))),
+        done ? fields.map((f) => h('div', { key: f.name, className: 'cx-wform-row ro' },
+          h('span', { className: 'k' }, fLabel(f), f.required ? h('i', { className: 'req' }, '*') : null),
+          h('span', { className: 'v' }, vals[f.name] || '—'))) : fields.map((f) => h('label', { key: f.name, className: 'cx-wform-row' },
+          h('span', { className: 'k' }, fLabel(f), f.required ? h('i', { className: 'req' }, '*') : null),
+          f.type === 'select'
+            ? h('select', { className: 'cx-wform-input', value: vals[f.name] ?? '', disabled: busy, onChange: (e) => set(f.name, e.target.value) },
+                (f.options || []).map((o) => h('option', { key: o.value, value: o.value }, o.label)))
+            : h('input', { className: 'cx-wform-input', value: vals[f.name] ?? '', disabled: busy, placeholder: f.label || f.name, onChange: (e) => set(f.name, e.target.value) }))),
+        err ? h('div', { className: 'cx-wform-err' }, err) : null,
+        done && link ? h('div', { className: 'cx-wform-acts' },
+          h('button', { className: 'cx-wform-open', onClick: () => onOpen?.(link, msg.app?.title || msg.app?.name || '详情') }, L('查看详情', 'View details'))) : null,
+        done ? null : h('div', { className: 'cx-wform-acts' },
+          h('button', {
+            className: 'cx-wform-submit', disabled: busy || done,
+            onClick: async () => {
+              if (busy || done) return;
+              setBusy(true); setErr('');
+              try {
+                const res = await onSubmit(msg, vals, true);
+                setLink(res?.url || ''); setDone(true);
+                writeFormState(msg.fk, { done: true, link: res?.url || '', values: vals });
+                onDone?.(msg.id, res?.url || '', vals);
+              }
+              catch (e) { setErr(String(e?.message || e)); }
+              finally { setBusy(false); }
+            },
+          }, busy ? L('提交中…', 'Submitting…') : L('提交', 'Submit'))));
+    }
+
+
+    // 创建类操作先确认参数：字段可编辑，确认后才真正调用接口。
+    function CxAskForm({ m, lang, onSubmit }) {
+      const L = (zh, en) => (lang === 'zh' ? zh : en);
+      const fields = (m.ask && m.ask.fields) || [];
+      const [vals, setVals] = useState(() => Object.fromEntries(fields.map((f) => [f.name, f.value == null ? '' : String(f.value)])));
+      const [sub, setSub] = useState(false);
+      const done = !!m.done;
+      const set = (k, v) => setVals((x) => ({ ...x, [k]: v }));
+      const submit = async () => {
+        if (sub || done) return;
+        setSub(true);
+        try { await onSubmit(m, vals); } finally { setSub(false); }
+      };
+      return h('div', { className: 'cx-wform' },
+        h('div', { className: 'cx-wform-head' },
+          h('span', { className: 'cx-wform-title' }, (m.ask && m.ask.title) || ''),
+          h('span', { className: 'cx-wform-count' }, done ? L('已确认', 'Confirmed') : `${fields.length} ${L('个参数', 'fields')}`)),
+        (m.ask && m.ask.note) ? h('div', { className: 'cx-wform-note' }, m.ask.note) : null,
+        fields.map((f) => h('label', { key: f.name, className: `cx-wform-row${done ? ' ro' : ''}` },
+          h('span', { className: 'cx-wform-label' }, f.label || f.name, f.required ? h('i', { className: 'req' }, '*') : null),
+          f.options
+            ? h('select', { className: 'cx-wform-input', value: vals[f.name] == null ? '' : vals[f.name], disabled: done, onChange: (e) => set(f.name, e.target.value) },
+              f.options.map((o) => h('option', { key: String(o.value ?? o), value: String(o.value ?? o) }, String(o.label ?? o))))
+            : h('input', { className: 'cx-wform-input', value: vals[f.name] == null ? '' : vals[f.name], placeholder: f.hint || '', title: f.hint || '', disabled: done, onChange: (e) => set(f.name, e.target.value) }))),
+        done ? null : h('div', { className: 'cx-wform-foot' },
+          h('button', { className: 'cx-btn pri', disabled: sub, onClick: submit }, sub ? L('创建中…', 'Creating…') : L('确认创建', 'Confirm'))));
+    }
+
+    function ChatPanel({ open, booted, fx, onClose, nodes, node, spaces, space, apps, app, avatar, ideFile, view, mode, onModeChange, onRequest, webTabs, onOpenWebTab, onCloseWebTab, onNavWebTab, onReloadWebTab, onManageWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices, formReq, cards, onOpenDev, onWebFocus }) {
       const tt = (key) => term(locale, key);
       const sectionTitle = (cn, en) => locale === 'zh' ? `${cn} ${en}` : en;
       const modeLabel = (m) => locale === 'zh' ? m.name : ({ avatar: 'Digital Avatar', factory: 'Software Factory', iot: 'Cyber World' })[m.id] || m.name;
@@ -45,13 +204,30 @@
       useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:panels', JSON.stringify({ left: showLeft, right: showRight })); } catch {} }, [showLeft, showRight]);
       const [ctxMenu, setCtxMenu] = useState(null);
       const [sceneOpen, setSceneOpen] = useState(false);
-      const [chatTab, setChatTab] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:chattab') || 'chat'; } catch { return 'chat'; } });
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:chattab', chatTab); } catch {} }, [chatTab]);
+      // 聊天面板当前标签：按 URL 基准恢复（标签 id 每次启动都会重排，不能存 id）
+      const tabIdOfBase = (base) => { const t = (webTabs || []).find((x) => (x.base || x.url) === base); return t ? t.id : null; };
+      const [chatTab, setChatTab] = useState(() => {
+        try {
+          const base = (cxSessionGet() || {}).chatTab;
+          if (!base || base === 'chat') return 'chat';
+          return tabIdOfBase(base) || 'chat';
+        } catch { return 'chat'; }
+      });
+      useEffect(() => {
+        // 切换节点/空间后标签会被重建，此时回退到对话
+        if (chatTab !== 'chat' && !(webTabs || []).some((t) => t.id === chatTab)) { setChatTab('chat'); return; }
+        const t = (webTabs || []).find((x) => x.id === chatTab);
+        cxSessionSave({ chatTab: t ? (t.base || t.url) : 'chat' });
+      }, [chatTab, webTabs]);
       const [replyPop, setReplyPop] = useState(false);
       const [chatLoaded, setChatLoaded] = useState({});
-      const [webMax, setWebMax] = useState(false);
+      const [webMax, setWebMax] = useState(() => !!(cxSessionGet() || {}).webMax);
+      useEffect(() => { cxSessionSave({ webMax }); }, [webMax]);
+      // 网页标签一出现就进入「最大化」：收起左右两栏，让页面占满整个对话区
+      useEffect(() => { onWebFocus && onWebFocus(!!webMax && chatTab !== 'chat'); }, [webMax, chatTab]);
       const [turn, setTurn] = useState(null);
-      OPEN_LINK = (url, title) => { if (onOpenWebTab) onOpenWebTab(url, title); };
+      // 链接直接在聊天框自带的网页标签里打开（CHAT 旁边那个 tab），不再另开窗口
+      OPEN_LINK = (url, title) => { const id = onOpenWebTab ? onOpenWebTab(url, title) : ''; if (id) setChatTab(id); };
       useEffect(() => {
         const onMsg = (e) => {
           const d = e && e.data;
@@ -78,9 +254,23 @@
       }, [ctxMenu]);
       const modeIntro = (m) => (m ? (locale === 'zh' ? m.intro : (m.introEn || m.intro)) : '');
       const modeQuick = (m) => (m ? (locale === 'zh' ? m.quick : (m.quickEn || m.quick)) : []);
-      const [msgs, setMsgs] = useState([{ role: 'ai', text: modeIntro(CHAT_MODES[0]) }]);
+      const [msgs, setMsgs] = useState(() => {
+        try {
+          const a = JSON.parse(localStorage.getItem('contextos-devops-dsh:chat') || '[]');
+          if (Array.isArray(a) && a.length) return a;
+        } catch {}
+        return [{ role: 'ai', text: modeIntro(CHAT_MODES[0]) }];
+      });
+      const [live, setLive] = useState(null);
+      const [traceMsg, setTraceMsg] = useState(null);
+      useEffect(() => {
+        try { localStorage.setItem('contextos-devops-dsh:chat', JSON.stringify(msgs.slice(-120))); } catch {}
+      }, [msgs]);
       const inputRef = useRef(null);
+      const lastUserRef = useRef('');
       const [mapTheme, setMapTheme] = useState(theme === 'light' ? 'light' : 'dark');
+      const spaceRef = useRef(space);
+      useEffect(() => { if (space) spaceRef.current = space; }, [space]);
       useEffect(() => { setMapTheme(theme === 'light' ? 'light' : 'dark'); }, [theme]);
       const draftTimerRef = useRef(null);
       const initialDraft = (() => { try { return localStorage.getItem('contextos-devops-dsh:draft') || ''; } catch { return ''; } })();
@@ -185,17 +375,48 @@
       const scrollRestorePendingRef = useRef(true);
       const scrollSaveTimer = useRef(null);
       useEffect(() => { scrollRestorePendingRef.current = true; }, [sessionKey]);
+      // 一次性贴底：同步 + rAF + 三档延时，兼顾卡片异步撑高
+      const userUpRef = useRef(false);
+      const scrollToEnd = () => {
+        userUpRef.current = false;
+        const put = () => { const el = endRef.current; if (el) el.scrollTop = el.scrollHeight; };
+        put();
+        requestAnimationFrame(put);
+        [60, 200, 420].forEach((t) => setTimeout(put, t));
+      };
+      useEffect(() => {
+        if (!endRef.current) return;
+        scrollRestorePendingRef.current = false;
+        scrollToEnd();
+      }, [msgs, busy, open, view, chatTab, sessionKey, space, node]);
+      // 切回聊天视图时再补一次（等布局完成后）
+      useEffect(() => {
+        if (view !== 'chat' || chatTab !== 'chat') return;
+        const t = setTimeout(scrollToEnd, 60);
+        return () => clearTimeout(t);
+      }, [view, chatTab, open, sessionKey]);
+      // 卡片图片/表格异步撑高后，仍然贴底（否则看起来“回滚到最前面”）
       useEffect(() => {
         const el = endRef.current;
         if (!el) return;
-        if (scrollRestorePendingRef.current) {
-          scrollRestorePendingRef.current = false;
-          try { const v = Number(localStorage.getItem(scrollKeyOf()) || '0'); el.scrollTop = v > 0 ? v : el.scrollHeight; }
-          catch { el.scrollTop = el.scrollHeight; }
-          return;
-        }
-        el.scrollTop = el.scrollHeight;
-      }, [msgs, busy, open]);
+        // 只有用户主动向上滚才停止跟随；内容撑高（卡片/表格/图片）时继续贴底
+        const el2 = el;
+        const onWheel = (e) => { if (e.deltaY < 0) userUpRef.current = true; };
+        const onTouch = () => { userUpRef.current = true; };
+        const onKey = (e) => { if (e.key === 'PageUp' || e.key === 'ArrowUp' || e.key === 'Home') userUpRef.current = true; };
+        el2.addEventListener('wheel', onWheel, { passive: true });
+        el2.addEventListener('touchmove', onTouch, { passive: true });
+        el2.addEventListener('keydown', onKey);
+        const ro = new ResizeObserver(() => { if (!userUpRef.current) el2.scrollTop = el2.scrollHeight; });
+        ro.observe(el2);
+        if (el2.firstElementChild) ro.observe(el2.firstElementChild);
+        return () => {
+          el2.removeEventListener('wheel', onWheel);
+          el2.removeEventListener('touchmove', onTouch);
+          el2.removeEventListener('keydown', onKey);
+          ro.disconnect();
+        };
+      }, [chatTab, view, open, sessionKey, space, node]);
       const onMsgScroll = (e) => {
         const el = e.currentTarget;
         clearTimeout(scrollSaveTimer.current);
@@ -265,27 +486,64 @@
         try { api('stateSet', { name: 'chat:' + sessionKey, value: msgs.slice(-100).map((m) => ({ role: m.role, text: String(m.text || '').slice(0, 4000), t: m.t || '' })) }).catch(() => {}); } catch {}
       }, [msgs, sessionKey, open]);
 
-      const push = (role, text, meta) => setMsgs((xs) => [...xs, { role, text, ...(meta || {}), t: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      const sanitizeTrace = (v, depth = 0) => {
+        if (v == null || typeof v === 'number' || typeof v === 'boolean') return v;
+        if (typeof v === 'string') return v.length > 4000 ? v.slice(0, 4000) + '…' : v;
+        if (depth > 4) return '[object]';
+        if (Array.isArray(v)) return v.slice(0, 50).map((x) => sanitizeTrace(x, depth + 1));
+        if (typeof v === 'object') { const o = {}; for (const k of Object.keys(v).slice(0, 40)) o[k] = sanitizeTrace(v[k], depth + 1); return o; }
+        return String(v);
+      };
+      const push = (role, text, meta) => {
+        const id = `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+        setMsgs((xs) => [...xs, { id, role, text, ...(meta || {}), t: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        return id;
+      };
+      // 表单提交成功后把只读状态写回消息（刷新后仍只剩「查看详情」）
+      const markFormDone = (id, link, values) => setMsgs((xs) => xs.map((m) => (m.id === id ? { ...m, done: true, link, values } : m)));
       const ai = (text, meta) => push('ai', text, meta);
       const aiCard = (text, card, meta) => push('ai', text, { ...(meta || {}), card });
-      const pmPortalUrl = (kind = '', uid = '') => {
-        if (!node || !space) return '';
-        const projectUid = pm?.project?.place_uid || '';
-        if (!projectUid) return '';
-        const base = `http://localhost:${node}/s/${space}/c/web.team.xiangmuguanli.portal?project_uid=${projectUid}`;
-        if (!kind || !uid) return base;
-        return `${base}#${projectUid}:web.team.xiangmuguanli.${kind}:${uid}`;
-      };
-      const switchMode = (m) => {
-        if (m === mode) return;
-        onModeChange(m);
-        setShowMore(false);
-      };
+
+      // —— 基础动作 ——
       const run = async (label, fn) => {
         setBusy(true); push('sys', label);
         try { return await fn(); }
-        catch (e) { ai(`失败：${String(e?.message || e)}`); return undefined; }
+        catch (e) { ai(`失败：${String(e?.message || e)}`); push('tool', ''); return undefined; }
         finally { setBusy(false); }
+      };
+      // 常用调试工具条：编程 / 切节点 / 切空间 / 开发模式
+      const ToolRow = ({ ctx }) => h('div', { className: 'cx-toolrow' },
+        ctx && ctx.space ? h('button', {
+          className: 'cx-btn sm',
+          onClick: () => cards?.openTerminal && cards.openTerminal({ node: ctx.node || node, space: ctx.space }),
+        }, locale === 'zh' ? '终端' : 'Terminal') : null,
+        ctx && ctx.space ? h('button', {
+          className: 'cx-btn sm',
+          onClick: () => cards?.rebuild && cards.rebuild({ node: ctx.node || node, space: ctx.space }),
+        }, locale === 'zh' ? '重新编译' : 'Rebuild') : null,
+        h('button', { className: 'cx-btn sm', onClick: () => cards?.openIde && cards.openIde(node) }, locale === 'zh' ? '编程' : 'IDE'),
+        nodes && nodes.length
+          ? h('label', { className: 'cx-toolsel' }, locale === 'zh' ? '节点' : 'Node',
+              h('select', { value: String(node || ''), onChange: (e) => cards?.selectNode(Number(e.target.value)) },
+                nodes.map((n) => h('option', { key: n.port, value: String(n.port) }, `:${n.port}`))))
+          : null,
+        spaces && spaces.length
+          ? h('label', { className: 'cx-toolsel' }, locale === 'zh' ? '空间' : 'Space',
+              h('select', { value: String(space || ''), onChange: (e) => cards?.selectSpace(e.target.value) },
+                spaces.map((sp) => h('option', { key: sp.name, value: sp.name }, sp.name))))
+          : null,
+        h('button', { className: 'cx-btn sm', onClick: () => onOpenDev && onOpenDev() }, locale === 'zh' ? '开发模式' : 'Dev'));
+      const switchMode = (id) => { if (id && id !== mode) onModeChange && onModeChange(id); };
+      const actorId = () => cxActorUid(avatar);
+      const appHomeUrl = (a, uid) => (!node || !a || !a.space || !a.command) ? '' : cxWebUrl({
+        node, pod: a.space, command: a.command, place: a.place || 'system',
+        placeUid: uid || a.place_uid || '', uid: actorId(),
+      });
+      const pmPortalUrl = (kind, uid) => {
+        if (!node || !space) return '';
+        const q = ['debug=true'];
+        if (uid) q.push(`system_uid=${encodeURIComponent(uid)}`);
+        return `http://127.0.0.1:${node}/s/${encodeURIComponent(space)}/c/web.team.xiangmuguanli.portal?${q.join('&')}`;
       };
       const deploy = async (port) => {
         const r = await run(`DEPLOY :${port}`, async () => {
@@ -296,41 +554,391 @@
         });
         if (r) { ai(`节点 :${port} 已部署。\n下一步：创建项目空间，例如「创建空间 demo」。`); setStep(null); }
       };
-      const createSpace = async (name) => {
-        if (!node) { ai('还没有选中节点。先说「部署 9188 节点」，或点左侧节点。'); return; }
-        const r = await run(`WORKSPACE ${name}`, async () => {
-          const created = await api('createSpace', { node, name });
-          await api('initSpace', { node, space: created.name });
+
+      // —— 应用商店 → 创建实例 ——
+      // 创建应用实例：先出确认表单（实例名/城市/公司），确认后再真正创建
+      const askInstance = (hit, nm) => {
+        const av = avatar || {};
+        const nz = (zh, en) => (locale === 'zh' ? zh : en);
+        const svc = hit || {};
+        const title = svc.title || svc.name || nz('应用', 'App');
+        askPush(nz(`创建应用实例 · ${title}`, `Create instance · ${title}`), [
+          { name: 'name', label: nz('实例名称', 'Instance name'), value: nm || title, required: true },
+          { name: 'city', label: nz('城市', 'City'), value: av.city_name || '深圳市' },
+          { name: 'company', label: nz('公司', 'Company'), value: av.company_name || '云轩领航' },
+        ], 'instance', { service: svc });
+      };
+
+      const createAppFromStore = async (source) => {
+        if (!node) { ai('还没有选中节点。'); return undefined; }
+        const direct = source && typeof source === 'object' && source.command ? source : null;
+        const kw = direct ? '' : String(source || '').trim();
+        return run(`STORE INSTANCE ${direct ? direct.name : (kw || '-')}`, async () => {
+          const list = direct ? [direct] : ((await api('storeApps', { node })) || []);
+          const norm = (s) => String(s || '').toLowerCase();
+          const hit = direct || list.find((s) => kw && (norm(s.title).includes(norm(kw)) || norm(s.help).includes(norm(kw)) || norm(s.command).includes(norm(kw))))
+            || list.find((s) => /审批/.test(kw) && /审批|shenpi/.test(String(s.title) + String(s.command) + String(s.help)))
+            || list.find((s) => /项目/.test(kw) && /项目|xiangmu/.test(String(s.title) + String(s.command) + String(s.help)))
+            || list[0];
+          if (!hit) { ai('应用商店里没有可用模板。'); return undefined; }
+          const nm = direct ? (direct.title || direct.name) : (kw && !/创建|生成|做一个|应用/.test(kw) ? kw : (hit.title || hit.name));
+          askInstance(hit, nm);
+          return hit;
+        });
+      };
+
+      // —— 往实例里写数据：先出表单 ——
+      // 最长公共中文片段（2..6 字），用于把用户原话和「最近应用」标题对上
+      const commonRun = (a, b) => {
+        const s = String(a || ''), t = String(b || '');
+        let best = 0;
+        for (let i = 0; i < s.length; i++) {
+          for (let n = 2; n <= 6 && i + n <= s.length; n++) {
+            const seg = s.slice(i, i + n);
+            if (t.includes(seg)) best = Math.max(best, n);
+          }
+        }
+        return best;
+      };
+      // 只在「最近应用」里找实例：不看当前选中的空间/应用
+      const matchRecentApp = (text, pool) => {
+        const list = Array.isArray(pool) ? pool.filter((x) => x && x.command) : [];
+        if (!list.length) return null;
+        let best = null, bestScore = 0;
+        list.forEach((x) => {
+          const sc = Math.max(commonRun(text, x.title), commonRun(text, x.name), commonRun(text, x.space));
+          if (sc > bestScore) { bestScore = sc; best = x; }
+        });
+        return bestScore >= 2 ? best : list[0];
+      };
+
+      // 应用=目录、功能=文件；读写都走同一条定位链：① 应用 ② 功能 ③ 读/写
+      const appOp = async ({ text: rawText, mode = 'write', function: fnArg = '' } = {}) => {
+        const text = String(rawText || lastUserRef.current || '');
+        if (!text.trim()) return false;
+        let list = Array.isArray(apps) ? apps.slice() : [];
+        if (!list.length) {
+          try { const r = await api('apps', { node, space, uid: actorId() }); if (Array.isArray(r)) list = r; } catch {}
+        }
+        if (!list.length) { ai('最近应用里还没有应用实例，请先在应用商店创建一个。'); return true; }
+
+        push('step', `① 定位应用（目录）：在 ${list.length} 个最近应用里匹配`);
+        let plan = null;
+        try {
+          plan = await api('resolveWrite', {
+            node, text, mode,
+            apps: list.map((x) => ({ title: x.title, name: x.name, space: x.space, command: x.command, functions: x.functions })),
+          });
+        } catch (e) { plan = null; }
+        const byPlan = plan && plan.command ? list.find((x) => String(x.command) === String(plan.command)) : null;
+        const app0 = byPlan || matchRecentApp(text, list);
+        if (!app0) { ai('最近应用里没有匹配的应用，请说清楚是哪个应用。'); return true; }
+
+        const fns = String(app0.functions || '').split(',').map((x) => x.trim()).filter(Boolean);
+        let fn = String((plan && plan.fn) || fnArg || '').trim();
+        if (!fn) fn = (/创建|新建|添加|建立|定义/.test(text) && /流程/.test(text)) ? 'flow' : (/发起|提交|申请|送审|报批/.test(text) ? 'request' : '');
+        if (fns.length && fn && !fns.includes(fn)) fn = fns.includes('supplier') && /供应商/.test(text) ? 'supplier' : fns[0];
+        if (!fn) fn = fns[0] || '';
+        if (!fn) { ai('这个应用还没有可用的功能，请先到应用商店重新生成模板。'); return true; }
+        push('step', `② 定位功能（文件）：${app0.title || app0.name} / ${fn}`);
+
+        const command = String(app0.command || '').replace(/\.portal$/, '') + '.' + fn;
+
+        if (mode === 'read') {
+          push('step', `③ 读取数据：${command}`);
+          let r = null;
+          try { r = await api('readData', { node, space: app0.space, command }); } catch (e) { r = null; }
+          if (!r || !Array.isArray(r.rows)) { ai(`读取失败：${command}`); return true; }
+          const cols = (r.columns || []).slice(0, 5).map((c) => ({ key: c, label: FIELD_ZH[c] || c }));
+          if (r.shape === 'detail' && r.fields) {
+            // 详情：一条记录，键值对展示
+            push('table', '', { table: { title: `${app0.title || app0.name} / ${fn}`, count: 1, detail: Object.entries(r.fields).slice(0, 12).map(([k, v]) => ({ key: k, label: FIELD_ZH[k] || k, value: String(v ?? '') })) } });
+          } else {
+            push('table', '', { table: { title: `${app0.title || app0.name} / ${fn}`, count: r.rows.length, columns: cols, rows: r.rows.slice(0, 20) } });
+          }
+          return true;
+        }
+
+        push('step', `③ 查询接口参数：${command}`);
+        let fields = [];
+        try { fields = await api('appFields', { node, space: app0.space, command }); } catch (e) { fields = []; }
+        const fromMeta = Array.isArray(fields) && fields.length > 0;
+        if (!fromMeta) {
+          fields = [
+            { name: 'title', label: '标题', labelEn: 'Title', type: 'text', required: true },
+            { name: 'content', label: '内容', labelEn: 'Content', type: 'textarea' },
+          ];
+        }
+        push('step', `④ 生成表单：${fields.length} 个字段${fromMeta ? '' : '（接口未返回字段，用通用字段）'}，确认后写入`);
+
+        const fk = `${node}|${app0.space}|${app0.place_uid}|${fn}`;
+        const saved = (typeof readFormState === 'function' ? readFormState(fk) : null) || {};
+        const planned = plan && plan.values && Object.keys(plan.values).length ? { ...plan.values } : null;
+        const values = saved.values || planned;
+        // 表单自带上下文：节点 / 空间 / 命令 / 实例 / 身份，随时能拼出完整接口 URL
+        const ctx = {
+          node, space: app0.space,                 // 空间只用名称（pod），绝不用 uid
+          command, portal: String(command).replace(/\.[^.]+$/, '.portal'),
+          place: app0.place || 'system',           // 数据挂在哪个表上 → <place>_uid
+          place_uid: app0.place_uid || '', uid: actorId(),
+        };
+        push('form', '', {
+          form: true, app: { ...app0 }, fn, action: 'create', command, ctx,
+          fields, fk, home: appHomeUrl(app0, app0.place_uid),
+          done: !!saved.done, link: saved.link || '', values,
+        });
+        return true;
+      };
+      const writeIntoApp = (args) => appOp({ ...(args || {}), mode: 'write' });
+
+      // —— 表单提交 ——
+      const submitForm = async (m, vals) => {
+        const a = m.app || {};
+        // 只用表单自带的上下文，不依赖页面下方当前节点/空间的选择
+        const ctx = m.ctx || {};
+        const fNode = ctx.node || node;
+        const fSpace = ctx.space || a.space;
+        const cmd = ctx.command || m.command || a.command;
+        const sysUid = ctx.place_uid || a.place_uid || '';
+        const who = ctx.uid || actorId();
+        const place = ctx.place || a.place || 'system';
+        // 接口 URL：/s/<pod>/c/<portal>/action/run/<cmd>/action/<action>/<k>/<v>?user.uid=&<place>_uid=&uid=
+        const scope = { [`${place}_uid`]: sysUid, 'user.uid': who, 'user_uid': who };
+        // user.uid = 当前分身身份；uid 只有「改/删某条记录」时才传
+        const r = await api('writeData', { node: fNode, space: fSpace, command: cmd, action: m.action || 'create', fields: vals, scope });
+        const uid = (r && (r.uid || r.id)) || '';
+        const portal = ctx.portal || String(cmd || '').replace(/\.[^.]+$/, '.portal');
+        const url = uid
+          ? cxWebUrl({ node: fNode, pod: fSpace, command: cmd, place, placeUid: sysUid, recordUid: uid, uid: who })
+          : '';
+        ai(locale === 'zh' ? `已提交「${a.title || a.name || '应用'}」` : `Saved to ${a.title || a.name || 'app'}`);
+        return { ...(r || {}), url };
+      };
+
+      // 每个应用的默认五功能链（AI 调研失败时的兜底）：目标 → 计划 → 任务 → 报告 → 反馈
+      const APP_CHAIN = [
+        { name: 'target', label: '目标' },
+        { name: 'plan', label: '计划' },
+        { name: 'task', label: '任务' },
+        { name: 'report', label: '报告' },
+        { name: 'feedback', label: '反馈' },
+      ];
+      const CHAIN_VALUE = APP_CHAIN.map((x) => x.name).join(',');
+      const CHAIN_TRANS = APP_CHAIN.map((x) => x.label).join(',');
+      // 代码生成：选模板 -> 表单确认 -> 落盘 -> 编译
+      const codegenAsk = async (text) => {
+        const list = await api('codegenList');
+        const app0 = app || (apps || [])[0] || {};
+        const parts = String(app0.command || '').split('.');
+        const zone = parts[1] || 'devops';
+        const mod = parts[2] || 'note';
+        // 先让宿主解析意图：工具栏 / 行内 + 动作名 + 条件
+        let plan = null;
+        try {
+          plan = await api('codegenPlan', { text, module: mod, fields: [] });
+        } catch (e) { plan = null; }
+        const tplKey = (plan && plan.template) || (/按钮/.test(text) ? 'buttons' : 'action');
+        const tpl = (list || []).find((x) => x.key === tplKey) || (list || [])[0];
+        if (!tpl) { ai('没有可用的代码模板。'); return false; }
+        const act = (plan && plan.action) || (text.match(/([a-zA-Z][a-zA-Z0-9_]*)/) || [])[1] || 'What';
+        askPush(locale === 'zh' ? `生成代码 · ${tpl.title}` : `Code · ${tpl.title}`, [
+          { name: 'zone', label: 'zone', value: zone, required: true },
+          { name: 'module', label: 'module', value: mod, required: true },
+          { name: 'Action', label: 'Action（导出）', value: act.charAt(0).toUpperCase() + act.slice(1), required: true },
+          { name: 'action', label: 'action（小写）', value: act.toLowerCase(), required: true },
+          { name: 'label', label: '按键文字', value: (plan && plan.label) || '' },
+          { name: 'field', label: '条件字段', value: (plan && plan.field) || '' },
+          { name: 'op', label: '比较（eq/ne/gt/lt/nonempty/empty）', value: (plan && plan.op) || '' },
+          { name: 'value', label: '条件值', value: (plan && plan.value) || '' },
+          { name: 'params', label: '参数', value: 'title* content*' },
+        ], 'codegen', { template: tpl.key, space: app0.space || space, why: (plan && plan.why) || '' });
+        if (plan && plan.why) push('step', plan.why);
+        return true;
+      };
+      const askPush = (title, fields, action, extra) => push('ai', '', { ask: { title, fields, action, ...(extra || {}) } });
+      const submitAsk = async (m, vals) => {
+        const a = m.ask || {};
+        if (!a.action) return;
+        markFormDone(m.id);
+        if (a.action === 'space') {
+          return doCreateSpace(vals.name, vals.repos);
+        }
+        if (a.action === 'codegen') {
+          const sp2 = a.space || spaceRef.current || space;
+          return run(`CODEGEN ${a.template}`, async () => {
+            const vars = { zone: vals.zone, module: vals.module, Action: vals.Action, action: vals.action, label: vals.label || vals.Action, field: vals.field || 'status', op: vals.op || 'eq', value: vals.value || '', params: vals.params || 'title* content*' };
+            const r = await api('codegenApply', { node, space: sp2, template: a.template, vars });
+            await onRefresh();
+            ai(locale === 'zh'
+              ? `已写入 ${r.file}（${r.bytes} 字节），编译${r.built ? '完成' : '未完成'}。`
+              : `Wrote ${r.file} (${r.bytes}B), build ${r.built ? 'done' : 'incomplete'}.`);
+            return r;
+          });
+        }
+        if (a.action === 'instance') {
+          const hit = a.service || {};
+          const nm = String(vals.name || '').trim() || hit.title || hit.name || '我的应用';
+          return run(`INSTANCE ${nm}`, async () => {
+            push('step', locale === 'zh' ? '① 定位模板 ② 等待空间编译就绪 ③ 创建实例' : '① template ② wait for space ③ create');
+            const d = await api('createStoreInstance', { node, service: hit, name: nm, city: vals.city || '', company: vals.company || '', uid: actorId() });
+            await onRefresh();
+            const data = { space: hit.space, command: hit.command, name: hit.name, title: nm, place_uid: d.place_uid || '', user_uid: actorId(), icons: hit.icons, service_name: hit.title };
+            ai(locale === 'zh' ? `已创建应用实例「${nm}」（${hit.space}）。` : `Instance "${nm}" created in ${hit.space}.`);
+            aiCard(locale === 'zh' ? `已从应用商店创建「${nm}」` : `Instance "${nm}" created`, { kind: 'app', entity: { kind: 'app', node, data }, action: { type: 'open', label: locale === 'zh' ? '打开界面' : 'Open', url: appHomeUrl(data, d.place_uid) } });
+            return d;
+          });
+        }
+        if (a.action === 'app') {
+          return run(`AUTOGEN ${vals.name}`, async () => {
+            const nm = appIdent(vals.name || '');
+            const sp2 = vals.space || a.space || spaceRef.current || space;
+            let finalName = appIdent(nm);
+            try {
+              const uq = await api('nameCheck', { node, space: sp2, name: finalName });
+              if (uq && uq.name) finalName = uq.name;
+            } catch (e) { /* 检查失败就按用户填的建，冲突时框架会报错 */ }
+            if (finalName !== nm) ai(locale === 'zh' ? `模板名「${nm}」已被占用，改用「${finalName}」。` : `Template "${nm}" is taken, using "${finalName}".`);
+            const r = await api('autogenApp', { node, space: sp2, name: finalName, help: vals.help || '', place: vals.place || 'system', value: vals.value || CHAIN_VALUE, trans: vals.trans || CHAIN_TRANS });
+            await onRefresh();
+            const built = !!r.built;
+            ai(built
+              ? `应用模板「${vals.help || nm}」已生成并编译完成（${sp2}）。`
+              : `应用模板「${vals.help || nm}」已生成，编译未完成${r.buildNote ? '：' + r.buildNote : ''}。`);
+            const svc = {
+              name: r.name,
+              title: vals.help || r.name,
+              command: `web.team.${r.name}.portal`,
+              space: r.space || sp2,
+              place: vals.place || 'system',
+              help: vals.help || '',
+              icons: '',
+              uid: '',
+            };
+            if (!built) {
+              // 编译失败：不给模板卡（不可用），给这条错误消息挂上排查工具
+              push('tool', '', { tool: { node, space: svc.space, name: svc.name } });
+              return r;
+            }
+            aiCard(locale === 'zh' ? '应用商店模板' : 'Store template', { kind: 'service', entity: { kind: 'service', node, data: svc } });
+            // 空间编译/重启期间创建实例会失败，轮询到就绪再提示，界面不阻塞
+            let tries = 0;
+            const timer = setInterval(async () => {
+              tries += 1;
+              if (tries > 72) { clearInterval(timer); return; }
+              try {
+                const st = await api('spaceReady', { node, space: svc.space, command: svc.command });
+                if (st && st.ready) {
+                  clearInterval(timer);
+                  ai(locale === 'zh' ? `模板已就绪，可以创建实例「${svc.title}」。` : `Template ready: ${svc.title}.`);
+                }
+              } catch { /* keep polling */ }
+            }, 5000);
+            return r;
+          });
+        }
+      };
+      // 真正创建一个项目空间：建空间 → git init → 刷新 → 切为当前空间 → 卡片
+      const doCreateSpace = async (nameArg, reposArg) => {
+        const name = String(nameArg || '').trim();
+        if (!name) return;
+        const repos = String(reposArg || '').trim();
+        const reposLabel = repos ? (/^https?:|^git@/.test(repos) ? repos : `https://shylinux.com/x/${repos}`) : 'git init';
+        return run(`WORKSPACE ${name}`, async () => {
+          const created = await api('createSpace', { node, name, repos });
+          await api('initSpace', { node, space: created.name, repos });
           await onRefresh();
+          spaceRef.current = created.name;
           onSelectNode(node); onSelectSpace(created.name);
+          aiCard('', { entity: {
+            kind: 'space', node,
+            data: { name: created.name, status: 'start', version: created.version || '', size: created.size || '', help: created.help || '', icons: created.icons || '' },
+            title: created.name,
+            status: (locale === 'zh' ? '运行中' : 'Running'),
+            statusKind: 'ok',
+            sub: `:${node} · ${reposLabel}`,
+            actions: [
+              { label: (locale === 'zh' ? '打开' : 'Open'), url: `http://127.0.0.1:${node}/s/${encodeURIComponent(created.name)}` },
+              { label: (locale === 'zh' ? '编程' : 'Code'), url: `http://127.0.0.1:${node}/s/${encodeURIComponent(created.name)}/c/command` },
+            ],
+          } });
           return created;
         });
-        if (r) { ai(`空间 ${r.name} 已创建并 git init。\n下一步：生成应用，例如「生成员工管理」。`); setStep(null); }
       };
+
+      // 创建应用前：让 AI 依据需求与竞品调研出五个功能及依赖，再进确认表单给用户改。
+      // 应用标识：小写字母开头，只留 a-z0-9_，非法时用 app+时间戳兜底
+      const appIdent = (name) => {
+        const s = String(name || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+        return /^[a-z][a-z0-9_]*$/.test(s) ? s : `app${Date.now().toString(36).slice(-5)}`;
+      };
+      // 中文名：优先取用户原话里的短语（≤16 字），不要模型写的整段解释
+      const shortAppTitle = (text, name) => {
+        const t = String(text || '');
+        const m = t.match(/(?:创建|新建|搭建|建一个|做一个|生成|来一个|帮我做)(?:一个|个)?\s*([^\s，。,.!?！？的]{2,16})(?:的)?应用/);
+        if (m && m[1]) return `${m[1]}应用`;
+        const s = String(name || '').trim();
+        return s ? `${s} 应用` : '应用';
+      };
+      const askAppPlan = (sp, name, help, place, text) => run(`PLAN ${name}`, async () => {
+        let nm = appIdent(name);
+        if (nm !== name) ai(`应用标识「${name}」不合规，改用「${nm}」。`);
+        // 模板名必须和云社区 service 列表、目标空间已有模块区分开
+        try {
+          const uq = await api('nameCheck', { node, space: sp, name: nm });
+          if (uq && uq.name && uq.name !== nm) {
+            ai(locale === 'zh' ? `模板名「${nm}」已被占用，改用「${uq.name}」。` : `Template "${nm}" is taken, using "${uq.name}".`);
+            nm = uq.name;
+          }
+        } catch (e) { /* 名字检查失败时继续，提交前还有一次 */ }
+        const ttl = (help && String(help).trim().length <= 20 && !/[，。；、]/.test(String(help))) ? String(help).trim() : shortAppTitle(text, nm);
+        let plan = null;
+        try { plan = await api('appPlan', { node, space: sp, name: nm, help: ttl, text: String(text || help || nm) }); } catch (e) { plan = null; }
+        const fns = (plan && Array.isArray(plan.functions) && plan.functions.length === 5)
+          ? plan.functions
+          : APP_CHAIN.map((x, i) => ({ name: x.name, label: x.label, depends: i ? [APP_CHAIN[i - 1].name] : [] }));
+        const val = fns.map((f) => f.name).join(',');
+        const tr = fns.map((f) => String(f.label || f.name).replace(/[,，、;；]/g, '')).join('、');
+        const chain = fns.map((f) => `${f.label}(${f.name})`).join(' → ');
+        // 参数表完全来自 service autogen 的自省（meta.autogen），客户端只填值。
+        let spec = null;
+        try { spec = await api('autogenSpec', { node }); } catch (e) { spec = null; }
+        if (!spec || !Array.isArray(spec.fields) || !spec.fields.length) {
+          ai(`读取 service autogen 参数失败：${String((spec && spec.error) || 'no fields')}`);
+          return;
+        }
+        // place = 应用在数据库里的表名，默认就是 system；模型给的模块名一律不用
+        const placeVal = (place && /^[a-z][a-z0-9_]*$/.test(String(place)) && String(place) !== nm) ? String(place) : 'system';
+        const VALUES = { space: sp, name: nm, help: ttl, place: placeVal, value: val, trans: tr };
+        const specFields = spec.fields.map((f) => ({
+          name: f.name,
+          label: f.label || f.name,
+          required: !!f.required,
+          value: VALUES[f.name] == null ? '' : VALUES[f.name],
+        }));
+        askPush(locale === 'zh' ? '创建应用模板' : 'Create app template', specFields, 'app', { node, note: (locale === 'zh' ? 'AI 调研的五个功能：' : 'AI-researched functions: ') + chain });
+      });
       const generate = async (spec) => {
-        if (!space) { ai('还没有选中项目空间。先说「创建空间 demo」，或点中间空间。'); return; }
+        let sp = spaceRef.current || space;
+        if (!sp) { ai('还没有选中项目空间。先说「创建空间 demo」，或点中间空间。'); return; }
         const raw = typeof spec === 'string' ? { name: spec } : (spec || {});
         const employee = /员工|employee|yuangong/i.test(String(raw.name || '')) || /员工/.test(String(raw.help || ''));
         const base = employee
           ? { name: 'yuangong', help: '员工管理', place: 'employee', value: 'profile,position,skill,experience,education,record', trans: '员工信息，工作岗位，专业技能，工作经验，教育经历，事件记录' }
-          : { name: 'app', help: '应用', place: 'profile', value: 'profile', trans: '简介' };
+          : { name: 'app', help: '应用', place: 'system', value: 'profile', trans: '简介' };
         const preset = { ...base, ...raw };
-        if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(preset.name || '')) { ai('应用名需要字母开头，只用字母/数字/下划线。'); return; }
-        const r = await run(`GENERATE ${preset.name}`, async () => {
-          const out = await api('autogenApp', { node, space, name: preset.name, help: preset.help, place: preset.place, value: preset.value, trans: preset.trans });
-          await onRefresh();
-          return out;
-        });
-        if (r) {
-          ai(`应用「${r.help}」已生成。\ncommand: ${r.command}\n${r.built ? '编译完成，可直接打开。' : '编译未完成：' + (r.warning || '未知原因')}`);
+        if (!/^[a-zA-Z][a-zA-Z0-9_]*(\s*[,，、]\s*[a-zA-Z][a-zA-Z0-9_]*)*$/.test(String(preset.value || ''))) {
+          preset.value = base.value;
+          preset.trans = base.trans;
         }
+        if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(preset.name || '')) { ai('应用名需要字母开头，只用字母/数字/下划线。'); return; }
+        return askAppPlan(sp, preset.name, preset.help, preset.place, lastUserRef.current);
       };
       const executeAction = async (action) => {
         if (!action || typeof action !== 'object') return;
         const op = String(action.op || '');
         const args = action.args && typeof action.args === 'object' ? action.args : {};
         const ctxApp = app || null;
-        const ctxSpace = space || ctxApp?.space || '';
+        const ctxSpace = spaceRef.current || space || ctxApp?.space || '';
         if (op === 'sshHosts') {
           return run('SSH HOSTS', async () => {
             const r = await api('sshHosts');
@@ -358,19 +966,47 @@
         if (op === 'createSpace' && OFFICIAL_KEY[args.name]) {
           return run(`DEPLOY OFFICIAL ${args.name}`, async () => { await api('officialSpaces', { node, keys: [OFFICIAL_KEY[args.name]] }); await onRefresh(); });
         }
-        if (op === 'createSpace') return createSpace(String(args.name || 'project'));
+        if (op === 'createSpace') {
+          const target = String(args.name || 'project').trim();
+          if (!node) { ai('还没有选中节点。先说「部署 9188 节点」，或点左侧节点。'); return; }
+          const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+          const slug = (target || 'project').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'project';
+          const guess = /^\d{8}-/.test(target) ? target : `${today}-${slug}`;
+          const repoName = guess.replace(/^\d{8}-?/, '') || slug;
+          const repos = String(args.repos || '').trim() || `https://shylinux.com/x/${repoName}`;
+          // 先出确认表单（名称/仓库可改），确认后走 doCreateSpace；仓库默认指到云社区同名库
+          askPush(locale === 'zh' ? '创建项目空间 · 确认参数' : 'Create space · confirm', [
+            { name: 'name', label: locale === 'zh' ? '空间名称' : 'Space name', value: guess, required: true },
+            { name: 'repos', label: locale === 'zh' ? '代码库（仓库名或完整地址）' : 'Repos (name or full URL)', value: repos, hint: locale === 'zh' ? '默认 https://shylinux.com/x/<仓库名>；清空则创建空空间（git init）' : 'Default https://shylinux.com/x/<repo>; clear it to create an empty space (git init)' },
+          ], 'space', { node });
+          return;
+        }
         if (op === 'initSpace') {
           const target = String(args.space || space || '');
           if (!target) { ai('当前没有项目空间。'); return; }
-          return run(`INIT ${target}`, async () => { await api('initSpace', { node, space: target }); await onRefresh(); });
+          return run(`INIT ${target}`, async () => { await api('initSpace', { node, space: target, repos: String(args.repos || '') }); await onRefresh(); });
         }
         if (op === 'autogenApp') return generate(args);
+        if (op === 'createApp' || op === 'generateAppCode') {
+          const appName = String(args.name || '').trim();
+          // Digital-avatar / cyber-world mode never writes code.「创建 X 应用」means:
+          // find the matching template in the app store, then create an instance.
+          if (mode && mode !== 'factory') {
+            const kw = String(appName || args.title || '').trim();
+            return createAppFromStore(kw);
+          }
+          const sp = spaceRef.current || space;
+          if (!sp) { ai('还没有选中项目空间。先创建或选择空间。'); return; }
+          if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(appName)) { ai('应用名需要字母开头，只用字母/数字/下划线。'); return; }
+          return askAppPlan(sp, appName, args.help || args.title || appName, args.place, lastUserRef.current);
+
+        }
         if (op === 'createInstance') {
           const target = (apps || []).find((a) => a.name === args.name) || app;
           if (!target) { ai('没找到要建实例的应用，先生成/选择一个应用。'); return; }
           const targetSpace = target.space || space || '';
           return run(`INSTANCE ${target.name}`, async () => {
-            await api('createInstance', { node, space: targetSpace, command: target.command, place: target.place || args.place || '', name: args.name || target.title || '我的应用', city: args.city || avatar?.city || '深圳市', company: args.company || avatar?.company || '云轩领航', uid: avatar?.uid || '' });
+            await api('createInstance', { node, space: targetSpace, command: target.command, place: target.place || args.place || '', name: args.name || target.title || '我的应用', city: args.city || avatar?.city || '深圳市', company: args.company || avatar?.company || '云轩领航', uid: cxActorUid(avatar) });
             await onRefresh();
           });
         }
@@ -452,26 +1088,61 @@
           if (onStore) onStore();
           return run('APP STORE', async () => { const list = await api('storeApps', { node }); ai(`应用商店：${list.length} 个服务。`); });
         }
-        if (op === 'createStoreInstance') {
-          return run(`STORE INSTANCE ${args.name || ''}`, async () => {
-            const services = await api('storeApps', { node });
-            const target = services.find((s) => (args.command && s.command === args.command) || (args.name && s.name.includes(args.name))) || (ctxApp ? { name: ctxApp.title || ctxApp.name, command: ctxApp.command, space: ctxApp.space || ctxSpace, place: ctxApp.place, uid: ctxApp.service_uid || '' } : null);
-            if (!target) { ai('应用商店里没有匹配的服务。'); return; }
-            await api('createStoreInstance', { node, service: target, name: args.name || String(target.name).split(/\s+/)[0], city: args.city || avatar?.city || '深圳市', company: args.company || avatar?.company || '云轩领航', uid: avatar?.uid || '' });
-            await onRefresh();
-            ai(`已从应用商店创建「${target.name}」实例。`);
-          });
+        if (op === 'createStoreInstance') return createAppFromStore(args.command || args.name || '');
+        if (op === 'writeData' || op === 'data') {
+          if (mode !== 'avatar') { ai(locale === 'zh' ? '读写应用数据请在数字分身模式下进行。' : 'App data read/write runs in Digital Avatar mode.'); return; }
+          return appOp({ ...args, mode: args.mode === 'read' ? 'read' : 'write', text: args.text || args.prompt || lastUserRef.current || '', function: args.command || args.function || '' });
         }
-        if (op === 'data') { onData(); return; }
         ai(`AI 给出了未识别的动作：${op || 'null'}`);
       };
       const handle = async (raw) => {
         const text = String(raw || '').trim();
         if (!text || busy) return;
+        lastUserRef.current = text;
         if (!chatReady) { ai('请先完成初始化：服务节点、云社区/云办公、数字分身和项目管理。'); return; }
         const attached = files.map((f) => f.name).join(', ');
         const content = attached ? `${text}\n附件：${attached}` : text;
         push('user', content); clearTimeout(draftTimerRef.current); if (inputRef.current) inputRef.current.value = ''; try { localStorage.removeItem('contextos-devops-dsh:draft'); } catch {} setFiles([]); try { inputRef.current?.focus({ preventScroll: true }); } catch {}
+        // 读写都走同一条定位链（应用=目录、功能=文件），成功就不再调模型
+        const WRITE_RE = /(添加|录入|新增|写入|加一条|新建一条|创建|发起|提交|报批)/;
+        const READ_RE = /(查看|查询|看看|列出|列一下|有哪些|列表|显示|统计|多少条)/;
+        const DATA_RE = /(数据|记录|列表|明细|清单|内容|情况)/;
+        const CODEGEN_RE = /(加|添加|新增|生成|写)[^，。]{0,8}(动作|功能|接口|按钮|代码)/;
+        if (mode === 'factory' && CODEGEN_RE.test(text)) {
+          setBusy(true);
+          try {
+            const ok = await codegenAsk(text);
+            setBusy(false);
+            if (ok) return;
+          } catch (e) {
+            ai(`生成失败：${String(e?.message || e)}`);
+            setBusy(false);
+            return;
+          }
+        }
+        if (mode === 'avatar' && WRITE_RE.test(text) && !/^(怎么|如何|为什么)/.test(text)) {
+          setBusy(true);
+          try {
+            const ok = await appOp({ text, mode: 'write' });
+            if (ok) { setBusy(false); return; }
+          } catch (e) {
+            ai(`执行失败：${String(e?.message || e)}`);
+            setBusy(false);
+            return;
+          }
+          setBusy(false);
+        } else if (mode === 'avatar' && READ_RE.test(text) && DATA_RE.test(text)) {
+          setBusy(true);
+          try {
+            const ok = await appOp({ text, mode: 'read' });
+            if (ok) { setBusy(false); return; }
+          } catch (e) {
+            ai(`执行失败：${String(e?.message || e)}`);
+            setBusy(false);
+            return;
+          }
+          setBusy(false);
+        }
         const history = msgs.filter((m) => m.role === 'user' || m.role === 'ai').slice(-8).map((m) => ({ role: m.role, text: m.text }));
         const selectedApp = app ? { name: app.name, title: app.title, command: app.command, space: app.space || space, place_uid: app.place_uid || '', place: app.place || '' } : null;
         const selectedAvatar = avatar ? { name: avatar.name, uid: avatar.uid, city: avatar.city, company: avatar.company, persona: avatar.persona || '', preferences: avatar.preferences || '', style: avatar.style || '', skills: avatar.skills || [] } : null;
@@ -487,47 +1158,50 @@
         const selectedScene = bg ? { id: bg.id, name: bg.name, theme: themeMode, language: locale === 'zh' ? 'zh' : 'en', timezone: sceneTz, location: sceneLoc } : null;
         const webPage = chatWebTab ? { url: chatWebTab.base || chatWebTab.url, title: chatWebTab.title || '' } : null;
         const editorFile = ideFile && ideFile.path ? { node: ideFile.node, space: ideFile.space, path: ideFile.path, language: ideFile.language, dirty: !!ideFile.dirty, content: String(ideFile.content || '').slice(0, 1500) } : null;
-        // 概念顺序：serve/node → space/pod → place/app → avatar → scene/background → mode → view → web → editor
-        const selection = {
-          serve: node, node,
-          space, pod: space,
-          place: selectedApp, app: selectedApp,
-          avatar: selectedAvatar,
-          scene: selectedScene, background: selectedScene,
-          mode,
-          view: view || 'chat',
-          web: webPage,
-          editor: editorFile,
-          experience: { sound: fx?.sound, light: fx?.light, color: fx?.color, style: fx?.style },
-          functions,
-        };
+        // 单一命名，不设别名：node / space / app / avatar / scene / mode / view / web / editor
         const context = {
-          selection,
-          serve: node, node,
-          space, pod: space,
-          place: selectedApp, app: selectedApp,
-          avatar: selectedAvatar,
-          scene: selectedScene, background: selectedScene,
           mode,
           view: view || 'chat',
+          node,
+          space,
+          app: selectedApp,
+          avatar: selectedAvatar,
+          scene: selectedScene,
           web: webPage,
           editor: editorFile,
           experience: { sound: fx?.sound, light: fx?.light, color: fx?.color, style: fx?.style },
           functions,
           nodes: (nodes || []).map((n) => ({ port: n.port, name: n.name, state: n.state, env: n.env })),
           spaces: (spaces || []).map((s) => ({ name: s.name, status: s.status })),
-          apps: (apps || []).map((a) => ({ name: a.name, title: a.title, command: a.command })),
+          apps: [],
         };
+        let recentApps = Array.isArray(apps) ? apps.slice() : [];
+        if (!recentApps.length) {
+          try { const rr = await api('apps', { node, space, uid: actorId() }); if (Array.isArray(rr)) recentApps = rr; } catch {}
+        }
+        context.apps = (recentApps || []).map((a) => ({ name: a.name, title: a.title, command: a.command }));
+        // 请求上下文只保留一个场景来源：scene。旧会话可能残留 background/bg 别名，
+        // 在发送边界统一剥离，避免同一份赛博世界配置在提示词里重复出现。
+        const requestContext = stripSceneAliases(context);
         const startedAt = Date.now();
         setTurn({ at: startedAt, ms: 0, tokens: 0, reqBytes: 0, resBytes: 0, q: text.slice(0, 70), a: '' });
         setBusy(true); push('sys', 'DSH INTENT');
         try {
-          const r = await api('chat', { message: content, history, context, mode });
+          setLive(locale === 'zh' ? '② 调用模型：分析意图与参数' : '② Calling model');
+          const r = await api('chat', { message: content, history, context: requestContext, mode });
           const reply = String(r?.reply || '');
           const u = r?.usage || null;
           const tokens = u ? (Number(u.total_tokens) || ((Number(u.input_tokens) || Number(u.prompt_tokens) || 0) + (Number(u.output_tokens) || Number(u.completion_tokens) || 0))) : Math.round((content.length + reply.length) / 4);
           setTurn({ at: startedAt, ms: Number(r?.ms) || (Date.now() - startedAt), tokens, est: !u, reqBytes: Number(r?.promptBytes) || 0, resBytes: Number(r?.outputBytes) || reply.length, q: text.slice(0, 70), a: reply.slice(0, 80) });
-          if (reply) ai(reply, { ms: Number(r?.ms) || (Date.now() - startedAt), tokens, est: !u, bytes: Number(r?.outputBytes) || reply.length });
+          const trace = {
+            at: new Date(startedAt).toISOString(),
+            mode,
+            ms: Number(r?.ms) || (Date.now() - startedAt),
+            request: { message: content, history, context: requestContext, promptBytes: Number(r?.promptBytes) || 0 },
+            response: { reply, usage: u || null, outputBytes: Number(r?.outputBytes) || reply.length },
+            actions: [],
+          };
+          const aiId = reply ? ai(reply, { ms: trace.ms, tokens, est: !u, bytes: trace.response.outputBytes, trace }) : null;
           if (onRequest) onRequest({
             at: new Date(startedAt).toISOString(),
             ms: Number(r?.ms) || (Date.now() - startedAt),
@@ -540,10 +1214,21 @@
             action: r?.action || null,
           });
           const actions = Array.isArray(r?.actions) && r.actions.length ? r.actions : (r?.action ? [r.action] : []);
-          for (const action of actions) await executeAction(action);
+          for (const action of actions) {
+            setLive(locale === 'zh' ? `③ 执行动作：${action.op}` : `③ Action: ${action.op}`);
+            let out;
+            try { out = await executeAction(action); } catch (e) { out = { error: String(e?.message || e) }; }
+            trace.actions.push({ op: action.op, args: action.args || {}, result: sanitizeTrace(out) });
+            if (aiId) setMsgs((xs) => xs.map((m) => (m.id === aiId ? { ...m, trace: { ...trace, actions: trace.actions.slice() } } : m)));
+          }
+          // 模型没给动作时，客户端自己判断：写数据类指令直接执行，不再回一句「正在打开…」
+          if (!actions.length && /(添加|录入|新增|写入|加一条|新建一条)/.test(text)) {
+            try { await writeIntoApp({ text }); } catch (e) { ai(`执行失败：${String(e?.message || e)}`); }
+          }
         } catch (e) {
           ai(`DSH 意图层调用失败：${String(e?.message || e)}\n请确认 DSH 已配置模型，或重启 DSH 加载 llm 注入。`);
         } finally {
+          setLive(null);
           setBusy(false);
         }
       };
@@ -571,6 +1256,17 @@
 
       const fmtBytes = (n) => (n >= 1024 ? `${(n / 1024).toFixed(1)}KB` : `${n}B`);
       const lastAi = [...msgs].reverse().find((m) => m.role === 'ai') || null;
+      const tracePanel = traceMsg ? h('div', { className: 'cx-trace-mask', onClick: () => setTraceMsg(null) },
+        h('div', { className: 'cx-trace', onClick: (e) => e.stopPropagation() },
+          h('div', { className: 'cx-trace-h' },
+            h('span', null, locale === 'zh' ? '请求上下文与返回' : 'Request trace'),
+            h('span', { className: 'cx-trace-sub' }, `${traceMsg.mode || ''} · ${traceMsg.trace?.ms || 0}ms`),
+            h('button', { className: 'cx-trace-x', onClick: () => setTraceMsg(null) }, '✕')),
+          h('div', { className: 'cx-trace-b' }, ['request', 'response', 'actions'].map((k) => h('div', { key: k, className: 'cx-trace-sec' },
+            h('div', { className: 'cx-trace-k' }, k === 'request' ? (locale === 'zh' ? '① 请求（原样发出）' : '① REQUEST') : k === 'response' ? (locale === 'zh' ? '② 模型返回' : '② RESPONSE') : (locale === 'zh' ? '③ 执行动作与结果' : '③ ACTIONS')),
+            h('pre', { className: 'cx-trace-code' }, JSON.stringify(traceMsg.trace?.[k] ?? null, null, 2))))),
+          h('div', { className: 'cx-trace-f' },
+            h('button', { className: 'cx-btn sm', onClick: () => { try { navigator.clipboard.writeText(JSON.stringify(traceMsg.trace, null, 2)); } catch {} } }, T('复制全部'))))) : null;
       const compose = h('div', { className: 'cx-compose' },
         chatTab !== 'chat' ? h('div', { className: 'cx-webstatus', onClick: () => setReplyPop((v) => !v) },
           h('span', { className: `dot${busy ? ' busy' : ''}` }),
@@ -606,7 +1302,21 @@
         h('input', { type: 'file', accept: 'image/*', ref: avatarImgRef, style: { display: 'none' }, onChange: (e) => { const f = (e.target.files || [])[0]; e.target.value = ''; f && onUploadAvatar(f); } }),
         h('input', { type: 'file', accept: 'image/*', ref: bgImgRef, style: { display: 'none' }, onChange: (e) => { const f = (e.target.files || [])[0]; e.target.value = ''; f && onUploadBg(f); } }));
 
-      const renderMsg = (m, i) => m.role === 'sys'
+      const renderMsg = (m, i) => m.role === 'form'
+        ? h(CxWriteForm, { key: i, msg: m, lang: locale, onSubmit: submitForm, onDone: markFormDone, onOpen: (url, title) => { if (typeof OPEN_LINK === 'function') OPEN_LINK(url, title); } })
+        : m.role === 'step'
+        ? h('div', { key: i, className: 'cx-step' }, m.text)
+        : m.role === 'table' && m.table
+        ? h('div', { key: i, className: 'cx-dtable' },
+            h('div', { className: 'cx-dtable-h' }, h('span', null, m.table.title), h('span', { className: 'n' }, m.table.detail ? (locale === 'zh' ? '详情' : 'DETAIL') : `${m.table.count} ${locale === 'zh' ? '条' : 'rows'}`)),
+            h('div', { className: 'cx-dtable-wrap' },
+              m.table.detail
+                ? h('table', { className: 'cx-dtable-kv' }, h('tbody', null, m.table.detail.map((f) => h('tr', { key: f.key },
+                    h('th', null, f.label), h('td', null, f.value.slice(0, 120))))))
+                : h('table', null,
+                    h('thead', null, h('tr', null, m.table.columns.map((c) => h('th', { key: c.key }, c.label)))),
+                    h('tbody', null, m.table.rows.map((row, ri) => h('tr', { key: ri }, m.table.columns.map((c) => h('td', { key: c.key }, String(row[c.key] ?? '').slice(0, 40)))))))))
+        : m.role === 'sys'
         ? h('div', { key: i, className: 'cx-sysline' }, h('span', { className: 'cx-sysdot' }), m.text)
         : h('div', { key: i, className: `cx-msg ${m.role}` },
             h('span', { className: 'cx-msg-avatar' }, m.role === 'user' ? 'ME' : 'AI'),
@@ -618,16 +1328,36 @@
                 m.role === 'ai' && m.tokens ? h('span', { className: 'cx-msg-metrics' }, `${m.est ? '≈' : ''}${m.tokens} tok`) : null,
                 m.role === 'ai' && m.bytes ? h('span', { className: 'cx-msg-metrics' }, fmtBytes(m.bytes)) : null,
                 h('div', { className: 'cx-msg-tools' },
-                  h('button', { className: 'cx-msg-tool', title: T('复制'), onClick: () => { try { navigator.clipboard.writeText(m.text); } catch {} } }, T('复制')),
-                  h('button', { className: 'cx-msg-tool', title: T('引用'), onClick: () => { const el = inputRef.current; if (!el) return; el.value = '> ' + String(m.text || '').split('\n').join('\n> ') + '\n'; el.focus(); } }, T('引用')),
+                  m.trace ? h('button', { className: 'cx-msg-tool', title: T('查看请求的上下文与返回'), onClick: () => setTraceMsg(m) }, T('详情')) : null,
                   m.role === 'ai' ? h('button', { className: 'cx-msg-tool', title: T('重试'), onClick: () => { const prev = [...msgs.slice(0, i)].reverse().find((x) => x.role === 'user'); if (prev) handle(prev.text); } }, T('重试')) : null,
-                  h('button', { className: 'cx-msg-tool danger', title: T('删除'), onClick: () => { setMsgs((list) => list.filter((_, j) => j !== i)); } }, T('删除')))),
+                  h('button', { className: 'cx-msg-tool', title: T('引用'), onClick: () => { const el = inputRef.current; if (!el) return; el.value = '> ' + String(m.text || '').split('\n').join('\n> ') + '\n'; el.focus(); } }, T('引用')),
+                  h('button', { className: 'cx-msg-tool', title: T('复制'), onClick: () => { try { navigator.clipboard.writeText(m.text); } catch {} } }, T('复制')),
+                  h('button', { className: 'cx-msg-tool danger', title: T('删除'), onClick: () => { setMsgs((list) => list.filter((_, j) => j !== i)); } }, T('删除'))),
               h('div', { className: 'cx-msg-body' },
                 h(RichText, { text: m.text }),
-                m.card ? h('div', { className: 'cx-result-card' },
+                m.ask ? h(CxAskForm, { m, lang: locale, onSubmit: submitAsk })
+                : m.card && m.card.entity && m.card.entity.kind === 'space' && m.card.entity.data
+                  ? h(SpaceCard, { s: m.card.entity.data, node: m.card.entity.node || node, locale, busy: false,
+                    onSelect: cards?.selectSpace, onOpen: (x) => { const id = cards?.openSpace?.(x?.name || x); if (id) setChatTab(id); }, onStart: cards?.startSpace, onStop: cards?.stopSpace, onDelete: cards?.deleteSpace, onIde: cards?.openIde, onTool: cards?.openCardTool, onHome: () => cards?.openHome?.(m.card.entity.data?.name || ''), isOpen: cards?.isOpenUrl, tone: cards?.tone })
+                : m.card && m.card.entity && m.card.entity.kind === 'app' && m.card.entity.data
+                  ? h(AppRow, { a: m.card.entity.data, node: m.card.entity.node || node, locale, busy: false, onSelect: cards?.selectApp, onOpen: (a) => { const id = cards?.openApp?.(a); if (id) setChatTab(id); } })
+                : m.role === 'tool' ? h(ToolRow, { ctx: m.tool })
+                : m.card && m.card.entity && m.card.entity.kind === 'service' && m.card.entity.data
+                  ? h(StoreRow, { s: m.card.entity.data, node: m.card.entity.node || node, locale, busy: false,
+                    onCreate: (svc) => createAppFromStore(svc || '') })
+                : m.card && m.card.entity && m.card.entity.kind === 'node' && m.card.entity.data
+                  ? h(NodeCard, { n: m.card.entity.data, locale, active: false, busy: false, onSelect: cards?.selectNode, onStart: cards?.startNode, onStop: cards?.stopNode, onDelete: cards?.deleteNode, onOpen: cards?.openNode, onIde: cards?.openIde, onTool: cards?.openCardTool, onHome: () => cards?.openHome?.(''), isOpen: cards?.isOpenUrl, tone: cards?.tone })
+                : m.card && m.card.entity ? h(CxEntityCard, { e: m.card.entity, lang: locale, onOpen: (u, t) => { if (typeof OPEN_LINK === 'function') OPEN_LINK(u, t); } })
+                : m.card && m.card.app ? h('div', { className: 'cx-app-card' },
+                  h('div', { className: 'cx-app-card-ico' }, m.card.app.icon ? h('img', { src: m.card.app.icon, alt: '' }) : h('span', { className: 'ph' }, String(m.card.app.title || 'A').slice(0, 1))),
+                  h('div', { className: 'cx-app-card-main' },
+                    h('div', { className: 'cx-app-card-title' }, m.card.app.title || '应用'),
+                    h('div', { className: 'cx-app-card-sub' }, m.card.app.meta || '')),
+                  m.card.app.link ? h('button', { className: 'cx-app-card-open', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.app.link.url, m.card.app.title || '打开'); } }, 'OPEN') : null)
+                  : m.card ? h('div', { className: 'cx-result-card' },
                   h('div', { className: 'cx-result-title' }, m.card.title || '结果'),
                   h('div', { className: 'cx-result-rows' }, (m.card.rows || []).map(([k, v], j) => h('div', { key: j, className: 'cx-result-row' }, h('span', null, k), h('b', null, String(v ?? '—'))))),
-                  m.card.link ? h('button', { className: 'cx-result-link', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.link.url, m.card.link.label || '管理'); } }, m.card.link.label || '打开') : null) : null)));
+                  m.card.link ? h('button', { className: 'cx-result-link', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.link.url, m.card.link.label || '管理'); } }, m.card.link.label || '打开') : null) : null))));
 
       const uidCtx = (it) => uidFieldMap(it);
       const openPm = (kind, mode = 'create', item = null) => {
@@ -760,20 +1490,19 @@
               h('div', { className: 'cx-hero-sub' }, T('用一个对话，部署节点、创建空间、生成应用、管理数字分身与日常任务。')),
               !msgs.some((m) => m.role === 'user') ? h('div', { className: 'cx-empty-hint' }, T('消息还是空白 · 输入问题，或从下面的建议开始')) : null)),
           msgs.map(renderMsg),
-          msgs.length <= 1 ? h('div', { className: 'cx-suggest' },
-            modeQuick(CHAT_MODES.find((x) => x.id === mode)).map((label) => h('button', {
-              key: label, type: 'button', className: 'cx-suggest-tag', title: T('点击填入输入框'),
-              onClick: () => {
-                const el = inputRef.current;
-                if (!el) return;
-                el.value = label;
-                el.focus();
-                try { el.setSelectionRange(el.value.length, el.value.length); } catch {}
-              },
-            }, label))) : null),
-        busy ? h('div', { className: 'cx-chat-typing' }, T('Copilot 正在执行…')) : null,
+          live ? h('div', { className: 'cx-live' }, h('span', { className: 'cx-live-dot' }), h('span', { className: 'cx-live-t' }, live)) : null),
         h('div', { className: 'cx-hint' },
-          h('div', { className: 'cx-hint-text' }, `${activePlan ? (locale === 'zh' ? `计划「${activePlan.title}」 · ` : `Plan "${activePlan.title}" · `) : ''}${modeIntro(CHAT_MODES.find((m) => m.id === mode))}`),
+          h('div', { className: 'cx-hint-name' }, activePlan ? (locale === 'zh' ? `计划「${activePlan.title}」` : `Plan "${activePlan.title}"`) : T(CHAT_MODES.find((m) => m.id === mode)?.name || '提示词')),
+          h('div', { className: 'cx-hint-quick' }, modeQuick(CHAT_MODES.find((x) => x.id === mode)).map((label) => h('button', {
+            key: label, type: 'button', className: 'cx-hint-chip', title: T('点击填入输入框'),
+            onClick: () => {
+              const el = inputRef.current;
+              if (!el) return;
+              el.value = label;
+              el.focus();
+              try { el.setSelectionRange(el.value.length, el.value.length); el.dispatchEvent(new Event('input', { bubbles: true })); } catch {}
+            },
+          }, label))),
           h('button', { className: 'cx-hint-more', onClick: () => setShowMore((v) => !v) }, showMore ? T('收起') : T('更多'))),
         showMore ? h('div', { className: 'cx-hint-panel' }, CHAT_MODES.map((m) => {
           const note = PRODUCT_NOTES[m.id] || {};
@@ -781,11 +1510,13 @@
             h('div', { className: 'ht' }, T(note.tag || 'MODE'), ' · ', locale === 'zh' ? (note.title || m.name) : modeLabel(m)),
             h('div', { className: 'hd' }, T(note.text || m.intro)));
         })) : null,
+            busy ? h('div', { className: 'cx-chat-typing' }, T('Copilot 正在执行…')) : null,
             compose,
             chatTab !== 'chat' && replyPop ? h('div', { className: 'cx-webpop' },
               h('div', { className: 'h' }, h('span', null, locale === 'zh' ? '最近一条回复' : 'LATEST REPLY'), h(IconButton, { name: 'close', onClick: () => setReplyPop(false) })),
               h('div', { className: 'b' }, lastAi ? h(RichText, { text: lastAi.text }) : h('div', { className: 'cx-empty' }, '—'))) : null),
           showRight ? rightPanel : null),
+        tracePanel,
         ctxMenu ? h('div', { className: 'cx-ctxmenu', style: { left: Math.min(ctxMenu.x, Math.max(0, (typeof window !== 'undefined' ? window.innerWidth : 1200) - 200)), top: Math.min(ctxMenu.y, Math.max(0, (typeof window !== 'undefined' ? window.innerHeight : 800) - 150)) }, onClick: (e) => e.stopPropagation() },
           h('div', { className: 'cx-ctxmenu-t' }, ctxMenu.kind === 'avatar' ? (avatar?.name || '数字人') : (bg?.name || '背景')),
           ctxMenu.kind === 'avatar' ? [

@@ -86,6 +86,112 @@
       return h('canvas', { className: 'cx-mon-twin', ref });
     }
 
+
+    /* ===== 面板看板：参考 Grafana，面板与数据源都可加 ===== */
+    const MON_PANELS = 'contextos-devops-dsh:monitor-panels';
+    const MON_DEFAULT = [
+      { id: 'n1', type: 'stat', title: '服务节点', src: { kind: 'nodes' }, w: 3, refresh: 0 },
+      { id: 'n2', type: 'stat', title: '项目空间', src: { kind: 'spaces' }, w: 3, refresh: 0 },
+      { id: 'n3', type: 'table', title: '节点健康', src: { kind: 'op', op: 'sampleNodes' }, w: 6, refresh: 10 },
+      { id: 'n4', type: 'query', title: 'runtime', src: { kind: 'cmd', node: 9191, command: 'runtime' }, w: 4, refresh: 10 },
+      { id: 'n5', type: 'iframe', title: '管理后台', src: { kind: 'url', url: '/c/admin', node: 9191 }, w: 8, refresh: 0 },
+    ];
+    const monLoad = () => { try { const v = JSON.parse(localStorage.getItem(MON_PANELS) || 'null'); return Array.isArray(v) && v.length ? v : MON_DEFAULT; } catch { return MON_DEFAULT; } };
+    const monSave = (v) => { try { localStorage.setItem(MON_PANELS, JSON.stringify(v.slice(0, 24))); } catch { /* ignore */ } };
+
+    function MonitorPanel({ p, data, onEdit, onDel, onReload, zh }) {
+      const body = () => {
+        if (p.type === 'iframe') {
+          const url = /^https?:/.test(p.src.url) ? p.src.url : `http://127.0.0.1:${p.src.node || 9191}${p.src.url || '/'}`;
+          return h('iframe', { className: 'cx-mon-frame', src: url, title: p.title, sandbox: 'allow-same-origin allow-scripts allow-forms' });
+        }
+        if (!data || data.loading) return h('div', { className: 'cx-mon-empty' }, zh ? '加载中…' : 'loading…');
+        if (data.error) return h('div', { className: 'cx-mon-empty err' }, String(data.error).slice(0, 120));
+        const r = data.value || {};
+        if (p.type === 'stat') return h('div', { className: 'cx-mon-stat' }, h('b', null, String(r.value ?? '—')), h('span', null, r.sub || ''));
+        if (p.type === 'table') {
+          const cols = (r.columns || []).slice(0, 5);
+          return h('div', { className: 'cx-mon-tbl' },
+            h('div', { className: 'h' }, cols.map((c) => h('span', { key: c }, String(c)))),
+            (r.rows || []).slice(0, 6).map((row, i) => h('div', { key: i, className: 'r' }, cols.map((c) => h('span', { key: c }, String(row[c] ?? '').slice(0, 18))))));
+        }
+        // query：单值 / 键值
+        if (r.fields) return h('div', { className: 'cx-mon-kv' }, Object.entries(r.fields).slice(0, 6).map(([k, v]) => h('div', { key: k }, h('span', null, k), h('b', null, String(v).slice(0, 24)))));
+        if (r.result) return h('div', { className: 'cx-mon-stat' }, h('b', { className: 'sm' }, String(r.result).slice(0, 40)));
+        return h('div', { className: 'cx-mon-empty' }, `${r.status ?? ''} ${r.count || ''} · ${r.ms ?? ''}ms`);
+      };
+      return h('section', { className: 'cx-mon-panel cx-mon-bo', style: { gridColumn: `span ${Math.max(2, Math.min(12, p.w || 3))}` } },
+        h('div', { className: 'cx-mon-pt' },
+          h('span', null, p.title || p.id),
+          h('span', { className: 'cx-mon-bo-act' },
+            h('button', { className: 'cx-term-act', onClick: () => onReload(p) }, zh ? '刷新' : 'Refresh'),
+            h('button', { className: 'cx-term-act', onClick: () => onEdit(p) }, zh ? '编辑' : 'Edit'),
+            h('button', { className: 'cx-term-act danger', onClick: () => onDel(p) }, zh ? '删除' : 'Delete'))),
+        h('div', { className: 'cx-mon-bo-body' }, body()));
+    }
+
+    function MonitorBoard({ nodes, spaces, locale, onNotify }) {
+      const zh = locale === 'zh';
+      const [panels, setPanels] = useState(monLoad);
+      const [data, setData] = useState({});
+      const [edit, setEdit] = useState(null);
+      const [tick, setTick] = useState(0);
+      useEffect(() => { monSave(panels); }, [panels]);
+      useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 5000); return () => clearInterval(t); }, []);
+      const load = async (p) => {
+        if (p.type === 'iframe') return;
+        setData((d) => ({ ...d, [p.id]: { loading: true } }));
+        try {
+          let value;
+          if (p.src.kind === 'nodes') value = { value: (nodes || []).length, sub: `${(nodes || []).filter((n) => n.state === 'running').length} running` };
+          else if (p.src.kind === 'spaces') value = { value: (spaces || []).length, sub: `${(spaces || []).filter((s) => s.status === 'running').length} online` };
+          else if (p.src.kind === 'op') value = await api(p.src.op, p.src.params || {});
+          else value = await api('monitorQuery', { node: p.src.node || 9191, space: p.src.space || '', command: p.src.command, action: p.src.action || '', params: p.src.params || {} });
+          setData((d) => ({ ...d, [p.id]: { value, at: Date.now() } }));
+        } catch (e) {
+          setData((d) => ({ ...d, [p.id]: { error: e.message || String(e) } }));
+        }
+      };
+      useEffect(() => {
+        panels.forEach((p) => { if (p.type === 'iframe') return; const due = p.refresh > 0 ? tick % Math.max(1, Math.round(p.refresh / 5)) === 0 : true; if (tick === 0 || due) load(p); });
+      }, [tick, panels.length]);
+      const startAdd = () => setEdit({ id: 'p' + Date.now().toString(36), type: 'query', title: zh ? '新面板' : 'New panel', w: 4, refresh: 10, src: { kind: 'cmd', node: 9191, command: 'runtime', params: {} } });
+      const saveEdit = () => { setPanels((list) => { const i = list.findIndex((x) => x.id === edit.id); return i >= 0 ? list.map((x) => (x.id === edit.id ? edit : x)) : [...list, edit]; }); setEdit(null); };
+      return h('div', { className: 'cx-mon-board' },
+        h('div', { className: 'cx-mon-board-h' },
+          h('span', { className: 't' }, zh ? '面板看板' : 'PANELS'),
+          h('span', { className: 's' }, zh ? '数据源 = 节点 + 空间 + 命令 + 参数' : 'source = node + space + command + params'),
+          h('button', { className: 'cx-btn xs pri', onClick: startAdd }, zh ? '+ 添加面板' : '+ Panel')),
+        h('div', { className: 'cx-mon-board-grid' }, panels.map((p) => h(MonitorPanel, { key: p.id, p, data: data[p.id], zh, onEdit: setEdit, onDel: (x) => setPanels((l) => l.filter((y) => y.id !== x.id)), onReload: load }))),
+        edit ? h('div', { className: 'cx-mon-ed' },
+          h('div', { className: 'cx-mon-ed-h' }, zh ? '面板设置' : 'Panel'),
+          h('label', null, zh ? '标题' : 'Title', h('input', { value: edit.title, onChange: (e) => setEdit({ ...edit, title: e.target.value }) })),
+          h('label', null, zh ? '类型' : 'Type', h('select', { value: edit.type, onChange: (e) => setEdit({ ...edit, type: e.target.value }) },
+            h('option', { value: 'stat' }, zh ? '数值' : 'Stat'),
+            h('option', { value: 'table' }, zh ? '表格' : 'Table'),
+            h('option', { value: 'query' }, zh ? '命令' : 'Command'),
+            h('option', { value: 'iframe' }, zh ? '内嵌网页' : 'Iframe'))),
+          h('label', null, zh ? '数据源类型' : 'Source', h('select', { value: edit.src.kind, onChange: (e) => setEdit({ ...edit, src: { ...edit.src, kind: e.target.value } }) },
+            h('option', { value: 'nodes' }, zh ? '节点列表' : 'Nodes'),
+            h('option', { value: 'spaces' }, zh ? '空间列表' : 'Spaces'),
+            h('option', { value: 'op' }, zh ? '内置数据' : 'Builtin'),
+            h('option', { value: 'cmd' }, zh ? '命令' : 'Command'),
+            h('option', { value: 'url' }, zh ? '网址' : 'URL'))),
+          edit.src.kind === 'cmd' ? h('div', { className: 'cx-mon-ed-row' },
+            h('label', null, 'node', h('input', { value: edit.src.node || 9191, onChange: (e) => setEdit({ ...edit, src: { ...edit.src, node: Number(e.target.value) || 9191 } }) })),
+            h('label', null, 'space', h('input', { value: edit.src.space || '', onChange: (e) => setEdit({ ...edit, src: { ...edit.src, space: e.target.value } }) })),
+            h('label', null, 'command', h('input', { value: edit.src.command || '', onChange: (e) => setEdit({ ...edit, src: { ...edit.src, command: e.target.value } }) })),
+            h('label', null, 'action', h('input', { value: edit.src.action || '', onChange: (e) => setEdit({ ...edit, src: { ...edit.src, action: e.target.value } }) }))) : null,
+          edit.src.kind === 'url' ? h('div', { className: 'cx-mon-ed-row' },
+            h('label', null, 'node', h('input', { value: edit.src.node || 9191, onChange: (e) => setEdit({ ...edit, src: { ...edit.src, node: Number(e.target.value) || 9191 } }) })),
+            h('label', null, 'url', h('input', { value: edit.src.url || '', onChange: (e) => setEdit({ ...edit, src: { ...edit.src, url: e.target.value } }) }))) : null,
+          h('label', null, zh ? '宽度（1-12 栅格）' : 'Width', h('input', { type: 'number', min: 2, max: 12, value: edit.w || 3, onChange: (e) => setEdit({ ...edit, w: Number(e.target.value) || 3 }) })),
+          h('label', null, zh ? '刷新秒数（0=不刷新）' : 'Refresh', h('input', { type: 'number', min: 0, max: 600, value: edit.refresh || 0, onChange: (e) => setEdit({ ...edit, refresh: Number(e.target.value) || 0 }) })),
+          h('div', { className: 'cx-mon-ed-f' },
+            h('button', { className: 'cx-btn xs', onClick: () => setEdit(null) }, zh ? '取消' : 'Cancel'),
+            h('button', { className: 'cx-btn xs pri', onClick: saveEdit }, zh ? '保存' : 'Save'))) : null);
+    }
+
     function MonitorView({ nodes, spaces, apps, events, logs, reqLog, locale, onRefresh }) {
       const zh = locale === 'zh';
       const [, tick] = useState(0);
@@ -115,6 +221,7 @@
       const maxBar = Math.max(1, ...spaceBars.map((b) => b.value));
       const feed = (events || []).slice(-8).reverse();
       return h('div', { className: 'cx-monitor' },
+        h(MonitorBoard, { nodes, spaces, locale }),
         h('div', { className: 'cx-mon-head' },
           h('div', null,
             h('div', { className: 'cx-mon-title' }, zh ? '数字孪生 · 运行监控' : 'DIGITAL TWIN · LIVE MONITOR'),
