@@ -305,10 +305,10 @@
     };
 
     const PmCalendar = React.memo(function PmCalendar({ tasks, start, end, onChange, locale }) {
-      const bootCalView = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || 'null') || {}; } catch { return {}; } })();
+      const bootCalView = cxRead('cal', {});
       const [view, setView] = useState(bootCalView.v === 2 && bootCalView.view ? bootCalView.view : 'week');
       const [cursor, setCursor] = useState(() => { try { return bootCalView.cursor ? new Date(bootCalView.cursor) : new Date(); } catch { return new Date(); } });
-      useEffect(() => { try { const prev = JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || '{}'); localStorage.setItem('contextos-devops-dsh:cal', JSON.stringify({ ...prev, v: 2, view, cursor: cursor.toISOString() })); } catch {} }, [view, cursor]);
+      useEffect(() => cxWrite('cal', { ...cxRead('cal', {}), v: 2, view, cursor: cursor.toISOString() }), [view, cursor]);
       const counts = {};
       for (const t of tasks || []) {
         const d = String(t.created_at || '').slice(0, 10);

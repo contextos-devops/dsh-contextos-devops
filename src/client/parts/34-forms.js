@@ -84,10 +84,10 @@
       const [taskId, setTaskId] = useState('');
       const [reportId, setReportId] = useState('');
       const [feedbackId, setFeedbackId] = useState('');
-      const bootCal = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || 'null') || {}; } catch { return {}; } })();
+      const bootCal = cxRead('cal', {});
       const [calStart, setCalStart] = useState(bootCal.start || '');
       const [calEnd, setCalEnd] = useState(bootCal.end || '');
-      useEffect(() => { try { const prev = JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || '{}'); localStorage.setItem('contextos-devops-dsh:cal', JSON.stringify({ ...prev, start: calStart, end: calEnd })); } catch {} }, [calStart, calEnd]);
+      useEffect(() => cxWrite('cal', { ...cxRead('cal', {}), start: calStart, end: calEnd }), [calStart, calEnd]);
       const [planStatusFilter, setPlanStatusFilter] = useState([]);
       const [taskStatusFilter, setTaskStatusFilter] = useState([]);
       const [reportTypeFilter, setReportTypeFilter] = useState([]);

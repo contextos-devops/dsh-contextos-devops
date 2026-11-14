@@ -124,7 +124,7 @@ window.__ModuleLoader__.load({
     const spaceIconHtml = (size) => svgIcon(ICON_SPACE, '#7c8cff', size);
     const chevHtml = (open, size) => ({ __html: `<svg width="${size || 10}" height="${size || 10}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(${open ? 90 : 0}deg);transition:transform .12s">${'<path d="M5.5 3L10.5 8l-5 5"/>'}</svg>` });
 
-    // 旧版 localStorage 键迁移（一次性）
+    // store-migration：旧键前缀迁移，需要枚举全部键，属唯一例外（一次性）
     try {
       const OLD = 'contextos-devops:';
       const NEW = 'contextos-devops-dsh:';
@@ -145,10 +145,10 @@ window.__ModuleLoader__.load({
     let cxSessionMem = null, cxSessionTimer = 0;
     const cxSessionGet = () => {
       if (cxSessionMem) return cxSessionMem;
-      try { const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); cxSessionMem = s && s.v === 2 ? s : null; } catch { cxSessionMem = null; }
+      const s = cxRead(SESSION_KEY, null); cxSessionMem = s && s.v === 2 ? s : null;
       return cxSessionMem;
     };
-    const cxSessionFlush = () => { try { if (cxSessionMem) localStorage.setItem(SESSION_KEY, JSON.stringify(cxSessionMem)); } catch {} };
+    const cxSessionFlush = () => { if (cxSessionMem) cxWrite(SESSION_KEY, cxSessionMem); };
     const cxSessionSave = (patch) => {
       const next = { ...(cxSessionGet() || {}), ...(patch || {}), v: 2, updatedAt: Date.now() };
       cxSessionMem = next;
@@ -200,6 +200,7 @@ window.__ModuleLoader__.load({
     // 语言在模块加载时就定下来，避免首帧（表单等 T() 文案）先按中文渲染
     let CURRENT_LANG = (() => {
       try {
+        // store-runtime：模块加载期就要定语言，早于 08-store 求值，只能直读
         const m = localStorage.getItem('contextos-devops-dsh:lang') || 'system';
         const nav = String((typeof navigator !== 'undefined' && navigator.language) || 'en').toLowerCase();
         const v = m === 'system' ? (nav.startsWith('zh') ? 'zh' : 'en') : m;
@@ -286,5 +287,5 @@ window.__ModuleLoader__.load({
  * one we saw (survives reloads before `avatars` finishes loading). */
 function cxActorUid(avatar) {
   if (avatar && avatar.uid) return avatar.uid;
-  try { return localStorage.getItem('contextos-devops-dsh:actor') || ''; } catch { return ''; }
+  return cxReadText('actor', '');
 }

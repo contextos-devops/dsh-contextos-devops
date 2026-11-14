@@ -14,8 +14,8 @@
       const [showRight, setShowRight] = useState(false);
       const [showBottom, setShowBottom] = useState(false);
       const [previewNonce, setPreviewNonce] = useState(0);
-      const [previewWidth, setPreviewWidth] = useState(() => { try { return Number(localStorage.getItem('contextos-devops-dsh:preview-w')) || 360; } catch { return 360; } });
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:preview-w', String(previewWidth)); } catch {} }, [previewWidth]);
+      const [previewWidth, setPreviewWidth] = useState(() => Number(cxReadText('preview-w', '360')) || 360);
+      useEffect(() => cxWriteText('preview-w', previewWidth), [previewWidth]);
       const startResize = (e) => {
         e.preventDefault();
         const startX = e.clientX; const startW = previewWidth;
@@ -36,7 +36,7 @@
       useEffect(() => { refreshGit(); }, [node, space]);
       const [recentOpen, setRecentOpen] = useState(true);
       const [treeOpen, setTreeOpen] = useState(true);
-      const readTreeFolds = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:tree-folds') || '{}'); } catch { return {}; } };
+      const readTreeFolds = () => cxRead('tree-folds', {});
       const treeFoldsKey = `${node || ''}:${space || ''}`;
       const skipTreeFoldSaveRef = useRef(false);
       useEffect(() => {
@@ -54,7 +54,7 @@
         try {
           const all = readTreeFolds();
           all[treeFoldsKey] = { recent: recentOpen, tree: treeOpen, git: gitOpen, gitHist: gitHistOpen };
-          localStorage.setItem('contextos-devops-dsh:tree-folds', JSON.stringify(all));
+          cxWrite('tree-folds', all);
         } catch {}
       }, [recentOpen, treeOpen, gitOpen, gitHistOpen, node, space]);
       const [editorErr, setEditorErr] = useState('');
@@ -99,7 +99,7 @@
       const restoreTextRef = useRef({});
       const termPendingRef = useRef(false);
       const saveTimerRef = useRef(null);
-      const readTermBuf = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:term-buf') || '{}'); } catch { return {}; } };
+      const readTermBuf = () => cxRead('term-buf', {});
       const readRemoteState = async () => { try { return (await api('stateGet')) || {}; } catch { return {}; } };
       const writeRemoteState = (name, value) => { try { api('stateSet', { name, value }).catch(() => {}); } catch {} };
       const termIdsRef = useRef(termIds); termIdsRef.current = termIds;
@@ -119,7 +119,7 @@
           ids.sort((a, b) => a - b);
           const all = readTermBuf();
           all[k] = { ids, texts };
-          localStorage.setItem('contextos-devops-dsh:term-buf', JSON.stringify(all));
+          cxWrite('term-buf', all);
           writeRemoteState('termBuf', all);
         } catch {}
       };
@@ -261,11 +261,11 @@
             const local = readIdeOpen();
             let changed = false;
             for (const k of Object.keys(remote)) { if (!local[k]) { local[k] = remote[k]; changed = true; } }
-            if (changed) { localStorage.setItem('contextos-devops-dsh:ide-open', JSON.stringify(local)); setIdeVersion((v) => v + 1); }
+            if (changed) { cxWrite('ide-open', local); setIdeVersion((v) => v + 1); }
           } catch {}
         })();
       }, []);
-      const readIdeOpen = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide-open') || '{}'); } catch { return {}; } };
+      const readIdeOpen = () => cxRead('ide-open', {});
       useEffect(() => {
         if (!node) return;
         restorePendingRef.current = true;
@@ -310,7 +310,7 @@
         try {
           const all = readIdeOpen();
           all[ideKey] = { tabs: tabs.map((t) => t.path), active: activePath };
-          localStorage.setItem('contextos-devops-dsh:ide-open', JSON.stringify(all));
+          cxWrite('ide-open', all);
           try { api('stateSet', { name: 'ideOpen', value: all }).catch(() => {}); } catch {}
         } catch {}
       }, [tabs, activePath, node, space]);
@@ -539,7 +539,7 @@
         try { await api('removePath', { node, space: sp, path: entry.path }); closeTab(entry.path); await reloadDir(dir); refreshGit(); }
         catch (e) { setStatus(String(e?.message || e)); }
       };
-      const readPanes = () => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide-panes') || '{}'); } catch { return {}; } };
+      const readPanes = () => cxRead('ide-panes', {});
       useEffect(() => {
         if (!node) return;
         const p = readPanes()[`${node}:${space}`];
@@ -549,7 +549,7 @@
       }, [node, space]);
       useEffect(() => {
         if (!node) return;
-        try { const all = readPanes(); all[`${node}:${space}`] = { left: showLeft, right: showRight, bottom: showBottom }; localStorage.setItem('contextos-devops-dsh:ide-panes', JSON.stringify(all)); } catch {}
+        try { const all = readPanes(); all[`${node}:${space}`] = { left: showLeft, right: showRight, bottom: showBottom }; cxWrite('ide-panes', all); } catch {}
       }, [showLeft, showRight, showBottom, node, space]);
       const jumpLine = (line) => { const ed = editorRef.current; if (ed) { try { ed.revealLineInCenter(line); ed.setPosition({ lineNumber: line, column: 1 }); ed.focus(); } catch {} } };
       const gitMark = (p) => (git && git.files ? git.files[p] : '');

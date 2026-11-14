@@ -63,14 +63,12 @@
           : null);
     }
     const FORM_STATE_KEY = 'contextos-devops-dsh:formstate';
-    const readFormState = (fk) => { try { return (JSON.parse(localStorage.getItem(FORM_STATE_KEY) || '{}') || {})[fk] || null; } catch { return null; } };
+    const readFormState = (fk) => (cxRead(FORM_STATE_KEY, {}) || {})[fk] || null;
     const writeFormState = (fk, v) => {
       if (!fk) return;
-      try {
-        const all = JSON.parse(localStorage.getItem(FORM_STATE_KEY) || '{}') || {};
-        all[fk] = { ...(all[fk] || {}), ...v };
-        localStorage.setItem(FORM_STATE_KEY, JSON.stringify(all));
-      } catch {}
+      const all = cxRead(FORM_STATE_KEY, {}) || {};
+      all[fk] = { ...(all[fk] || {}), ...v };
+      cxWrite(FORM_STATE_KEY, all);
     };
     function CxWriteForm({ msg, onSubmit, onOpen, onDone, lang }) {
       // 直接用当前语言渲染，避免 T() 依赖全局语言初始化时机
@@ -176,7 +174,7 @@
       const [files, setFiles] = useState([]);
       const [showMore, setShowMore] = useState(false);
       const [folds, setFolds] = useState({ map: true, targets: false, plans: false, tasks: false, reports: false, feedbacks: false });
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:folds', JSON.stringify(folds)); } catch {} }, [folds]);
+      useEffect(() => cxWrite('folds', folds), [folds]);
       const fold = (k) => folds[k] === true;
       const [calFull, setCalFull] = useState(false);
       const calRef = useRef(null);
@@ -188,7 +186,7 @@
       useEffect(() => { if (!calFull) return; const close = (e) => { if (e.key === 'Escape') setCalFull(false); }; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close); }, [calFull]);
       const [calStart, setCalStart] = useState('');
       const [calEnd, setCalEnd] = useState('');
-      useEffect(() => { try { const prev = JSON.parse(localStorage.getItem('contextos-devops-dsh:cal') || '{}'); localStorage.setItem('contextos-devops-dsh:cal', JSON.stringify({ ...prev, start: calStart, end: calEnd })); } catch {} }, [calStart, calEnd]);
+      useEffect(() => cxWrite('cal', { ...cxRead('cal', {}), start: calStart, end: calEnd }), [calStart, calEnd]);
       const [planStatusFilter, setPlanStatusFilter] = useState([]);
       const [taskStatusFilter, setTaskStatusFilter] = useState([]);
       const [reportTypeFilter, setReportTypeFilter] = useState([]);
@@ -201,7 +199,7 @@
       const bgImgRef = useRef(null);
       const [showLeft, setShowLeft] = useState(true);
       const [showRight, setShowRight] = useState(true);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:panels', JSON.stringify({ left: showLeft, right: showRight })); } catch {} }, [showLeft, showRight]);
+      useEffect(() => cxWrite('panels', { left: showLeft, right: showRight }), [showLeft, showRight]);
       const [ctxMenu, setCtxMenu] = useState(null);
       const [sceneOpen, setSceneOpen] = useState(false);
       // 聊天面板当前标签：按 URL 基准恢复（标签 id 每次启动都会重排，不能存 id）
@@ -255,16 +253,14 @@
       const modeIntro = (m) => (m ? (locale === 'zh' ? m.intro : (m.introEn || m.intro)) : '');
       const modeQuick = (m) => (m ? (locale === 'zh' ? m.quick : (m.quickEn || m.quick)) : []);
       const [msgs, setMsgs] = useState(() => {
-        try {
-          const a = JSON.parse(localStorage.getItem('contextos-devops-dsh:chat') || '[]');
-          if (Array.isArray(a) && a.length) return a;
-        } catch {}
+        const a = cxRead('chat', []);
+        if (Array.isArray(a) && a.length) return a;
         return [{ role: 'ai', text: modeIntro(CHAT_MODES[0]) }];
       });
       const [live, setLive] = useState(null);
       const [traceMsg, setTraceMsg] = useState(null);
       useEffect(() => {
-        try { localStorage.setItem('contextos-devops-dsh:chat', JSON.stringify(msgs.slice(-120))); } catch {}
+        cxWrite('chat', msgs.slice(-120));
       }, [msgs]);
       const inputRef = useRef(null);
       const lastUserRef = useRef('');
@@ -273,7 +269,7 @@
       useEffect(() => { if (space) spaceRef.current = space; }, [space]);
       useEffect(() => { setMapTheme(theme === 'light' ? 'light' : 'dark'); }, [theme]);
       const draftTimerRef = useRef(null);
-      const initialDraft = (() => { try { return localStorage.getItem('contextos-devops-dsh:draft') || ''; } catch { return ''; } })();
+      const initialDraft = cxReadText('draft', '');
       useEffect(() => {
         const onKey = (e) => {
           if ((e.metaKey || e.ctrlKey) && String(e.key).toLowerCase() === 'k') {
@@ -420,19 +416,19 @@
       const onMsgScroll = (e) => {
         const el = e.currentTarget;
         clearTimeout(scrollSaveTimer.current);
-        scrollSaveTimer.current = setTimeout(() => { try { localStorage.setItem(scrollKeyOf(), String(Math.round(el.scrollTop))); } catch {} }, 300);
+        scrollSaveTimer.current = setTimeout(() => cxWriteText(scrollKeyOf(), Math.round(el.scrollTop)), 300);
       };
       useEffect(() => {
         (async () => {
           try {
             let local = null;
-            try { local = JSON.parse(localStorage.getItem(sessionKey) || 'null'); } catch {}
+            local = cxRead(sessionKey, null);
             if (Array.isArray(local) && local.length) return;
             const st = await api('stateGet');
             const remote = st && st['chat:' + sessionKey];
             if (Array.isArray(remote) && remote.length) {
               setMsgs(remote);
-              try { localStorage.setItem(sessionKey, JSON.stringify(remote)); } catch {}
+              cxWrite(sessionKey, remote);
             }
           } catch {}
         })();
@@ -468,10 +464,10 @@
         if (!open) return;
         const prev = sessionStateRef.current;
         if (prev.key && prev.ready) {
-          try { localStorage.setItem(prev.key, JSON.stringify(prev.msgs)); } catch {}
+          cxWrite(prev.key, prev.msgs);
         }
         let saved = null;
-        try { saved = JSON.parse(localStorage.getItem(sessionKey) || 'null'); } catch {}
+        saved = cxRead(sessionKey, null);
         const next = Array.isArray(saved) && saved.length ? saved : [{ role: 'ai', text: modeIntro(CHAT_MODES.find((x) => x.id === mode)) || modeIntro(CHAT_MODES[0]) }];
         sessionStateRef.current = { key: sessionKey, ready: false, msgs: next };
         setMsgs(next);
@@ -482,7 +478,7 @@
         if (cur.key !== sessionKey) return;
         if (!cur.ready) { cur.ready = true; cur.msgs = msgs; return; }
         cur.msgs = msgs;
-        try { localStorage.setItem(sessionKey, JSON.stringify(msgs)); } catch {}
+        cxWrite(sessionKey, msgs);
         try { api('stateSet', { name: 'chat:' + sessionKey, value: msgs.slice(-100).map((m) => ({ role: m.role, text: String(m.text || '').slice(0, 4000), t: m.t || '' })) }).catch(() => {}); } catch {}
       }, [msgs, sessionKey, open]);
 
@@ -1102,7 +1098,7 @@
         if (!chatReady) { ai('请先完成初始化：服务节点、云社区/云办公、数字分身和项目管理。'); return; }
         const attached = files.map((f) => f.name).join(', ');
         const content = attached ? `${text}\n附件：${attached}` : text;
-        push('user', content); clearTimeout(draftTimerRef.current); if (inputRef.current) inputRef.current.value = ''; try { localStorage.removeItem('contextos-devops-dsh:draft'); } catch {} setFiles([]); try { inputRef.current?.focus({ preventScroll: true }); } catch {}
+        push('user', content); clearTimeout(draftTimerRef.current); if (inputRef.current) inputRef.current.value = ''; cxRemove('draft'); setFiles([]); try { inputRef.current?.focus({ preventScroll: true }); } catch {}
         // 读写都走同一条定位链（应用=目录、功能=文件），成功就不再调模型
         const WRITE_RE = /(添加|录入|新增|写入|加一条|新建一条|创建|发起|提交|报批)/;
         const READ_RE = /(查看|查询|看看|列出|列一下|有哪些|列表|显示|统计|多少条)/;
@@ -1279,7 +1275,7 @@
             h('div', { className: 'sum' }, turn ? (busy ? `Q: ${turn.q}` : `A: ${turn.a || turn.q}`) : (locale === 'zh' ? '可以就当前网页提问' : 'Ask about this page'))),
           h(IconButton, { name: replyPop ? 'chevronDown' : 'chevronUp', className: 'arr', onClick: () => setReplyPop((v) => !v), title: replyPop ? T('收起') : T('展开') })) : null,
         files.length ? h('div', { className: 'cx-compose-files' }, files.map((f, i) => h('span', { key: i, className: 'cx-tag cy' }, f.name, h(IconButton, { name: 'close', className: 'cx-tag-x', onClick: () => setFiles((xs) => xs.filter((_, j) => j !== i)) })))) : null,
-        h('textarea', { key: sessionKey, ref: inputRef, className: 'cx-compose-input', rows: 3, defaultValue: initialDraft, placeholder: 'Message or run a task, / commands, @ files or sessions', disabled: busy, onChange: (e) => { const v = e.target.value; clearTimeout(draftTimerRef.current); draftTimerRef.current = setTimeout(() => { try { localStorage.setItem('contextos-devops-dsh:draft', v); } catch {} }, 180); }, onKeyDown: (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent?.isComposing) { e.preventDefault(); handle(inputRef.current?.value || ''); } } }),
+        h('textarea', { key: sessionKey, ref: inputRef, className: 'cx-compose-input', rows: 3, defaultValue: initialDraft, placeholder: 'Message or run a task, / commands, @ files or sessions', disabled: busy, onChange: (e) => { const v = e.target.value; clearTimeout(draftTimerRef.current); draftTimerRef.current = setTimeout(() => cxWriteText('draft', v), 180); }, onKeyDown: (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent?.isComposing) { e.preventDefault(); handle(inputRef.current?.value || ''); } } }),
         h('div', { className: 'cx-compose-tools', onContextMenu: (e) => {
           const el = e.target.closest && e.target.closest('.cx-compose-plus, .cx-compose-send');
           if (!el) return;

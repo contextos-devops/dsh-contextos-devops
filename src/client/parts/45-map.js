@@ -26,11 +26,11 @@
             const pre = document.createElement('link'); pre.rel = 'preconnect'; pre.href = 'https://rt0.map.gtimg.com'; pre.dataset.cxTencent = '1'; document.head.appendChild(pre);
           }
           leafletRef.current = L;
-          const bootMap = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:map') || 'null'); } catch { return null; } })();
+          const bootMap = cxRead('map', null);
           const startView = bootMap && Number.isFinite(bootMap.lat) && Number.isFinite(bootMap.lng) ? [bootMap.lat, bootMap.lng] : [22.5431, 114.0579];
           const startZoom = bootMap && Number.isFinite(bootMap.zoom) ? bootMap.zoom : 11;
           const map = L.map(hostRef.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: true, wheelDebounceTime: 80, wheelPxPerZoomLevel: 120, preferCanvas: true, zoomAnimation: true }).setView(startView, startZoom);
-          const saveMapState = () => { try { const c = map.getCenter(); localStorage.setItem('contextos-devops-dsh:map', JSON.stringify({ lat: c.lat, lng: c.lng, zoom: map.getZoom() })); } catch {} };
+          const saveMapState = () => { try { const c = map.getCenter(); cxWrite('map', { lat: c.lat, lng: c.lng, zoom: map.getZoom() }); } catch {} };
           map.on('moveend', saveMapState);
           map.on('zoomend', saveMapState);
           const tiles = L.tileLayer('https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={y}&type=vector&styleid=3&scene=0', {

@@ -26,19 +26,19 @@
       const [toast, setToast] = useState(null);
       const [dataPulse, setDataPulse] = useState(0);
       const bootSelRef = useRef(null);
-      if (bootSelRef.current === null) { try { bootSelRef.current = JSON.parse(localStorage.getItem('contextos-devops-dsh:sel') || 'null') || {}; } catch { bootSelRef.current = {}; } }
+      if (bootSelRef.current === null) bootSelRef.current = cxRead('sel', {});
       // 上次退出时的整套状态：节点/空间/实例/工作模式/视图/网页标签
       const bootRef = useRef(null);
       if (bootRef.current === null) bootRef.current = cxSessionGet() || {};
       const boot = bootRef.current;
       const restored = !!boot.view;
       const nodeFresh = (x) => !!x && !!(x.builtAt || x.sizeText || (x.runtime && x.runtime.builtAt));
-      const [nodes, setNodes] = useState(() => { try { return (JSON.parse(localStorage.getItem('contextos-devops-dsh:nodes') || '[]') || []).filter(nodeFresh); } catch { return []; } });
+      const [nodes, setNodes] = useState(() => cxRead('nodes', []).filter(nodeFresh));
       const nodesRef = useRef(nodes); nodesRef.current = nodes;
       const bootedRef = useRef(false);
-      const [selMap, setSelMap] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:sel-map') || '{}') || {}; } catch { return {}; } });
+      const [selMap, setSelMap] = useState(() => cxRead('sel-map', {}));
       const selMapRef = useRef(selMap); selMapRef.current = selMap;
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:sel-map', JSON.stringify(selMap)); } catch {} }, [selMap]);
+      useEffect(() => cxWrite('sel-map', selMap), [selMap]);
       const rememberSel = (port, patch) => { if (!port) return; setSelMap((m) => ({ ...m, [port]: { ...(m[port] || {}), ...patch } })); };
       const appKeyOf = (a) => (a ? `${a.space || ''}:${a.command || ''}:${a.place_uid || a.name || ''}` : '');
       const [node, setNode] = useState(() => boot.node ?? bootSelRef.current?.node ?? null);
@@ -54,7 +54,7 @@
       const [storeService, setStoreService] = useState(null);
       const [webTabs, setWebTabs] = useState(() => {
         try {
-          const saved = Array.isArray(boot.tabs) && boot.tabs.length ? { tabs: boot.tabs, active: boot.active } : JSON.parse(localStorage.getItem(WEBTABS_KEY) || 'null');
+          const saved = Array.isArray(boot.tabs) && boot.tabs.length ? { tabs: boot.tabs, active: boot.active } : cxRead('webtabs', null);
           if (!saved || !Array.isArray(saved.tabs)) return [];
           return saved.tabs.filter((t) => t && (t.base || t.url)).slice(0, 8).map((t, i) => ({
             id: t.id || `w${Date.now().toString(36)}${i}`,
@@ -69,7 +69,7 @@
       useEffect(() => { if (!webMenu) return; const close = () => setWebMenu(null); window.addEventListener('mousedown', close); return () => window.removeEventListener('mousedown', close); }, [webMenu]);
       const [activeWeb, setActiveWeb] = useState(() => {
         if (boot.active) return boot.active;
-        try { const saved = JSON.parse(localStorage.getItem(WEBTABS_KEY) || 'null'); return saved?.active || null; } catch { return null; }
+        return cxRead('webtabs', null)?.active || null;
       });
       const [viewMode, setViewMode] = useState(() => boot.view || 'chat');
       const [intro, setIntro] = useState(null);
@@ -79,10 +79,10 @@
         const t = setTimeout(() => setDevMounted(true), 160);   /* 先出过场，再挂载重型编辑器 */
         return () => clearTimeout(t);
       }, [viewMode, devMounted]);
-      const [workMode, setWorkMode] = useState(() => boot.mode || (() => { try { return localStorage.getItem('contextos-devops-dsh:work-mode') || 'avatar'; } catch { return 'avatar'; } })());
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:work-mode', workMode); } catch {} }, [workMode]);
-      const [chatFull, setChatFull] = useState(() => { try { const v = localStorage.getItem('contextos-devops-dsh:chatfull'); return v === null ? true : v === '1'; } catch { return true; } });
-      const [themeMode, setThemeMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:theme') || 'system'; } catch { return 'system'; } });
+      const [workMode, setWorkMode] = useState(() => boot.mode || cxReadText('work-mode', 'avatar'));
+      useEffect(() => cxWriteText('work-mode', workMode), [workMode]);
+      const [chatFull, setChatFull] = useState(() => cxReadText('chatfull', '1') === '1');
+      const [themeMode, setThemeMode] = useState(() => cxReadText('theme', 'system'));
 
       const [opFx, setOpFx] = useState(null);
       const [pipeMenu, setPipeMenu] = useState(null);
@@ -150,12 +150,12 @@
         window.addEventListener('cx-data-op', onOp);
         return () => window.removeEventListener('cx-data-op', onOp);
       }, []);
-      const [fx, setFx] = useState(() => { try { return { sound: 'soft', light: 'high', color: 'cyan', style: 'tech', ...JSON.parse(localStorage.getItem('contextos-devops-dsh:fx') || '{}') }; } catch { return { sound: 'soft', light: 'high', color: 'cyan', style: 'tech' }; } });
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:fx', JSON.stringify(fx)); } catch {} }, [fx]);
+      const [fx, setFx] = useState(() => ({ ...cxStoreDef('fx'), ...cxRead('fx', {}) }));
+      useEffect(() => cxWrite('fx', fx), [fx]);
       const fxSet = (k, v) => setFx((x) => ({ ...x, [k]: v }));
-      const [theme, setTheme] = useState(() => { const sys = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark'; try { const m = localStorage.getItem('contextos-devops-dsh:theme') || 'system'; return m === 'system' ? sys : m; } catch { return sys; } });
+      const [theme, setTheme] = useState(() => { const sys = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark'; const m = cxReadText('theme', 'system'); return m === 'system' ? sys : m; });
       const lightTheme = themeMode === 'light' || theme === 'light';
-      const [langMode, setLangMode] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:lang') || 'system'; } catch { return 'system'; } });
+      const [langMode, setLangMode] = useState(() => cxReadText('lang', 'system'));
       const prefsReadyRef = useRef(false);
       useEffect(() => {
         (async () => {
@@ -163,8 +163,8 @@
             const st = await api('stateGet');
             const p = st && st.prefs;
             if (p && typeof p === 'object') {
-              if (p.theme) { setThemeMode(p.theme); try { localStorage.setItem('contextos-devops-dsh:theme', p.theme); } catch {} }
-              if (p.lang) { setLangMode(p.lang); try { localStorage.setItem('contextos-devops-dsh:lang', p.lang); } catch {} }
+              if (p.theme) { setThemeMode(p.theme); cxWriteText('theme', p.theme); }
+              if (p.lang) { setLangMode(p.lang); cxWriteText('lang', p.lang); }
               if (p.view) setViewMode(p.view);
               if (p.work) setWorkMode(p.work);
             }
@@ -202,9 +202,9 @@
         }, 400);
         return () => clearInterval(timer);
       }, []);
-      const [locale, setLocale] = useState(() => { try { const m = localStorage.getItem('contextos-devops-dsh:lang') || 'system'; return m === 'system' ? browserLang() : m; } catch { return browserLang(); } });
+      const [locale, setLocale] = useState(() => { const m = cxReadText('lang', 'system'); return m === 'system' ? browserLang() : m; });
       CURRENT_LANG = locale === 'zh' ? 'zh' : 'en';
-      const bootConsole = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:console') || 'null') || {}; } catch { return {}; } })();
+      const bootConsole = cxRead('console', {});
       const [consoleOpen, setConsoleOpen] = useState(bootConsole.open === true);
       const [consoleMax, setConsoleMax] = useState(false);
       const consoleBoxRef = useRef(null);
@@ -213,10 +213,10 @@
       const [termSplit, setTermSplit] = useState(false);
       const consoleOpenRef = useRef(consoleOpen); consoleOpenRef.current = consoleOpen;
       const viewModeRef = useRef(viewMode); viewModeRef.current = viewMode;
-      const initialReqLog = (() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:reqlog') || '[]') || []; } catch { return []; } })();
+      const initialReqLog = cxRead('reqlog', []);
       const reqLogRef = useRef(initialReqLog);
       const [reqLog, setReqLog] = useState(initialReqLog);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:reqlog', JSON.stringify(reqLog.slice(-50))); } catch {} }, [reqLog]);
+      useEffect(() => cxWrite('reqlog', reqLog.slice(-50)), [reqLog]);
       const pushReq = (e) => {
         try {
           reqLogRef.current = [...reqLogRef.current, e].slice(-50);
@@ -238,7 +238,7 @@
       }, []);
       const [consoleHeight, setConsoleHeight] = useState(Number(bootConsole.height) || 190);
       const [events, setEvents] = useState([]);
-      const [sort, setSort] = useState(() => { try { const v = JSON.parse(localStorage.getItem('contextos-devops-dsh:console') || 'null') || {}; return v.sort && v.sort.key ? v.sort : { key: '', dir: 1 }; } catch { return { key: '', dir: 1 }; } });
+      const [sort, setSort] = useState(() => { const v = cxRead('console', {}); return v.sort && v.sort.key ? v.sort : { key: '', dir: 1 }; });
       const [detail, setDetail] = useState(null);
       const parseDebug = (m) => {
         const text = String(m || '').trim().replace(/^↳\s*/, '');
@@ -246,7 +246,7 @@
         return mm ? { method: mm[1].toUpperCase(), url: mm[2], rest: mm[3], raw: text } : { method: '', url: text, rest: '', raw: text };
       };
       const [files, setFiles] = useState(null);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:console', JSON.stringify({ open: consoleOpen, tab: consoleTab, height: consoleHeight, sort })); } catch {} }, [consoleOpen, consoleTab, consoleHeight, sort]);
+      useEffect(() => cxWrite('console', { open: consoleOpen, tab: consoleTab, height: consoleHeight, sort }), [consoleOpen, consoleTab, consoleHeight, sort]);
       useEffect(() => {
         const onToast = (e) => setToast({ id: Date.now(), text: String(e?.detail?.text || ''), kind: e?.detail?.kind || 'ok' });
         window.addEventListener('cx-toast', onToast);
@@ -257,15 +257,15 @@
         const t = setTimeout(() => setToast(null), toast.kind === 'err' ? 4200 : 2600);
         return () => clearTimeout(t);
       }, [toast]);
-      const loadPref = (k, d) => { try { const v = JSON.parse(localStorage.getItem('contextos-devops-dsh:' + k) || 'null'); return v == null ? d : v; } catch { return d; } };
+      const loadPref = (k, d) => cxRead(k, d);
       const [nodeStatusFilter, setNodeStatusFilter] = useState(() => loadPref('filter-node', []));
       const [spaceStatusFilter, setSpaceStatusFilter] = useState(() => loadPref('filter-space', []));
       const [appSpaceFilter, setAppSpaceFilter] = useState(() => loadPref('filter-app', []));
       const [storeSpaceFilter, setStoreSpaceFilter] = useState(() => loadPref('filter-store', []));
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:filter-node', JSON.stringify(nodeStatusFilter)); } catch {} }, [nodeStatusFilter]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:filter-space', JSON.stringify(spaceStatusFilter)); } catch {} }, [spaceStatusFilter]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:filter-app', JSON.stringify(appSpaceFilter)); } catch {} }, [appSpaceFilter]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:filter-store', JSON.stringify(storeSpaceFilter)); } catch {} }, [storeSpaceFilter]);
+      useEffect(() => cxWrite('filter-node', nodeStatusFilter), [nodeStatusFilter]);
+      useEffect(() => cxWrite('filter-space', spaceStatusFilter), [spaceStatusFilter]);
+      useEffect(() => cxWrite('filter-app', appSpaceFilter), [appSpaceFilter]);
+      useEffect(() => cxWrite('filter-store', storeSpaceFilter), [storeSpaceFilter]);
       const t = useCallback((key) => term(locale, key), [locale]);
       const tp = useCallback((key) => locale === 'zh' ? `${term('zh', key)} / ${term('en', key)}` : term('en', key), [locale]);
       useEffect(() => {
@@ -282,7 +282,7 @@
         window.addEventListener?.('languagechange', apply);
         return () => window.removeEventListener?.('languagechange', apply);
       }, [langMode]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:theme', themeMode); } catch {} }, [themeMode]);
+      useEffect(() => cxWriteText('theme', themeMode), [themeMode]);
       const restoredRef = useRef(restored);
       useEffect(() => {
         if (lightTheme) return;                   /* 浅色主题不播过场 */
@@ -292,9 +292,9 @@
         setIntro(viewMode);
       }, [viewMode, lightTheme]);
 
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:lang', langMode); } catch {} }, [langMode]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:view', viewMode); } catch {} }, [viewMode]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:chatfull', chatFull ? '1' : '0'); } catch {} }, [chatFull]);
+      useEffect(() => cxWriteText('lang', langMode), [langMode]);
+      useEffect(() => cxWriteText('view', viewMode), [viewMode]);
+      useEffect(() => cxWriteText('chatfull', chatFull ? '1' : '0'), [chatFull]);
       const shellRef = useRef(null);
       useEffect(() => {
         if (fx.sound === 'off') return;
@@ -426,7 +426,7 @@
         setWelcome(now ? { title: 'INITIALIZE', sub: 'CONTEXTOS · SETUP' } : { title: 'READY', sub: 'CONTEXTOS · ONLINE' });
       }, [initState]);
 
-      const [nodesLoaded, setNodesLoaded] = useState(() => { try { return (JSON.parse(localStorage.getItem('contextos-devops-dsh:nodes') || '[]') || []).length > 0; } catch { return false; } });
+      const [nodesLoaded, setNodesLoaded] = useState(() => cxRead('nodes', []).length > 0);
       const autoInitRef = useRef(false);
       const initBusyRef = useRef(false);
       const [showDevices, setShowDevices] = useState(false);
@@ -539,7 +539,7 @@
           { k: '', t: 'LIVE locale', m: locale },
         ];
         try {
-          return [...liveRows, ...Object.keys(localStorage).filter((k) => k.startsWith('contextos-devops-dsh:')).sort().map((k) => ({ k: 'ok', t: k.replace('contextos-devops-dsh:', ''), m: String(localStorage.getItem(k) || '').slice(0, 260) }))];
+          return [...liveRows, ...cxStoreDump().map((x) => ({ k: 'ok', t: x.key, m: String(x.value || '').slice(0, 260) }))];
         } catch { return liveRows; }
       })();
       const prettyJson = (v) => { try { return JSON.stringify(JSON.parse(v), null, 2); } catch { return String(v ?? ''); } };
@@ -620,7 +620,7 @@
         setNodes(list);
         setNodesLoaded(true);
         activity(`加载节点 ${list.length} 个（${list.filter((n) => n.state === 'running').length} 运行中）`, 'ok');
-        try { localStorage.setItem('contextos-devops-dsh:nodes', JSON.stringify(list)); } catch {}
+        cxWrite('nodes', list);
         try { api('stateSet', { name: 'nodesCache', value: list }).catch(() => {}); } catch {}
         setNode((cur) => cur != null ? (list.some((n) => n.port === cur) ? cur : list[0]?.port ?? null) : (list.find((n) => n.state === 'running')?.port ?? list[0]?.port ?? null));
         return list;
@@ -724,7 +724,7 @@
             mark('node', 'done', `已连接 ${cfg.remoteUrl} · sessid ${String(r.sessid).slice(0, 10)}…`);
             ['spaces', 'avatar', 'scene', 'project'].forEach((id) => mark(id, 'done', T('远程连接：跳过本地步骤')));
             current = 'chat'; mark('chat', 'run');
-            try { localStorage.setItem('contextos-devops-dsh:init', '1'); } catch {}
+            cxWriteText('init', '1');
             setViewMode('chat'); setChatFull(true);
             mark('chat', 'done', T('远程会话已建立'));
             finish();
@@ -814,7 +814,7 @@
           const active = await loadAvatars(nodePort);
           await loadBackgrounds(nodePort).catch(() => null);
           await loadApps(nodePort, '', actorUid);
-          try { localStorage.setItem('contextos-devops-dsh:init', '1'); } catch {}
+          cxWriteText('init', '1');
           setViewMode('chat');
           setChatFull(true);
           mark('chat', 'done', T('对话已就绪'));
@@ -927,7 +927,7 @@
         if (!nodesLoaded || autoInitRef.current) return;
         autoInitRef.current = true;
         let done = false;
-        try { done = localStorage.getItem('contextos-devops-dsh:init') === '1'; } catch {}
+        done = cxReadText('init', '') === '1';
         if (!done) openInit();
       }, [nodesLoaded, openInit]);
 
@@ -950,7 +950,7 @@
           // 系统级命令（/c/dream、/c/xterm、/c/vimer、/s/<pod>/c/runtime …）不认它，带上只会污染日志。
           const appLevel = /^\/s\/[^/]+\/c\/web\.team\.[^/]+\.[^/]+/.test(u.pathname);
           let actor = avatar?.uid || '';
-          if (!actor) { try { actor = localStorage.getItem('contextos-devops-dsh:actor') || ''; } catch { actor = ''; } }
+          if (!actor) actor = cxReadText('actor', '');
           if (appLevel && actor) u.searchParams.set('user.uid', actor);
           return u.toString();
         } catch { return raw; }
@@ -964,7 +964,7 @@
           return u.toString();
         } catch { return raw; }
       };
-      useEffect(() => { if (avatar?.uid) { try { localStorage.setItem('contextos-devops-dsh:actor', avatar.uid); } catch {} } }, [avatar?.uid]);
+      useEffect(() => { if (avatar?.uid) cxWriteText('actor', avatar.uid); }, [avatar?.uid]);
       const webTabsRef = useRef([]);
       webTabsRef.current = webTabs;
       const openWeb = (url, title, appMeta) => {
@@ -983,10 +983,10 @@
       }, [theme, locale, avatar?.uid]);
       useEffect(() => {
         try {
-          localStorage.setItem('contextos-devops-dsh:sel', JSON.stringify({
+          cxWrite('sel', {
             node, space,
             app: app ? { space: app.space || '', command: app.command || '', name: app.name || '', title: app.title || '', place_uid: app.place_uid || '' } : null,
-          }));
+          });
         } catch {}
       }, [node, space, app]);
       useEffect(() => { if (space && spaces.length && !spaces.some((x) => x.name === space)) setSpace(null); }, [spaces]);
@@ -997,10 +997,10 @@
       }, [apps]);
       useEffect(() => {
         try {
-          localStorage.setItem(WEBTABS_KEY, JSON.stringify({
+          cxWrite('webtabs', {
             active: activeWeb || '',
             tabs: webTabs.map((t) => ({ id: t.id, base: t.base || t.url, title: t.title, app: t.app || null })),
-          }));
+          });
         } catch {}
       }, [webTabs, activeWeb]);
       const activeTab = webTabs.find((t) => t.id === activeWeb) || webTabs[webTabs.length - 1] || null;
@@ -1234,11 +1234,11 @@
       const running = nodes.filter((n) => n.state === 'running').length;
       const stage = activeTab ? 4 : app ? 3 : space ? 2 : node ? 1 : 0;
 
-      const [ideProjects, setIdeProjects] = useState(() => { try { return JSON.parse(localStorage.getItem('contextos-devops-dsh:ide') || 'null') || []; } catch { return []; } });
-      const [ideActive, setIdeActive] = useState(() => { try { return localStorage.getItem('contextos-devops-dsh:ide-active') || ''; } catch { return ''; } });
+      const [ideProjects, setIdeProjects] = useState(() => cxRead('ide', []));
+      const [ideActive, setIdeActive] = useState(() => cxReadText('ide-active', ''));
       const [ideFile, setIdeFile] = useState(null);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:ide', JSON.stringify(ideProjects)); } catch {} }, [ideProjects]);
-      useEffect(() => { try { localStorage.setItem('contextos-devops-dsh:ide-active', ideActive); } catch {} }, [ideActive]);
+      useEffect(() => cxWrite('ide', ideProjects), [ideProjects]);
+      useEffect(() => cxWriteText('ide-active', ideActive), [ideActive]);
       useEffect(() => { const key = `${node}:${space}`; if (ideProjects.some((x) => x.key === key)) setIdeActive(key); }, [node, space]);
       const selectIdeProject = (key) => { const p = ideProjects.find((x) => x.key === key); if (!p) return; setIdeActive(key); setNode(p.node); setSpace(p.space); };
       const closeIdeProject = (key) => { setIdeProjects((ps) => ps.filter((x) => x.key !== key)); if (ideActive === key) setIdeActive(''); };

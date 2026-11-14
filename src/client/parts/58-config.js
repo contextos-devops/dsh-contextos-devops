@@ -12,7 +12,7 @@
     }
     function ctxCfgLoad() {
       let d = null;
-      try { d = JSON.parse(localStorage.getItem(CTX_CFG_NS) || 'null'); } catch {}
+      d = cxRead(CTX_CFG_NS, null);
       if (!d || typeof d !== 'object') d = {};
       d.global = { ...CTX_CFG_DEFAULT, ...(d.global || {}) };
       d.sessions = d.sessions || {};
@@ -22,7 +22,7 @@
     }
     let CTX_CFG = ctxCfgLoad();
     function ctxCfgSave() {
-      try { localStorage.setItem(CTX_CFG_NS, JSON.stringify(CTX_CFG)); } catch {}
+      cxWrite(CTX_CFG_NS, CTX_CFG);
       try { api('stateSet', { name: 'contextos-config', value: CTX_CFG }).catch(() => {}); } catch {}
       ctxCfgEmit();
     }
@@ -30,11 +30,11 @@
     function ctxCfgSession(sessionId) { return (sessionId && CTX_CFG.sessions[sessionId]) || {}; }
     function ctxCfgSetGlobal(k, v) { CTX_CFG.global[k] = v; ctxCfgSave(); }
     function ctxCfgSetSession(sid, k, v) { if (!sid) return; CTX_CFG.sessions[sid] = { ...ctxCfgSession(sid), [k]: v }; ctxCfgSave(); }
-    function ctxCallsLoad() { try { return JSON.parse(localStorage.getItem(CTX_CALLS_NS) || '[]') || []; } catch { return []; } }
+    function ctxCallsLoad() { return cxRead(CTX_CALLS_NS, []); }
     function ctxCallLog(entry) {
       const list = ctxCallsLoad();
       list.unshift({ t: new Date().toISOString(), ...entry });
-      try { localStorage.setItem(CTX_CALLS_NS, JSON.stringify(list.slice(0, 500))); } catch {}
+      cxWrite(CTX_CALLS_NS, list.slice(0, 500));
       try { api('stateSet', { name: 'contextos-calls', value: list.slice(0, 500) }).catch(() => {}); } catch {}
       ctxCfgEmit();
     }
@@ -356,7 +356,7 @@ th{color:#8fb8c9;background:#08131f}
         tab === 'stats' ? h('div', { className: 'cx-ctx-stats' },
           [['调用次数', calls.length], ['成功', calls.filter((c) => c.ok !== false).length], ['失败', calls.filter((c) => c.ok === false).length], ['节点', new Set(calls.map((c) => c.node).filter(Boolean)).size], ['空间', new Set(calls.map((c) => c.space).filter(Boolean)).size]].map(([k, v]) => h('div', { key: k, className: 'cx-ctx-stat' }, h('b', null, String(v)), h('span', null, k)))) :
         h('div', { className: 'cx-ctx-list' },
-          h('div', { className: 'cx-ctx-actions' }, h('button', { className: 'cx-btn', onClick: () => { try { localStorage.removeItem(CTX_CALLS_NS); } catch {} ctxCfgEmit(); } }, T('清空'))),
+          h('div', { className: 'cx-ctx-actions' }, h('button', { className: 'cx-btn', onClick: () => { cxRemove(CTX_CALLS_NS); ctxCfgEmit(); } }, T('清空'))),
           calls.length ? h('table', { className: 'cx-console-table' },
             h('thead', null, h('tr', null, ['时间', '操作', '节点', '空间', '结果'].map((k) => h('th', { key: k }, k)))),
             h('tbody', null, calls.slice(0, 100).map((c, i) => h('tr', { key: i }, h('td', null, String(c.t || '').slice(11, 19)), h('td', null, c.op || ''), h('td', null, c.node || ''), h('td', null, c.space || ''), h('td', null, c.ok === false ? 'ERR' : 'OK'))))) : h('div', { className: 'cx-ctx-empty' }, T('暂无调用')));

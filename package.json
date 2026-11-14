@@ -1,6 +1,6 @@
 {
   "name": "@local/contextos-devops-dsh",
-  "version": "1.46.21",
+  "version": "1.46.22",
   "private": true,
   "type": "module",
   "description": "ContextOS DevOps for DeepSeek Harness: tech dashboard for cluster nodes, project spaces, platform apps and data.",
@@ -39,7 +39,7 @@
     }
   },
   "scripts": {
-    "build:client": "node build/client.mjs && node scripts/gate.mjs && node scripts/hook-order-check.mjs && node scripts/op-check.mjs && node scripts/ui-check.mjs && node scripts/i18n-check.mjs && node scripts/context-check.mjs",
+    "build:client": "node build/client.mjs && node scripts/gate.mjs && node scripts/hook-order-check.mjs && node scripts/op-check.mjs && node scripts/store-check.mjs && node scripts/ui-check.mjs && node scripts/i18n-check.mjs && node scripts/context-check.mjs",
     "watch:client": "node build/client.mjs --watch",
     "check:ui": "node scripts/ui-check.mjs",
     "check:context": "node scripts/context-check.mjs",
@@ -49,6 +49,7 @@
     "verify:ui": "node scripts/ui-verify.mjs",
     "release": "npm run build:client && node scripts/ui-verify.mjs",
     "check:hooks": "node scripts/hook-order-check.mjs",
-    "check:ops": "node scripts/op-check.mjs"
+    "check:ops": "node scripts/op-check.mjs",
+    "check:store": "node scripts/store-check.mjs"
   }
 }

@@ -12,7 +12,7 @@
         if (!uid || ownerRef.current === uid) return;
         ownerRef.current = uid;
         let saved = (cxSessionGet() || {}).pm || {};
-        if (!saved || !Object.keys(saved).length) { try { saved = (JSON.parse(localStorage.getItem('contextos-devops-dsh:pm') || '{}'))[uid] || {}; } catch { saved = {}; } }
+        if (!saved || !Object.keys(saved).length) saved = cxRead('pm', {})[uid] || {};
         setTargetId(saved.target || ''); setPlanId(saved.plan || ''); setTaskId(saved.task || ''); setReportId(saved.report || ''); setFeedbackId(saved.feedback || '');
       }, [avatarUid]);
       useEffect(() => {
@@ -22,9 +22,9 @@
         const shaped = { target: targetId, plan: planId, task: taskId, report: reportId, feedback: feedbackId };
         cxSessionSave({ pm: shaped });
         try {
-          const all = JSON.parse(localStorage.getItem('contextos-devops-dsh:pm') || '{}');
+          const all = cxRead('pm', {});
           all[uid] = shaped;
-          localStorage.setItem('contextos-devops-dsh:pm', JSON.stringify(all));
+          cxWrite('pm', all);
         } catch {}
       }, [avatarUid, targetId, planId, taskId, reportId, feedbackId]);
       return { targetId, setTargetId, planId, setPlanId, taskId, setTaskId, reportId, setReportId, feedbackId, setFeedbackId };

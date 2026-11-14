@@ -96,8 +96,8 @@
       { id: 'n4', type: 'query', title: 'runtime', src: { kind: 'cmd', node: 9191, command: 'runtime' }, w: 4, refresh: 10 },
       { id: 'n5', type: 'iframe', title: '管理后台', src: { kind: 'url', url: '/c/admin', node: 9191 }, w: 8, refresh: 0 },
     ];
-    const monLoad = () => { try { const v = JSON.parse(localStorage.getItem(MON_PANELS) || 'null'); return Array.isArray(v) && v.length ? v : MON_DEFAULT; } catch { return MON_DEFAULT; } };
-    const monSave = (v) => { try { localStorage.setItem(MON_PANELS, JSON.stringify(v.slice(0, 24))); } catch { /* ignore */ } };
+    const monLoad = () => { const v = cxRead(MON_PANELS, null); return Array.isArray(v) && v.length ? v : MON_DEFAULT; };
+    const monSave = (v) => cxWrite(MON_PANELS, v.slice(0, 24));
 
     function MonitorPanel({ p, data, onEdit, onDel, onReload, zh }) {
       const body = () => {
