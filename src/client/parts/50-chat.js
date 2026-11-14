@@ -94,6 +94,62 @@
       useEffect(() => {
         cxWrite('chat', msgs.slice(-120));
       }, [msgs]);
+      /* 布局自愈：消息卡片的结构是「头一行、按钮在行尾、正文满宽」。
+         若页面上还挂着旧版本样式表，级联会把正文挤到右边；这里用内联
+         !important 兜底（不依赖任何外部样式），并记录「谁把它挤歪了」。 */
+      useEffect(() => {
+        let timer = null, observer = null, warned = false;
+        const fix = () => {
+          try {
+            const root = document.querySelector('.cx-chat-b');
+            if (!root) return;
+            const fixed = [];
+            root.querySelectorAll('.cx-msg').forEach((card) => {
+              const main = card.querySelector('.cx-msg-main');
+              const meta = card.querySelector('.cx-msg-meta');
+              const tools = card.querySelector('.cx-msg-tools');
+              const body = card.querySelector('.cx-msg-body');
+              const want = [
+                [card, 'display', 'flex', 'display'],
+                [card, 'align-items', 'flex-start', 'alignItems'],
+                [main, 'display', 'flex', 'display'],
+                [main, 'flex-direction', 'column', 'flexDirection'],
+                [main, 'align-items', 'stretch', 'alignItems'],
+                [main, 'flex', '1 1 auto', 'flexGrow'],
+                [main, 'min-width', '0', 'minWidth'],
+                [meta, 'display', 'flex', 'display'],
+                [meta, 'flex-direction', 'row', 'flexDirection'],
+                [meta, 'align-items', 'center', 'alignItems'],
+                [meta, 'flex-wrap', 'wrap', 'flexWrap'],
+                [tools, 'margin-left', 'auto', 'marginLeft'],
+                [body, 'width', '100%', 'width'],
+                [body, 'max-width', '100%', 'maxWidth'],
+              ];
+              want.forEach(([el, cssKey, val, jsKey]) => {
+                if (!el) return;
+                const before = window.getComputedStyle(el)[jsKey];
+                if (jsKey === 'flexDirection' && String(before) !== val) fixed.push(`${String(el.className).split(' ')[0]}.${jsKey}=${before}`);
+                if (jsKey === 'marginLeft' && String(before) !== 'auto') fixed.push(`${String(el.className).split(' ')[0]}.${jsKey}=${before}`);
+                if (el.style.getPropertyValue(cssKey) !== val || el.style.getPropertyPriority(cssKey) !== 'important') el.style.setProperty(cssKey, val, 'important');
+              });
+            });
+            if (fixed.length && !warned && typeof activity === 'function') {
+              warned = true;
+              activity(`布局自愈 ${fixed.length} 处（旧样式接管）：${fixed.slice(0, 4).join(' ')}`, 'warn');
+            }
+          } catch {}
+        };
+        const boot = () => { fix(); timer = setTimeout(fix, 400); timer = setTimeout(fix, 1600); };
+        boot();
+        try {
+          const root = document.querySelector('.cx-chat-b');
+          if (root && window.MutationObserver) {
+            observer = new MutationObserver(() => fix());
+            observer.observe(root, { childList: true, subtree: true });
+          }
+        } catch {}
+        return () => { if (timer) clearTimeout(timer); if (observer) observer.disconnect(); };
+      }, []);
       const inputRef = useRef(null);
       const lastUserRef = useRef('');
       const [mapTheme, setMapTheme] = useState(theme === 'light' ? 'light' : 'dark');
@@ -1272,7 +1328,7 @@
               h('div', { className: 'cx-chat-hin' },
                 h('div', { className: 'cx-chat-brand' },
                   h('div', { className: 'cx-chat-orb' }, h(CtxMark, { variant: 'copilot', size: 22 })),
-                  h('div', { className: 'cx-chat-copy' }, h('div', { className: 'cx-chat-title' }, 'CONTEXTOS · COPILOT'), h('div', { className: 'cx-chat-sub' }, `${tt('avatar')} · ${tt('factory')} · ${tt('iot')}`))),
+                  h('div', { className: 'cx-chat-copy' }, h('div', { className: 'cx-chat-title' }, 'CONTEXTOS · COPILOT'), h('div', { className: 'cx-chat-sub' }, `${tt('avatar')} · ${tt('factory')} · ${tt('iot')} · ${cxClientTag()}`))),
                 h('div', { className: 'cx-chat-actions' },
                   ...(!docked ? [
                     h(DropSelect, { value: themeMode, title: tt('light') + ' / ' + tt('dark'), onChange: setThemeMode, options: [{ value: 'system', label: tt('system') }, { value: 'light', label: tt('light') }, { value: 'dark', label: tt('dark') }] }),

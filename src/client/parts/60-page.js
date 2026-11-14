@@ -211,7 +211,7 @@
               /* 几何自检：正文占比与工具栏右边距，比字符串更能证明「看起来对不对」 */
               geo: (() => {
                 try {
-                  const m = document.querySelector('.cx-msg');
+                  const m = document.querySelector('.cx-msg.ai') || document.querySelector('.cx-msg');
                   if (!m) return null;
                   const r = m.getBoundingClientRect();
                   const t = m.querySelector('.cx-msg-tools');
@@ -223,6 +223,22 @@
                     toolsRightGap: tr ? Math.round(r.right - tr.right) : null,
                     bodyRatio: br && r.width ? Number((br.width / r.width).toFixed(2)) : null,
                   };
+                } catch { return null; }
+              })(),
+              /* DOM 取证：把第一条消息的真实结构与每层盒模型抄回来，无需再截图 */
+              dom: (() => {
+                try {
+                  const m = document.querySelector('.cx-msg.ai') || document.querySelector('.cx-msg');
+                  if (!m) return null;
+                  const box = (sel) => {
+                    const n = sel ? m.querySelector(sel) : m;
+                    if (!n) return null;
+                    const r = n.getBoundingClientRect(); const c = window.getComputedStyle(n);
+                    return { w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.x),
+                      d: c.display, fd: c.flexDirection, fg: c.flexGrow, ml: c.marginLeft, wd: c.width };
+                  };
+                  return { html: String(m.outerHTML || '').slice(0, 500),
+                    card: box(null), main: box('.cx-msg-main'), meta: box('.cx-msg-meta'), tools: box('.cx-msg-tools'), body: box('.cx-msg-body') };
                 } catch { return null; }
               })(),
             } }).catch(() => {});

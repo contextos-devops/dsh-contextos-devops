@@ -23,6 +23,13 @@ window.__ModuleLoader__.load({
     const API = '/contextos-devops-dsh/api';
     const CLIENT_CSS = '/contextos-devops-dsh/assets/client.css?v=__CLIENT_CSS_VERSION__';
     const CLIENT_BUILD = '__CLIENT_BUILD__';
+    // 界面版本徽标：让「你看到的到底是哪一版」不再靠猜
+    function cxClientTag() {
+      try {
+        const v = String(CLIENT_CSS).split('?v=')[1] || '';
+        return v ? 'v' + v : '';
+      } catch { return ''; }
+    }
     const CRITICAL_CSS = '.cx-shell{height:100%;min-height:0;display:flex;flex-direction:column;background:#050a12;color:#d9f4ff;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow:hidden}';
     // 样式随版本走：旧 link（上次插件实例注入的 v=旧版本）必须被改写，
     // 否则会出现「新 JS + 旧 CSS」——布局按旧规则算，看起来像回归。
