@@ -7,7 +7,8 @@
 - 客户端入口：`client.js`
 - 本地状态：`$DSH_HOME/contextos-devops-dsh/`
 - API：`POST /contextos-devops-dsh/api`
-- 当前版本：`1.30.5`
+- 当前版本：`1.47.2`（以 `package.json` 为准）
+- 文档入口：`docs/INDEX.md`（按任务找文档）；文件级清单看生成的 `docs/CODE-INDEX.md`
 
 ---
 
