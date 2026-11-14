@@ -182,7 +182,7 @@
         setTimeout(() => {
           try {
             const cs = window.getComputedStyle(el);
-            api('stateSet', { name: 'clientCheck', value: {
+            api('stateSet', { name: 'clientCheckChat', value: {
               at: new Date().toISOString(),
               version: String(CLIENT_CSS).split('?v=')[1] || '',
               fontSize: cs.fontSize,

@@ -160,6 +160,28 @@ if (!/URL-SPEC/.test(read('docs/URL-SPEC.md'))) err('URL 规范：docs/URL-SPEC.
   if (claimed && claimed[1] !== pkg.version) err(`README.md: 版本 ${claimed[1]} 与 package.json ${pkg.version} 不一致`);
 }
 
+// 12) 样式不得污染宿主：:root 只能声明 --cx- 前缀令牌，顶层选择器必须带 cx
+{
+  const css = read('assets/client.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const m of css.matchAll(/:root\s*\{([^}]*)\}/g)) {
+    for (const d of m[1].matchAll(/(--[\w-]+)\s*:/g)) {
+      if (!d[1].startsWith('--cx-')) err(`assets/client.css: :root 泄漏宿主令牌 ${d[1]}（必须 --cx- 前缀）`);
+    }
+  }
+  let depth = 0, buf = '';
+  for (const ch of css) {
+    if (ch === '{') {
+      if (depth === 0) {
+        const sel = buf.trim();
+        if (sel && !sel.startsWith('@') && sel !== ':root' && !/cx/.test(sel)) err(`assets/client.css: 顶层选择器未限定在 .cx- 作用域：${sel.slice(0, 60)}`);
+      }
+      depth++;
+      buf = '';
+    } else if (ch === '}') { depth = Math.max(0, depth - 1); buf = ''; }
+    else if (depth === 0) buf += ch;
+  }
+}
+
 const ok = ERR.length === 0;
 console.log(`gate: ${ok ? 'PASS' : 'FAIL'}  ERR=${ERR.length} WARN=${WARN.length}`);
 for (const e of ERR) console.log(`  ERR  ${e}`);

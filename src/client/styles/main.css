@@ -2308,44 +2308,45 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
    DESIGN SYSTEM（2026-11-08 收敛版）
    字号 10/12/14 · 图标 14/18 · 控件 28px · 栏高自动
    ============================================================ */
+/* 令牌一律 --cx- 前缀：宿主 DSH 也定义 --fs-…、--sp-…、--h-item 等通用名，
+   在 :root 上覆盖它们会把宿主原生界面（如消息工具栏）一起改坏。 */
 :root{
-  --fs-10:10px; --fs-12:12px; --fs-14:14px;
-  --icon-10:14px; --icon-12:18px;
-  --sp-2:4px; --sp-3:6px; --sp-4:8px; --sp-5:10px; --sp-7:20px;
-  --r-sm:4px; --r-lg:24px;
-  --pad-bar:10px; --gap-bar:8px; --h-item:28px;
-  --cx-fs:var(--fs-12); --cx-fs-body:var(--fs-10); --cx-fs-status:var(--fs-10); --cx-fs-title:var(--fs-14);
-  --cx-icon-10:var(--icon-10); --cx-icon-12:var(--icon-12); --cx-icon-14:var(--icon-12);
+  --cx-fs-10:10px; --cx-fs-12:12px; --cx-fs-14:14px;
+  --cx-icon-10:14px; --cx-icon-12:18px; --cx-icon-14:18px;
+  --cx-sp-2:4px; --cx-sp-3:6px; --cx-sp-4:8px; --cx-sp-5:10px; --cx-sp-7:20px;
+  --cx-r-sm:4px; --cx-r-lg:24px;
+  --cx-pad-bar:10px; --cx-gap-bar:8px; --cx-h-item:28px;
+  --cx-fs:var(--cx-fs-12); --cx-fs-body:var(--cx-fs-10); --cx-fs-status:var(--cx-fs-10); --cx-fs-title:var(--cx-fs-14);
 }
 
 /* —— 字号角色 —— */
-.cx-shell{font-size:var(--fs-12)}
-.cx-shell .cx-title,.cx-shell .cx-entity-name,.cx-shell .cx-pm-card .cx-entity-name,.cx-shell .cx-msg-role{font-size:var(--fs-14)!important}
-.cx-shell .cx-msg,.cx-shell .cx-pm-content,.cx-shell .cx-entity-copy,.cx-shell .cx-compose-input,.cx-shell .cx-input,.cx-shell .cx-select,.cx-shell .cx-table,.cx-shell .cx-console{font-size:var(--fs-10)!important}
-.cx-shell .cx-entity-type,.cx-shell .cx-entity-status,.cx-shell .cx-entity-meta,.cx-shell .cx-sub,.cx-shell .cx-hint,.cx-shell .cx-sysline{font-size:var(--fs-10)!important}
-.cx-shell .cx-btn,.cx-shell .cx-sel-btn,.cx-shell .cx-drop,.cx-shell .cx-view,.cx-shell .cx-stage,.cx-shell .cx-tag,.cx-shell .cx-chip,.cx-shell .cx-pm-act,.cx-shell .cx-aff-zh,.cx-shell .cx-aff-en,.cx-shell .cx-aff-value,.cx-shell .cx-pm-h{font-size:var(--fs-12)!important}
+.cx-shell{font-size:var(--cx-fs-12)}
+.cx-shell .cx-title,.cx-shell .cx-entity-name,.cx-shell .cx-pm-card .cx-entity-name,.cx-shell .cx-msg-role{font-size:var(--cx-fs-14)!important}
+.cx-shell .cx-msg,.cx-shell .cx-pm-content,.cx-shell .cx-entity-copy,.cx-shell .cx-compose-input,.cx-shell .cx-input,.cx-shell .cx-select,.cx-shell .cx-table,.cx-shell .cx-console{font-size:var(--cx-fs-10)!important}
+.cx-shell .cx-entity-type,.cx-shell .cx-entity-status,.cx-shell .cx-entity-meta,.cx-shell .cx-sub,.cx-shell .cx-hint,.cx-shell .cx-sysline{font-size:var(--cx-fs-10)!important}
+.cx-shell .cx-btn,.cx-shell .cx-sel-btn,.cx-shell .cx-drop,.cx-shell .cx-view,.cx-shell .cx-stage,.cx-shell .cx-tag,.cx-shell .cx-chip,.cx-shell .cx-pm-act,.cx-shell .cx-aff-zh,.cx-shell .cx-aff-en,.cx-shell .cx-aff-value,.cx-shell .cx-pm-h{font-size:var(--cx-fs-12)!important}
 
 /* —— 图标角色 —— */
 .cx-shell .cx-aff svg,.cx-shell .cx-view svg,.cx-shell .cx-drop svg,.cx-shell .cx-btn svg,.cx-shell .cx-sel-btn svg,
 .cx-shell .cx-stage svg,.cx-shell .cx-term-tab svg,.cx-shell .cx-pm-ops svg,.cx-shell .cx-compose-plus svg,
 .cx-shell .cx-compose-send svg,.cx-shell .cx-menu-item svg,.cx-shell .cx-tag svg,.cx-shell .cx-pm-h svg,
 .cx-shell .cx-entity-ico,.cx-shell .cx-entity-ico svg,.cx-shell .cx-entity-pic svg,.cx-shell .cx-title svg,
-.cx-shell .cx-header .cx-mark svg{width:var(--icon-12)!important;height:var(--icon-12)!important;flex:none}
+.cx-shell .cx-header .cx-mark svg{width:var(--cx-icon-12)!important;height:var(--cx-icon-12)!important;flex:none}
 .cx-shell .cx-entity-meta svg,.cx-shell .cx-hint svg,.cx-shell .cx-sysline svg,.cx-shell .cx-entity-status svg,
-.cx-shell .cx-tag svg{width:var(--icon-10)!important;height:var(--icon-10)!important}
+.cx-shell .cx-tag svg{width:var(--cx-icon-10)!important;height:var(--cx-icon-10)!important}
 
 /* —— 栏：不设高度，统一内边距 —— */
 .cx-shell .cx-header,.cx-shell .cx-pipe,.cx-shell .cx-chat-h,.cx-shell .cx-chat-tabs,
 .cx-shell .cx-addrbar,.cx-shell .cx-statusbar,.cx-shell .cx-console-head,.cx-shell .cx-console-tabs,.cx-shell .cx-pm-h{
   height:auto!important;max-height:none!important;min-height:0!important;
   margin:0!important;box-sizing:border-box;
-  display:flex!important;align-items:center;gap:var(--gap-bar)!important;flex-wrap:nowrap;
+  display:flex!important;align-items:center;gap:var(--cx-gap-bar)!important;flex-wrap:nowrap;
 }
-.cx-shell .cx-header{padding:var(--sp-7)!important;overflow:visible!important}
-.cx-shell .cx-pipe,.cx-shell .cx-chat-tabs,.cx-shell .cx-console-tabs{padding:var(--sp-3) var(--pad-bar)!important;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.cx-shell .cx-header{padding:var(--cx-sp-7)!important;overflow:visible!important}
+.cx-shell .cx-pipe,.cx-shell .cx-chat-tabs,.cx-shell .cx-console-tabs{padding:var(--cx-sp-3) var(--cx-pad-bar)!important;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .cx-shell .cx-pipe::-webkit-scrollbar,.cx-shell .cx-chat-tabs::-webkit-scrollbar,.cx-shell .cx-console-tabs::-webkit-scrollbar{height:0}
-.cx-shell .cx-chat-h{padding:var(--sp-7)!important;overflow:visible!important}
-.cx-shell .cx-pm-h{padding:var(--sp-3) var(--pad-bar)!important;overflow:hidden}
+.cx-shell .cx-chat-h{padding:var(--cx-sp-7)!important;overflow:visible!important}
+.cx-shell .cx-pm-h{padding:var(--cx-sp-3) var(--cx-pad-bar)!important;overflow:hidden}
 .cx-shell .cx-pm-h>*{flex:none}
 
 /* —— 顶栏四段：品牌 | 模式(占满居中) | 样式 —— */
@@ -2362,13 +2363,13 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-pipe .cx-stage,
 .cx-shell .cx-chat-tabs .cx-chat-tab,
 .cx-shell .cx-console-tabs .cx-console-tab{
-  height:var(--h-item)!important;min-height:var(--h-item)!important;
-  padding:0 var(--pad-bar)!important;margin:0!important;
-  font-size:var(--fs-12)!important;line-height:1!important;
+  height:var(--cx-h-item)!important;min-height:var(--cx-h-item)!important;
+  padding:0 var(--cx-pad-bar)!important;margin:0!important;
+  font-size:var(--cx-fs-12)!important;line-height:1!important;
   box-sizing:border-box;display:inline-flex;align-items:center;
 }
-.cx-shell .cx-pipe .cx-stage .n{width:var(--icon-12)!important;height:var(--icon-12)!important;font-size:var(--fs-10)!important}
-.cx-shell .cx-header .cx-view *,.cx-shell .cx-header .cx-drop *,.cx-shell .cx-btn *{font-size:var(--fs-12)!important;line-height:1!important}
+.cx-shell .cx-pipe .cx-stage .n{width:var(--cx-icon-12)!important;height:var(--cx-icon-12)!important;font-size:var(--cx-fs-10)!important}
+.cx-shell .cx-header .cx-view *,.cx-shell .cx-header .cx-drop *,.cx-shell .cx-btn *{font-size:var(--cx-fs-12)!important;line-height:1!important}
 
 /* —— 窄屏隐藏顺序 —— */
 @media (max-width:1560px){.cx-shell .cx-header .cx-actions .cx-drop:nth-child(1){display:none}}
@@ -2391,8 +2392,8 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-menu-wrap{display:inline-flex;flex:none}
 .cx-shell .cx-menu-wrap>.cx-btn,
 .cx-shell .cx-menu-wrap>.cx-btn.xs{
-  width:var(--h-item)!important;min-width:var(--h-item)!important;
-  height:var(--h-item)!important;padding:0!important;
+  width:var(--cx-h-item)!important;min-width:var(--cx-h-item)!important;
+  height:var(--cx-h-item)!important;padding:0!important;
   display:inline-flex;align-items:center;justify-content:center;
   box-sizing:border-box;
 }
@@ -2405,8 +2406,8 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-console-head .cx-btn,
 .cx-shell .cx-compose-plus,
 .cx-shell .cx-compose-send{
-  width:var(--h-item)!important;min-width:var(--h-item)!important;
-  height:var(--h-item)!important;
+  width:var(--cx-h-item)!important;min-width:var(--cx-h-item)!important;
+  height:var(--cx-h-item)!important;
   padding:0!important;aspect-ratio:1/1;
   display:inline-flex;align-items:center;justify-content:center;
   box-sizing:border-box;flex:none;
@@ -2414,7 +2415,7 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell svg{aspect-ratio:1/1;flex:none}
 .cx-shell .cx-webtab-ico,
 .cx-shell .cx-webtab-ico img,
-.cx-shell .cx-tab img{width:var(--icon-12)!important;height:var(--icon-12)!important;object-fit:contain;border-radius:3px}
+.cx-shell .cx-tab img{width:var(--cx-icon-12)!important;height:var(--cx-icon-12)!important;object-fit:contain;border-radius:3px}
 
 /* 标签栏 + 与地址栏更多：统一 28×28 方形 */
 .cx-shell .cx-webtabs>.cx-btn.xs,
@@ -2422,13 +2423,13 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-addrbar>.cx-btn.xs,
 .cx-shell .cx-addrbar .cx-addressbar-actions>.cx-btn,
 .cx-shell .cx-addrbar .cx-addressbar-actions button{
-  width:var(--h-item)!important;min-width:var(--h-item)!important;
-  height:var(--h-item)!important;padding:0!important;
+  width:var(--cx-h-item)!important;min-width:var(--cx-h-item)!important;
+  height:var(--cx-h-item)!important;padding:0!important;
   aspect-ratio:1/1;display:inline-flex;align-items:center;justify-content:center;
   box-sizing:border-box;flex:none;
 }
 .cx-shell .cx-addrbar .cx-btn.xs svg,
-.cx-shell .cx-webtabs>.cx-btn.xs svg{width:var(--icon-10)!important;height:var(--icon-10)!important}
+.cx-shell .cx-webtabs>.cx-btn.xs svg{width:var(--cx-icon-10)!important;height:var(--cx-icon-10)!important}
 
 /* 输入类控件文字 12px */
 .cx-shell .cx-compose-input,
@@ -2444,7 +2445,7 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-drop-pop button,
 .cx-shell .cx-menu .cx-menu-item,
 .cx-shell .cx-ctxmenu button{
-  font-size:var(--fs-14)!important;
+  font-size:var(--cx-fs-14)!important;
   padding:8px 10px!important;
   line-height:1.2!important;
 }
@@ -2457,7 +2458,7 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 
 /* 地址栏按钮图标统一 14px（更多菜单不再偏大） */
 .cx-shell .cx-addrbar button svg,
-.cx-shell .cx-addrbar .cx-addressbar-actions svg{width:var(--icon-10)!important;height:var(--icon-10)!important}
+.cx-shell .cx-addrbar .cx-addressbar-actions svg{width:var(--cx-icon-10)!important;height:var(--cx-icon-10)!important}
 .cx-shell .cx-addrbar .cx-addressbar-actions button{padding:0!important;display:inline-flex;align-items:center;justify-content:center}
 
 /* 地图：深色主题 + 与插件主题协调；标题栏恢复高度 */
@@ -2468,15 +2469,15 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-taskmap.cx-map-blue .leaflet-tile-pane{filter:invert(1) hue-rotate(195deg) saturate(1.5) brightness(.7) contrast(.95)}
 .cx-taskmap.cx-map-light .leaflet-tile-pane{filter:none}
 .cx-taskmap .leaflet-control-attribution{background:rgba(4,16,26,.7);color:var(--cx-text-faint)}
-.cx-map-theme{height:24px!important;min-height:24px!important;padding:0 8px!important;font-size:var(--fs-10)!important}
+.cx-map-theme{height:24px!important;min-height:24px!important;padding:0 8px!important;font-size:var(--cx-fs-10)!important}
 
 /* 地址栏图标：统一标准 18px（与 12px 文字配套） */
 .cx-shell .cx-addrbar button svg,
 .cx-shell .cx-addrbar .cx-addressbar-actions svg,
-.cx-shell .cx-addrbar .cx-btn svg{width:var(--icon-12)!important;height:var(--icon-12)!important}
+.cx-shell .cx-addrbar .cx-btn svg{width:var(--cx-icon-12)!important;height:var(--cx-icon-12)!important}
 .cx-shell .cx-addrbar button,
 .cx-shell .cx-addrbar .cx-addressbar-actions button{
-  width:var(--h-item)!important;min-width:var(--h-item)!important;height:var(--h-item)!important;
+  width:var(--cx-h-item)!important;min-width:var(--cx-h-item)!important;height:var(--cx-h-item)!important;
   padding:0!important;display:inline-flex;align-items:center;justify-content:center;flex:none;
 }
 
@@ -2531,7 +2532,7 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-app .cx-menu-wrap>.cx-btn svg{width:14px!important;height:14px!important}
 .cx-shell .cx-node .cx-btn.xs,
 .cx-shell .cx-space .cx-btn.xs,
-.cx-shell .cx-app .cx-btn.xs{height:26px!important;min-height:26px!important;padding:0 10px!important;font-size:var(--fs-12)!important}
+.cx-shell .cx-app .cx-btn.xs{height:26px!important;min-height:26px!important;padding:0 10px!important;font-size:var(--cx-fs-12)!important}
 
 /* 开发模式：停掉装饰性特效，面板延迟渲染 */
 .cx-shell[data-view="dev"] .cx-comet,
