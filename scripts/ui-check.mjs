@@ -40,7 +40,7 @@ ok('Deploy selects standard spaces', read('src/client/parts/34-forms.js').includ
 ok('Deploy auto mode exists', read('lib/core/nodes.js').includes("mode = 'auto'"));
 ok('Init log is a table', initUi.includes('cx-init-log'));
 ok('Init has retry action', initUi.includes('onRetry'));
-ok('Init port probe exists', initUi.includes('freePort') && read('index.js').includes("op === 'freePort'"));
+ok('Init port probe exists', initUi.includes('freePort') && read('lib/core/ops.js').includes('freePort:'));
 ok('Init uses Cyber World term', initUi.includes('DIGITAL AVATAR & CYBER WORLD'));
 ok('Init shows execution log', initUi.includes('cx-init-debug'));
 ok('Init uses goal/plan descriptions', initUi.includes('目标描述') && initUi.includes('计划描述'));

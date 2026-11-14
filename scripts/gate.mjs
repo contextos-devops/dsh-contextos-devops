@@ -88,7 +88,7 @@ if (!/URL-SPEC/.test(read('docs/URL-SPEC.md'))) err('URL 规范：docs/URL-SPEC.
   if (!/action\/upload/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 未写明文件上传接口（<cmd>/action/upload）');
   if (!/20240903-operation/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 未写明文件存储依赖云研发空间（20240903-operation）');
   if (!/面板可加/.test(read('docs/MONITOR.md'))) err('监控规范：docs/MONITOR.md 缺失或未写「面板可加，数据源可配」');
-  if (!/monitorQuery/.test(read('index.js'))) err('监控规范：index.js 缺少 monitorQuery 取数入口');
+  if (!/monitorQuery/.test(read('lib/core/ops.js'))) err('监控规范：lib/core/ops.js 缺少 monitorQuery 取数入口');
   if (!/web\.chat\.action/.test(read('docs/INTERFACE.md')) || !/sess\.daemon/.test(read('docs/INTERFACE.md'))) err('接口规范：docs/INTERFACE.md 未写明 web.chat.action 转发与 sess.daemon 网页空间');
   if (!/export async function upload/.test(read('lib/base/http.js'))) err('接口规范：lib/base/http.js 缺少 upload()');
   if (!/export function envelopeShape/.test(read('lib/base/http.js'))) err('接口规范：lib/base/http.js 缺少 envelopeShape');
