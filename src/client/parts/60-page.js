@@ -208,6 +208,23 @@
                   return `main=${pick('.cx-msg-main')} meta=${pick('.cx-msg-meta')} tools=${pick('.cx-msg-tools')}`;
                 } catch { return 'err'; }
               })(),
+              /* 几何自检：正文占比与工具栏右边距，比字符串更能证明「看起来对不对」 */
+              geo: (() => {
+                try {
+                  const m = document.querySelector('.cx-msg');
+                  if (!m) return null;
+                  const r = m.getBoundingClientRect();
+                  const t = m.querySelector('.cx-msg-tools');
+                  const b = m.querySelector('.cx-msg-body');
+                  const tr = t ? t.getBoundingClientRect() : null;
+                  const br = b ? b.getBoundingClientRect() : null;
+                  return {
+                    card: [Math.round(r.width), Math.round(r.height)],
+                    toolsRightGap: tr ? Math.round(r.right - tr.right) : null,
+                    bodyRatio: br && r.width ? Number((br.width / r.width).toFixed(2)) : null,
+                  };
+                } catch { return null; }
+              })(),
             } }).catch(() => {});
           } catch {}
         }, 400);
