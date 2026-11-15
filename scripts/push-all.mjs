@@ -90,7 +90,7 @@ let local = '';
 try { local = git(['rev-parse', 'HEAD']); } catch { /* ignore */ }
 for (const [name, url] of list) {
   try {
-    const head = git(['ls-remote', name, BRANCH]).split(/\s+/)[0];
+    const head = git([...NO_PROXY, 'ls-remote', name, BRANCH]).split(/\s+/)[0];
     const ok = head && local && head.startsWith(local.slice(0, 8));
     console.log(`${ok ? 'PASS' : 'FAIL'}  ${name} HEAD ${head.slice(0, 8)} ${ok ? '= 本地' : '≠ 本地' + local.slice(0, 8)}`);
     if (!ok) failed += 1;
