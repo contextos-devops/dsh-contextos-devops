@@ -16,8 +16,11 @@ const CRED = path.join(os.homedir(), '.git-credentials');
 // 主机 → 期望的用户名；没列出的主机走系统默认凭据
 const USER_BY_HOST = { 'github.com': 'contextos-devops' };
 
+// 任何一步都不许停下来要口令：拿不到凭据就失败，卡住会让整轮任务挂死
+const ENV = { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_ASKPASS: '/usr/bin/true', SSH_ASKPASS: '/usr/bin/true' };
+
 function git(args, opts = {}) {
-  return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...opts }).trim();
+  return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: ENV, timeout: 45000, ...opts }).trim();
 }
 
 function readCredentials() {
@@ -66,8 +69,9 @@ for (const [name, url] of list) {
   const host = hostOf(url);
   const helper = helperFor(host, creds);
   const args = [...(helper || []), 'push', name, BRANCH];
+  console.log(`PUSH  ${name} (${host}) …`);
   try {
-    const out = execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    const out = execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: ENV, timeout: 60000 });
     console.log(`PASS  ${name} (${host})${helper ? ' — 凭据 contextos-devops' : ''}`);
     const tail = out.trim().split('\n').slice(-1)[0];
     if (tail) console.log(`      ${tail}`);
