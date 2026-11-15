@@ -1,21 +1,21 @@
 # 提交给 awesome-dsh-plugin 的教学条目
 #
 # 用法：fork https://github.com/awesome-dsh-plugin/awesome-dsh-plugin
-#      把本文件复制为 data/plugins/shylinux__dsh-contextos-devops.yml
+#      把本文件复制为 data/plugins/contextos-devops__dsh-contextos-devops.yml
 #      （文件名固定 <owner>__<repo>.yml，一个 PR 最多 3 个文件）
 #      然后提 PR。README 由仓库脚本生成，不要手改。
 #
 # 字段规则：url 必须与仓库完全一致；description 里的数字/接口名必须能在代码里对上；
 #           描述含 ": " 时必须整体加引号；icon 必须是 GitHub 托管的位图。
 
-url: https://github.com/shylinux/dsh-contextos-devops
-name: shylinux/dsh-contextos-devops
+url: https://github.com/contextos-devops/dsh-contextos-devops
+name: contextos-devops/dsh-contextos-devops
 category: dev
 description:
   en: "ContextOS DevOps for DeepSeek Harness: deploy cluster nodes, create project spaces, scaffold and build apps, manage avatars and PM boards, scan LAN / Wi-Fi / Bluetooth devices, and drive all of it from an in-app Copilot."
   zh: "DSH 里的 ContextOS 运维控制台：部署服务节点、创建项目空间、生成并编译应用、管理数字分身与项目看板、扫描同网与蓝牙设备，并让内置 Copilot 直接执行这些操作。"
-icon: https://raw.githubusercontent.com/shylinux/dsh-contextos-devops/master/assets/icon-180.png
+icon: https://raw.githubusercontent.com/contextos-devops/dsh-contextos-devops/master/assets/icon-180.png
 
 # 发到 npm 之后，再把下面两行取消注释（npm 安装比源码安装快，且免 allowBuilds 授权）：
 # npm: dsh-contextos-devops
-# tarball: https://github.com/shylinux/dsh-contextos-devops/releases/latest/download/dsh-contextos-devops.tgz
+# tarball: https://github.com/contextos-devops/dsh-contextos-devops/releases/latest/download/dsh-contextos-devops.tgz

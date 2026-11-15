@@ -31,7 +31,7 @@ node --check index.js    # 只改宿主时先做语法检查
 | 远端 | 地址 | 用途 |
 | --- | --- | --- |
 | `origin` | https://shylinux.com/x/dsh-contextos-devops | 主库（ContextOS 自家） |
-| `github` | https://github.com/shylinux/dsh-contextos-devops | GitHub 镜像（对外） |
+| `github` | https://github.com/contextos-devops/dsh-contextos-devops | GitHub 镜像（对外） |
 
 提交后**两个都要推**：`npm run push:all`（= `git push origin master && git push github master`）。
 两个远端必须同 commit；只推一个会导致「别人拉到的和你看的不是同一份代码」。

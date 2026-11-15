@@ -1,6 +1,6 @@
 {
   "name": "dsh-contextos-devops",
-  "version": "1.48.26",
+  "version": "1.48.27",
   "type": "module",
   "description": "ContextOS DevOps for DeepSeek Harness: one dashboard for cluster nodes, project spaces, apps, avatars, PM boards and IoT devices, with an in-app Copilot that can deploy and scaffold.",
   "exports": {
@@ -66,13 +66,13 @@
     "name": "shy",
     "url": "https://shylinux.com"
   },
-  "homepage": "https://github.com/shylinux/dsh-contextos-devops#readme",
+  "homepage": "https://github.com/contextos-devops/dsh-contextos-devops#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shylinux/dsh-contextos-devops.git"
+    "url": "git+https://github.com/contextos-devops/dsh-contextos-devops.git"
   },
   "bugs": {
-    "url": "https://github.com/shylinux/dsh-contextos-devops/issues"
+    "url": "https://github.com/contextos-devops/dsh-contextos-devops/issues"
   },
   "keywords": [
     "dsh",
