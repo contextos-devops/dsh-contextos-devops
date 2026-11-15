@@ -133,10 +133,10 @@ if (!/URL-SPEC/.test(read('docs/URL-SPEC.md'))) err('URL 规范：docs/URL-SPEC.
   if (!copilot.includes('三纲五常')) err('lib/core/copilot.js: doctrine not injected into prompt');
 }
 
-// 10) AGENTS 契约：DSH 工作流 + 对话流程必须写清楚
+// 10) AGENTS 契约：工作流程 + 对话流程必须写清楚
 {
   const t = read('AGENTS.md');
-  for (const k of ['铁律', 'DSH 工作流', '对话流程', 'npm run build:client', 'plugin_manager', 'usr/local/WorkBuddy/dsh-reports']) {
+  for (const k of ['铁律', '工作流程', '对话流程', 'npm run build:client', 'plugin_manager', 'usr/local/WorkBuddy/dsh-reports']) {
     if (!t.includes(k)) err(`AGENTS.md: missing ${k}`);
   }
 }

@@ -1,11 +1,8 @@
 # AGENTS · 插件工作契约
 
-> 本文件约束两类智能体：
-> 1. 在本仓库改代码的 **DSH 代理**（外部驱动，有 bash/文件工具）；
-> 2. 插件内 **Copilot**（`/api?op=chat`，用户在界面里对话）。
->
+> 约束两类智能体：**外部 DSH 代理**（有 bash/文件工具，改本仓库）与**插件内 Copilot**（`/api?op=chat`，在界面里对话）。
 > 冲突优先级：根 `../../../AGENTS.md`（平台铁律）> 本文件 > `docs/*`。
-> 每次对话：读本文件 → `docs/INDEX.md` → 只读本轮相关的那一章。
+> 每次对话：**本文件 §〇 → §二 流程 → `docs/INDEX.md` 对应一行**，只读本轮需要的那一章。
 
 ---
 
@@ -13,154 +10,299 @@
 
 | 问题 | 答案 |
 | --- | --- |
-| 这是什么 | DSH 插件：ContextOS 的节点/空间/应用/分身/项目/物联，装进对话式界面 |
-| 代码在哪 | 宿主 `index.js` + `lib/**`；客户端 `src/client/parts/*.js`（24 片段拼成 `client.js`） |
-| 一条请求怎么走 | 组件 → `api(op)` → `index.js` 查 `lib/core/ops.js` → `lib/core/*.js` → ContextOS HTTP |
-| 怎么算改完 | `npm run build:client` 全绿 + 接口/界面有证据 + 报告落盘 |
-| 下一步干什么 | 看 §六「本轮做什么」：红门禁 > 已知限制 > 用户新需求 |
-
-三条命令先记住：
+| 这是什么 | DSH 插件：把 ContextOS 的节点/空间/应用/分身/项目/物联装进对话式界面 |
+| 规模 | 宿主 345 行 + `lib/**` 5.6k 行 + 客户端 24 片段 7.6k 行 + CSS 3.3k 行 + 102 个 op |
+| 代码在哪 | 宿主 `index.js` + `lib/**`；客户端 `src/client/parts/*.js`（拼成 `client.js`）；样式 `src/client/styles/*.css` |
+| 一条请求怎么走 | 组件 → `api(op)` → `index.js` 查 `lib/core/ops.js` → `lib/core/<域>.js` → ContextOS HTTP |
+| 怎么算改完 | `npm run build:client` 全绿（10 道门禁）+ 有证据 + 报告落盘 |
+| 下一步干什么 | §七 验收标准 → §十二 本轮优先级：红门禁 > 已知限制 > 用户需求 |
 
 ```sh
 npm run build:client     # 构建 + 10 道门禁（红了先修，不许带 FAIL 交付）
 npm run check:probe      # 离线渲染 fixture 量布局（需本机 Edge/Chrome）
-npm run verify:ui        # 真浏览器验收（需 Edge CDP 9223）
+npm run verify:ui        # 真浏览器验收（需 Edge CDP 9223），exit 0 才算过
 node --check index.js    # 只改宿主时先做语法检查
 ```
 
 ---
 
-## 一、你可以做哪些事
+## 一、工作范式
 
-| 想做 | 改哪里 | 顺手必须做 |
+**三纲**：集群化部署 → 让所有设备互联互通；模块化开发 → 让所有代码自动生成；自动化应用 → 让所有数据自由流动。
+
+**五常**：代码、文档、会话、团队、市场。
+
+**运行方式**：以 **AI 会话为驱动**实现人机协同 —— 人给意图，智能体给计划与产物；**不断生成代码、不断生成文档**；
+**用代码工具提升效率**（能写成脚本的检查不再靠人看），**用规范文档提升质量**（写不清楚的规则等于没有）；
+**不断优化流程本身**，让「发现 → 修复 → 固化」的周期一轮比一轮短，最终实现 **RSI**。
+
+一句话判据：**这件事让「设备更多、代码更少、数据更通」中的哪一个前进？** 都答不出，就别做。
+理念全文 `docs/DOCTRINE.md`；每轮判据 `docs/RSI-CONSTITUTION.md`。
+
+---
+
+## 二、工作流程：八步（每轮照做，不跳步）
+
+| # | 步骤 | 做什么 | 产出（缺一不算做完） |
+| --- | --- | --- | --- |
+| ① | **意图识别** | 复述诉求 + 判断问题类型（`docs/DIAGNOSTICS.md` §一）+ 写目标句与可判定验收 | 目标 + 验收句 |
+| ② | **生成计划** | 范围 / 影响面 / 代价（时间、回归风险、要碰的文件） | 计划（≤6 行） |
+| ③ | **拆解任务** | 拆成 3–6 条可执行任务，标出依赖与顺序 | 任务清单 |
+| ④ | **读取规范** | 按 `docs/INDEX.md` 只读本轮相关的那一章，不整份塞 | 引用到的章节号 |
+| ⑤ | **选择工具** | 先查 §九 脚本表与 `DIAGNOSTICS.md`「先跑哪条」；有现成门禁就不手搓 | 命令清单 |
+| ⑥ | **执行任务** | 生成代码 + 生成文档（同一次提交）；长任务逐步报进度（做了什么、哪个数字变了） | 改动 + 进度 |
+| ⑦ | **质量验收** | 是否符合规范？是否满足用户需求？→ `build:client` 全绿 + §七 对应矩阵 + 报告里贴证据 | exit 0 + 证据 |
+| ⑧ | **归纳总结** | 规范不完善 → 补规范；脚本不完善 → 补脚本；索引不完善 → 补索引；验收标准不完善 → 补标准 | 至少一条新断言/新脚本/新索引行 |
+
+一句话记忆：**意图 → 计划 → 任务 → 规范 → 工具 → 执行 → 验收 → 归纳**。
+第 ⑧ 步是复利来源：同类问题第二次出现时，应当靠断言而不是靠回忆解决。
+
+**每轮四件套（缺一不算完成）**：代码（全绿 + 可验证）· 文档（改对应章节，不追加文末）·
+门禁（本轮踩的坑 → 至少一条新断言）· 规范（写进本文件或 `docs/CODE-GEN.md`）。
+
+---
+
+## 三、代码索引（架构与现状）
+
+### 3.1 五层
+
+```
+页面/视图（60-page 装配，chat / manage / dev / monitor）
+   ↓
+组件片段（src/client/parts/*.js：卡片、表单、消息、PM、地图、编辑器、监控…）
+   ↓ api(op)                         ← 唯一客户端出口，op 必须登记在 ops.js
+宿主路由（index.js：查表分发，不写业务分支）
+   ↓
+领域实现（lib/core/*.js：nodes / spaces / apps / project / copilot / codegen …）
+   ↓
+ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
+```
+
+### 3.2 文件地图
+
+| 路径 | 行数 | 职责 |
 | --- | --- | --- |
-| 加/改一个后端动作 | `lib/core/ops.js` + `lib/core/<域>.js` | `npm run check:ops` |
-| 改请求转发/鉴权 | `index.js`（只允许查表分发，不许写业务分支） | `node --check index.js` + 重载 |
-| 加一个要保存的状态 | `src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA` | `node scripts/docs-index.mjs --write` |
-| 改界面/布局/组件 | `src/client/parts/*.js`、`src/client/styles/*.css` | `check:ui` + `check:probe` + 真机截图 |
-| 加项目管理工作流 | `lib/core/project.js`（状态机唯一处） | 状态表进 `docs/MEMORY.md` |
+| `index.js` | 345 | 宿主接线：`export const inject=['tools','webServer','llm']`、工具注册、HTTP/WS 路由、静态资源 |
+| `lib/core/ops.js` | 299 | **op 注册表**（102 条）：`{ method, noUser, run }`；`index.js` 只查表 |
+| `lib/core/nodes.js` | 627 | 节点：列表/部署/启停/探活/端口 |
+| `lib/core/spaces.js` | 406 | 空间：列表/创建/构建/目录树 |
+| `lib/core/apps.js` | 675 | 应用：列表/创建/打开/商店 |
+| `lib/core/project.js` | 393 | 项目管理状态机（PM 唯一处） |
+| `lib/core/copilot.js` | 419 | 对话：提示词、三模式短路、动作白名单 |
+| `lib/core/codegen.js` | 401 | 代码生成（factory 模式） |
+| `lib/core/avatar.js` | 289 | 数字分身 |
+| `lib/core/vocab.js` | 158 | 词表（字段/概念唯一命名） |
+| `lib/base/url.js` | 178 | 两类 URL 构造（`apiPath` / `webUrl`） |
+| `lib/base/http.js` | 140 | 请求与鉴权（`user.uid`/sessid） |
+| `lib/base/registry.js` | 186 | 节点/空间注册与缓存 |
+| `lib/base/state.js` | 45 | 服务端状态目录（`state.json`） |
+
+客户端 24 片段（构建顺序即文件名序）：
+
+| 片段 | 行数 | 干什么 |
+| --- | --- | --- |
+| `00-prelude.js` | 310 | 启动、样式注入（版本跟随）、i18n、工具函数 |
+| `05-bootstrap.js` | 61 | React/Monaco/xterm 加载与降级 |
+| `08-store.js` | 85 | **唯一持久化出口**（`CX_STORE_SCHEMA` + `cxRead/cxWrite`） |
+| `10-ui.js` | 188 | 基础组件（按钮、标签、空态、加载） |
+| `12-debug.js` | 361 | 底部控制台、DEBUG/STATE 页 |
+| `15-layout.js` | 86 | 壳层布局与侧栏 |
+| `20-devworkspace.js` | 789 | DEV 工作台：终端会话、预览、分栏 |
+| `25-editor-ui.js` | 28 | 编辑器工具条 |
+| `30-modals.js` | 85 | 模态框底座 |
+| `32-cards.js` | 176 | 节点/空间/应用卡片 |
+| `34-forms.js` | 176 | 表单与字段 |
+| `36-data.js` | 267 | 数据表格 |
+| `40-project.js` | 430 | PM 数据层（计划/任务/报告/反馈）+ 农历 |
+| `45-map.js` | 109 | 地图卡片（Leaflet） |
+| `46-pm.js` | 158 | PM 交互（选择/筛选） |
+| `47-three.js` | 324 | 三维场景（赛博世界） |
+| `49-msg.js` | 167 | 消息子组件（引用/表单/实体卡） |
+| `50-chat.js` | 1422 | 会话面板（消息流、工具条、自愈、上传） |
+| `51-pmselection.js` | 31 | PM 选中态 |
+| `52-pmdata.js` | 29 | PM 数据派生 |
+| `55-pm.js` | 146 | PM 视图装配 |
+| `58-config.js` | 381 | 插件配置（主题/语言/模型/调用） |
+| `59-monitor.js` | 262 | 监控面板 |
+| `60-page.js` | 1518 | 页面装配、视图切换、`clientCheck` 自报 |
+
+样式：`tokens.css`（2）+ `main.css`（3294）+ `kit.css`（20）→ 构建成 `assets/client.css`。
+
+**构建产物**：`client.js`（7590 行）、`assets/client.css` —— 只由 `build/client.mjs` 生成，不许手改。
+
+### 3.3 数据与状态
+
+- 浏览器：38 个键，全部登记在 `src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA`，键表见 `docs/STATE.md`。
+- 服务端：`~/.dsh/contextos-devops-dsh/state.json`（节点缓存、终端缓冲、请求日志、选择记忆、prefs、clientCheck）。
+- 生成物：`docs/CODE-INDEX.md`（代码索引）、`docs/STATE.md`（状态表）—— 改代码后跑 `node scripts/docs-index.mjs --write`。
+
+---
+
+## 四、文档索引（24 份，入口 `docs/INDEX.md`）
+
+| 我要干什么 | 读这份 |
+| --- | --- |
+| 按任务找文档（唯一入口） | `docs/INDEX.md` |
+| 理念：三纲五常 / 四件套 / 抽象递减 | `docs/DOCTRINE.md` |
+| 每轮判据（Copilot 也注入） | `docs/RSI-CONSTITUTION.md` |
+| **出问题了先查哪、先跑哪** | `docs/DIAGNOSTICS.md` |
+| 界面：布局/组件/主题/图标/文字 | `docs/DESIGN-SYSTEM.md` + 根 `USER-VIEW.md` |
+| 表单字段形态 | `docs/FORM-FIELDS.md` |
+| 接口五形态 / 两类 URL / 禁止清单 | `docs/INTERFACE.md`、`docs/URL-SPEC.md` |
+| 代码生成（factory）两类模块与词表 | `docs/CODE-GEN.md` |
+| PM 数据流与契约 | `docs/CODE-MAP.md`、`docs/MEMORY.md` |
+| 对话协议与动作表 | `docs/AI-CONVERSATION.md` |
+| 监控面板接法 | `docs/MONITOR.md` |
+| 权限/身份 | `docs/IAM.md` |
+| DSH 宿主能力与边界 | `docs/DSH-COS.md` |
+| 交付验收（L0–L3 + 证据表） | `docs/ACCEPTANCE.md` |
+| 架构分层与边界 | `docs/ARCHITECTURE.md` |
+| 产品全貌 / 对外讲 | `docs/CONTEXTOS-SUMMARY.md` |
+| 完整产品设计稿 | `docs/PRODUCT-DESIGN.md` |
+| 找文件/组件/op/脚本（生成） | `docs/CODE-INDEX.md` |
+| 查存了哪些状态（生成） | `docs/STATE.md` |
+| 历史坑与决策 | `docs/RSI-LEDGER.md` |
+| 根规范路由与插件硬规则 | `docs/AI-CONTEXT.md` |
+
+新文档必须登记 `docs/INDEX.md`，否则 `docs-check` 判孤儿。
+
+---
+
+## 五、岗位职责（可以做什么）
+
+| 想做的事 | 改哪里 | 顺手必须做 |
+| --- | --- | --- |
+| 加/改后端动作 | `lib/core/ops.js` + `lib/core/<域>.js` | `npm run check:ops` |
+| 改请求转发/鉴权 | `index.js`（只许查表分发） | `node --check index.js` + 重载插件 |
+| 加持久化状态 | `08-store.js` 的 `CX_STORE_SCHEMA` | `node scripts/docs-index.mjs --write` |
+| 改界面/布局/组件 | `src/client/parts/*.js`、`styles/*.css` | `check:ui` + `check:probe` + 真机截图 |
+| 加项目管理流程 | `lib/core/project.js`（状态机唯一处） | 状态表进 `docs/MEMORY.md` |
 | 改 Copilot 提示词/动作 | `lib/core/copilot.js` + `docs/AI-CONVERSATION.md` | 三模式短路不许绕过 |
-| 改文档 | `docs/*.md`；新文档必须进 `docs/INDEX.md` | `npm run check:docs` |
-| 加门禁 | `scripts/*.mjs` + `package.json` 的 `build:client` 链 | 自测「能抓到该错误」；布局类加 `ui-probe` 用例 |
+| 改文档 | `docs/*.md` | 登记 `INDEX.md` + `check:docs` |
+| 加门禁脚本 | `scripts/*.mjs` + `build:client` 链 | 自测「能抓到该错误」 |
+| 加布局不变量 | `scripts/fixtures/*.html` + `ui-probe` 的 `CASES` | `--css /dev/null` 必须 FAIL |
 
-**不能碰**：`client.js`（构建产物）、`usr/icebergs/`、`usr/volcanos/`、`page/cache.css`、任何 `*.db`。
-
-**可以直接调的宿主能力**：`contextos_list_nodes`、`contextos_list_spaces`、`contextos_read_data`、
+**可直接调用的宿主工具**：`contextos_list_nodes`、`contextos_list_spaces`、`contextos_read_data`、
 `contextos_write_data`、`contextos_create_space`、`contextos_create_app`、`contextos_deploy_node`、
 `contextos_space_start/stop`、`contextos_pipeline`。
 
 ---
 
-## 二、方向：三纲五常（判断该不该做）
+## 六、铁律红线（不可以做）
 
-**三纲**：集群化部署 → 设备互联互通；模块化开发 → 代码自动生成；自动化应用 → 数据自由流动。
-**五常**：代码、文档、会话、团队、市场。
-
-一句话判据：**这件事让「设备更多、代码更少、数据更通」中的哪一个前进？** 都答不出，就别做。
-完整理念见 `docs/DOCTRINE.md`；每轮判据见 `docs/RSI-CONSTITUTION.md`。
-
----
-
-## 三、铁律（违反即返工）
-
-| # | 铁律 | 判据 |
+| # | 红线 | 判据 |
 | --- | --- | --- |
-| 1 | 不改构建产物 | `client.js` 只能由 `node build/client.mjs` 生成 |
-| 2 | 每次改动 bump 版本 | `package.json.version` 变化（缓存键） |
-| 3 | 改完必过构建链 | `npm run build:client` exit 0 |
-| 4 | 宿主改动必须重载 | `plugin_manager set_plugin include:contextos-devops-dsh` → false → true |
-| 5 | 不改框架 | `usr/volcanos`、`usr/icebergs` 只读 |
-| 6 | 不直连数据库 | 读写走 HTTP API，禁止 `sqlite3` 改数据 |
-| 7 | URL 单一来源 | `lib/base/url.js`（`apiPath`/`webUrl`）与 `cxWebUrl` |
-| 8 | 不直连 localStorage | 只走 `08-store.js` 的 `cxRead/cxWrite/…` |
-| 9 | 词表优先 | 字段/操作用 `lib/core/vocab.js` 与框架名，不自造同义词 |
-| 10 | 结论必须有证据 | 命令输出/回执/截图/exit code；「应该可以」不算 |
-| 11 | 报告落盘 | `usr/local/WorkBuddy/dsh-reports/<日期>-<主题>.md` |
-| 12 | 不重启代替修复 | 先复现 → 改根因 → 再验，不许用重启掩盖 |
+| 1 | 不改构建产物 | `client.js`、`assets/client.css` 只能由 `build/client.mjs` 生成 |
+| 2 | 不碰框架与数据库 | `usr/icebergs/`、`usr/volcanos/` 只读；禁止 `sqlite3` 改数据 |
+| 3 | 不在 `index.js` 写业务分支 | 只许查 `OPS` 表；`op-check` 会红 |
+| 4 | 不绕过存储出口 | 禁止 `localStorage.setItem`；`store-check` 会红 |
+| 5 | 不手拼 URL | 只走 `lib/base/url.js` 与 `cxWebUrl`；空间只用 pod 名 |
+| 6 | 不跨应用污染样式 | `:root` 只准声明 `--cx-*`；gate 第 12 项 |
+| 7 | 不用重启代替修复 | 先复现 → 改根因 → 再验 |
+| 8 | 不带 FAIL 交付 | `build:client` exit 0 才算完；`verify:ui` 退出 2 不算完成 |
+| 9 | 不写「应该可以」 | 结论必须带命令输出/回执/截图/exit code |
+| 10 | 不把版本写死 | bump `package.json.version`，缓存键跟着走 |
+| 11 | 不留测试垃圾 | 测试节点/空间/临时文件收尾清理 |
+| 12 | 不新增无归属文档 | 孤儿文档 `docs-check` 会红 |
+| 13 | 不放宽断言蒙混 | 断言放宽必须在报告里写清「为什么旧阈值是错的」 |
 
 ---
 
-## 四、DSH 工作流：八步（每轮照做，不跳步）
+## 七、验收标准（什么算完成任务）
 
-用户只给一句话也要走完这八步；每步都有**可判定的产出**，没有产出就还在上一步。
+**通用四件**：`npm run build:client` exit 0 · 对应验证矩阵通过 · 文档同步 · 报告落盘 `usr/local/WorkBuddy/dsh-reports/`。
 
-| # | 步骤 | 做什么 | 产出（缺一不算做完） |
-| --- | --- | --- | --- |
-| ① | **分析** | 复述诉求 → 判断问题类型（`docs/DIAGNOSTICS.md` §一）→ 写目标句与验收句 | 目标 + 可判定验收 |
-| ② | **计划** | 范围 / 影响面 / 代价（时间、回归风险、要碰的文件）+ 3–6 条任务 | 计划表 + 任务清单 |
-| ③ | **读规范** | 按 `docs/INDEX.md` 只读本轮相关那一章，不整份塞 | 引用到的章节号 |
-| ④ | **选工具** | 先看 `docs/DIAGNOSTICS.md`「先跑哪条」；有现成门禁/取证脚本就不手搓 | 命令清单 |
-| ⑤ | **执行** | 调工具与模型，最小改动；长任务逐步报进度（做了什么、哪个数字变了） | 改动 + 进度 |
-| ⑥ | **产物** | 代码 + 文档改动 + 报告（`usr/local/WorkBuddy/dsh-reports/`） | 三件齐 |
-| ⑦ | **检测** | `npm run build:client` 全绿 + 对应验证矩阵 + 报告里贴证据 | exit 0 + 证据 |
-| ⑧ | **归纳** | 这是哪一类问题 → 补规范（本章/DIAGNOSTICS）→ 补工具（新断言/新脚本） | 至少一条新断言 |
-
-一句话记忆：**分析 → 计划 → 规范 → 工具 → 执行 → 产物 → 检测 → 归纳**。
-第 ⑧ 步是这套流程的复利来源：同类问题第二次出现时，应当靠断言而不是靠回忆解决。
-
-**每轮四件套（缺一不算完成）**
-
-| 件 | 判据 |
-| --- | --- |
-| 代码 | `npm run build:client` 全绿 + 接口回执可验证 |
-| 文档 | 行为变了就改对应章节（不追加文末），`docs/*` 与代码同提交 |
-| 门禁 | 本轮踩的坑 → 至少一条新断言（gate/ui-check/op-check/store-check/docs-check） |
-| 规范 | 规则写进本文件或 `docs/CODE-GEN.md` |
-
-**提交前自检**
+改了宿主（`index.js`、`lib/**`）必须让宿主重载后才算验收：`plugin_manager` 把插件 `false → true`：
 
 ```sh
-npm run build:client && node --check index.js
-git status --porcelain          # 只应包含本轮文件
-git add -A && git -c user.name="shy" -c user.email="shy@localhost" commit -m "…"
+# 或由 DSH 代理调用同名工具
+plugin_manager set_plugin include:contextos-devops-dsh  # enabled:false → 再 true
 ```
 
+| 改动类型 | 最低验证 | 判定 |
+| --- | --- | --- |
+| 纯文档 | `check:docs` | 索引覆盖 + 链接可解析 |
+| 客户端 UI/样式 | `build:client` + `check:probe` + `verify:ui` | 不变量全绿 + 真机截图 |
+| 宿主 `lib/*.js`、`index.js` | `build:client` + **重载插件** + 真实 `api` 回执 | 回执字段符合预期 |
+| 新 op | `check:ops` + `curl`（方法门一致）+ 回读 | 写入成功且能读回 |
+| 存储键 | `check:store` + `docs-index --write` + 刷新仍在 | 刷新后值不变 |
+| Copilot 动作 | `build:client` + 一次真实对话 | `action` 正确 + 卡片渲染 |
+| 门禁脚本 | 自测「故意改坏 → 必须 FAIL」 | 双向自测通过 |
+
+**不合格的典型**：只跑静态门禁就说已验证；截图能看但数值不对；报告里没有 exit code。
+
 ---
 
-## 五、验证矩阵（按改动类型选，不许降级）
+## 八、规范（怎么写才算「本仓库风格」）
 
-| 改动 | 最低验证 |
+- **JS 不断抽象通用组件**：同一个交互出现第二次 → 抽到 `10-ui/32-cards/34-forms`，不要复制粘贴；
+  hook 依赖数组不许引用本文件稍后才声明的变量（`hook-order-check` 会红）。
+- **CSS 不断抽象全局变量**：颜色/字号/间距/圆角一律走 `--cx-*` 令牌（`tokens.css`），
+  禁止散落硬编码色值；同一属性的覆盖必须能说清「为什么后写的这条要赢」。
+- **API 不断完善接口标准**：新动作先进 `ops.js` 注册（method/noUser），客户端只 `api(op)`；
+  参数与报文遵循 `docs/INTERFACE.md` 与 `docs/URL-SPEC.md`。
+- **不断生成脚本工具**：凡是「人工检查超过两次」的事，第三次必须变成脚本或断言；
+  凡是「列表」必须由目录/注册表推导，不许手抄（今天正是手抄 parts 列表导致插件整体加载失败）。
+- **命名**：概念/参数固定为 `node/space/app/avatar/scene/mode/view/web/editor`，不自造同义词（`vocab.js`）。
+
+---
+
+## 九、脚本（现成能用什么）
+
+### 9.1 npm 脚本
+
+| 命令 | 作用 |
 | --- | --- |
-| 纯文档 | `npm run check:docs` |
-| 客户端 UI/样式 | `build:client` + `check:probe`（布局不变量）+ `verify:ui`（或 headless 截图 + DOM 断言） |
-| 宿主 `lib/*.js`、`index.js` | `build:client` + **重载插件** + 真实 `api` 调用回执 |
-| 新 op | `check:ops` + `curl`（PUT/POST/DELETE 与方法门一致）+ 回读 |
-| 存储键 | `check:store` + `docs-index --write` + 刷新后状态仍在 |
-| Copilot 动作 | `build:client` + 一次真实对话（看 `action` 与卡片） |
+| `npm run build:client` | 构建 + 10 道门禁（gate → load → hook-order → op → store → ui → probe → i18n → context → docs） |
+| `npm run check:probe` | 离线渲染 fixture，断言布局不变量（`--case` / `--verbose` / `--png` / `--css`） |
+| `npm run verify:ui` | 真浏览器验收（Edge CDP 9223），`exit 0/1/2` |
+| `npm run check:ops` / `check:store` / `check:ui` / `check:hooks` / `check:load` / `check:i18n` / `check:context` / `check:docs` | 单跑某道门禁 |
+| `npm run watch:client` | 监听片段变化重建（不跑门禁） |
+| `npm run release` | `build:client` + `verify:ui` |
 
-判定口径：`verify:ui` 退出码 `0` 才算通过；`2`（无法验证）不算完成。
+### 9.2 脚本文件
 
----
-
-## 六、本轮做什么（优先级）
-
-1. **红门禁**：`build:client` 有任何 FAIL，先修它。
-2. **`docs/RSI-LEDGER.md` 里的未闭环项**与 `README.md §十三 已知限制`。
-3. 用户新需求（按 §四 走）。
-4. 没有上述输入时，按「抽象 → 门禁 → 索引」自选：把重复代码抽掉、把人工检查变成断言、
-   把散落知识收进索引（`docs/INDEX.md`、`CODE-INDEX`、`STATE`）。
-
-选任务时先写一句「完成后哪个判据会变绿/哪个数字会下降」，否则换一个。
-
----
-
-## 七、禁止清单与反模式
-
-| 禁止 / 反模式 | 原因 |
-| --- | --- |
-| 手改 `client.js` | 下次构建覆盖，且掩盖源文件问题 |
-| 只跑静态门禁就说「已验证」 | 界面/接口没真跑过，回归全留给用户 |
-| 改 CSS 只看自己加的那条规则 | 本仓库多次被后面的 `!important` 与旧规则覆盖 |
-| 未 bump 版本就构建 | 客户端缓存不刷新，用户看到旧界面 |
-| 在 `index.js` 写 `if (op === …)` | 契约被打散，`op-check` 会红 |
-| 新状态直接 `localStorage.setItem` | 绕过 schema，`store-check` 会红 |
-| 新增无归属文档 | `docs-check` 判孤儿 |
-| 把测试节点/空间留在环境里 | 污染用户数据，收尾必须清理 |
-| 用「重启试试」代替定位 | 下一次同样的问题还会来 |
+| 脚本 | 干什么 | 典型用法 |
+| --- | --- | --- |
+| `build/client.mjs` | 拼 24 片段 → `client.js`，拼 CSS → `client.css`，注入构建哈希与版本 | `node build/client.mjs --watch` |
+| `scripts/gate.mjs` | 产物哈希/语法/CSS 版本/`:root` 令牌/README+AGENTS 结构 | `npm run gate` |
+| `scripts/load-check.mjs` | 片段清单 vs 目录哈希 + `vm` 里真执行 `factory()` | `npm run check:load` |
+| `scripts/hook-order-check.mjs` | hook 依赖数组引用未声明变量（TDZ） | `npm run check:hooks` |
+| `scripts/op-check.mjs` | 客户端每个 `api('x')` 都有 op；方法与注册表一致 | `npm run check:ops` |
+| `scripts/store-check.mjs` | 只准走 `08-store.js`；schema 与 helper 类型一致（棘轮） | `npm run check:store` |
+| `scripts/ui-check.mjs` | 静态 UI 断言（字号/图标/控件尺寸/禁用写法，88 条） | `npm run check:ui` |
+| `scripts/ui-probe.mjs` | 无头渲染真实 CSS，量盒子并断言（消息结构/折叠高度） | `npm run check:probe -- --verbose` |
+| `scripts/i18n-check.mjs` | 中英文案成对、词表一致 | `npm run check:i18n` |
+| `scripts/context-check.mjs` | `ai-context.json` 文档存在 + 硬规则仍被注入提示词 | `npm run check:context` |
+| `scripts/docs-index.mjs` | 生成 `CODE-INDEX.md` / `STATE.md`（`--write` 或 `--check`） | `node scripts/docs-index.mjs --write` |
+| `scripts/docs-check.mjs` | 孤儿文档、死链、生成物过期、已删文档复活 | `npm run check:docs` |
+| `scripts/ui-verify.mjs` | 真机验收：结构/尺寸/下拉/本地化/控制台 | `npm run verify:ui` |
+| `scripts/edge-refresh.mjs` | 通过 CDP 刷新页面（改完客户端用） | `node scripts/edge-refresh.mjs` |
+| `scripts/accept-factory.mjs` | factory 模式端到端验收 | `npm run verify:factory` |
 
 ---
 
-## 八、对话流程：插件内 Copilot 契约（改对话链路时读）
+## 十、经验（以前踩过什么，现在怎么处理）
+
+| 症状 | 做法 | 依据 |
+| --- | --- | --- |
+| 插件整体不加载 / 白屏 | 先跑 `check:load`；parts 列表必须目录推导，产物必须被真执行 | `RSI-LEDGER` 2026-11-15 加载失败 |
+| 「改了样式界面没变」 | 先查 `clientCheck.css/build` 与 `?v=` 是否一致；prelude 会改写已挂载的旧 `<link>` | `RSI-LEDGER` 2026-11-15 新 JS + 旧 CSS |
+| 消息头与正文挤成两栏 | 关键布局写 JSX 内联；`check:probe --case msg-card` 复现 | `DIAGNOSTICS.md` §二.1/.2 |
+| 折叠后卡片还是很长 | 固定高度必须配 `.folded{height:auto}` 例外；`check:probe --case pm-folded` 双向断言 | `DIAGNOSTICS.md` §二.3 |
+| 悬停态离线截图看不出差别 | 无头命中 `@media (hover:none)`；判悬停看 `clientCheck.layout.opacity` 或注入类名 | `DIAGNOSTICS.md` §二.4 |
+| 宿主界面被插件带歪 | `:root` 只写 `--cx-*`；跨应用共用 document 是事实 | gate 第 12 项 |
+| hook 报 `Cannot access X before initialization` | 依赖数组引用了稍后声明的变量；`check:hooks` 拦 | `RSI-LEDGER` 2026-11-13 崩溃 |
+| 接口 404/405 | `check:ops` + 方法门（create→PUT / remove→DELETE / 其余 POST） | `INTERFACE.md` |
+| 数据写入 200 但丢字段 | 值里不能带半角 `/`；写完必须回读 | `URL-SPEC.md` |
+| 门禁红了但看不出原因 | 单跑对应脚本，看它打印的定位行 | 各脚本 `FAIL` 行 |
+| 同一个坑踩第二次 | 到本表加一行 + 在 §二 第 ⑧ 步补断言 | 本文件 §二 |
+
+完整复盘按日期在 `docs/RSI-LEDGER.md`；症状路由在 `docs/DIAGNOSTICS.md`。
+
+---
+
+## 十一、对话流程：插件内 Copilot 契约（改对话链路时读）
 
 ```text
 用户输入 → 客户端按 mode 短路 → POST /api?op=chat { message, history, context }
@@ -178,20 +320,16 @@ git add -A && git -c user.name="shy" -c user.email="shy@localhost" commit -m "�
 
 ---
 
-## 九、文档与索引（别让知识散落）
+## 十二、本轮做什么（优先级）
 
-| 你要 | 动作 |
-| --- | --- |
-| 找某份文档 | `docs/INDEX.md`（唯一入口，按任务查表） |
-| 找文件/组件/op | `docs/CODE-INDEX.md`（生成，别手改） |
-| 查存了哪些状态 | `docs/STATE.md`（生成，别手改） |
-| 加文档 | 先想「能不能加到现有文档的一章」；必须新开就登记进 `INDEX.md` |
-| 改生成物 | 改代码源头（`08-store.js`/`ops.js`/目录），再 `node scripts/docs-index.mjs --write` |
-| 复盘 | 每轮往 `docs/RSI-LEDGER.md` 追加：症状 → 根因 → 修法 → 证据 → 教训 |
+1. **红门禁**：`build:client` 任何 FAIL，先修。
+2. `docs/RSI-LEDGER.md` 未闭环项与 `README.md` 已知限制。
+3. 用户新需求（走 §二 八步）。
+4. 无上述输入时按「抽象 → 门禁 → 索引」自选；先写清「完成后哪个判据会变绿」。
 
 ---
 
-## 十、交接模板（报告里必须有）
+## 十三、交接模板（报告里必须有）
 
 ```md
 # <主题>
