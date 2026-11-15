@@ -204,7 +204,7 @@
                 try {
                   const m = document.querySelector('.cx-msg');
                   if (!m) return 'no-message';
-                  const pick = (sel) => { const n = m.querySelector(sel); if (!n) return '-'; const c = window.getComputedStyle(n); return `${c.display}/${c.flexDirection}/${c.marginLeft}`; };
+                  const pick = (sel) => { const n = m.querySelector(sel); if (!n) return '-'; const c = window.getComputedStyle(n); return `${c.display}/${c.flexDirection}/${c.marginLeft}/${c.opacity}`; };
                   return `main=${pick('.cx-msg-main')} meta=${pick('.cx-msg-meta')} tools=${pick('.cx-msg-tools')}`;
                 } catch { return 'err'; }
               })(),
