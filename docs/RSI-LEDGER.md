@@ -425,6 +425,8 @@ gate added so the same bug cannot return silently
   （`.cx-msg-main/meta/tools` 的 display/flex-direction/margin-left），下次可直接读真实 DOM 计算值。
 - Evidence: 本地用真实 `assets/client.css` 渲染同一段消息结构（headless Edge）→ meta 独占一行、tools 右对齐、
   正文满宽；说明 CSS 本身正确，线上差异来自「加载了哪份 CSS」。`npm run build:client` 全绿（1.48.2）。
+- 固化: `00-prelude` 的 href 版本跟随（自动生效）+ `clientCheck` 的 `build`/`css`/`layout` 字段（可判定）。
+  缺口：静态门禁仍无法断言「页面上已挂载的旧 link」，列为 §8.2 第 ③ 步的待升级项。
 - Lesson: 版本化资源不仅要换 URL，还要**改写已经挂在 DOM 上的旧 URL**；热重载场景下，DOM 生命周期比模块长。
 
 ## 2026-11-15 · 一类问题：样式其实没错，错的是「生效的那一层」
@@ -444,3 +446,26 @@ gate added so the same bug cannot return silently
 - Lesson: **「改了对不对」要看最终生效值，不是看源码里那条规则**。所以本轮把手工取证固化成
   `scripts/ui-probe.mjs`：fixture 只写结构 + class，断言写在脚本里，双向自测（真 CSS 通过 / 空 CSS 失败）；
   并把「症状 → 先读 → 先跑 → 断言」收进 `docs/DIAGNOSTICS.md`，下次同类问题先跑命令再动代码。
+
+## 2026-11-15 — 全面归纳 #1（插件架构与界面长战役）
+
+> AGENTS.md §8.2 的第一次执行：聚类 → 找规律 → 升级门禁 → 补症状表 → 写报告。
+
+| 类别 | 次数 | 典型症状 | 已固化为 |
+| --- | --- | --- | --- |
+| 加载层（产物/清单/缓存） | 3 | 插件整体不加载（parts 手抄漏片段）；新 JS 配旧 CSS；`:root` 通用令牌污染宿主 | `load-check`（真执行 factory）、prelude href 版本跟随、gate 第 12 项 `--cx-*` |
+| 级联层（布局/覆盖） | 7 | 消息头与正文挤两栏；工具条位置四次调整；字号行高不等；折叠后仍 218px | `ui-probe` 的 `msg-card`（6 断言）/`pm-folded`（3 断言）；关键布局写 JSX 内联 |
+| 流程层（门禁/文档） | 4 | README/AGENTS 结构失配；docs 孤儿与死链；gate 关键字随标题漂移 | `docs-check`、gate 第 11 项（README/AGENTS 结构）、`docs-index --write` |
+| 数据层（接口/持久化） | 3 | `seedProject` 从未路由（静默 404）；`llmInfo` 调未导出函数；`feedback_count` 恒 0 | `op-check`（客户端调用 ↔ 注册表）、`store-check` 棘轮 |
+| 索引层 | 2 | 手册式索引过时；文档重复三份验收 | `CODE-INDEX.md`/`STATE.md` 生成器、`docs/INDEX.md` 唯一入口 |
+
+**规律**：出问题的往往不是「写的那一层」，而是「生效的那一层」——
+产物没被执行（加载层）、后写的覆盖没说清为什么赢（级联层）、规则只写在文档里没有断言（流程层）。
+因此固化的方向统一为：**把规则搬到可执行产物上**（真执行、真渲染、真计数）。
+
+**本轮新增**：`scripts/ledger-stats.mjs`（数条目、距上次归纳条数、缺「根因/固化」点名，`--check` 阈值 10）；
+`AGENTS.md` §八 定义单次五问与全面归纳六动作。
+
+**下轮建议**：① 给「已挂载旧 link 被改写」加可判定证据（服务端校验 `clientCheck.build` 与静态路由版本一致）；
+② 把 `ledger-stats --check` 以 soft 方式接进 `build:client`（只提示不阻断）；
+③ 每次 retro 必须新增一个 `ui-probe` 用例或一条 gate 断言。

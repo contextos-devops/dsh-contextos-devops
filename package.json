@@ -1,6 +1,6 @@
 {
   "name": "@local/contextos-devops-dsh",
-  "version": "1.48.18",
+  "version": "1.48.19",
   "private": true,
   "type": "module",
   "description": "ContextOS DevOps for DeepSeek Harness: tech dashboard for cluster nodes, project spaces, platform apps and data.",
@@ -53,6 +53,7 @@
     "check:ops": "node scripts/op-check.mjs",
     "check:store": "node scripts/store-check.mjs",
     "check:docs": "node scripts/docs-check.mjs",
-    "check:load": "node scripts/load-check.mjs"
+    "check:load": "node scripts/load-check.mjs",
+    "stats:ledger": "node scripts/ledger-stats.mjs"
   }
 }

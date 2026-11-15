@@ -15,7 +15,7 @@
 | 代码在哪 | 宿主 `index.js` + `lib/**`；客户端 `src/client/parts/*.js`（拼成 `client.js`）；样式 `src/client/styles/*.css` |
 | 一条请求怎么走 | 组件 → `api(op)` → `index.js` 查 `lib/core/ops.js` → `lib/core/<域>.js` → ContextOS HTTP |
 | 怎么算改完 | `npm run build:client` 全绿（10 道门禁）+ 有证据 + 报告落盘 |
-| 下一步干什么 | §七 验收标准 → §十二 本轮优先级：红门禁 > 已知限制 > 用户需求 |
+| 下一步干什么 | §七 验收标准 → §十三 本轮优先级：红门禁 > 已知限制 > 用户需求 |
 
 ```sh
 npm run build:client     # 构建 + 10 道门禁（红了先修，不许带 FAIL 交付）
@@ -49,7 +49,7 @@ node --check index.js    # 只改宿主时先做语法检查
 | ② | **生成计划** | 范围 / 影响面 / 代价（时间、回归风险、要碰的文件） | 计划（≤6 行） |
 | ③ | **拆解任务** | 拆成 3–6 条可执行任务，标出依赖与顺序 | 任务清单 |
 | ④ | **读取规范** | 按 `docs/INDEX.md` 只读本轮相关的那一章，不整份塞 | 引用到的章节号 |
-| ⑤ | **选择工具** | 先查 §九 脚本表与 `DIAGNOSTICS.md`「先跑哪条」；有现成门禁就不手搓 | 命令清单 |
+| ⑤ | **选择工具** | 先查 §十 脚本表与 `DIAGNOSTICS.md`「先跑哪条」；有现成门禁就不手搓 | 命令清单 |
 | ⑥ | **执行任务** | 生成代码 + 生成文档（同一次提交）；长任务逐步报进度（做了什么、哪个数字变了） | 改动 + 进度 |
 | ⑦ | **质量验收** | 是否符合规范？是否满足用户需求？→ `build:client` 全绿 + §七 对应矩阵 + 报告里贴证据 | exit 0 + 证据 |
 | ⑧ | **归纳总结** | 规范不完善 → 补规范；脚本不完善 → 补脚本；索引不完善 → 补索引；验收标准不完善 → 补标准 | 至少一条新断言/新脚本/新索引行 |
@@ -211,6 +211,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 ## 七、验收标准（什么算完成任务）
 
 **通用四件**：`npm run build:client` exit 0 · 对应验证矩阵通过 · 文档同步 · 报告落盘 `usr/local/WorkBuddy/dsh-reports/`。
+**收尾必做**：§八 归纳总结（单次写 LEDGER 五问；累计到阈值做全面归纳）。
 
 改了宿主（`index.js`、`lib/**`）必须让宿主重载后才算验收：`plugin_manager` 把插件 `false → true`：
 
@@ -233,7 +234,60 @@ plugin_manager set_plugin include:contextos-devops-dsh  # enabled:false → 再 
 
 ---
 
-## 八、规范（怎么写才算「本仓库风格」）
+## 八、归纳总结（每次会话后小结，每多轮后全面归纳）
+
+> 目的是让「发现 → 修复 → 固化」的周期一轮比一轮短：**单次留证据，多轮出规律**。
+> 交付代码只是半程；没有归纳，同一个坑会以新面孔再来一次。
+
+### 8.1 每次问题会话后（单次复盘，必做）
+
+问题修完、门禁变绿之后，立刻回答五个问题，写进 `docs/RSI-LEDGER.md` 对应日期条目：
+
+| # | 问题 | 写不出说明什么 |
+| --- | --- | --- |
+| 1 | **现象**：用户看到什么？用哪张截图/哪条自报数据复现 | 需求没理解，回到 §二 第 ① 步 |
+| 2 | **根因层次**：加载层 / 级联层 / 数据层 / 逻辑层 / 流程层（见 `docs/DIAGNOSTICS.md` §一） | 还在猜，回去量 |
+| 3 | **属于哪类**：这是第几次出现同一类问题？（查 §十一 经验表与 LEDGER） | 没归类，下次还会慢 |
+| 4 | **固化了什么**：新增/收紧了哪条断言、脚本、索引行、规范句 | 等于没修根因，只是这次手动绕过了 |
+| 5 | **数字对比**：改前 → 改后（px / 行数 / 耗时 / exit code） | 结论不可判定，见 §六 红线 9 |
+
+单次复盘模板（直接粘进 LEDGER）：
+
+```text
+YYYY-MM-DD — <一句话现象>
+- 根因：<层次 + 具体机制 + 文件:行>
+- 类别：<布局/加载/数据/流程…>（同类第 N 次）
+- 固化：<新门禁/新断言/新索引行/新规范句，写清判据>
+- 数字：<改前 → 改后>
+```
+
+### 8.2 每多轮之后（全面归纳，定期做）
+
+**触发条件**（满足任一即做）：同类问题累计 ≥3 次；问题会话累计 ≥10 次；每两周一次；用户明确要求「总结一下」。
+
+全面归纳的六个动作，缺一不算完成：
+
+| # | 动作 | 产物 |
+| --- | --- | --- |
+| 1 | **聚类**：把这段时间的问题按 §8.1 的类别归堆，数每类次数 | 一张「类别 × 次数 × 典型症状」表 |
+| 2 | **找规律**：哪一类复发最多？复发是因为没断言，还是断言写在了错的一层？ | 一段结论（不是罗列） |
+| 3 | **升级门禁**：把最高频的类变成**可执行断言**（优先扩展现有脚本，不新开脚本） | 新断言 / 新 `ui-probe` 用例 / 新 gate 项 |
+| 4 | **补症状表**：新的症状 → 先跑哪条命令 → 指向哪份文档 | `docs/DIAGNOSTICS.md` 新行 |
+| 5 | **补经验与索引**：能一句话说清的处理方式进 §十一；新文档/新脚本进 §四/§十 与 `docs/INDEX.md` | 表行 + 索引行 |
+| 6 | **写归纳报告**：`usr/local/WorkBuddy/dsh-reports/YYYY-MM-DD-retro-<主题>.md`（类别表、规律、门禁升级、下轮建议） | 报告文件 |
+
+**判据（可执行）**：`node scripts/ledger-stats.mjs` 会打印条目总数、距上次全面归纳的条目数、缺字段的条目。
+`--check` 在「距上次归纳 ≥10 条」或「2026-11-15 之后的新条目缺 根因/固化」时 exit 1 —— 此时先补归纳，再开新功能。
+（单次命令：`npm run stats:ledger`；本文件 §八 的规则与脚本行为必须一致，改口径要同时改脚本。）
+
+### 8.3 两条纪律
+
+- **不许只写「已修复」**：没有根因层次与固化判据的条目，视为没复盘（`ledger-stats --check` 会点名）。
+- **不许把归纳写成感想**：归纳的产物必须是**表、断言、脚本、索引行**之一；纯文字总结不算。
+
+---
+
+## 九、规范（怎么写才算「本仓库风格」）
 
 - **JS 不断抽象通用组件**：同一个交互出现第二次 → 抽到 `10-ui/32-cards/34-forms`，不要复制粘贴；
   hook 依赖数组不许引用本文件稍后才声明的变量（`hook-order-check` 会红）。
@@ -247,9 +301,9 @@ plugin_manager set_plugin include:contextos-devops-dsh  # enabled:false → 再 
 
 ---
 
-## 九、脚本（现成能用什么）
+## 十、脚本（现成能用什么）
 
-### 9.1 npm 脚本
+### 10.1 npm 脚本
 
 | 命令 | 作用 |
 | --- | --- |
@@ -260,7 +314,7 @@ plugin_manager set_plugin include:contextos-devops-dsh  # enabled:false → 再 
 | `npm run watch:client` | 监听片段变化重建（不跑门禁） |
 | `npm run release` | `build:client` + `verify:ui` |
 
-### 9.2 脚本文件
+### 10.2 脚本文件
 
 | 脚本 | 干什么 | 典型用法 |
 | --- | --- | --- |
@@ -279,10 +333,11 @@ plugin_manager set_plugin include:contextos-devops-dsh  # enabled:false → 再 
 | `scripts/ui-verify.mjs` | 真机验收：结构/尺寸/下拉/本地化/控制台 | `npm run verify:ui` |
 | `scripts/edge-refresh.mjs` | 通过 CDP 刷新页面（改完客户端用） | `node scripts/edge-refresh.mjs` |
 | `scripts/accept-factory.mjs` | factory 模式端到端验收 | `npm run verify:factory` |
+| `scripts/ledger-stats.mjs` | 数 LEDGER 条目、距上次全面归纳的条数、缺字段条目 | `node scripts/ledger-stats.mjs --check` |
 
 ---
 
-## 十、经验（以前踩过什么，现在怎么处理）
+## 十一、经验（以前踩过什么，现在怎么处理）
 
 | 症状 | 做法 | 依据 |
 | --- | --- | --- |
@@ -302,7 +357,7 @@ plugin_manager set_plugin include:contextos-devops-dsh  # enabled:false → 再 
 
 ---
 
-## 十一、对话流程：插件内 Copilot 契约（改对话链路时读）
+## 十二、对话流程：插件内 Copilot 契约（改对话链路时读）
 
 ```text
 用户输入 → 客户端按 mode 短路 → POST /api?op=chat { message, history, context }
@@ -320,7 +375,7 @@ plugin_manager set_plugin include:contextos-devops-dsh  # enabled:false → 再 
 
 ---
 
-## 十二、本轮做什么（优先级）
+## 十三、本轮做什么（优先级）
 
 1. **红门禁**：`build:client` 任何 FAIL，先修。
 2. `docs/RSI-LEDGER.md` 未闭环项与 `README.md` 已知限制。
@@ -329,7 +384,7 @@ plugin_manager set_plugin include:contextos-devops-dsh  # enabled:false → 再 
 
 ---
 
-## 十三、交接模板（报告里必须有）
+## 十四、交接模板（报告里必须有）
 
 ```md
 # <主题>
