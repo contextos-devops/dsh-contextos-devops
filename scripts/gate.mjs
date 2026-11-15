@@ -147,7 +147,7 @@ if (!/URL-SPEC/.test(read('docs/URL-SPEC.md'))) err('URL 规范：docs/URL-SPEC.
   // 断言的是「README 是否回答了这几个问题」，不是某一种措辞（多种等价写法都算过）。
   const need = [
     ['上手路径', /60 秒上手|快速开始|Quick start/],
-    ['能力清单', /能力矩阵|^##+ 功能|^##+ 能力/m],
+    ['能力清单', /能力矩阵|^##+ 功能|^##+ 能力|^##+ Capabilit(y|ies)/m],
     ['智能体契约入口', /智能体|AGENTS\.md/],
     ['RSI 循环', /RSI/],
     ['文档入口', /docs\/INDEX\.md/],
@@ -156,7 +156,7 @@ if (!/URL-SPEC/.test(read('docs/URL-SPEC.md'))) err('URL 规范：docs/URL-SPEC.
   for (const [k, re] of need) if (!re.test(readme)) err(`README.md: missing ${k}`);
   if (readme.split('\n').length > 400) err('README.md: 超过 400 行，概览应拆分到 docs/PRODUCT-DESIGN.md');
   const pkg = JSON.parse(read('package.json'));
-  const claimed = /\|\s*版本\s*\|[^\n]*?(\d+\.\d+\.\d+)/.exec(readme);
+  const claimed = /\|\s*(?:版本|Version)\s*\|[^\n]*?(\d+\.\d+\.\d+)/.exec(readme);
   if (claimed && claimed[1] !== pkg.version) err(`README.md: 版本 ${claimed[1]} 与 package.json ${pkg.version} 不一致`);
 }
 

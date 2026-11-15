@@ -2,97 +2,197 @@
 
 <img src="icon.svg" width="72" align="left" hspace="12" vspace="4" alt="ContextOS DevOps">
 
-**把 ContextOS 的节点、空间、应用、分身、赛博世界装进 DeepSeek Harness 的对话界面。**
-一句话部署节点，一句话生成应用，一句话写数据——每一步都能在界面上看见、点动、回读验证。
+**A software factory inside DeepSeek Harness.** Deploy a cluster node, generate a working app,
+and put it online — by talking, not by memorising commands. Every step is visible on screen,
+clickable, and reads back from the server so you can check it landed.
 
 <p>
-  <img alt="version" src="https://img.shields.io/badge/version-1.48.1-0a8fb0">
+  <img alt="version" src="https://img.shields.io/badge/version-1.48.34-0a8fb0">
   <img alt="ops" src="https://img.shields.io/badge/ops-102-0a8fb0">
-  <img alt="gates" src="https://img.shields.io/badge/build%20gates-9-0a8fb0">
+  <img alt="build gates" src="https://img.shields.io/badge/build%20gates-12-0a8fb0">
   <img alt="client" src="https://img.shields.io/badge/client-24%20parts-0a8fb0">
-  <img alt="license" src="https://img.shields.io/badge/license-private-6b7f8c">
+  <img alt="license" src="https://img.shields.io/badge/license-MIT-0a8fb0">
 </p>
 
 ---
 
-## 为什么
+## Why this exists
 
-ContextOS 的核心是三纲五常：**集群化部署**让设备互联互通，**模块化开发**让代码自动生成，**自动化应用**让数据自由流动；五常是代码、文档、会话、团队、市场。
+ContextOS is built on three doctrines: **clustered deployment** (machines find each other and
+share work), **modular development** (code is generated from a spec, not typed line by line), and
+**automated applications** (data flows through apps instead of being copied between tools).
 
-这个插件把这三件事搬进对话：你说「部署 9188 节点」，节点就起来了；你说「生成一个审批系统」，模板、五个功能、编译、实例、商店卡片一次到位。**不靠记忆命令，靠说清楚意图。**
+Most teams only ever use a fraction of that, because the entry cost is a pile of CLI flags.
+This plugin removes that cost: the primitives are the same, but the interface is a conversation
+plus a control panel. Say "deploy a node on 9188" and a node appears; say "generate an approval
+system" and you get a template, five features, a compile, an instance and a store card.
+
+The long-term goal is simple: **every company gets its own software factory**, not by hiring a
+platform team, but by talking to one that is already in the room.
 
 ---
 
-## 能力矩阵
+## Capabilities
 
-| 域 | 你能做什么 |
+| Area | What you can do |
 | --- | --- |
-| **节点** | 部署（copy / download / source）、启动、停止、编译时间与体积、运行环境、命令终端、卡片菜单 |
-| **项目空间** | 创建（可指定代码库）、编译、启停、go.work 自动登记、打开首页 |
-| **应用** | 生成模板（AI 调研五个功能）→ 确认 → 编译 → 创建实例 → 打开界面 |
-| **数据** | 添加 / 列表 / 详情 / 修改 / 删除，全部走五种标准 URL，回读校验 |
-| **代码生成** | 加动作、加字段、条件按钮、模块骨架；两类模块（内存 / 数据库）都按框架规范生成 |
-| **数字分身** | 分身与赛博世界、项目管理（目标→计划→任务→报告→反馈）、地图与甘特 |
-| **监控** | Grafana 式看板：任意面板 + 数据源（节点 + 空间 + 命令 + 参数）、iframe 内嵌 |
-| **对话** | 三种工作模式（数字分身 / 软件工厂 / 物联）各自限定能力，写操作先出确认表单 |
+| **Nodes** | Deploy (copy / download / source), start, stop, read uptime + size, open a terminal, act from card menus |
+| **Spaces** | Create (optionally from a repo), compile, start / stop, auto-register in `go.work`, open the space home page |
+| **Apps** | Generate a template (Copilot researches five features) → confirm → compile → create instance → open the UI |
+| **Data** | Create / list / detail / update / delete through the five standard URLs, with read-back verification |
+| **Code generation** | Add actions, add fields, conditional buttons, module skeletons — for both in-memory and database modules |
+| **Avatars & PM** | Digital avatars and cyber scenes, project boards (goal → plan → task → report → feedback), calendar, map, Gantt |
+| **Monitoring** | Grafana-style dashboards: any panel bound to node + space + command + params, iframe embedding |
+| **Chat** | Three working modes (avatar / factory / iot), each with its own action whitelist; writes go through a confirm form |
 
 ---
 
-## 快速开始（60 秒上手）
+## Quick start
 
-### 前置
+### Install
 
-- DeepSeek Harness 桌面版（本插件以 local bundle 方式 `link:` 安装）
-- Node.js 20+
-- 一个可用的 ContextOS 节点（可选；插件可以自己部署）
-
-### 安装
+Fastest path — the package is published on npm:
 
 ```sh
-cd usr/dsh-plugins/dsh-contextos-devops
-npm run build:client          # 构建 + 12 道门禁，必须全绿
+dsh plugin --profile desktop add dsh-contextos-devops
 ```
 
-然后在 DSH 里启用插件，重载后打开 **ContextOS DevOps**：
+From source — useful when you want to change it:
+
+```sh
+git clone https://github.com/contextos-devops/dsh-contextos-devops
+cd dsh-contextos-devops
+npm run build:client            # build + 12 gates, must be all green
+dsh plugin --profile desktop add link:$PWD
+```
+
+Then enable the bundle and reload it (a DSH restart is not needed):
 
 ```js
 plugin_manager({ action: 'set_plugin', target: 'include:dsh-contextos-devops', enabled: true })
 ```
 
-### 第一次对话
+Open **ContextOS DevOps** in the sidebar. You need Node.js 20+ and a ContextOS node — the plugin
+can deploy one for you if you do not have it yet.
+
+### First five minutes
 
 ```
-部署 9188 节点
-创建项目空间 demo
-生成应用模板「员工管理」
-创建「员工管理」实例
-给「员工管理」添加数据：张三 / 研发部
+deploy a node on 9188
+create a space called demo
+generate an app template "Employee Management"
+create an instance of "Employee Management"
+add a row to "Employee Management": Zhang San / R&D
 ```
 
-每一步都会返回一张可点击的卡片或表单，不用记 URL。
+Every sentence returns a card or a form you can click; nothing depends on remembering a URL.
 
 ---
 
-## 三种工作模式
+## The interface: four surfaces
 
-| 模式 | 能做 | 不能做 |
+| Surface | What it is for | What you see |
 | --- | --- | --- |
-| **数字分身** `avatar` | 创建应用实例、读写业务数据、查最近应用 | 生成代码、部署节点 |
-| **软件工厂** `factory` | 部署节点、建空间、生成模板与代码、编译上线 | 读写业务数据、查最近应用 |
-| **物联** `iot` | 扫描 / 连接 / 控制设备 | 业务数据、代码生成 |
+| **Chat** | Drive everything by talking | Message cards with per-message actions, a composer with six context chips (node / space / app / avatar / scene / mode), a request console |
+| **Manage** | Run the factory with your eyes | Node, space, app and recent cards; project boards; calendar, map and Gantt |
+| **Dev** | Change code without leaving the app | File tree, Monaco editor, Git changes and history, multi-session terminal, live preview |
+| **Monitor** | Watch it work | Grafana-style panels over the same ops layer, plus a console that can show activity, requests, events, debug URLs, state and files |
 
-模式在**调用模型之前**就完成短路，不把「该不该做」交给模型判断。
+### Chat
+
+The composer carries the current context so you never repeat yourself: which node, which space,
+which app, which avatar, which scene, which working mode. The message bar has **details / retry /
+quote / copy / delete**; "details" opens the exact request that was sent, with size, tokens and
+the raw response. Confirm forms appear before anything that writes.
+
+### Manage
+
+Four columns of live cards: **serve** (nodes with status, port, worker/prod, memory), **space**
+(version, modules, uptime), **recent apps**, and the **store**. Selecting a node scopes the other
+three; selections are remembered per node. The right rail holds the project board, with goal →
+plan → task → report → feedback as a chain and a Gantt view of what is running.
+
+### Dev
+
+A real IDE surface, not a read-only viewer: Monaco with the ContextOS language grammar, a tree
+that hides dotfiles, Git changes and history sections, up to four panes, and xterm sessions that
+survive tab switches. The editor follows the selected project.
+
+### Monitor
+
+Panels are data-bound, not screenshots: pick node, space, command and params, and the panel
+renders the live response. The bottom console switches between ACTIVITY, REQUEST, EVENTS,
+DEBUG/URL, STATE and FILES — the request log is the same one the chat writes to.
 
 ---
 
-## 架构
+## End-to-end flows
+
+### 1. Deploy a node
+
+`deploy a node on 9188` → pick a mode (copy an existing binary, download from a parent node, or
+build from source) → the plugin starts it, waits for `/c/runtime`, and verifies the static assets.
+The node card then offers start / stop / terminal / open, and a size-by-uptime readout.
+
+### 2. Space → app → instance → data
+
+```
+create a space called demo
+generate an app template "Employee Management"
+create an instance of "Employee Management"
+add a row: Zhang San / R&D
+```
+
+The generator writes a real Go module (command registration, table model, CSS and JS views),
+compiles it inside the space, and only reports success after the command answers.
+
+### 3. Generate code
+
+Ask for a change — "add a `status` field to the task list", "only leaders may approve", "add a
+button that archives a row". The generator edits the module skeleton, keeps naming and URL rules
+intact, and recompiles; failures are surfaced instead of being swallowed.
+
+### 4. Publish
+
+Every app and space has a web URL and an API URL that follow the same rules, so sharing is a link,
+not a deployment ritual. Instances can be published to the store together with a card that other
+spaces (and other machines) can install.
+
+### 5. Run the work
+
+The project board carries the loop everyone actually needs: a goal holds plans, a plan holds
+tasks, a task produces reports, a report receives feedback, and feedback decides whether the task
+may finish. Calendar, map and Gantt read the same data.
+
+### 6. Devices and machines
+
+Scan the LAN, list Wi-Fi networks and nearby Bluetooth devices, browse the SSH hosts already
+configured on this machine, and control local volume, clipboard, screenshots and wallpaper — all
+from the same panel.
+
+---
+
+## Working modes
+
+| Mode | Allowed | Blocked |
+| --- | --- | --- |
+| **Avatar** `avatar` | Create app instances, read/write business data, list recent apps | Code generation, node deployment |
+| **Factory** `factory` | Deploy nodes, create spaces, generate templates and code, compile and ship | Business data, recent apps |
+| **IoT** `iot` | Scan, connect and control devices | Business data, code generation |
+
+The mode is enforced **before the model is called** — the whitelist lives in the server, so a
+prompt cannot talk its way into an action the mode does not allow.
+
+---
+
+## Architecture
 
 ```
 ┌──────────────────── DeepSeek Harness ────────────────────┐
-│  Web GUI  ──  src/client/parts/*.js  (24 片段)            │
+│  Web GUI  ──  src/client/parts/*.js  (24 parts)           │
 │                 │  api(op, args)                          │
 │                 ▼                                         │
-│  index.js  ──  lib/core/ops.js  (102 个 op, 唯一注册处)    │
+│  index.js  ──  lib/core/ops.js  (102 ops, one registry)   │
 │                 │                                         │
 │                 ▼                                         │
 │  lib/core/*.js  ──  lib/base/*.js  ──  ContextOS HTTP     │
@@ -100,109 +200,120 @@ plugin_manager({ action: 'set_plugin', target: 'include:dsh-contextos-devops', e
                           │
                           ▼
         ┌──────────── ContextOS ────────────┐
-        │ 节点 /c/...      空间 /s/<pod>/... │
-        │ 门户 /s/<pod>/c/<portal>/action/...│
+        │ nodes /c/...    spaces /s/<pod>/...│
+        │ portals /s/<pod>/c/<portal>/action/...│
         └────────────────────────────────────┘
 ```
 
-- **一条请求**：组件 → `api(op)` → `ops.js` 分发 → `lib/core` → ContextOS → 回执 → 卡片/表单/表格。
-- **一条命令五种形态**：网页 URL、接口 URL、内部 CMD、命令 CLI、会话 MCP，详见 [`docs/INTERFACE.md`](docs/INTERFACE.md)。
-- **URL 单一来源**：`lib/base/url.js` 与客户端的 `cxWebUrl`，禁止手拼。
+- **One request**: component → `api(op)` → `ops.js` dispatch → `lib/core` → ContextOS → response → card / form / table.
+- **One command, five shapes**: web URL, API URL, internal CMD, CLI, session MCP — see [`docs/INTERFACE.md`](docs/INTERFACE.md).
+- **One URL source**: `lib/base/url.js` and the client's `cxWebUrl`; hand-built URLs are rejected by review.
 
 ---
 
-## 目录
+## Repository layout
 
 ```
 .
-├── index.js               # 宿主入口：只做查表分发，不写业务分支
+├── index.js               # host entry: table dispatch only, no business branches
 ├── lib/
-│   ├── base/              # http / url / registry / 状态目录
-│   └── core/              # ops 注册 + 各域实现（nodes/spaces/apps/data/codegen/…）
+│   ├── base/              # http / url / registry / state directory
+│   └── core/              # ops registry + domain logic (nodes/spaces/apps/data/codegen/…)
 ├── src/client/
-│   ├── parts/             # 24 个片段 → build/client.mjs → client.js
+│   ├── parts/             # 24 parts → build/client.mjs → client.js
 │   └── styles/            # tokens / main / kit → assets/client.css
-├── docs/                  # 入口 docs/INDEX.md
-├── scripts/               # 构建与 12 道门禁
-└── build/client.mjs       # 唯一的打包入口
+├── docs/                  # entry point: docs/INDEX.md
+├── scripts/               # build + 12 gates
+└── build/client.mjs       # the only bundler entry
 ```
 
-`client.js` 与 `assets/client.css` 是**构建产物**，不要手改。
+`client.js` and `assets/client.css` are **build artifacts** — never edit them by hand.
 
 ---
 
-## 开发
+## Development
 
 ```sh
-npm run build:client    # 构建 + 全部门禁
-npm run verify:ui       # 真浏览器验收（需 Edge CDP 9223），exit 0 才算过
-npm run check:docs      # 文档索引 / 链接 / 生成物一致
+npm run build:client    # build + every gate
+npm run verify:ui       # real browser check (needs Edge on CDP 9223); exit 0 counts
+npm run check:docs      # docs index / links / generated files in sync
+npm run publish:npm     # dry-run npm packaging; --publish to actually ship
 ```
 
-构建链（11 道）：
+Build chain (12 gates):
 
 ```
 gate → load-check → hook-order-check → op-check → store-check
-     → ui-check → ui-probe → i18n-check → context-check → docs-check
+     → ui-check → ui-probe → i18n-check → context-check
+     → docs-check → docs-budget → publish-check
 ```
 
-| 命令 | 检查什么 |
+| Command | What it checks |
 | --- | --- |
-| `check:ops` | op 必须注册在 `ops.js`，`index.js` 不许出现 `if (op === …)` |
-| `check:store` | 持久化状态必须走 `08-store.js` 的 schema |
-| `check:ui` | 字号 / 图标 / 控件尺寸 / 禁用写法 |
-| `check:probe` | 无头浏览器渲染 fixture：消息三行结构、工具条对齐、折叠态高度 |
-| `check:docs` | 文档索引覆盖、链接可解析、生成物不过期 |
-| `verify:ui` | 真开浏览器：结构、尺寸、下拉、本地化、控制台无报错 |
+| `check:ops` | Every op is registered in `ops.js`; `index.js` has no `if (op === …)` |
+| `check:store` | Persisted state goes through the `08-store.js` schema, and the raw `localStorage` count may only go down |
+| `check:ui` | Type scale, icon sizes, control heights, banned patterns |
+| `check:probe` | Headless render of fixtures: message structure, toolbar alignment, collapsed heights |
+| `check:docs` | Docs index covers every file, links resolve, generated files are current |
+| `check:load` | The built bundle actually executes and exports `apply` / `inject` |
+| `check:publish` | npm/GitHub metadata, manifest, icon, tarball size |
+| `verify:ui` | Real browser: structure, sizes, dropdowns, localisation, no console errors |
 
-**改宿主必须重载插件**（`lib/`、`index.js`）；只改客户端刷新页面即可。
+**Host changes need a plugin reload** (`lib/`, `index.js`); client changes only need a page refresh.
 
 ---
 
-## 文档
+## Docs
 
-| 文档 | 读它做什么 |
+| Doc | Read it when |
 | --- | --- |
-| [`docs/INDEX.md`](docs/INDEX.md) | **唯一入口**：按任务查表 |
-| [`docs/DOCTRINE.md`](docs/DOCTRINE.md) | 三纲五常、每轮四件套、抽象递减 |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | 分层与模块边界 |
-| [`docs/CODE-GEN.md`](docs/CODE-GEN.md) | 代码生成规范：两类模块、词表、参数文法、权限 |
-| [`docs/INTERFACE.md`](docs/INTERFACE.md) | 一条命令五种形态、两层能力、三种认证 |
-| [`docs/URL-SPEC.md`](docs/URL-SPEC.md) | 接口 URL / 网页 URL 形状与禁止清单 |
-| [`docs/AI-CONVERSATION.md`](docs/AI-CONVERSATION.md) | 对话请求参数、动作表、已知缺口 |
-| [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) | 验收标准与证据要求 |
-| [`AGENTS.md`](AGENTS.md) | 给 AI 的工作契约（铁律、工作流、对话流程） |
+| [`docs/INDEX.md`](docs/INDEX.md) | **Start here** — one row per task |
+| [`docs/DOCTRINE.md`](docs/DOCTRINE.md) | The three doctrines, the per-round checklist, abstraction budget |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Layers and module boundaries |
+| [`docs/CODE-GEN.md`](docs/CODE-GEN.md) | Code generation: module kinds, vocabulary, grammar, permissions |
+| [`docs/INTERFACE.md`](docs/INTERFACE.md) | One command in five shapes, two capability tiers, three auth models |
+| [`docs/URL-SPEC.md`](docs/URL-SPEC.md) | API vs web URL shapes and the forbidden list |
+| [`docs/AI-CONVERSATION.md`](docs/AI-CONVERSATION.md) | Chat request params, action table, known gaps |
+| [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md) | Symptom → cause table; layout invariants |
+| [`docs/PUBLISH.md`](docs/PUBLISH.md) | npm, tarball, catalog submission |
+| [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) | Acceptance criteria and the evidence they need |
+| [`AGENTS.md`](AGENTS.md) | The working contract for AI agents (iron rules, workflow, chat protocol) |
 
 ---
 
-## 状态
+## Status
 
-- **稳定**：节点 / 空间 / 应用 / 数据 CRUD / 代码生成 / 监控看板 / 三种模式对话。
-- **已知限制**：见 [`docs/RSI-LEDGER.md`](docs/RSI-LEDGER.md) 的未闭环项（网页标签会话隔离、远程节点凭证续期、监控无历史数据）。
-- **版本**：以 `package.json` 为准，每次改动必 bump（客户端缓存键）。
-
----
-
-## 给智能体（Agent）
-
-这个插件本身就是给智能体用的：
-
-- **外部智能体**（DSH 代理）可以直接调 15 个 `contextos_*` 工具：部署节点、建空间、建应用、读写数据、跑流水线。
-- **插件内 Copilot** 走 `POST /api?op=chat`：客户端按模式短路 → 宿主拼 prompt → 返回 `{reply, action}` → 执行并渲染。
-- 两者共用同一套约束：每轮走完 **RSI 循环**（目标 → 计划 → 取证 → 改动 → 构建 → 实测 → 抽象 → 报告），并留下四件套（代码 / 文档 / 门禁 / 规范）。
-
-契约见 [`AGENTS.md`](AGENTS.md)，动作协议见 [`docs/AI-CONVERSATION.md`](docs/AI-CONVERSATION.md)。
+- **Stable**: nodes, spaces, apps, data CRUD, code generation, monitoring panels, the three modes.
+- **Known limits**: see the open items in [`docs/RSI-LEDGER.md`](docs/RSI-LEDGER.md) (web-tab session isolation, remote node credential renewal, monitoring has no history).
+- **Version**: `package.json` is the source of truth, and every change bumps it because the client cache key follows the version.
+- **Scale**: 102 ops, 24 client parts, ~7.6k lines of client code, 12 gates.
 
 ---
 
-## 参与
+## For agents
 
-1. 读 [`AGENTS.md`](AGENTS.md) 与 [`docs/INDEX.md`](docs/INDEX.md)。
-2. 每轮四件套：**代码 + 文档 + 门禁 + 规范**，缺一不算完成。
-3. 提交前：`npm run build:client` 全绿、`git status` 只含本轮文件、报告落 `usr/local/WorkBuddy/dsh-reports/`。
+This plugin exists to be driven by agents.
+
+- **External agents** (the DSH agent) can call the `contextos_*` tools directly: deploy a node,
+  create a space, create an app, read/write data, run the whole pipeline.
+- **The in-app Copilot** uses `POST /api?op=chat`: the client short-circuits by working mode, the
+  host builds the prompt, the model returns `{reply, action}`, and the plugin executes and renders it.
+- Both obey the same contract: every round runs the **RSI loop** (goal → plan → evidence → change →
+  build → verify → abstract → report) and leaves four artifacts (code, docs, gates, spec).
+
+The contract is in [`AGENTS.md`](AGENTS.md); the action protocol is in [`docs/AI-CONVERSATION.md`](docs/AI-CONVERSATION.md).
 
 ---
 
-## 许可
+## Contributing
 
-私有项目，未附开源协议文件；未经授权请勿分发。
+1. Read [`AGENTS.md`](AGENTS.md) and [`docs/INDEX.md`](docs/INDEX.md).
+2. Every round ships four artifacts: **code + docs + gate + spec** — three out of four is not done.
+3. Before committing: `npm run build:client` is green, `git status` holds only this round's files,
+   and the report lands in `usr/local/WorkBuddy/dsh-reports/`.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).

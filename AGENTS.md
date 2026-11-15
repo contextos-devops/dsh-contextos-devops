@@ -324,6 +324,7 @@ npm run verify:ui       # 真浏览器验收（Edge CDP 9223）
 
 1. **红门禁**：`build:client` 任何 FAIL，先修。
 2. `docs/RSI-LEDGER.md` 未闭环项与 `README.md` 已知限制。
+3. `README.md` 是**英文**产品介绍（对外首页）；改对外定位改它，改内部规范改 `docs/`。
 3. 用户新需求（走 §二 八步）。
 4. 无上述输入时按「抽象 → 门禁 → 索引」自选；先写清「完成后哪个判据会变绿」。
 
