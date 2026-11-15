@@ -16,7 +16,7 @@
 | `lib/base/http.js` | 141 | `baseUrl()` `encode()` `envelopeRows()` `envelopeShape()` `http()` `upload()` `parseRuntime()` `probe()` …11 个 |
 | `lib/base/platform.js` | 34 | `sqliteBin()` `openBrowser()` `openTerminalAt()` `isMac` `isLinux` `osName` `archName` `platformTriple` …9 个 |
 | `lib/base/registry.js` | 187 | `registryPath()` `readRegistry()` `writeRegistry()` `saveNodeInfo()` `refreshNodes()` `portOnDisk()` `scanLocalNodes()` `binExists()` …10 个 |
-| `lib/base/state.js` | 46 | `listDataFiles()` `readDataFile()` `migrateStateOnce()` |
+| `lib/base/state.js` | 67 | `listDataFiles()` `readDataFile()` `migrateStateKeys()` `migrateStateOnce()` |
 | `lib/base/table.js` | 48 | `decodeCell()` `parseFixedTable()` `parseTable()` |
 | `lib/base/texttable.js` | 27 | `parseTextTable()` |
 | `lib/base/url.js` | 179 | `portalOf()` `placeUidKey()` `apiPath()` `dataPath()` `webUrl()` `systemUrl()` `spaceUrl()` `platformUrl()` …19 个 |
@@ -33,7 +33,7 @@
 | `lib/core/iam.js` | 123 | `iamCommand()` `iamList()` `iamCall()` `commandExists()` `subjectEndpoints()` `iamEndpoints()` `IAM` `SUBJECTS` …9 个 |
 | `lib/core/identity.js` | 23 | `activeAvatarUid()` `resolveActorUid()` |
 | `lib/core/nodes.js` | 628 | `sshHosts()` `sysControl()` `deployNode()` `startNode()` `stopNode()` `openNode()` `openSpace()` `openTerminalAt()` …17 个 |
-| `lib/core/ops.js` | 300 | `opIndex()` `OPS` |
+| `lib/core/ops.js` | 307 | `opIndex()` `OPS` |
 | `lib/core/project.js` | 394 | `fieldOptions()` `pmList()` `optionValue()` `pmCreateItem()` `pmLog()` `pmFieldsFor()` `pmModifyItem()` `pmRemoveItem()` …13 个 |
 | `lib/core/spaces.js` | 407 | `baseDirOf()` `spaceBase()` `spaceDir()` `startSpace()` `stopSpace()` `compileSpace()` `listSpaces()` `initSpace()` …20 个 |
 | `lib/core/terminal.js` | 138 | `terminalUpgrade()` |
@@ -102,6 +102,7 @@
 | `scripts/op-check.mjs` | OPS ↔ 客户端 api() 契约 |
 | `scripts/publish-check.mjs` | — |
 | `scripts/publish-npm.mjs` | — |
+| `scripts/push-all.mjs` | — |
 | `scripts/store-check.mjs` | 持久化唯一出口 + schema 登记 |
 | `scripts/ui-check.mjs` | UI 结构与组件复用断言 |
 | `scripts/ui-probe.mjs` | — |
@@ -118,7 +119,7 @@
 | `npm run verify:ui` | 真浏览器验收（Edge CDP 9223） |
 | `npm run release` | build:client + verify:ui |
 | `npm run stats:ledger` | LEDGER 条目统计与归纳提醒 |
-| `npm run push:all` | git push origin master && git push github master |
+| `npm run push:all` | node scripts/push-all.mjs |
 | `npm run publish:npm` | node scripts/publish-npm.mjs |
 | `npm run check:<名>` | 单跑某道门禁：ui / probe / context / i18n / hooks / ops / store / docs / load / budget / publish |
 

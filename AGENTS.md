@@ -33,7 +33,8 @@ node --check index.js    # 只改宿主时先做语法检查
 | `origin` | https://shylinux.com/x/dsh-contextos-devops | 主库（ContextOS 自家） |
 | `github` | https://github.com/contextos-devops/dsh-contextos-devops | GitHub 镜像（对外） |
 
-提交后**两个都要推**：`npm run push:all`（= `git push origin master && git push github master`）。
+提交后**两个都要推**：`npm run push:all`（`scripts/push-all.mjs`：按主机挑凭据→推→核对两端 HEAD 与本地一致）。
+GitHub 组织仓库要用 `contextos-devops` 账号令牌（`~/.git-credentials` 里同时存着 `shylinux`，直接用 `git push` 会 403）。
 两个远端必须同 commit；只推一个会导致「别人拉到的和你看的不是同一份代码」。
 
 ## 一、工作范式
