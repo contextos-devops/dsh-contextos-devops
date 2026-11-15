@@ -237,6 +237,12 @@ window.__ModuleLoader__.load({
 
       '取消': 'Cancel', '保存': 'Save', '关闭': 'Close', '删除': 'Delete', '引用': 'Quote', '编辑': 'Edit', '停止': 'Stop',
       '发送': 'Send', '保存并编译': 'Save + build', '创建中…': 'Creating…', '保存中…': 'Saving…', '复制': 'Copy', '新建': 'New', '界面出现错误': 'UI error', '重试': 'Retry', '刷新页面': 'Reload', '返回': 'Back', '更多': 'More', '收起': 'Less', '清除': 'Clear', '展开': 'Expand', '折叠': 'Collapse',
+      '检查更新': 'Check updates', '当前版本': 'Current version', '最新版本': 'Latest version',
+      '检查时间': 'Checked at', '检查失败': 'Check failed', '检查中…': 'Checking…', '重新检查': 'Check again',
+      '有新版本': 'Update available', '已是最新版本': 'You are up to date', '复制更新命令': 'Copy update command',
+      '打开发布页': 'Open npm page',
+      '本地版本以 package.json 为准，最新版本来自 npm registry（缓存 30 分钟）。': 'Local version comes from package.json; latest comes from the npm registry (cached 30 min).',
+      '暂时查不到最新版本（网络或 registry 不可用）': 'Cannot reach the registry right now',
       '上传头像照片': 'Upload avatar photo', '修改分身…': 'Edit avatar…', '切换分身': 'Switch avatar', '新建分身…': 'New avatar…',
       '上传背景照片': 'Upload background photo', '赛博世界设置…': 'Cyber World settings…', '切换赛博世界': 'Switch Cyber World', '新建赛博世界': 'New Cyber World',
       '初始化': 'Initialize', '进入': 'Enter', '稍后': 'Later', '添加文件': 'Attach file', '确认': 'Confirm',

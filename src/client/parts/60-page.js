@@ -85,6 +85,17 @@
       const [themeMode, setThemeMode] = useState(() => cxReadText('theme', 'system'));
 
       const [opFx, setOpFx] = useState(null);
+      // 版本检查：只展示结果，不在客户端发 npm 请求（服务端 4s 超时 + 30 分钟缓存）
+      const [upd, setUpd] = useState(null);
+      const [updOpen, setUpdOpen] = useState(false);
+      const [updBusy, setUpdBusy] = useState(false);
+      const checkUpd = (force) => {
+        setUpdBusy(true);
+        api('checkUpdate', force ? { force: true } : {})
+          .then((r) => setUpd(r && r.local ? r : null))
+          .catch(() => {})
+          .finally(() => setUpdBusy(false));
+      };
       const [pipeMenu, setPipeMenu] = useState(null);
       const [sidebarHidden, setSidebarHidden] = useState(false);
       useEffect(() => {
@@ -96,6 +107,11 @@
         const iv = setInterval(update, 2000);
         window.addEventListener('resize', update);
         return () => { ro.disconnect(); clearInterval(iv); window.removeEventListener('resize', update); };
+      }, []);
+      // 打开界面 1.5s 后自动查一次（避开首屏渲染），失败静默
+      useEffect(() => {
+        const t = setTimeout(() => checkUpd(false), 1500);
+        return () => clearTimeout(t);
       }, []);
       const pipeModeLabel = (id) => {
         const m = CHAT_MODES.find((x) => x.id === id);
@@ -1339,7 +1355,10 @@
         welcome && (welcome.title === 'READY' || !lightTheme) ? h(WelcomeBurst, { key: `w${welcome.title}${Date.now()}`, title: welcome.title, sub: welcome.sub, onDone: () => setWelcome(null) }) : null,
         h('header', { className: 'cx-header' },
           sidebarHidden ? h('button', { className: 'cx-btn cx-sb-toggle', title: '显示 / 隐藏 DSH 侧边栏', onClick: () => { try { CX_LAYOUT && CX_LAYOUT.toggleSidebar && CX_LAYOUT.toggleSidebar(); } catch {} } }, '☰') : null,
-          h('div', { className: 'cx-brand' }, h('div', { className: 'cx-mark' }, h(CtxMark, { variant: 'devops', size: 22 })), h('div', null, h('div', { className: 'cx-title' }, 'CONTEXTOS · DEVOPS'), h('div', { className: 'cx-sub' }, `${t('cluster')} · ${t('modules')} · ${t('automation')} · v__CLIENT_CSS_VERSION__`))),
+          h('div', { className: 'cx-brand' }, h('div', { className: 'cx-mark' }, h(CtxMark, { variant: 'devops', size: 22 })), h('div', null, h('div', { className: 'cx-title' }, 'CONTEXTOS · DEVOPS'), h('div', { className: 'cx-sub' }, `${t('cluster')} · ${t('modules')} · ${t('automation')} · `,
+              h('button', { type: 'button', className: `cx-ver${upd && upd.hasUpdate ? ' upd' : ''}`, title: upd && upd.hasUpdate ? `${T('有新版本')} v${upd.latest}` : T('检查更新'), onClick: (e) => { e.stopPropagation(); setUpdOpen(true); if (!upd) checkUpd(true); } },
+                `v__CLIENT_CSS_VERSION__`),
+              upd && upd.hasUpdate ? h('span', { className: 'cx-ver-tag', title: upd.checkedAt || '' }, `→ v${upd.latest}`) : null))),
           h('div', { className: 'cx-views' },
             [['chat', '对话', 'CHAT'], ['manage', '管理', 'MANAGE'], ['dev', '开发', 'DEV'], ['monitor', '监控', 'MONITOR']].map(([k, zh, en]) =>
               h(UiAffordance, { key: k, as: 'button', icon: k, zh: locale === 'zh' ? zh : en, en: locale === 'zh' ? en : '', mode: 'short', className: `cx-view${viewMode === k ? ' on' : ''}`, onClick: () => setViewMode(k), title: zh + ' / ' + en }))),
@@ -1477,6 +1496,7 @@
         modal === 'instance' && currentApp ? h(InstanceModal, { node, space: currentApp.space || space, app: currentApp, avatar, onClose: () => setModal(null), onDone: (r) => { setModal(null); act('LOAD RECENT', () => selectCreated(r)); } }) : null,
         modal === 'storeInstance' && storeService ? h(StoreInstanceModal, { node, service: storeService, avatar, onClose: () => setModal(null), onDone: (r) => { setModal(null); setStoreService(null); act('LOAD RECENT', () => selectCreated(r)); } }) : null,
         showDevices ? h(DeviceModal, { node, onClose: () => setShowDevices(false) }) : null,
+        updOpen ? h(UpdateModal, { info: upd, busy: updBusy, onCheck: () => checkUpd(true), onClose: () => setUpdOpen(false) }) : null,
         showAvatars ? h(AvatarModal, { node, data: avatarData, active: avatar, onClose: () => setShowAvatars(false), onSelect: (a) => { setAvatar(a); setShowAvatars(false); }, onCreated: async (a) => { const d = await api('avatars', { node }); setAvatarData(d); const found = (d.items || []).find((x) => x.uid === a.uid) || a; setAvatar(found); setShowAvatars(false); }, onUpdated: async (a) => { const d = await api('avatars', { node }); setAvatarData(d); const found = (d.items || []).find((x) => x.uid === a.uid) || a; setAvatar(found); } }) : null,
         h(InitOverlay, { state: initState, onClose: () => setInitState(null), onStart: runInit, onRetry: retryInit, onLoginRemote: (cfg) => api('remoteLogin', cfg) }),
         dataPulse ? h('div', { key: dataPulse, className: 'cx-data-flash', 'aria-hidden': 'true' }) : null,

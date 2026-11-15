@@ -33,11 +33,12 @@
 | `lib/core/iam.js` | 123 | `iamCommand()` `iamList()` `iamCall()` `commandExists()` `subjectEndpoints()` `iamEndpoints()` `IAM` `SUBJECTS` …9 个 |
 | `lib/core/identity.js` | 23 | `activeAvatarUid()` `resolveActorUid()` |
 | `lib/core/nodes.js` | 628 | `sshHosts()` `sysControl()` `deployNode()` `startNode()` `stopNode()` `openNode()` `openSpace()` `openTerminalAt()` …17 个 |
-| `lib/core/ops.js` | 307 | `opIndex()` `OPS` |
+| `lib/core/ops.js` | 311 | `opIndex()` `OPS` |
 | `lib/core/project.js` | 394 | `fieldOptions()` `pmList()` `optionValue()` `pmCreateItem()` `pmLog()` `pmFieldsFor()` `pmModifyItem()` `pmRemoveItem()` …13 个 |
 | `lib/core/spaces.js` | 407 | `baseDirOf()` `spaceBase()` `spaceDir()` `startSpace()` `stopSpace()` `compileSpace()` `listSpaces()` `initSpace()` …20 个 |
 | `lib/core/terminal.js` | 138 | `terminalUpgrade()` |
 | `lib/core/terminal2.js` | 142 | `terminalUpgrade()` |
+| `lib/core/update.js` | 102 | `parseVersion()` `compareVersion()` `localVersion()` `checkUpdate()` `resetUpdateCache()` `PKG_NAME` `REGISTRY` `NPM_PAGE` …9 个 |
 | `lib/core/users.js` | 52 | `usersFile()` `loadUsers()` `saveUsers()` `ensureUser()` |
 | `lib/core/vocab.js` | 159 | `fieldOf()` `actionOf()` `checkField()` `checkAction()` `declAttrs()` `autoType()` `paramOf()` `paramSpec()` …21 个 |
 | `lib/misc/async.js` | 16 | `waitFor()` |
@@ -48,7 +49,7 @@
 
 | 片段 | 行数 | 主要定义 |
 | --- | ---: | --- |
-| `src/client/parts/00-prelude.js` | 316 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
+| `src/client/parts/00-prelude.js` | 322 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
 | `src/client/parts/05-bootstrap.js` | 62 | `QUERY_OPS` |
 | `src/client/parts/08-store.js` | 86 | — |
 | `src/client/parts/10-ui.js` | 189 | `CtxMark` `Ico` `Icon` `Panel` `TOKENS` `Btn` `Toolbar` `Section` `Field` `EmptyState` |
@@ -56,7 +57,7 @@
 | `src/client/parts/15-layout.js` | 87 | `SingleLineTitle` `DoubleLineTitle` `UiBar` `UiWorkspace` `UiAddressBar` `MenuList` `UiCardList` `UiTableList` `UiTreeList` |
 | `src/client/parts/20-devworkspace.js` | 790 | `DevWorkspace` `termActiveRef` `termPendingRef` `termIdsRef` `termKeyRef` `termHostsRef` `termMapRef` `termAct` |
 | `src/client/parts/25-editor-ui.js` | 29 | `GitSections` `EditorTabs` |
-| `src/client/parts/30-modals.js` | 86 | `DropSelect` `MenuButton` `Modal` `SceneModal` `AvatarEditModal` |
+| `src/client/parts/30-modals.js` | 107 | `DropSelect` `MenuButton` `Modal` `SceneModal` `AvatarEditModal` `UpdateModal` |
 | `src/client/parts/32-cards.js` | 177 | `CARD_TOOLS` `NodeCard` `SpaceCard` `ItemIcon` `AppRow` `StoreRow` `OfficialSpaces` |
 | `src/client/parts/34-forms.js` | 177 | `DeployModal` `SpaceModal` `AppModal` `CodeModal` `InstanceModal` `StoreInstanceModal` |
 | `src/client/parts/36-data.js` | 268 | `AvatarModal` `QUESTIONS` `DeviceModal` `DataModal` `INIT_DEFAULTS` |
@@ -71,12 +72,12 @@
 | `src/client/parts/55-pm.js` | 147 | `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` `PmSectionHead` `PM_STATUS_ORDER` |
 | `src/client/parts/58-config.js` | 382 | `CTX_CFG_KEYS` `CTX_CFG_DEFAULT` `CTX_CFG_NS` `CTX_CALLS_NS` `CTX_UI` `CTX_DATA` `MODE_INTRO_SEEN` `ModeIntro` `WelcomeBurst` `CursorComet` |
 | `src/client/parts/59-monitor.js` | 263 | `MonitorDonut` `R` `MonitorSpark` `MonitorTwin` `MON_PANELS` `MON_DEFAULT` `MonitorPanel` `MonitorBoard` `MonitorView` |
-| `src/client/parts/60-page.js` | 1519 | `PipeSelect` `Page` `Boundary` |
+| `src/client/parts/60-page.js` | 1539 | `PipeSelect` `Page` `Boundary` |
 
 ## 3. 接口契约
 
-- 注册表：`lib/core/ops.js` — **102** 个 op（GET 查询 / PUT 仅 pmCreate / POST 其余）。
-- 客户端调用 **75** 个；仅服务端 **28** 个：`health` `refreshNodes` `openNode` `nodeTerminal` `dockerDeploy` `remoteDeploy` `pipeline` `spaceOpen` `spaceTerminal` `storageCheck` `backupSpace` `backups` `sampleNodes` `createApp` `codegenRender` `codegenInspect` `pmTree` `pmUpdate` `pmDelete` `deleteAvatar` `deleteBackground` `removeData` `llmInfo` `iamList` `iamCall` `iamSubjects` `iamEndpoints` `clientError`。
+- 注册表：`lib/core/ops.js` — **103** 个 op（GET 查询 / PUT 仅 pmCreate / POST 其余）。
+- 客户端调用 **76** 个；仅服务端 **28** 个：`health` `refreshNodes` `openNode` `nodeTerminal` `dockerDeploy` `remoteDeploy` `pipeline` `spaceOpen` `spaceTerminal` `storageCheck` `backupSpace` `backups` `sampleNodes` `createApp` `codegenRender` `codegenInspect` `pmTree` `pmUpdate` `pmDelete` `deleteAvatar` `deleteBackground` `removeData` `llmInfo` `iamList` `iamCall` `iamSubjects` `iamEndpoints` `clientError`。
 - 门禁：`scripts/op-check.mjs`（缺 op、方法不一致、路由层残留业务分支都会红）。
 
 ## 4. 持久化

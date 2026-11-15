@@ -8,7 +8,7 @@ const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-e
           return raw.length > 220 ? raw.slice(0, 220) + '…' : raw;
         } catch { return op; }
       })();
-      const QUERY_OPS = new Set(['health', 'nodes', 'spaces', 'apps', 'storeApps', 'avatars', 'backgrounds', 'devices', 'sshHosts', 'pmList', 'pmTree', 'projectStatus', 'fieldOptions', 'listDir', 'tree', 'readFile', 'readData', 'git', 'origin', 'stateGet', 'llmInfo', 'files', 'file']);
+      const QUERY_OPS = new Set(['health', 'nodes', 'spaces', 'apps', 'storeApps', 'avatars', 'backgrounds', 'devices', 'sshHosts', 'pmList', 'pmTree', 'projectStatus', 'fieldOptions', 'listDir', 'tree', 'readFile', 'readData', 'git', 'origin', 'stateGet', 'llmInfo', 'files', 'file', 'checkUpdate']);
       const method = QUERY_OPS.has(op) ? 'GET' : (op === 'pmCreate' ? 'PUT' : 'POST');
       // GET 一律不走浏览器缓存：否则 /api?op=nodes 这类地址会被缓存在磁盘上，
       // 插件重启、页面刷新都还是旧数据（曾导致节点编译时间永远显示 —）

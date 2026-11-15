@@ -44,6 +44,7 @@ platform team, but by talking to one that is already in the room.
 | **Avatars & PM** | Digital avatars and cyber scenes, project boards (goal → plan → task → report → feedback), calendar, map, Gantt |
 | **Monitoring** | Grafana-style dashboards: any panel bound to node + space + command + params, iframe embedding |
 | **Chat** | Three working modes (avatar / factory / iot), each with its own action whitelist; writes go through a confirm form |
+| **Updates** | The header version chip compares the running build with npm (`checkUpdate`, 30 min cache) and gives you the exact update command |
 
 ---
 

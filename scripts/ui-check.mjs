@@ -118,6 +118,9 @@ ok('task process uses reportCreate', project.includes("status === 'process'") &&
 ok('danger actions are in context menu', pm.includes("new Set(['modify', 'remove', 'cancel', 'reject', 'handover'])"));
 ok('Chat context has one scene source', chat.includes('function stripSceneAliases') && chat.includes('const requestContext = stripSceneAliases(context);') && chat.includes('context: requestContext'));
 ok('Chat message body is a vertical column', css.includes('.cx-shell .cx-msg .cx-msg-main{display:flex!important;flex-direction:column!important') && css.includes('.cx-shell .cx-msg .cx-msg-body{width:100%!important;min-width:0}'));
+ok('version chip opens update modal', read('src/client/parts/60-page.js').includes("className: `cx-ver${upd && upd.hasUpdate ? ' upd' : ''}`") && read('src/client/parts/60-page.js').includes('h(UpdateModal, { info: upd'));
+ok('update check is a GET op with noUser', read('lib/core/ops.js').includes("checkUpdate: { method: 'GET', noUser: true") && read('src/client/parts/05-bootstrap.js').includes("'checkUpdate']"));
+ok('update check never throws (falls back to cache)', read('lib/core/update.js').includes('if (cache.value) return { ...cache.value, local, cached: true, stale: true, error: msg };'));
 const failed = checks.filter((c) => !c.condition);
 for (const c of checks) console.log(`${c.condition ? 'PASS' : 'FAIL'}  ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
 if (failed.length) { console.error(`ui-check: ${failed.length} failed`); process.exit(1); }

@@ -3292,3 +3292,11 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-trace-k{font-size:10px;color:var(--cx-cyan);letter-spacing:.08em;margin-bottom:4px}
 .cx-trace-code{margin:0;padding:8px 10px;background:#04101a;border:1px solid rgba(0,212,255,.14);border-radius:6px;font-size:10px;line-height:1.55;color:#bfe9f7;white-space:pre-wrap;word-break:break-all;max-height:260px;overflow:auto}
 .cx-trace-f{display:flex;justify-content:flex-end;padding:8px 14px;border-top:1px solid rgba(0,212,255,.18)}
+
+/* 版本徽标：默认与副标题同色，有更新时变强调色并带箭头；点击打开检查更新 */
+.cx-ver{font:inherit;color:inherit;background:none;border:0;padding:0 2px;cursor:pointer;border-bottom:1px dashed color-mix(in srgb,var(--cx-accent) 40%,transparent)}
+.cx-ver:hover{color:var(--cx-accent-2)}
+.cx-ver.upd{color:var(--cx-accent-2);border-bottom-color:var(--cx-accent-2);font-weight:600}
+.cx-ver-tag{margin-left:6px;padding:0 6px;border-radius:999px;font-size:calc(var(--cx-fs-10) + 1px);color:#04121a;background:var(--cx-accent-2)}
+.cx-upd-state{padding:10px 12px;border-radius:8px;border:1px solid var(--cx-line2);background:var(--cx-surface-1);color:var(--cx-muted);font-size:var(--cx-fs-12)}
+.cx-upd-state.on{border-color:var(--cx-accent-2);color:var(--cx-text)}

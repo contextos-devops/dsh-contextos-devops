@@ -83,3 +83,24 @@
           h('button', { className: 'cx-btn', onClick: onClose }, T('取消')),
           h('button', { className: 'cx-btn pri', onClick: () => onSave(form) }, T('保存'))));
     }
+
+    // 检查更新弹窗：只展示事实（本地/最新/检查时间/来源），动作交给用户复制命令执行。
+    function UpdateModal({ info, busy, onCheck, onClose }) {
+      const local = info?.local || '—';
+      const latest = info?.latest || '—';
+      const has = !!info?.hasUpdate;
+      const cmd = 'npm i -g dsh-contextos-devops && dsh plugin --profile desktop add dsh-contextos-devops';
+      const copy = (text) => { try { navigator.clipboard.writeText(text); } catch {} };
+      return h(Modal, { title: T('检查更新') + ' / CHECK UPDATES', desc: T('本地版本以 package.json 为准，最新版本来自 npm registry（缓存 30 分钟）。'), onClose },
+        h('div', { className: 'cx-form' },
+          h('label', { className: 'cx-field' }, T('当前版本'), h('input', { className: 'cx-input', readOnly: true, value: `v${local}` })),
+          h('label', { className: 'cx-field' }, T('最新版本'), h('input', { className: 'cx-input', readOnly: true, value: info?.ok ? `v${latest}` : (info?.error || T('检查失败')) })),
+          h('label', { className: 'cx-field full' }, T('检查时间'), h('input', { className: 'cx-input', readOnly: true, value: info?.checkedAt ? new Date(info.checkedAt).toLocaleString() : '—' })),
+          h('div', { className: 'cx-field full' }, h('div', { className: `cx-upd-state${has ? ' on' : ''}` },
+            has ? `↑ ${T('有新版本')}：v${local} → v${latest}` : (info?.stale || !info?.ok ? T('暂时查不到最新版本（网络或 registry 不可用）') : T('已是最新版本'))))),
+        h('div', { className: 'cx-foot' },
+          h('button', { className: 'cx-btn', onClick: () => copy(cmd), title: cmd }, T('复制更新命令')),
+          h('button', { className: 'cx-btn', onClick: onCheck, disabled: busy }, busy ? T('检查中…') : T('重新检查')),
+          info?.npm ? h('button', { className: 'cx-btn', onClick: () => { try { window.open(info.npm, '_blank'); } catch {} } }, T('打开发布页')) : null,
+          h('button', { className: 'cx-btn pri', onClick: onClose }, T('关闭'))));
+    }
