@@ -89,6 +89,7 @@
 | 脚本 | 作用 |
 | --- | --- |
 | `scripts/accept-factory.mjs` | 一次性空间跑通软件工厂 |
+| `scripts/catalog-pr.mjs` | — |
 | `scripts/context-check.mjs` | AI 上下文包与硬规则仍在 |
 | `scripts/docs-budget.mjs` | 文档 token 预算（棘轮）与路由实付 |
 | `scripts/docs-check.mjs` | 文档索引、链接、生成物一致 |
@@ -120,6 +121,7 @@
 | `npm run release` | build:client + verify:ui |
 | `npm run stats:ledger` | LEDGER 条目统计与归纳提醒 |
 | `npm run push:all` | node scripts/push-all.mjs |
+| `npm run catalog:pr` | node scripts/catalog-pr.mjs |
 | `npm run publish:npm` | node scripts/publish-npm.mjs |
 | `npm run check:<名>` | 单跑某道门禁：ui / probe / context / i18n / hooks / ops / store / docs / load / budget / publish |
 
@@ -142,7 +144,7 @@
 | `docs/INTERFACE.md` | 419 | 人写 |
 | `docs/MONITOR.md` | 83 | 人写 |
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
-| `docs/PUBLISH.md` | 143 | 人写 |
+| `docs/PUBLISH.md` | 157 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
 | `docs/RSI-LEDGER.md` | 136 | 人写 |
 | `docs/STATE.md` | — | 生成 |

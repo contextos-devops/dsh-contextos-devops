@@ -95,6 +95,20 @@ node scripts/publish-npm.mjs --publish   # 已登录时直接发布
 （如 `>=0.2.2-rc.1 <1.0.0`），否则 `0.2.2-rc.3` 这类版本会被静默排除。我们目前不直接依赖
 任何 `@deepseek-ai/*` 包（只用 `ctx` 注入），所以只需 `engines.dsh`。
 
+## 3.2 提交收录（awesome-dsh-plugin）
+
+```sh
+node scripts/catalog-pr.mjs              # 只检查前置条件（不写任何东西）
+node scripts/catalog-pr.mjs --create     # 建 fork → 提交条目 → 开 PR
+```
+
+脚本按 contributing.md 的硬门槛逐条判：`dsh.bundle.patch`、`cordis.patch.yml` 里有 `insert:`、
+仓库带 `dsh-plugin` topic、**建库满 24 小时**、条目文件名 `<owner>__<repo>.yml`、上游没有重名条目。
+任何一条不满足就退出码 2 并说明原因——省掉一次被 CI 打回的往返。
+
+> 建库时长是最容易忘的一条：我们的仓库 2026-11-15T03:39Z 建，**11-16 11:39（北京）之后**才能提。
+> 条目内容在 `release/catalog-entry.yml`，`npm:` 行等发版后再取消注释。
+
 ## 4. 路径 C：自建索引（内网 / 私有）
 
 `index.json` 最小形状：
