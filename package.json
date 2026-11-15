@@ -1,6 +1,6 @@
 {
   "name": "@local/contextos-devops-dsh",
-  "version": "1.48.11",
+  "version": "1.48.13",
   "private": true,
   "type": "module",
   "description": "ContextOS DevOps for DeepSeek Harness: tech dashboard for cluster nodes, project spaces, platform apps and data.",

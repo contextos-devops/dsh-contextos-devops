@@ -3054,8 +3054,9 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-msg-wrap{display:flex;flex-direction:column;align-items:stretch;gap:2px;max-width:94%;min-width:0}
 .cx-msg-wrap.user{align-items:flex-end}
 .cx-msg-wrap .cx-msg{max-width:100%}
-.cx-msg-meta .cx-msg-tools{margin-left:auto;display:flex;align-items:center;gap:6px;flex:0 0 auto;opacity:.55;transition:opacity .12s ease}
-.cx-msg-wrap:hover .cx-msg-tools,.cx-msg-wrap:focus-within .cx-msg-tools{opacity:1}
+.cx-msg-meta .cx-msg-tools{margin-left:auto;display:flex;align-items:center;gap:6px;flex:0 0 auto;opacity:1}
+.cx-msg-meta .cx-msg-tools{font-size:inherit;line-height:inherit;letter-spacing:inherit}
+.cx-msg-meta .cx-msg-tools .cx-msg-tool{font:inherit;line-height:inherit;height:auto;padding:0 4px;letter-spacing:inherit;color:inherit;opacity:1}
 .cx-msg-tool{border:0;background:transparent;color:var(--cx-muted);font:var(--cx-fs-body)/1 var(--cx-font);cursor:pointer;padding:1px 4px;border-radius:3px;letter-spacing:.06em}
 .cx-msg-tool:hover{color:var(--cx-cyan);background:rgba(var(--cx-hue-rgb),.12)}
 .cx-msg-tool.danger:hover{color:#ff7b7b}
