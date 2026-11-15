@@ -1,5 +1,8 @@
 # 状态索引 / STATE
 
+> 读这份当：要加一个持久化状态，或查某个键存在哪、默认值是什么。
+> 不读这份当 → 存储出口的实现与门禁 → [ARCHITECTURE.md](ARCHITECTURE.md) §5；服务端 state.json → §5 同节
+>
 > 生成物：`node scripts/docs-index.mjs --write`（2026-11-15）· 源：`src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA`
 > 手改会被下一次生成覆盖；要改内容改代码里的源头。
 

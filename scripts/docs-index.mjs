@@ -44,10 +44,13 @@ for (const f of parts) {
 const serverOnly = ops.map(([k]) => k).filter((k) => !clientOps.has(k));
 
 const now = new Date().toISOString().slice(0, 10);
-const head = (title, what) => `# ${title}\n\n> 生成物：\`node scripts/docs-index.mjs --write\`（${now}）· ${what}\n> 手改会被下一次生成覆盖；要改内容改代码里的源头。\n`;
+const head = (title, when, elsewhere, what) => `# ${title}\n\n> 读这份当：${when}\n> 不读这份当 → ${elsewhere}\n>\n> 生成物：\`node scripts/docs-index.mjs --write\`（${now}）· ${what}\n> 手改会被下一次生成覆盖；要改内容改代码里的源头。\n`;
 
 // ── CODE-INDEX.md
-let code = head('代码索引 / CODE INDEX', '源：`src/client/parts/*.js`、`lib/**/*.js`、`scripts/*.mjs`、`docs/*.md`');
+let code = head('代码索引 / CODE INDEX',
+  '要找某个文件 / 组件 / op / 脚本在哪，或核对接口契约。',
+  '架构分层与模块归属 → [ARCHITECTURE.md](ARCHITECTURE.md)；产品设计 → [PRODUCT-DESIGN.md](PRODUCT-DESIGN.md)',
+  '源：`src/client/parts/*.js`、`lib/**/*.js`、`scripts/*.mjs`、`docs/*.md`');
 code += `\n## 1. 服务端（宿主进程）\n\n| 文件 | 行数 | 导出 |\n| --- | ---: | --- |\n`;
 code += `| \`index.js\` | ${lines('index.js')} | \`apply()\`、\`inject\`；路由只做 \`OPS\` 分发 |\n`;
 for (const f of walk('lib', '.js').sort()) {
@@ -91,7 +94,10 @@ for (const f of walk('docs', '.md').sort()) {
 }
 
 // ── STATE.md
-let state = head('状态索引 / STATE', '源：`src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA`');
+let state = head('状态索引 / STATE',
+  '要加一个持久化状态，或查某个键存在哪、默认值是什么。',
+  '存储出口的实现与门禁 → [ARCHITECTURE.md](ARCHITECTURE.md) §5；服务端 state.json → §5 同节',
+  '源：`src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA`');
 state += `\n## 1. 浏览器侧（localStorage，前缀 \`contextos-devops-dsh:\`）\n\n| 键 | 类型 | 默认值 | 说明 |\n| --- | --- | --- | --- |\n`;
 for (const [key, spec] of schemaRows) {
   const def = spec.kind === 'text' ? `\`${spec.def}\`` : `\`${JSON.stringify(spec.def)}\``;

@@ -10,6 +10,11 @@ updated: 2026-11-14
 
 # 接口规范
 
+
+
+> 读这份当：设计或调试接口，或需要 PM 排序与状态口径。
+> 不读这份当 → URL 形状 → `URL-SPEC.md`
+**按章读**：§1–§5 报文形态与动作 → 设计接口时；§6–§10 认证/错误/排障 → 联调失败时；§11 PM 排序与状态值 → 改列表顺序时。
 > DSH 里一切皆插件；ContextOS 里一切皆**命令**。
 > 一条命令五种用法，两层能力，两套权限。
 
@@ -404,3 +409,10 @@ POST /c/dream/action/build?name=<space>
 ### 10.4 一个必须知道的行为
 
 `PushButton` 只在**浏览器 UA** 下生效：`curl`（非浏览器 UA）拿到的是数据报文，没有按钮列；浏览器打开同一 URL 才看到工具栏与行内按钮。这是 UA + Method 区分网页/接口的必然结果，不是 bug。
+
+## 11. PM 列表排序与状态值
+
+- `status` 按 ContextOS 状态序：`created, submited, approved, process, finished, canceled, rejected`。
+- 同一状态内按 `created_at` 倒序。
+- 客户端不排序、不推断状态：服务端返回什么顺序就渲染什么顺序，按钮由 `item.actions` 决定。
+- 实现位置：`lib/core/project.js`（唯一状态机），查询参数见 `docs/URL-SPEC.md`。

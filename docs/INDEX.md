@@ -1,79 +1,103 @@
 # 文档索引 / INDEX
 
-> 唯一入口：先在这里按「我现在要干什么」找到**一行**，只读那一份的**那一章**。
-> 铁律：`../../../AGENTS.md`（平台）> `../../AGENTS.md`（插件）> 本目录任何文档。
-> 本文件由 `scripts/docs-check.mjs` 校验：`docs/` 下每份 `.md` 必须在此登记，链接必须可解析。
+> 读这份当：每次开工，找「我该读哪一份的哪一章」。
+> 不读这份当 → 流程与验收 → `../AGENTS.md`；症状排查 → `DIAGNOSTICS.md`。
+>
+> **唯一入口**：按「我现在要干什么」找到**一行**，只读那一份的**那一章**。
+> 冲突优先级：根 `../../../AGENTS.md`（平台铁律）> 插件 `../AGENTS.md` > 本目录任何文档。
+> 本文件由 `scripts/docs-check.mjs` 校验：孤儿文档、死链、生成物过期都会红。
 
-## 一、开工三件套（每次对话，按顺序）
+## 〇、30 秒定位
 
-| 步骤 | 读什么 | 为什么 |
+| 我要… | 读这一份 | 读哪一章 |
 | --- | --- | --- |
-| 1 | `../../AGENTS.md` §一 铁律、§二 工作流 | 不许改构建产物、必须 bump 版本、必须落报告 |
-| 2 | `AI-CONTEXT.md` | 根规范路由 + 插件硬规则 + 迭代清单 |
-| 3 | `INDEX.md`（本文件）对应行 | 只取本轮需要的那一章 |
+| 知道自己该干什么、怎么算完成 | `../AGENTS.md` | §二 工作流程、§七 验收、§八 归纳 |
+| 判断方向对不对 | `DOCTRINE.md` | 全册（104 行） |
+| Copilot 每轮的最高法则 | `RSI-CONSTITUTION.md` | 全册（107 行） |
+| 出问题了先查哪、先跑哪条命令 | `DIAGNOSTICS.md` | §一 症状表 |
+| 找某个文件 / 组件 / op / 脚本 | `CODE-INDEX.md` | 按表查（生成物） |
+| 查存了哪些状态 | `STATE.md` | 键表（生成物） |
 
-## 二、按任务找文档
+## 一、开工三件套（每次对话，按顺序，别多读）
 
-| 我要做的事 | 读这份 | 章节 |
+1. `../AGENTS.md` §〇 定位 + §二 八步流程 —— 本轮该怎么走。
+2. `AI-CONTEXT.md` —— 根规范路由 + 插件硬规则（72 行，必读）。
+3. 本文件「§二 任务路由」对应的一行 —— 只取那一章。
+
+## 二、任务路由（一行一任务）
+
+| 我要做的事 | 文档 | 章节 |
 | --- | --- | --- |
-| 搞清方向：三纲五常 / 每轮四件套 / 抽象递减 | `DOCTRINE.md` | 全册 |
-| 改界面：布局/组件/主题/图标/文字 | `DESIGN-SYSTEM.md`；根 `USER-VIEW.md` | 全册 / §〇–§三 |
-| 布局出了问题（挤行/折叠过高/改了没变） | `DIAGNOSTICS.md` | §二 布局三条硬规则 |
-| 新页面/新组件，别造第二套样式 | `DESIGN-SYSTEM.md`、`FORM-FIELDS.md` | 组件清单 / 字段形态 |
-| 加接口、调接口、对报文 | `INTERFACE.md`、`URL-SPEC.md` | 五形态 / 两类 URL + 禁止清单 |
-| 加一个 op（后端动作） | `../lib/core/ops.js` + `CODE-INDEX.md` §3 | 注册表 + 门禁 |
-| 加一个要保存的状态 | `STATE.md` + `../src/client/parts/08-store.js` | 键表 / `CX_STORE_SCHEMA` |
-| 写代码生成（factory 模式） | `CODE-GEN.md` | 两类模块 + 词表 + 权限 |
-| 写项目管理（PM）逻辑 | `CODE-MAP.md`、`MEMORY.md` | 数据流/契约 / PM 约定 |
-| 接 AI 对话 / 动作协议 | `AI-CONVERSATION.md` | 请求参数 + 动作表 + 已知缺口 |
-| 接监控面板 | `MONITOR.md` | 面板可加、数据源可配 |
-| 接权限/身份 | `IAM.md` | 角色与 user.uid |
-| 部署/环境/DSH 本体机制 | `DSH-COS.md` | 宿主能力与边界 |
-| 交付前验收 | `ACCEPTANCE.md` | L0–L3、证据表、UI 硬规则、可用性门禁 |
-| 看产品全貌（对外讲） | `CONTEXTOS-SUMMARY.md` | 一页读懂 |
-| 看完整产品/技术设计稿 | `PRODUCT-DESIGN.md` | 全册（目标形态与路线图） |
-| 架构分层与目录职责 | `ARCHITECTURE.md` | 五层与边界 |
-| 找某个文件/组件/op 在哪 | `CODE-INDEX.md`（生成） | §1–§6 |
-| 复盘历史坑与决策 | `RSI-LEDGER.md` | 按日期 |
-| 界面/接口出问题，先查哪、先跑哪 | `DIAGNOSTICS.md` | §一 症状表、§二 布局三条硬规则 |
-| 运行期最高法则（Copilot 也注入） | `RSI-CONSTITUTION.md` | 十二条 |
+| 改界面：布局 / 组件 / 主题 / 图标 / 文字 | `DESIGN-SYSTEM.md` | 全册（276 行） |
+| 改表单、字段取值 | `DESIGN-SYSTEM.md` | §18 表单取值 |
+| 加 UI 回归断言 | `DESIGN-SYSTEM.md` | §19 UI 不变量 |
+| 布局出问题（挤行 / 折叠过高 / 改了没变） | `DIAGNOSTICS.md` | §二 布局三条硬规则 |
+| 接口 / 报文 / 五种形态 | `INTERFACE.md` | §1–§10；PM 排序看 §11 |
+| 构造任何 URL 之前 | `URL-SPEC.md` | 全册（239 行） |
+| 加一个 op（后端动作） | `../lib/core/ops.js` + `CODE-INDEX.md` | 注册表 + §3 |
+| 加一个要保存的状态 | `STATE.md` + `08-store.js` | 键表 / `CX_STORE_SCHEMA` |
+| 写代码生成（factory 模式） | `CODE-GEN.md` | 一–五；工厂实现要点看 §六 |
+| 写项目管理（PM）逻辑 | `ARCHITECTURE.md` + `INTERFACE.md` | §5 唯一入口 / §11 状态与排序 |
+| 接 AI 对话 / 动作协议 | `AI-CONVERSATION.md` | 全册（123 行） |
+| 接监控面板 | `MONITOR.md` | 全册（79 行） |
+| 权限 / 身份 | `IAM.md` | 全册（147 行） |
+| DSH 宿主能力与边界 | `DSH-COS.md` | 全册（110 行） |
+| 交付前验收 | `ACCEPTANCE.md` | L0–L3 + 证据表 |
+| 对外讲产品 / 做方案 | `PRODUCT-DESIGN.md` | §0–§1.11；按章读表在开头 |
+| 判断一层代码该放哪 | `ARCHITECTURE.md` | §1 五层、§8 模块归属 |
 
-## 三、规范类（人写，会变）
+## 三、症状路由（先跑命令，再读文档）
 
-| 文档 | 一句话 | 什么时候读 |
+| 症状 | 先跑 | 再读 |
 | --- | --- | --- |
-| `ARCHITECTURE.md` | tokens / UI kit / PM 数据与卡片 / UID 契约 | 判断一层代码该放哪 |
-| `DESIGN-SYSTEM.md` | 插件视觉与组件规范 | 任何界面改动 |
-| `FORM-FIELDS.md` | 字段形态与表单渲染约定 | 新增/修改表单 |
-| `INTERFACE.md` | 一条命令五种形态、两层能力、认证 | 接口设计/排障 |
-| `URL-SPEC.md` | 接口 URL 与网页 URL 的形状、禁止清单 | 构造任何 URL 之前 |
-| `CODE-GEN.md` | 代码生成规范（模块/词表/参数文法/权限） | factory 模式生成代码 |
-| `CODE-MAP.md` | 数据流、文件职责、契约、改动路由 | 改 PM 或页面编排 |
-| `AI-CONVERSATION.md` | 对话请求参数、动作表、已知缺口 | 改 Copilot 链路 |
-| `AI-CONTEXT.md` | 根规范路由 + 插件硬规则 + 迭代清单 | 每次开工 |
-| `MEMORY.md` | 项目长期记忆与 PM 契约 | 跨轮次决策依赖 |
-| `MONITOR.md` | 监控面板与数据源 | 改监控视图 |
-| `IAM.md` | 权限与身份模型 | 涉及 user.uid/角色 |
-| `DSH-COS.md` | DSH 宿主能力与 ContextOS 的边界 | 判断能不能做到 |
-| `CONTEXTOS-SUMMARY.md` | 产品全貌（对外讲） | 写材料/介绍 |
-| `PRODUCT-DESIGN.md` | 深度设计稿：产品逻辑、AI-first、DSH 联动、协议与数据 | 要做方案/查历史设计取舍 |
-| `ACCEPTANCE.md` | 唯一验收口径：L0–L3 + 证据表 + UI 硬规则 + verify:ui | 说「完成」之前 |
-| `RSI-CONSTITUTION.md` | 十二条运行期法则（注入 Copilot 提示词） | 任何 AI 对话 |
-| `RSI-LEDGER.md` | 踩坑与决策台账 | 复盘/避免重复 |
+| 插件不加载 / 白屏 | `npm run check:load` | `DIAGNOSTICS.md` §一 · `RSI-LEDGER` 11-15 |
+| 改了样式界面没变 | `clientCheck` 的 `css` / `build` | `DIAGNOSTICS.md` §一 加载层 |
+| 消息头与正文挤成两栏 | `npm run check:probe -- --case msg-card` | `DIAGNOSTICS.md` §二.1–.2 |
+| 折叠后卡片仍很长 | `npm run check:probe -- --case pm-folded` | `DIAGNOSTICS.md` §二.3 |
+| 悬停态看不出差别 | 看 `clientCheck.layout.opacity` | `DIAGNOSTICS.md` §二.4 |
+| 宿主界面被带歪 | — | `DIAGNOSTICS.md` §一 污染层 |
+| 接口 404 / 405 / 写丢字段 | `npm run check:ops` | `INTERFACE.md`、`URL-SPEC.md` |
+| 门禁红了看不出原因 | 单跑该脚本，看 `FAIL` 行 | `../AGENTS.md` §十 脚本表 |
 
-## 四、生成物（脚本产出，勿手改）
+## 四、文档地图（人写 17 份 + 生成 2 份）
 
-| 文档 | 生成命令 | 内容 |
-| --- | --- | --- |
-| `CODE-INDEX.md` | `node scripts/docs-index.mjs --write` | 服务端/客户端/脚本/文档的文件-行数-导出索引、op 契约、存储概览 |
-| `STATE.md` | 同上 | 浏览器 38 个存储键 + 服务端 state.json 9 项 |
+| 文档 | 行数 | 一句话 | 读这份当 | 不读这份当 → 见 |
+| --- | --- | --- | --- | --- |
+| `AI-CONTEXT.md` | 76 | 根规范路由 + 插件硬规则 | 每次开工 | — |
+| `DOCTRINE.md` | 108 | 三纲五常 / 四件套 / 抽象递减 | 判断方向 | 具体做法 → `../AGENTS.md` |
+| `RSI-CONSTITUTION.md` | 111 | 十二条运行期法则 | 任何 AI 对话 | 落地流程 → `../AGENTS.md` §二 |
+| `DIAGNOSTICS.md` | 98 | 出问题先查哪、先跑哪 | 有故障 | 历史坑 → `RSI-LEDGER.md` |
+| `DESIGN-SYSTEM.md` | 280 | 视觉/组件/表单/UI 不变量 | 任何界面改动 | 产品取舍 → `PRODUCT-DESIGN.md` |
+| `INTERFACE.md` | 419 | 五种形态/认证/PM 排序 | 接口设计与排障 | URL 形状 → `URL-SPEC.md` |
+| `URL-SPEC.md` | 243 | 两类 URL 与禁止清单 | 构造 URL 前 | 接口语义 → `INTERFACE.md` |
+| `CODE-GEN.md` | 410 | 代码生成规范与工厂要点 | factory 模式 | 架构 → `ARCHITECTURE.md` |
+| `ARCHITECTURE.md` | 135 | 五层/请求流程/模块归属 | 判断代码放哪 | 生成细节 → `CODE-GEN.md` |
+| `AI-CONVERSATION.md` | 127 | 对话参数/动作表/缺口 | 改 Copilot 链路 | 提示词 → `../lib/core/copilot.js` |
+| `MONITOR.md` | 83 | 监控面板与数据源 | 改监控视图 | — |
+| `IAM.md` | 151 | 权限与身份模型 | 涉及 user.uid/角色 | 接口 → `INTERFACE.md` |
+| `DSH-COS.md` | 114 | DSH 宿主能力与边界 | 判断能不能做到 | 版本差异 → `RSI-LEDGER.md` |
+| `ACCEPTANCE.md` | 247 | 唯一验收口径 | 说「完成」之前 | 流程 → `../AGENTS.md` §七 |
+| `PRODUCT-DESIGN.md` | 843 | 产品与技术设计稿 | 做方案/查设计取舍 | 现状 → `../README.md` 能力矩阵 |
+| `RSI-LEDGER.md` | 495 | 踩坑与决策台账 | 复盘/避免重复 | 症状路由 → `DIAGNOSTICS.md` |
+| `CODE-INDEX.md` | 130 | 文件-行数-导出-契约索引 | 找东西 | 生成物，勿手改 |
+| `STATE.md` | 66 | 存储键表 | 加/查状态 | 生成物，勿手改 |
+| `INDEX.md` | 本文件 | 唯一入口 | 每次开工 | — |
 
-`npm run check:docs` 会比对生成物是否与代码一致（不一致就红）。
+**按章读**（>400 行的大文档，只读需要的章）：`INTERFACE.md` §1–§5 报文与动作、§6–§10 认证与排障、§11 PM 排序；
+`CODE-GEN.md` §一–§三 模块与词表、§四–§五 参数文法与权限、§六 工厂实现；
+`PRODUCT-DESIGN.md` 开头有按章读表；`RSI-LEDGER.md` 按日期倒序读最近三条即可。
 
-## 五、文档治理（写新文档前先读）
+## 五、生成物（脚本产出，勿手改）
 
-1. **能加到现有文档的一章，就不新开文件**；新开必须在 §二/§三登记，否则 `check:docs` 判孤儿。
-2. 一份真源：同一事实只写一处，其它地方给「文件 + 章节」指针（例如 `ACCEPTANCE.md §12`）。
-3. 生成物不手改：改 `08-store.js`、`ops.js`、目录结构，再跑生成脚本。
-4. 过时内容不删改历史叙述：在原文加「已废弃（日期）→ 见 XXX」并在 `RSI-LEDGER.md` 记一行。
-5. 文档与代码同一次提交；`check:docs` + `check:context` 必须绿。
+```sh
+node scripts/docs-index.mjs --write   # 重新生成 CODE-INDEX.md 与 STATE.md
+npm run check:docs                    # 校验孤儿/死链/生成物是否过期
+```
+
+## 六、文档治理（写新文档前先读）
+
+1. **能加到现有文档的一章，就不新开文件**；新开必须在 §二/§四登记，否则 `check:docs` 判孤儿。
+2. **一份真源**：同一事实只写一处，其它地方给「文件 §章节」指针。
+3. **生成物不手改**：改 `ops.js`、`08-store.js`、目录结构后重跑生成脚本。
+4. **过时内容**：加「已废弃（日期）→ 见 X」，并在 `RSI-LEDGER.md` 记一行。
+5. **文档与代码同一次提交**；`check:docs` + `check:context` 必须绿。

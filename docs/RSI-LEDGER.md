@@ -1,5 +1,10 @@
 # RSI ledger
 
+> 读这份当：复盘，或查某个坑以前怎么处理。
+> 不读这份当 → 症状路由 → `DIAGNOSTICS.md`
+
+**按章读**：按日期倒序，**只读最近 3 条**即可对齐当前问题；查旧坑用 `grep -n "<症状关键词>" docs/RSI-LEDGER.md`。
+
 Rule: every iteration must leave the project easier to change than before.
 A change is incomplete if it only adds a page-local workaround.
 
@@ -34,13 +39,13 @@ gate added so the same bug cannot return silently
   centralized UID normalization.
 - Removed: unused `pmDetail` API path, `assertUid`, item UID wrapper, dead
   fresh-id state.
-- Gate: `ui-check` + `context-check`; project memory in `docs/MEMORY.md`.
+- Gate: `ui-check` + `context-check`; project memory in `docs/MEMORY.md`（2026-11-15 已并入 `ARCHITECTURE.md` / `DIAGNOSTICS.md`，此处为历史记录）
 
 ## 2026-11-08 — code map / metadata consolidation
 
 - Lesson: PM metadata was split between map and card modules.
 - Abstraction: PM metadata lives with `PmCard`; ownership documented in
-  `docs/CODE-MAP.md`.
+  `docs/CODE-MAP.md`（2026-11-15 已并入 `ARCHITECTURE.md`，此处为历史记录）
 - Gate: context pack includes code map and memory.
 
 ## 2026-11-08 — PM selection hook
@@ -469,3 +474,21 @@ gate added so the same bug cannot return silently
 **下轮建议**：① 给「已挂载旧 link 被改写」加可判定证据（服务端校验 `clientCheck.build` 与静态路由版本一致）；
 ② 把 `ledger-stats --check` 以 soft 方式接进 `build:client`（只提示不阻断）；
 ③ 每次 retro 必须新增一个 `ui-probe` 用例或一条 gate 断言。
+
+## 2026-11-15 · 文档 23 份互相重复，且写着过期事实
+
+- Symptom: 同一件事写在 2–3 份文档里（CODE-MAP ≈ ARCHITECTURE、FORM-FIELDS ⊂ DESIGN-SYSTEM、
+  CONTEXTOS-SUMMARY ⊂ PRODUCT-DESIGN、MEMORY 混装五类内容）；PRODUCT-DESIGN 1662 行吞掉架构/规范/UI/协议；
+  更糟的是**写了与现状不符的事实**（「pmList 直读 SQLite」「index.js ≈3000 行」「client.js ≈5200 行」「没有独立构建产物」）。
+- Root cause: 层：索引层 + 流程层 —— 文档没有「读这份当」入口、没有体积预算、合并后没有退役机制；
+  文档里的数字靠人手抄，没有任何断言比对真实值。
+- 类别: 索引层（同类第 3 次：验收三合一、代码索引只有 PM、本次全文重复）。
+- Fix: 23 份 → 19 份（CONTEXTOS-SUMMARY/FORM-FIELDS 并入 PRODUCT-DESIGN/DESIGN-SYSTEM，
+  MEMORY 按归属拆散，CODE-MAP 并入重写的 ARCHITECTURE）；PRODUCT-DESIGN 1662 → 843 行并加「按章读」；
+  `docs/INDEX.md` 重写为「30 秒定位 → 任务路由 → 症状路由 → 文档地图（含行数）」；
+  19 份全部补「读这份当 / 不读这份当」两行；`docs-check.mjs` 新增四条断言（入口约定、>400 行必须按章读、
+  INDEX 行数 = 真实行数、已删 6 份不得复活）。
+- 数字: docs 23 份 5244 行 → 19 份 4203 行（−1041）；INDEX 抓出 17 处过期行数并订正；
+  `build:client` exit 0，ui-check 88、ui-probe 9/9、docs 19 份全绿。
+- 固化: `docs-check` 第 4–7 条断言（行数断言让「文档里的数字」第一次可执行）；
+  报告 `usr/local/WorkBuddy/dsh-reports/2026-11-15-docs-restructure.md`。

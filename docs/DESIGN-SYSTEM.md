@@ -1,5 +1,8 @@
 # ContextOS 界面设计系统
 
+
+> 读这份当：任何界面、组件、表单、主题改动。
+> 不读这份当 → 布局故障 → `DIAGNOSTICS.md`；产品取舍 → `PRODUCT-DESIGN.md`
 所有页面只允许组合本文件的组件与 `--cx-*` token。
 
 ## 1. 纵向结构
@@ -170,7 +173,7 @@ UiAddressBar {
 > 单一来源：`src/client/styles/tokens.css`（变量）+ `main.css` 末尾「字号规范（唯一来源）」段。
 > 所有页面/卡片/控件必须引用变量，不允许再写裸像素。
 
-## 1. 字号（唯一来源）
+## 9. 字号（唯一来源）
 
 | 角色 | 变量 | 值 | 用在 |
 |---|---|---|---|
@@ -181,7 +184,7 @@ UiAddressBar {
 
 规则：`body/font-size` 继承 `--cx-fs`；每个角色只允许出现在一个选择器组里。
 
-## 2. 颜色
+## 10. 颜色
 
 - **色系**（`data-hue`，7 档）：cyan / green / violet / amber / rose / ice / warm
   - 每档同时定义 `--cx-cyan`、`--cx-accent`、`--cx-green`、`--cx-hue-rgb`、`--cx-green-rgb`
@@ -190,7 +193,7 @@ UiAddressBar {
   - 覆盖主色 + 背景渐变 + 字体族（古典用衬线）
 - 边框/弱文字跟随色系：`--cx-line`、`--cx-line2`、`--cx-border`、`--cx-border-strong`、`--cx-muted`、`--cx-text-dim`
 
-## 3. 布局
+## 11. 布局
 
 - **顶部四段**：`[☰] [品牌标题] [模式组 flex:1 居中] [样式组]`
   - 模式组吃掉剩余空间并居中；样式组 2px 间隔、固定右侧
@@ -198,7 +201,7 @@ UiAddressBar {
 - **右栏**：`时间 / 任务 / 报告 / 反馈 / 地点` 五段，标题依次吸顶（`top: i*34px`）
 - **卡片**：`EntityTitle`（图标 + 标题 + 类型 + 状态 + 元信息）+ 正文 + 操作行
 
-## 4. 间距与圆角
+## 12. 间距与圆角
 
 | 项 | 值 |
 |---|---|
@@ -209,12 +212,12 @@ UiAddressBar {
 | 圆角：输入框 | 24px |
 | 圆角：图标按钮 | 50% |
 
-## 5. 图标
+## 13. 图标
 
 - 图标与字号绑定：**12px 文字 → 18px 图标**、**10px 文字 → 14px 图标**、**14px 标题 → 20px 图标**（变量 `--cx-icon-12 / --cx-icon-10 / --cx-icon-14`）
 - 卡片图标必须复用标题栏的 `Ico`，不允许另画一套
 
-## 6. 动效（全部可被「动效·关」禁用）
+## 14. 动效（全部可被「动效·关」禁用）
 
 | 名称 | 时长 | 触发 |
 |---|---|---|
@@ -230,7 +233,7 @@ UiAddressBar {
 
 动效强弱四档（强/中/弱/微）+ 关：`data-light` 控制光晕透明度、彗星透明度、动画时长。
 
-## 7. 交互反馈
+## 15. 交互反馈
 
 | 操作 | 反馈 |
 |---|---|
@@ -240,15 +243,37 @@ UiAddressBar {
 | 点击 | 光波扩散（全区域 canvas） |
 | 键盘 | 字母/退格/回车有键音 |
 
-## 8. 声音
+## 16. 声音
 
 - 7 种音色：柔和 / CS / 红警 / 魔兽 / 星际 / 8-bit / 静音
 - WebAudio 现场合成，无音频文件；悬停、点击、按键、数据操作各有音色
 
-## 9. 代码约定
+## 17. 代码约定
 
 1. **不手改 `client.js`**：改 `src/client/parts/*.js` 后 `npm run build:client`（含门禁）
 2. **样式进 `main.css`**，变量进 `tokens.css`；禁止裸色值/裸字号
 3. **单一实现**：最大化 `cxMaxApply`、标题 `EntityTitle`、图标 `Ico`、下拉 `DropSelect`、声音 `play()` 各只有一处
 4. **门禁**：`gate.mjs` 校验产物哈希、CSS 版本、`100vw/100vh` 全屏回归、`cxMaxApply` 唯一性
 5. **调试**：Edge 常开 + `node scripts/edge-refresh.mjs` 刷新验证，不再反复启停插件
+
+## 18. 表单取值（强制）
+
+所有表单参数，取值范围与提交值都必须以后台为准。
+
+1. **取值范围来自后台**：任何枚举/下拉字段，先调 `fieldOptions({ node, space, command, field })` 拿 `options`。
+2. **提交 `value`，不提交 `name`/`label`**：后台返回 `{ value, name, label }` 时 `value` 才是可写值（常见是数字 `"0"/"1"`）。
+3. **显示用 `label`**：UI 展示 label（缺省回退 name），不把显示值发回去。
+4. **存量数据要归一**：编辑旧记录时按 `value/name/label` 三种形态匹配到 `value` 再提交。
+5. **默认值也取自选项**：默认 = `options[0].value`，不硬编码英文名。
+
+实现入口：`lib/core/project.js → optionValue({ node, space, command, field, raw })`。
+
+## 19. UI 不变量（回归清单）
+
+- 消息布局固定为 `avatar | main(meta 在上、body 在下)`；`.cx-msg-main` 必须是列 flex，body 满宽。
+- 消息工具条在 meta 行右端，`margin-left:auto`，默认 `opacity:0`、悬停显示（不占额外行、不跳行）。
+- 请求上下文只有 `scene` 一个来源；`background`/`bg` 在发送边界剥离。
+- 调试四个页签同一行，页签条 sticky。
+- 表头固定布局、KEY 列稳定、长值换行；详情面板高度随内容，不强制整屏。
+- 同一区块不出现重复标题（如 REQUEST 之上再一个「请求信息」）。
+- 加载/空/错误/长文本四态必须显式。

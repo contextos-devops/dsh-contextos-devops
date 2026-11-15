@@ -10,6 +10,9 @@ updated: 2026-11-14
 
 # 接口 URL 与网页 URL 规范
 
+
+> 读这份当：构造任何接口或网页 URL 之前。
+> 不读这份当 → 接口语义 → `INTERFACE.md`
 > 唯一真源：`lib/base/url.js`（宿主）、`cxWebUrl`（`src/client/parts/00-prelude.js`，客户端）。
 > 任何地方**不许手拼**这两类 URL；任何地方**不许**用空间 uid。
 

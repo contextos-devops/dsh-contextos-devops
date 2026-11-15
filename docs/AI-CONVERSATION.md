@@ -1,5 +1,8 @@
 # AI 会话：请求参数、上下文与可执行动作
 
+
+> 读这份当：改 Copilot 对话链路、动作协议或上下文注入。
+> 不读这份当 → 实现 → `../lib/core/copilot.js`；产品设计 → `PRODUCT-DESIGN.md`
 > 一句话：**一次对话 = 一次 `{message, history, context, mode}` → `{reply, action, actions}` 的往返**；客户端先尝试本地直执（读写应用数据），失败或非数据类意图才交给模型。
 
 ## 一、请求流程

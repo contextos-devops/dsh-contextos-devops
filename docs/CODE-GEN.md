@@ -1,5 +1,10 @@
 # 代码生成规范（在插件里按需求生成 ContextOS 代码）
 
+> 读这份当：让插件按需求生成 ContextOS 代码（factory 模式）。
+> 不读这份当 → 架构 → `ARCHITECTURE.md`；接口 → `INTERFACE.md`
+
+**按章读**：§一–§二 两类模块与目录 → 要落文件时；§三 词表 → 起名/中英对照；§四–§五 参数文法与权限 → 写命令标签；§六 工厂实现要点 → 改 `lib/core/codegen.js`。
+
 > 用户说「给某个功能加一个动作 / 加个按钮 / 加个字段 / 新写一个功能」，插件按本规范生成代码、写入空间、编译、验证。
 > 实现：`lib/core/codegen.js`（模板 + 渲染 + 落盘）、`index.js` 的 `codegenList` / `codegenRender` / `codegenApply`，客户端 `50-chat.js` 的 `codegenAsk`。
 
@@ -394,3 +399,11 @@ codegenAsk(text)
 ```
 
 用户可以在表单里改 zone、module、动作名与参数，改完再确认。
+
+## 六、软件工厂实现要点（createApp / autogenApp）
+
+- `createApp`：脚手架 + 生成 CRUD + `ensureGoMod` + 本地 Go 构建；返回 `web.chat.<zone>.<name>`。
+- `autogenApp`：社区 autogen + `ensureGoMod` + 补值文件 + `goTidyBuild`（`go build ... ./src`）+ 空间重启。
+- **构建失败必须抛错**，不许返回 `{built:false}` 当成功。
+- `value` 是 ASCII Go 标识符列表；`trans` 是中文显示列表。
+- 验收用的探测空间必须删除（`deleteSpace`），不许留 `factorycheck*`/`uiprobe*`。

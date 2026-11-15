@@ -1,5 +1,8 @@
 # 代码索引 / CODE INDEX
 
+> 读这份当：要找某个文件 / 组件 / op / 脚本在哪，或核对接口契约。
+> 不读这份当 → 架构分层与模块归属 → [ARCHITECTURE.md](ARCHITECTURE.md)；产品设计 → [PRODUCT-DESIGN.md](PRODUCT-DESIGN.md)
+>
 > 生成物：`node scripts/docs-index.mjs --write`（2026-11-15）· 源：`src/client/parts/*.js`、`lib/**/*.js`、`scripts/*.mjs`、`docs/*.md`
 > 手改会被下一次生成覆盖；要改内容改代码里的源头。
 
@@ -105,26 +108,22 @@
 
 | 文档 | 行数 | 性质 |
 | --- | ---: | --- |
-| `docs/ACCEPTANCE.md` | 244 | 人写 |
-| `docs/AI-CONTEXT.md` | 73 | 人写 |
-| `docs/AI-CONVERSATION.md` | 124 | 人写 |
-| `docs/ARCHITECTURE.md` | 78 | 人写 |
-| `docs/CODE-GEN.md` | 397 | 人写 |
+| `docs/ACCEPTANCE.md` | 247 | 人写 |
+| `docs/AI-CONTEXT.md` | 76 | 人写 |
+| `docs/AI-CONVERSATION.md` | 127 | 人写 |
+| `docs/ARCHITECTURE.md` | 135 | 人写 |
+| `docs/CODE-GEN.md` | 410 | 人写 |
 | `docs/CODE-INDEX.md` | — | 生成 |
-| `docs/CODE-MAP.md` | 78 | 人写 |
-| `docs/CONTEXTOS-SUMMARY.md` | 225 | 人写 |
-| `docs/DESIGN-SYSTEM.md` | 255 | 人写 |
-| `docs/DIAGNOSTICS.md` | 84 | 人写 |
-| `docs/DOCTRINE.md` | 105 | 人写 |
-| `docs/DSH-COS.md` | 111 | 人写 |
-| `docs/FORM-FIELDS.md` | 38 | 人写 |
-| `docs/IAM.md` | 148 | 人写 |
-| `docs/INDEX.md` | 80 | 索引 |
-| `docs/INTERFACE.md` | 407 | 人写 |
-| `docs/MEMORY.md` | 63 | 人写 |
-| `docs/MONITOR.md` | 80 | 人写 |
-| `docs/PRODUCT-DESIGN.md` | 1663 | 人写 |
-| `docs/RSI-CONSTITUTION.md` | 108 | 人写 |
-| `docs/RSI-LEDGER.md` | 472 | 人写 |
+| `docs/DESIGN-SYSTEM.md` | 280 | 人写 |
+| `docs/DIAGNOSTICS.md` | 98 | 人写 |
+| `docs/DOCTRINE.md` | 108 | 人写 |
+| `docs/DSH-COS.md` | 114 | 人写 |
+| `docs/IAM.md` | 151 | 人写 |
+| `docs/INDEX.md` | 104 | 索引 |
+| `docs/INTERFACE.md` | 419 | 人写 |
+| `docs/MONITOR.md` | 83 | 人写 |
+| `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
+| `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
+| `docs/RSI-LEDGER.md` | 495 | 人写 |
 | `docs/STATE.md` | — | 生成 |
-| `docs/URL-SPEC.md` | 240 | 人写 |
+| `docs/URL-SPEC.md` | 243 | 人写 |

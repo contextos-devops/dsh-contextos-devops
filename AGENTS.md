@@ -138,7 +138,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 
 ---
 
-## 四、文档索引（24 份，入口 `docs/INDEX.md`）
+## 四、文档索引（19 份，入口 `docs/INDEX.md`）
 
 | 我要干什么 | 读这份 |
 | --- | --- |
@@ -147,17 +147,16 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 | 每轮判据（Copilot 也注入） | `docs/RSI-CONSTITUTION.md` |
 | **出问题了先查哪、先跑哪** | `docs/DIAGNOSTICS.md` |
 | 界面：布局/组件/主题/图标/文字 | `docs/DESIGN-SYSTEM.md` + 根 `USER-VIEW.md` |
-| 表单字段形态 | `docs/FORM-FIELDS.md` |
+| 表单取值 / 字段形态 | `docs/DESIGN-SYSTEM.md` §18 |
 | 接口五形态 / 两类 URL / 禁止清单 | `docs/INTERFACE.md`、`docs/URL-SPEC.md` |
 | 代码生成（factory）两类模块与词表 | `docs/CODE-GEN.md` |
-| PM 数据流与契约 | `docs/CODE-MAP.md`、`docs/MEMORY.md` |
+| 架构分层 / 请求流程 / 模块归属 | `docs/ARCHITECTURE.md` |
 | 对话协议与动作表 | `docs/AI-CONVERSATION.md` |
 | 监控面板接法 | `docs/MONITOR.md` |
 | 权限/身份 | `docs/IAM.md` |
 | DSH 宿主能力与边界 | `docs/DSH-COS.md` |
 | 交付验收（L0–L3 + 证据表） | `docs/ACCEPTANCE.md` |
-| 架构分层与边界 | `docs/ARCHITECTURE.md` |
-| 产品全貌 / 对外讲 | `docs/CONTEXTOS-SUMMARY.md` |
+| 产品全貌 / 对外讲 | `docs/PRODUCT-DESIGN.md` §0–1.11 |
 | 完整产品设计稿 | `docs/PRODUCT-DESIGN.md` |
 | 找文件/组件/op/脚本（生成） | `docs/CODE-INDEX.md` |
 | 查存了哪些状态（生成） | `docs/STATE.md` |
@@ -176,7 +175,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 | 改请求转发/鉴权 | `index.js`（只许查表分发） | `node --check index.js` + 重载插件 |
 | 加持久化状态 | `08-store.js` 的 `CX_STORE_SCHEMA` | `node scripts/docs-index.mjs --write` |
 | 改界面/布局/组件 | `src/client/parts/*.js`、`styles/*.css` | `check:ui` + `check:probe` + 真机截图 |
-| 加项目管理流程 | `lib/core/project.js`（状态机唯一处） | 状态表进 `docs/MEMORY.md` |
+| 加项目管理流程 | `lib/core/project.js`（状态机唯一处） | 排序/状态口径进 `docs/INTERFACE.md` §11 |
 | 改 Copilot 提示词/动作 | `lib/core/copilot.js` + `docs/AI-CONVERSATION.md` | 三模式短路不许绕过 |
 | 改文档 | `docs/*.md` | 登记 `INDEX.md` + `check:docs` |
 | 加门禁脚本 | `scripts/*.mjs` + `build:client` 链 | 自测「能抓到该错误」 |
