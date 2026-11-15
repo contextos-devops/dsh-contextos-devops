@@ -144,6 +144,6 @@
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
 | `docs/PUBLISH.md` | 133 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
-| `docs/RSI-LEDGER.md` | 128 | 人写 |
+| `docs/RSI-LEDGER.md` | 136 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 243 | 人写 |

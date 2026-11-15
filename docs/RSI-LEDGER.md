@@ -15,8 +15,16 @@ Each entry records: lesson → reusable abstraction → verification.
 ## 归档（只读）
 
 2026-11-15 的 3 条早期条目，连同之前的 45 条，均已移入 [docs/archive/LEDGER-2026H1.md](archive/LEDGER-2026H1.md)（10-08 起，按日原样保存）。
-正册只保留**最近 6 条**（滚动窗口，含本次上架）；查旧坑先看这份，不够再进归档。
+正册只保留**最近 6–8 条**（滚动窗口，含本次上架；超过 8 条就把最旧的移入归档）；查旧坑先看这份，不够再进归档。
 
+
+## 2026-11-15 · 改名后「插件好像没了」：模块 id 变了，宿主还在找旧目录
+
+- 现象：目录/包名从 `contextos-devops-dsh` 改成 `dsh-contextos-devops` 后，界面里插件打不开；正在跑的宿主返回 `/dsh-contextos-devops/api?op=health` 404。
+- 根因：**加载层**。宿主在进程启动时按旧模块 id（`@local/contextos-devops-dsh`）加载并把 fiber 留在内存里；仓库目录改名后旧 specifier 解析不到，新 id 又没被这轮启动加载 → 插件整体消失。`plugin_manager list_bundles` 读的是 profile 配置，所以看起来「已安装、已启用」，与运行态不是一回事。
+- 类别：加载层（同类第 4 次：手抄清单、旧 CSS、旧 link、模块 id 漂移）。
+- 固化：① `scripts/push-all.mjs` 按主机挑凭据并核对两端 HEAD（GitHub 组织仓库用 `contextos-devops` 令牌，`~/.git-credentials` 里第一条是 `shylinux` → 403）；② `lib/base/state.js` 的 `migrateStateKeys()` 把 `state.json` 里 `chat:/scroll:` 的旧前缀键一次性改名（服务端状态也不能随改名丢）；③ AGENTS §〇之二 写明「GitHub 组织仓库要换账号令牌」。
+- 数字：健康检查 404 → 200；旧前缀键 2 → 0；两端 HEAD 9bcf54f → aeca8d7（同 commit）；`build:client` 12 道门禁全绿。
 
 ## 2026-11-15 · 上架插件市场：市场不收代码，只收一行 YAML
 
