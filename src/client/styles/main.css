@@ -3049,12 +3049,17 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-pm-side:not(.right) .cx-gantt-sec{flex:none}
 
 /* 2026-11-13: message hover toolbar */
-.cx-msg-tools{margin-left:auto;display:flex;align-items:center;gap:6px;opacity:0;transform:translateY(-2px);transition:opacity .12s ease,transform .12s ease}
-.cx-msg:hover .cx-msg-tools,.cx-msg:focus-within .cx-msg-tools{opacity:1;transform:none}
+.cx-msg-wrap{display:flex;flex-direction:column;align-items:stretch;gap:2px;max-width:94%;min-width:0}
+.cx-msg-wrap.user{align-items:flex-end}
+.cx-msg-wrap .cx-msg{max-width:100%}
+.cx-msg-bar{display:flex;align-items:center;gap:2px;min-height:18px;padding:0 2px;opacity:.45;transform:none;transition:opacity .12s ease}
+.cx-msg-wrap.user .cx-msg-bar{justify-content:flex-end}
+.cx-msg-wrap:hover .cx-msg-bar,.cx-msg-wrap:focus-within .cx-msg-bar{opacity:1;transform:none}
+.cx-msg-bar .cx-msg-tools{margin-left:0;display:flex;align-items:center;gap:6px}
 .cx-msg-tool{border:0;background:transparent;color:var(--cx-muted);font:var(--cx-fs-body)/1 var(--cx-font);cursor:pointer;padding:1px 4px;border-radius:3px;letter-spacing:.06em}
 .cx-msg-tool:hover{color:var(--cx-cyan);background:rgba(var(--cx-hue-rgb),.12)}
 .cx-msg-tool.danger:hover{color:#ff7b7b}
-@media (hover:none){.cx-msg-tools{opacity:1;transform:none}}
+@media (hover:none){.cx-msg-bar{opacity:1;transform:none}}
 
 /* 应用实例回执卡（参考管理视图 APP 卡片） */
 .cx-app-card{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--cx-line);border-radius:8px;background:var(--cx-panel-2);min-width:280px;max-width:420px}

@@ -121,7 +121,7 @@
                 [meta, 'flex-direction', 'row', 'flexDirection'],
                 [meta, 'align-items', 'center', 'alignItems'],
                 [meta, 'flex-wrap', 'wrap', 'flexWrap'],
-                [tools, 'margin-left', 'auto', 'marginLeft'],
+                [tools, 'margin-left', '0', 'marginLeft'],
                 [body, 'width', '100%', 'width'],
                 [body, 'max-width', '100%', 'maxWidth'],
               ];
@@ -129,7 +129,6 @@
                 if (!el) return;
                 const before = window.getComputedStyle(el)[jsKey];
                 if (jsKey === 'flexDirection' && String(before) !== val) fixed.push(`${String(el.className).split(' ')[0]}.${jsKey}=${before}`);
-                if (jsKey === 'marginLeft' && String(before) !== 'auto') fixed.push(`${String(el.className).split(' ')[0]}.${jsKey}=${before}`);
                 if (el.style.getPropertyValue(cssKey) !== val || el.style.getPropertyPriority(cssKey) !== 'important') el.style.setProperty(cssKey, val, 'important');
               });
             });
@@ -1202,21 +1201,24 @@
                     h('tbody', null, m.table.rows.map((row, ri) => h('tr', { key: ri }, m.table.columns.map((c) => h('td', { key: c.key }, String(row[c.key] ?? '').slice(0, 40)))))))))
         : m.role === 'sys'
         ? h('div', { key: i, className: 'cx-sysline' }, h('span', { className: 'cx-sysdot' }), m.text)
-        : h('div', { key: i, className: `cx-msg ${m.role}` },
+        : h('div', { key: i, className: `cx-msg-wrap ${m.role}` },
+            h('div', { className: 'cx-msg-bar' },
+                h('div', { className: 'cx-msg-tools', style: { display: 'flex', alignItems: 'center', gap: 2 } },
+                m.trace ? h('button', { className: 'cx-msg-tool', title: T('查看请求的上下文与返回'), onClick: () => setTraceMsg(m) }, T('详情')) : null,
+                m.role === 'ai' ? h('button', { className: 'cx-msg-tool', title: T('重试'), onClick: () => { const prev = [...msgs.slice(0, i)].reverse().find((x) => x.role === 'user'); if (prev) handle(prev.text); } }, T('重试')) : null,
+                h('button', { className: 'cx-msg-tool', title: T('引用'), onClick: () => { const el = inputRef.current; if (!el) return; el.value = '> ' + String(m.text || '').split('\n').join('\n> ') + '\n'; el.focus(); } }, T('引用')),
+                h('button', { className: 'cx-msg-tool', title: T('复制'), onClick: () => { try { navigator.clipboard.writeText(m.text); } catch {} } }, T('复制')),
+                h('button', { className: 'cx-msg-tool danger', title: T('删除'), onClick: () => { setMsgs((list) => list.filter((_, j) => j !== i)); } }, T('删除')))),
+            h('div', { className: `cx-msg ${m.role}`, style: { display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-start', gap: 8 } },
             h('span', { className: 'cx-msg-avatar' }, m.role === 'user' ? 'ME' : 'AI'),
-            h('div', { className: 'cx-msg-main' },
-              h('div', { className: 'cx-msg-meta' },
+            h('div', { className: 'cx-msg-main', style: { display: 'flex', flexDirection: 'column', alignItems: 'stretch', flex: '1 1 auto', minWidth: 0 } },
+              h('div', { className: 'cx-msg-meta', style: { display: 'flex', alignItems: 'center', gap: 8, width: '100%', marginBottom: 2 } },
                 h('span', null, m.role === 'user' ? 'YOU' : 'COPILOT'),
                 m.t ? h('span', null, m.t) : null,
                 m.role === 'ai' && m.ms ? h('span', { className: 'cx-msg-metrics' }, `${(m.ms / 1000).toFixed(1)}s`) : null,
                 m.role === 'ai' && m.tokens ? h('span', { className: 'cx-msg-metrics' }, `${m.est ? '≈' : ''}${m.tokens} tok`) : null,
                 m.role === 'ai' && m.bytes ? h('span', { className: 'cx-msg-metrics' }, fmtBytes(m.bytes)) : null,
-                h('div', { className: 'cx-msg-tools' },
-                  m.trace ? h('button', { className: 'cx-msg-tool', title: T('查看请求的上下文与返回'), onClick: () => setTraceMsg(m) }, T('详情')) : null,
-                  m.role === 'ai' ? h('button', { className: 'cx-msg-tool', title: T('重试'), onClick: () => { const prev = [...msgs.slice(0, i)].reverse().find((x) => x.role === 'user'); if (prev) handle(prev.text); } }, T('重试')) : null,
-                  h('button', { className: 'cx-msg-tool', title: T('引用'), onClick: () => { const el = inputRef.current; if (!el) return; el.value = '> ' + String(m.text || '').split('\n').join('\n> ') + '\n'; el.focus(); } }, T('引用')),
-                  h('button', { className: 'cx-msg-tool', title: T('复制'), onClick: () => { try { navigator.clipboard.writeText(m.text); } catch {} } }, T('复制')),
-                  h('button', { className: 'cx-msg-tool danger', title: T('删除'), onClick: () => { setMsgs((list) => list.filter((_, j) => j !== i)); } }, T('删除'))),
+              ),
               h('div', { className: 'cx-msg-body' },
                 h(RichText, { text: m.text }),
                 m.ask ? h(CxAskForm, { m, lang: locale, onSubmit: submitAsk })
