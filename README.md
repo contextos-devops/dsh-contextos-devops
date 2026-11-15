@@ -50,7 +50,7 @@ ContextOS 的核心是三纲五常：**集群化部署**让设备互联互通，
 
 ```sh
 cd usr/dsh-plugins/contextos-devops-dsh
-npm run build:client          # 构建 + 11 道门禁，必须全绿
+npm run build:client          # 构建 + 12 道门禁，必须全绿
 ```
 
 然后在 DSH 里启用插件，重载后打开 **ContextOS DevOps**：
@@ -123,7 +123,7 @@ plugin_manager({ action: 'set_plugin', target: 'include:contextos-devops-dsh', e
 │   ├── parts/             # 24 个片段 → build/client.mjs → client.js
 │   └── styles/            # tokens / main / kit → assets/client.css
 ├── docs/                  # 入口 docs/INDEX.md
-├── scripts/               # 构建与 11 道门禁
+├── scripts/               # 构建与 12 道门禁
 └── build/client.mjs       # 唯一的打包入口
 ```
 

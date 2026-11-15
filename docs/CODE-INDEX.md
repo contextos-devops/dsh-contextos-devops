@@ -100,6 +100,7 @@
 | `scripts/ledger-stats.mjs` | — |
 | `scripts/load-check.mjs` | — |
 | `scripts/op-check.mjs` | OPS ↔ 客户端 api() 契约 |
+| `scripts/publish-check.mjs` | — |
 | `scripts/store-check.mjs` | 持久化唯一出口 + schema 登记 |
 | `scripts/ui-check.mjs` | UI 结构与组件复用断言 |
 | `scripts/ui-probe.mjs` | — |
@@ -117,7 +118,7 @@
 | `npm run release` | build:client + verify:ui |
 | `npm run stats:ledger` | LEDGER 条目统计与归纳提醒 |
 | `npm run push:all` | git push origin master && git push github master |
-| `npm run check:<名>` | 单跑某道门禁：ui / probe / context / i18n / hooks / ops / store / docs / load / budget |
+| `npm run check:<名>` | 单跑某道门禁：ui / probe / context / i18n / hooks / ops / store / docs / load / budget / publish |
 
 ## 6. 文档
 
@@ -134,11 +135,12 @@
 | `docs/DOCTRINE.md` | 108 | 人写 |
 | `docs/DSH-COS.md` | 114 | 人写 |
 | `docs/IAM.md` | 151 | 人写 |
-| `docs/INDEX.md` | 104 | 索引 |
+| `docs/INDEX.md` | 105 | 索引 |
 | `docs/INTERFACE.md` | 419 | 人写 |
 | `docs/MONITOR.md` | 83 | 人写 |
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
+| `docs/PUBLISH.md` | 129 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
-| `docs/RSI-LEDGER.md` | 149 | 人写 |
+| `docs/RSI-LEDGER.md` | 128 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 243 | 人写 |

@@ -14,11 +14,11 @@
 | 规模 | 宿主 345 行 + `lib/**` 5.6k 行 + 客户端 24 片段 7.6k 行 + CSS 3.3k 行 + 102 个 op |
 | 代码在哪 | 宿主 `index.js` + `lib/**`；客户端 `src/client/parts/*.js`（拼成 `client.js`）；样式 `src/client/styles/*.css` |
 | 一条请求怎么走 | 组件 → `api(op)` → `index.js` 查 `lib/core/ops.js` → `lib/core/<域>.js` → ContextOS HTTP |
-| 怎么算改完 | `npm run build:client` 全绿（11 道门禁）+ 有证据 + 报告落盘 |
+| 怎么算改完 | `npm run build:client` 全绿（12 道门禁）+ 有证据 + 报告落盘 |
 | 下一步干什么 | §七 验收标准 → §十三 本轮优先级：红门禁 > 已知限制 > 用户需求 |
 
 ```sh
-npm run build:client     # 构建 + 11 道门禁（红了先修，不许带 FAIL 交付）
+npm run build:client     # 构建 + 12 道门禁（红了先修，不许带 FAIL 交付）
 npm run check:probe      # 离线渲染 fixture 量布局（需本机 Edge/Chrome）
 npm run verify:ui        # 真浏览器验收（需 Edge CDP 9223），exit 0 才算过
 node --check index.js    # 只改宿主时先做语法检查
@@ -102,7 +102,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 生成物过期时：`node scripts/docs-index.mjs --write`。
 **构建产物** `client.js`、`assets/client.css` 只由 `build/client.mjs` 生成，不许手改。
 
-## 四、文档索引（19 份，入口 `docs/INDEX.md`）
+## 四、文档索引（20 份，入口 `docs/INDEX.md`）
 
 | 我要干什么 | 读这份 |
 | --- | --- |
@@ -120,6 +120,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 | 权限/身份 | `docs/IAM.md` |
 | DSH 宿主能力与边界 | `docs/DSH-COS.md` |
 | 交付验收（L0–L3 + 证据表） | `docs/ACCEPTANCE.md` |
+| 对外发布 / 上架市场（提 PR / 发 npm） | `docs/PUBLISH.md` + `release/catalog-entry.yml` |
 | 产品全貌 / 对外讲 | `docs/PRODUCT-DESIGN.md` §0–1.11 |
 | 完整产品设计稿 | `docs/PRODUCT-DESIGN.md` |
 | 找文件/组件/op/脚本（生成） | `docs/CODE-INDEX.md` |
@@ -130,6 +131,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 新文档必须登记 `docs/INDEX.md`，否则 `docs-check` 判孤儿。
 
 ---
+
 
 ## 五、岗位职责（可以做什么）
 
@@ -269,13 +271,13 @@ YYYY-MM-DD — <一句话现象>
 本轮只需要记住三条：
 
 ```sh
-npm run build:client    # 构建 + 11 道门禁（红先修，不许带 FAIL 交付）
+npm run build:client    # 构建 + 12 道门禁（红先修，不许带 FAIL 交付）
 npm run check:probe     # 离线量布局（改 UI 时）
 npm run verify:ui       # 真浏览器验收（Edge CDP 9223）
 ```
 
 **每个脚本干什么、参数怎么写、门禁顺序**：`docs/CODE-INDEX.md` §5 脚本表 + §5.1 npm 脚本；
-单跑某道门禁用 `npm run check:<名>`（ui / probe / hooks / ops / store / load / i18n / context / docs / budget）。
+单跑某道门禁用 `npm run check:<名>`（ui / probe / hooks / ops / store / load / i18n / context / docs / budget / publish）。
 凡是「人工检查超过两次」的事，第三次必须变成脚本或断言（§九）。
 
 ## 十一、经验（以前踩过什么，现在怎么处理）

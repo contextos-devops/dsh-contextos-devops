@@ -14,9 +14,17 @@ Each entry records: lesson → reusable abstraction → verification.
 
 ## 归档（只读）
 
-2026-11-15 之前的 45 条已移入 [docs/archive/LEDGER-2026H1.md](archive/LEDGER-2026H1.md)（10-08 起，按日原样保存）。
-正册只保留**最近 6 条**（滚动窗口）；查旧坑先看这份，不够再进归档。
+2026-11-15 的 3 条早期条目，连同之前的 45 条，均已移入 [docs/archive/LEDGER-2026H1.md](archive/LEDGER-2026H1.md)（10-08 起，按日原样保存）。
+正册只保留**最近 6 条**（滚动窗口，含本次上架）；查旧坑先看这份，不够再进归档。
 
+
+## 2026-11-15 · 上架插件市场：市场不收代码，只收一行 YAML
+
+- 症状：想「发布插件」，但市场（插件→发现）里搜不到，也不知道从哪一步开始；仓库里其实早已满足安装条件，缺的只是一个条目文件。
+- 根因层次：**认知层**——把「发布」当成打包上传，实际是「往精选列表提一个 YAML 的 PR」，市场只允许安装列表内的 `github:` / `npm:` 来源；同时仓库缺 `dsh.bundle.patch` 是最常见被拒原因（我们这条本来就有）。
+- 固化：`docs/PUBLISH.md`（三条路径 + 提 PR 步骤 + 发版动作 + 被拒对照表）、`release/catalog-entry.yml`（可直接复制的条目）、`scripts/publish-check.mjs`（把收录硬门槛变成 12 条断言，接入 `build:client` 成为第 12 道门禁）、`LICENSE` 与 `assets/icon-180.png`（市场拒 SVG）。
+- 数字：publish-check 8 PASS / 2 WARN（`private:true`、`@local` 包名，均属「发 npm 才需改」）；tarball 0.95MB / 80 文件；仓库年龄 9 天。
+- 教训：**对外发布的第一性问题是「别人怎么装」**，不是「怎么打包」；先让 GitHub 源码安装可用（产物入库 + dsh.bundle），npm 只是提速项。
 
 ## 2026-11-15 — architecture pass: OPS registry, store, docs index
 
@@ -117,41 +125,3 @@ Each entry records: lesson → reusable abstraction → verification.
 **下轮建议**：① 给「已挂载旧 link 被改写」加可判定证据（服务端校验 `clientCheck.build` 与静态路由版本一致）；
 ② 把 `ledger-stats --check` 以 soft 方式接进 `build:client`（只提示不阻断）；
 ③ 每次 retro 必须新增一个 `ui-probe` 用例或一条 gate 断言。
-
-## 2026-11-15 · 文档 23 份互相重复，且写着过期事实
-
-- Symptom: 同一件事写在 2–3 份文档里（CODE-MAP ≈ ARCHITECTURE、FORM-FIELDS ⊂ DESIGN-SYSTEM、
-  CONTEXTOS-SUMMARY ⊂ PRODUCT-DESIGN、MEMORY 混装五类内容）；PRODUCT-DESIGN 1662 行吞掉架构/规范/UI/协议；
-  更糟的是**写了与现状不符的事实**（「pmList 直读 SQLite」「index.js ≈3000 行」「client.js ≈5200 行」「没有独立构建产物」）。
-- Root cause: 层：索引层 + 流程层 —— 文档没有「读这份当」入口、没有体积预算、合并后没有退役机制；
-  文档里的数字靠人手抄，没有任何断言比对真实值。
-- 类别: 索引层（同类第 3 次：验收三合一、代码索引只有 PM、本次全文重复）。
-- Fix: 23 份 → 19 份（CONTEXTOS-SUMMARY/FORM-FIELDS 并入 PRODUCT-DESIGN/DESIGN-SYSTEM，
-  MEMORY 按归属拆散，CODE-MAP 并入重写的 ARCHITECTURE）；PRODUCT-DESIGN 1662 → 843 行并加「按章读」；
-  `docs/INDEX.md` 重写为「30 秒定位 → 任务路由 → 症状路由 → 文档地图（含行数）」；
-  19 份全部补「读这份当 / 不读这份当」两行；`docs-check.mjs` 新增四条断言（入口约定、>400 行必须按章读、
-  INDEX 行数 = 真实行数、已删 6 份不得复活）。
-- 数字: docs 23 份 5244 行 → 19 份 4203 行（−1041）；INDEX 抓出 17 处过期行数并订正；
-  `build:client` exit 0，ui-check 88、ui-probe 9/9、docs 19 份全绿。
-- 固化: `docs-check` 第 4–7 条断言（行数断言让「文档里的数字」第一次可执行）；
-  报告 `usr/local/WorkBuddy/dsh-reports/2026-11-15-docs-restructure.md`。
-
-## 2026-11-15 · 上下文成本：大头在常驻 AGENTS，不在文档
-
-- Symptom: 每次请求真正吃上下文的是两份 AGENTS 常驻（插件 6932 + 根 4914 tokens），按需文档一次仅 1.2–2.6K；
-  LEDGER 越滚越长（51 条 4523 tokens）却每次收尾都要读。
-- Root cause: 流程层 —— 只做了「文档去重」，没做「常驻预算」与「台账滚动」，体积全靠眼睛估、无断言钉住。
-- 类别: 索引层（同类第 4 次：验收三合一 → 代码索引只覆盖 PM → 全文重复 → 常驻/台账膨胀）。
-- Fix: ① AGENTS 396 → 327 行（文件地图表、脚本表改指针，脚本表进 `CODE-INDEX` §5.1 生成物）；
-  ② LEDGER 51 → 正册 6 条 + `docs/archive/LEDGER-2026H1.md` 45 条；③ 新增 `scripts/docs-budget.mjs` 接进构建（第 11 道）。
-- 数字: 19 份 49220 tokens 全部在预算内；路由实付 0 / 1661 / 3912 / 1673；LEDGER 4523 → 6 条；`build:client` exit 0。
-- 固化: `docs-budget.mjs` 超预算即红 + 「11 道门禁」口径；报告 `2026-11-15-context-budget.md`。
-
-## 2026-11-15 · 两个代码库地址（自建 + GitHub 镜像）
-
-- Symptom: 远端一直只有 `https://shylinux.com/x/...`，push 曾长期失败；用户告知同时存在 GitHub 镜像，两个必须同 commit。
-- Root cause: 流程层 —— 发布口径没写进规范，远端靠口头记忆。
-- 类别: 流程层（同类第 1 次）。
-- Fix: 加 `github` 远端；`npm run push:all`（origin + github 一起推）；AGENTS 新增「〇之二 代码库与发布」表。
-- 数字: 落后 39 个提交 → 两个远端均推到 e93879e（0 落后，rc=0）。
-- 固化: AGENTS §〇之二 + `push:all` 脚本；另把 `docs-index --write` 改成自动同步 INDEX 行数（本轮又一次被行数过期卡住）。

@@ -50,6 +50,7 @@
 
 | 症状 | 先跑 | 再读 |
 | --- | --- | --- |
+| 对外发布 / 上架市场 / 发 npm | `PUBLISH.md` | §1 选路径 · §2 提 PR |
 | 插件不加载 / 白屏 | `npm run check:load` | `DIAGNOSTICS.md` §一 · `RSI-LEDGER` 11-15 |
 | 改了样式界面没变 | `clientCheck` 的 `css` / `build` | `DIAGNOSTICS.md` §一 加载层 |
 | 消息头与正文挤成两栏 | `npm run check:probe -- --case msg-card` | `DIAGNOSTICS.md` §二.1–.2 |
@@ -78,8 +79,8 @@
 | `DSH-COS.md` | 114 | DSH 宿主能力与边界 | 判断能不能做到 | 版本差异 → `RSI-LEDGER.md` |
 | `ACCEPTANCE.md` | 247 | 唯一验收口径 | 说「完成」之前 | 流程 → `../AGENTS.md` §七 |
 | `PRODUCT-DESIGN.md` | 843 | 产品与技术设计稿 | 做方案/查设计取舍 | 现状 → `../README.md` 能力矩阵 |
-| `RSI-LEDGER.md` | 149 | 踩坑与决策台账 | 复盘/避免重复 | 症状路由 → `DIAGNOSTICS.md` |
-| `CODE-INDEX.md` | 145 | 文件-行数-导出-契约索引 | 找东西 | 生成物，勿手改 |
+| `RSI-LEDGER.md` | 128 | 踩坑与决策台账 | 复盘/避免重复 | 症状路由 → `DIAGNOSTICS.md` |
+| `CODE-INDEX.md` | 147 | 文件-行数-导出-契约索引 | 找东西 | 生成物，勿手改 |
 | `STATE.md` | 66 | 存储键表 | 加/查状态 | 生成物，勿手改 |
 | `INDEX.md` | 本文件 | 唯一入口 | 每次开工 | — |
 
