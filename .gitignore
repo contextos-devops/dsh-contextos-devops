@@ -1,1 +1,4 @@
 vendor
+
+# 发布产物（npm pack 生成）
+*.tgz

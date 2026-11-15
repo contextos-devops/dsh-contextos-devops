@@ -278,6 +278,7 @@ npm run verify:ui       # 真浏览器验收（Edge CDP 9223）
 
 **每个脚本干什么、参数怎么写、门禁顺序**：`docs/CODE-INDEX.md` §5 脚本表 + §5.1 npm 脚本；
 单跑某道门禁用 `npm run check:<名>`（ui / probe / hooks / ops / store / load / i18n / context / docs / budget / publish）。
+发布 npm：`npm run publish:npm`（临时目录改名打包，不动本机 link 安装；详见 `docs/PUBLISH.md` §3）。
 凡是「人工检查超过两次」的事，第三次必须变成脚本或断言（§九）。
 
 ## 十一、经验（以前踩过什么，现在怎么处理）

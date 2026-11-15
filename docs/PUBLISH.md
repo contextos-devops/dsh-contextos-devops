@@ -57,25 +57,29 @@ dsh plugin --profile desktop add github:shylinux/contextos-devops-dsh
 
 ## 3. 路径 B：发 npm（推荐作为正式版）
 
-npm 上 `dsh-contextos-devops` 与 `contextos-devops-dsh` 都空闲。发布前做三件事：
+npm 上 `dsh-contextos-devops` 与 `contextos-devops-dsh` 都空闲。**不需要改本机包名**：
+本机 profile 用 `link:` 把仓库装成 `@local/contextos-devops-dsh`，改名会破坏本地安装，
+所以发版时在临时目录里改名再打包 —— 一条命令：
 
 ```sh
-# 1) 改名 + 去掉 private（同步 cordis.patch.yml 里的 name）
-python3 - <<'PY'
-import json;p='package.json';d=json.load(open(p))
-d['name']='dsh-contextos-devops';d.pop('private',None)
-json.dump(d,open(p,'w'),indent=2,ensure_ascii=False);open(p,'a').write('\n')
-PY
-sed -i '' "s#name: '@local/contextos-devops-dsh'#name: 'dsh-contextos-devops'#" cordis.patch.yml
-
-# 2) 全量门禁 + 发布检查
-npm run build:client && npm run check:publish
-
-# 3) 发布（--access public 只对 scoped 包需要；无 scope 可省）
-npm login && npm publish
+npm login                       # 一次性
+node scripts/publish-npm.mjs    # 默认只打包并打印下一步（不动仓库、不动本机安装）
+node scripts/publish-npm.mjs --publish   # 已登录时直接发布
 ```
 
-发布后把 `release/catalog-entry.yml` 里的 `npm:` 行取消注释，再提一个 PR 更新条目。
+脚本做的事（都可核对）：
+
+| 步骤 | 结果 |
+|---|---|
+| `npm pack` 原仓库 | 与最终包内容一致（走 `files` 规则） |
+| 解包到临时目录，改 `package.json` | `name=dsh-contextos-devops`、删 `private` |
+| 改 `cordis.patch.yml` | `insert.name` 同步成新包名（否则装上后模块解析不到） |
+| 自检 | name / patch / `index.js`+`client.js`+`assets/client.css` 三者一致，`private` 已移除 |
+| 重新打包 | 仓库根目录产出 `dsh-contextos-devops-<版本>.tgz`（`.gitignore` 已忽略） |
+| `--publish` | 先 `npm whoami`，未登录直接报错退出，不会带病上传 |
+
+发布后两件事：① 把 `release/catalog-entry.yml` 里 `npm:` 行取消注释再提 PR；
+② 想让自己也换成 npm 安装，把 profile 的 `link:` 改成 `dsh-contextos-devops@<版本>`。
 
 **注意 semver 预发布坑**：给 `@deepseek-ai/*` 写 peerDependencies 时范围必须显式带预发布分支
 （如 `>=0.2.2-rc.1 <1.0.0`），否则 `0.2.2-rc.3` 这类版本会被静默排除。我们目前不直接依赖
@@ -122,7 +126,7 @@ git add -A && git commit -m "release: vX.Y.Z" && npm run push:all
 ## 7. 我方现状（2026-11-15）
 
 - ✅ LICENSE（MIT）、`assets/icon-180.png`、`engines.dsh`、`keywords`、`repository`、`dsh.bundle.patch`、产物入库、仓库 9 天
-- ✅ `scripts/publish-check.mjs`（8 PASS / 2 WARN：`private:true`、`@local` 包名——发 npm 时才需要改）
+- ✅ `scripts/publish-check.mjs`（8 PASS / 2 WARN：`private:true`、`@local` 包名——发布时由 `publish-npm.mjs` 在临时目录改写，不影响 dev 安装）
 - ✅ `release/catalog-entry.yml` 可直接复制进教学仓库
 - ⬜ GitHub 仓库加 topic `dsh-plugin`（网页操作，一次性）
-- ⬜ 决定是否改名发 npm（需你拍板：要不要发布 `dsh-contextos-devops`）
+- ✅ `scripts/publish-npm.mjs`：临时目录改名打包（不动本机 link 安装），已产出 0.95MB 包；npm 发布需你 `npm login` 后执行一条命令

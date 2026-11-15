@@ -88,9 +88,9 @@ if (exists('README.md')) {
 }
 
 // ── 4. 可发布：npm 侧的元数据（源码安装不要求，但发布 npm 必须）
-if (pkg.private === true) warn('package.json 有 private:true —— 上 npm 前必须删掉（GitHub 源码安装不受影响）');
+if (pkg.private === true) warn('package.json 有 private:true —— 发 npm 时由 scripts/publish-npm.mjs 在临时目录删掉（不影响本机 link 安装）');
 if (String(pkg.name || '').startsWith('@local/')) {
-  warn(`包名 ${pkg.name} 是本地名，npm 上不可发布；发布时改名（如 dsh-contextos-devops，npm 上已查为空闲）并同步 cordis.patch.yml 的 name`);
+  warn(`包名 ${pkg.name} 是本地名；发 npm 时 publish-npm.mjs 会改名为 dsh-contextos-devops 并同步 cordis.patch.yml（npm 上已查为空闲）`);
 }
 if (!pkg.engines?.dsh) fail('缺 engines.dsh —— 市场用它判断「这个插件能不能装进当前宿主」');
 else ok(`engines.dsh = ${pkg.engines.dsh}`);
