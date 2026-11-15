@@ -12,7 +12,7 @@
 | 级别 | 验什么 | 怎么验 | 通过证据 |
 | --- | --- | --- | --- |
 | **L0 静态** | 语法、构建、静态门禁 | `npm run build:client` | 退出码 0 + `ui-check`/`context-check` 通过行 |
-| **L1 接口** | 同一个后端入口、真实回读 | `node --check index.js` + `POST /contextos-devops-dsh/api` | 请求/响应原文 + 回读结果；200 不等于成功 |
+| **L1 接口** | 同一个后端入口、真实回读 | `node --check index.js` + `POST /dsh-contextos-devops/api` | 请求/响应原文 + 回读结果；200 不等于成功 |
 | **L2 渲染** | 真实浏览器 DOM、样式、控制台、交互 | `dsh-preview` 的 `browser_open/console/read/interact` | 页面 URL、0 console error、关键选择器与尺寸、截图 |
 | **L3 人看** | 视觉与任务闭环 | 截图 + 实际操作路径 | 截图路径 + “哪些没验到”的明确说明 |
 
@@ -137,7 +137,7 @@ Unverified: 宿主当前仍加载旧 apps.js；修复后的 createApp 以模块�
 ```text
 ACCEPT autogen + alignment @ 2026-11-13 16:37 CST
 L0: npm run build:client -> ui-check 84 passed; context-check passed; version 1.30.7
-L1: old host POST /contextos-devops-dsh/api {"op":"autogenApp",...}
+L1: old host POST /dsh-contextos-devops/api {"op":"autogenApp",...}
     -> HTTP 200, ok:true, data.built=false
        warning "go mod tidy failed (1): ... module declares its path as ice
                 but was required as ice/devops"

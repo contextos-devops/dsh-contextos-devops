@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: '@local/contextos-devops-dsh',
+  id: 'dsh-contextos-devops',
   factory(require) {
     const React = require('react');
     const h = React.createElement;
@@ -20,8 +20,8 @@ window.__ModuleLoader__.load({
     const CX_HOST = (typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) ? location.hostname : '127.0.0.1';
     const { useState, useEffect, useCallback, useRef } = React;
     let CX_LAYOUT = null;
-    const API = '/contextos-devops-dsh/api';
-    const CLIENT_CSS = '/contextos-devops-dsh/assets/client.css?v=__CLIENT_CSS_VERSION__';
+    const API = '/dsh-contextos-devops/api';
+    const CLIENT_CSS = '/dsh-contextos-devops/assets/client.css?v=__CLIENT_CSS_VERSION__';
     const CLIENT_BUILD = '__CLIENT_BUILD__';
     // 界面版本徽标：让「你看到的到底是哪一版」不再靠猜
     function cxClientTag() {
@@ -143,24 +143,29 @@ window.__ModuleLoader__.load({
     const spaceIconHtml = (size) => svgIcon(ICON_SPACE, '#7c8cff', size);
     const chevHtml = (open, size) => ({ __html: `<svg width="${size || 10}" height="${size || 10}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(${open ? 90 : 0}deg);transition:transform .12s">${'<path d="M5.5 3L10.5 8l-5 5"/>'}</svg>` });
 
-    // store-migration：旧键前缀迁移，需要枚举全部键，属唯一例外（一次性）
+    // store-migration：旧键前缀链式迁移，需要枚举全部键，属唯一例外（一次性）
+    // contextos-devops: → contextos-devops-dsh: → dsh-contextos-devops:（插件改名的数据兼容）
     try {
-      const OLD = 'contextos-devops:';
-      const NEW = 'contextos-devops-dsh:';
+      const LEGACY = ['contextos-devops:', 'contextos-devops-dsh:'];
+      const NEW = 'dsh-contextos-devops:';
       const keys = [];
-      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(OLD)) keys.push(k); }
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && LEGACY.some((p) => k.startsWith(p))) keys.push(k);
+      }
       for (const k of keys) {
-        const nk = NEW + k.slice(OLD.length);
+        const p = LEGACY.find((x) => k.startsWith(x));
+        const nk = NEW + k.slice(p.length);
         if (localStorage.getItem(nk) == null) localStorage.setItem(nk, localStorage.getItem(k));
       }
     } catch {}
     let OPEN_LINK = null;
-    const WEBTABS_KEY = 'contextos-devops-dsh:webtabs';
+    const WEBTABS_KEY = 'dsh-contextos-devops:webtabs';
 
     /* ── 统一会话快照 ────────────────────────────────────────────────
        启动时一次性恢复「当前节点 / 空间 / 应用实例 / 工作模式 / 视图 /
        网页标签」，直接进入上次的界面，不再逐项读取、不再闪回默认界面。 */
-    const SESSION_KEY = 'contextos-devops-dsh:session';
+    const SESSION_KEY = 'dsh-contextos-devops:session';
     let cxSessionMem = null, cxSessionTimer = 0;
     const cxSessionGet = () => {
       if (cxSessionMem) return cxSessionMem;
@@ -220,7 +225,7 @@ window.__ModuleLoader__.load({
     let CURRENT_LANG = (() => {
       try {
         // store-runtime：模块加载期就要定语言，早于 08-store 求值，只能直读
-        const m = localStorage.getItem('contextos-devops-dsh:lang') || 'system';
+        const m = localStorage.getItem('dsh-contextos-devops:lang') || 'system';
         const nav = String((typeof navigator !== 'undefined' && navigator.language) || 'en').toLowerCase();
         const v = m === 'system' ? (nav.startsWith('zh') ? 'zh' : 'en') : m;
         return v === 'zh' ? 'zh' : 'en';

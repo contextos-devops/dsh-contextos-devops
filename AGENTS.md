@@ -30,8 +30,8 @@ node --check index.js    # 只改宿主时先做语法检查
 
 | 远端 | 地址 | 用途 |
 | --- | --- | --- |
-| `origin` | https://shylinux.com/x/contextos-devops-dsh | 主库（ContextOS 自家） |
-| `github` | https://github.com/shylinux/contextos-devops-dsh | GitHub 镜像（对外） |
+| `origin` | https://shylinux.com/x/dsh-contextos-devops | 主库（ContextOS 自家） |
+| `github` | https://github.com/shylinux/dsh-contextos-devops | GitHub 镜像（对外） |
 
 提交后**两个都要推**：`npm run push:all`（= `git push origin master && git push github master`）。
 两个远端必须同 commit；只推一个会导致「别人拉到的和你看的不是同一份代码」。
@@ -182,7 +182,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 
 ```sh
 # 或由 DSH 代理调用同名工具
-plugin_manager set_plugin include:contextos-devops-dsh  # enabled:false → 再 true
+plugin_manager set_plugin include:dsh-contextos-devops  # enabled:false → 再 true
 ```
 
 | 改动类型 | 最低验证 | 判定 |

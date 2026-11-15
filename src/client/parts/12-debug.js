@@ -243,8 +243,8 @@
         const rec = CONSOLE_TERMS[key] = { wrap, term: null, fit: null, ws: null };
         (async () => {
           const load = async (src) => { const code = await (await fetch(src)).text(); new Function('module', 'exports', 'define', 'require', 'window', 'self', 'globalThis', code)(undefined, undefined, undefined, undefined, window, window, window); };
-          if (!window.Terminal) await load('/contextos-devops-dsh/xterm/xterm.js');
-          if (!(window.FitAddon && window.FitAddon.FitAddon)) await load('/contextos-devops-dsh/xterm/addon-fit.js').catch(() => {});
+          if (!window.Terminal) await load('/dsh-contextos-devops/xterm/xterm.js');
+          if (!(window.FitAddon && window.FitAddon.FitAddon)) await load('/dsh-contextos-devops/xterm/addon-fit.js').catch(() => {});
           if (cancelled || !window.Terminal) return;
           const lightNow = (document.querySelector('.cx-shell') || {}).dataset?.theme === 'light';
           const termTheme = lightNow
@@ -274,7 +274,7 @@
           const connect = () => {
             if (cancelled) return;
             let ws;
-            try { ws = new WebSocket(`${wsProto}://${wsHost}/contextos-devops-dsh/terminal?shell=bash`); } catch { return; }
+            try { ws = new WebSocket(`${wsProto}://${wsHost}/dsh-contextos-devops/terminal?shell=bash`); } catch { return; }
             rec.ws = ws;
             ws.onmessage = (e) => { if (ws === rec.ws) { try { feed(e.data); } catch {} } };
             ws.onclose = () => { if (ws !== rec.ws) return; try { term.write('\r\n[closed]\r\n'); } catch {} };

@@ -88,7 +88,7 @@
 
 
     /* ===== 面板看板：参考 Grafana，面板与数据源都可加 ===== */
-    const MON_PANELS = 'contextos-devops-dsh:monitor-panels';
+    const MON_PANELS = 'dsh-contextos-devops:monitor-panels';
     const MON_DEFAULT = [
       { id: 'n1', type: 'stat', title: '服务节点', src: { kind: 'nodes' }, w: 3, refresh: 0 },
       { id: 'n2', type: 'stat', title: '项目空间', src: { kind: 'spaces' }, w: 3, refresh: 0 },

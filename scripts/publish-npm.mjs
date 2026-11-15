@@ -1,6 +1,6 @@
 // 把当前仓库打成一个可发布的 npm 包，而不改本机 dev 安装的包名。
 //
-// 为什么需要这一步：本机 profile 用 `link:` 把仓库装成 `@local/contextos-devops-dsh`，
+// 为什么需要这一步：本机 profile 用 `link:` 把仓库装成 `dsh-contextos-devops`，
 // 直接改 package.json 的 name 会让本地插件解析失败。所以发布时在**临时目录**里改名：
 //   package.json → name=<--name>、删 private
 //   cordis.patch.yml → insert.name=<--name>

@@ -98,7 +98,7 @@ try {
 }
 if (!registered) errs.push('client.js 未向 __ModuleLoader__ 注册模块');
 else {
-  if (registered.id !== '@local/contextos-devops-dsh') errs.push(`模块 id 异常：${registered.id}`);
+  if (registered.id !== 'dsh-contextos-devops') errs.push(`模块 id 异常：${registered.id}`);
   let out = null;
   try {
     out = registered.factory((name) => {

@@ -28,7 +28,7 @@ import { OPS } from './lib/core/ops.js';
 /** 插件用到的数据文件（JSON）清单。 */
 /** 读取插件数据文件内容（仅限 state 目录内、单文件 512KB 以内）。 */
 /** 把旧版状态目录迁移到新目录（一次性）。 */
-const ROUTE = '/contextos-devops-dsh/api';
+const ROUTE = '/dsh-contextos-devops/api';
 
 const text = (value) => [{ type: 'text', text: JSON.stringify(value, null, 2) }];
 const output = {
@@ -307,7 +307,7 @@ export function apply(ctx) {
 
   const server = ctx.webServer || ctx.get('webServer');
   if (server) {
-    ctx.effect(() => server.registerUpgrade({ path: '/contextos-devops-dsh/terminal', handler: terminalUpgrade }));
+    ctx.effect(() => server.registerUpgrade({ path: '/dsh-contextos-devops/terminal', handler: terminalUpgrade }));
     ctx.effect(() =>
       server.register({
         kind: 'exact',
@@ -319,11 +319,11 @@ export function apply(ctx) {
         },
       }),
     );
-    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops-dsh/monaco', handler: makeStatic('/contextos-devops-dsh/monaco', monacoRoot) }));
-    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops-dsh/xterm', handler: makeStatic('/contextos-devops-dsh/xterm', xtermRoot) }));
-    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops-dsh/three', handler: makeStatic('/contextos-devops-dsh/three', threeRoot) }));
-    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops-dsh/leaflet', handler: makeStatic('/contextos-devops-dsh/leaflet', leafletRoot) }));
-    ctx.effect(() => server.register({ kind: 'prefix', path: '/contextos-devops-dsh/assets', handler: makeStatic('/contextos-devops-dsh/assets', assetsRoot) }));
+    ctx.effect(() => server.register({ kind: 'prefix', path: '/dsh-contextos-devops/monaco', handler: makeStatic('/dsh-contextos-devops/monaco', monacoRoot) }));
+    ctx.effect(() => server.register({ kind: 'prefix', path: '/dsh-contextos-devops/xterm', handler: makeStatic('/dsh-contextos-devops/xterm', xtermRoot) }));
+    ctx.effect(() => server.register({ kind: 'prefix', path: '/dsh-contextos-devops/three', handler: makeStatic('/dsh-contextos-devops/three', threeRoot) }));
+    ctx.effect(() => server.register({ kind: 'prefix', path: '/dsh-contextos-devops/leaflet', handler: makeStatic('/dsh-contextos-devops/leaflet', leafletRoot) }));
+    ctx.effect(() => server.register({ kind: 'prefix', path: '/dsh-contextos-devops/assets', handler: makeStatic('/dsh-contextos-devops/assets', assetsRoot) }));
   }
 }
 

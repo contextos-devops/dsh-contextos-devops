@@ -115,12 +115,12 @@ let state = head('状态索引 / STATE',
   '要加一个持久化状态，或查某个键存在哪、默认值是什么。',
   '存储出口的实现与门禁 → [ARCHITECTURE.md](ARCHITECTURE.md) §5；服务端 state.json → §5 同节',
   '源：`src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA`');
-state += `\n## 1. 浏览器侧（localStorage，前缀 \`contextos-devops-dsh:\`）\n\n| 键 | 类型 | 默认值 | 说明 |\n| --- | --- | --- | --- |\n`;
+state += `\n## 1. 浏览器侧（localStorage，前缀 \`dsh-contextos-devops:\`）\n\n| 键 | 类型 | 默认值 | 说明 |\n| --- | --- | --- | --- |\n`;
 for (const [key, spec] of schemaRows) {
   const def = spec.kind === 'text' ? `\`${spec.def}\`` : `\`${JSON.stringify(spec.def)}\``;
   state += `| \`${key}\` | ${spec.kind === 'text' ? '文本' : 'JSON'} | ${def} | ${spec.zh}${spec.note ? '：' + spec.note : ''} |\n`;
 }
-state += `\n## 2. 服务端（\`~/.dsh/contextos-devops-dsh/state.json\`）\n\n| 名称 | 写入方 | 用途 |\n| --- | --- | --- |\n`;
+state += `\n## 2. 服务端（\`~/.dsh/dsh-contextos-devops/state.json\`）\n\n| 名称 | 写入方 | 用途 |\n| --- | --- | --- |\n`;
 state += `| \`prefs\` | \`stateSet\` | 主题/语言/视图/工作模式（跨端口恢复） |\n`;
 state += `| \`clientCheck\` | \`stateSet\` | 真实 DOM 字号/bundle 版本回报 |\n`;
 state += `| \`reqlog\` | \`stateSet\` | 最近 50 条请求（控制台 REQUEST 页） |\n`;

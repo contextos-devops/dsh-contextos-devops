@@ -28,7 +28,7 @@
 ```text
 组件事件
   → api('pmList', { node, space })           lib/base/api.js（方法由 OPS[op].method 决定）
-  → POST /contextos-devops-dsh/api?op=pmList&node=…
+  → POST /dsh-contextos-devops/api?op=pmList&node=…
   → index.js route()                          OPS 查表；非 noUser 先 ensureUser(node)
   → ops.js run(body, ctx)                     → lib/core/project.js listPm()
   → ContextOS /s/<pod>/c/web.team.xiangmuguanli.portal/action/run/plan/action/list
@@ -49,9 +49,9 @@ export function apply(ctx) { … }
 ```
 
 1. **工具**：`ctx.tools.register`（`contextos_*`），供 DSH 主代理调用；
-2. **HTTP API**：`/contextos-devops-dsh/api`（`?op=` 单一入口，方法门在 `ops.js`）；
+2. **HTTP API**：`/dsh-contextos-devops/api`（`?op=` 单一入口，方法门在 `ops.js`）；
 3. **静态资源**：`/monaco`、`/xterm`、`/three`、`/leaflet` 与插件自身 `assets/`；
-4. **WebSocket**：`/contextos-devops-dsh/terminal`（PTY 多会话）；
+4. **WebSocket**：`/dsh-contextos-devops/terminal`（PTY 多会话）；
 5. **LLM**：`ctx.llm`（`chat` op 调 `lib/core/copilot.js`）。
 
 客户端由 `build/client.mjs` 拼 24 个片段成 `client.js`，经
@@ -69,7 +69,7 @@ index.js    接线：工具注册 + HTTP/WS 路由 + 静态资源（不写业务
 - **HTTP_DEBUG AsyncLocalStorage**：记录真实 ContextOS URL/method，回传前端 DEBUG 面板；
 - **写操作走真实 HTTP**：不另造数据格式；**PM 不直读 SQLite**（历史直读路径已移除）；
 - **翻译**：带浏览器 UA 的请求取 `_trans` 元数据，缓存 60 秒；
-- **状态**：`~/.dsh/contextos-devops-dsh/state.json`（节点缓存、终端缓冲、请求日志、选择记忆、prefs、clientCheck）。
+- **状态**：`~/.dsh/dsh-contextos-devops/state.json`（节点缓存、终端缓冲、请求日志、选择记忆、prefs、clientCheck）。
 
 ## 5. 客户端结构与片段分工
 

@@ -49,14 +49,14 @@ ContextOS 的核心是三纲五常：**集群化部署**让设备互联互通，
 ### 安装
 
 ```sh
-cd usr/dsh-plugins/contextos-devops-dsh
+cd usr/dsh-plugins/dsh-contextos-devops
 npm run build:client          # 构建 + 12 道门禁，必须全绿
 ```
 
 然后在 DSH 里启用插件，重载后打开 **ContextOS DevOps**：
 
 ```js
-plugin_manager({ action: 'set_plugin', target: 'include:contextos-devops-dsh', enabled: true })
+plugin_manager({ action: 'set_plugin', target: 'include:dsh-contextos-devops', enabled: true })
 ```
 
 ### 第一次对话

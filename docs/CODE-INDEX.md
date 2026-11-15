@@ -11,7 +11,7 @@
 | 文件 | 行数 | 导出 |
 | --- | ---: | --- |
 | `index.js` | 346 | `apply()`、`inject`；路由只做 `OPS` 分发 |
-| `lib/base/env.js` | 14 | `ctxRoot()` `stateDir()` `HOME` |
+| `lib/base/env.js` | 23 | `ctxRoot()` `stateDir()` `HOME` |
 | `lib/base/field.js` | 26 | `fieldSegments()` `splitFields()` |
 | `lib/base/http.js` | 141 | `baseUrl()` `encode()` `envelopeRows()` `envelopeShape()` `http()` `upload()` `parseRuntime()` `probe()` …11 个 |
 | `lib/base/platform.js` | 34 | `sqliteBin()` `openBrowser()` `openTerminalAt()` `isMac` `isLinux` `osName` `archName` `platformTriple` …9 个 |
@@ -48,7 +48,7 @@
 
 | 片段 | 行数 | 主要定义 |
 | --- | ---: | --- |
-| `src/client/parts/00-prelude.js` | 311 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
+| `src/client/parts/00-prelude.js` | 316 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
 | `src/client/parts/05-bootstrap.js` | 62 | `QUERY_OPS` |
 | `src/client/parts/08-store.js` | 86 | — |
 | `src/client/parts/10-ui.js` | 189 | `CtxMark` `Ico` `Icon` `Panel` `TOKENS` `Btn` `Toolbar` `Section` `Field` `EmptyState` |

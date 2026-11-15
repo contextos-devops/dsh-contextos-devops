@@ -2,7 +2,7 @@
 // 约定：localStorage 只能在这里出现（scripts/store-check.mjs 棘轮门禁）；
 // 新状态一律走 cxRead/cxWrite（JSON）或 cxReadText/cxWriteText（原样字符串），
 // 键名先进 CX_STORE_SCHEMA，顺带成为 docs/STATE.md 与「控制台 → STATE」页的索引。
-const CX_STORE_PREFIX = 'contextos-devops-dsh:';
+const CX_STORE_PREFIX = 'dsh-contextos-devops:';
 const CX_STORE_SCHEMA = {
   theme: { kind: 'text', def: 'system', zh: '主题', note: 'system / dark / light' },
   lang: { kind: 'text', def: 'system', zh: '语言', note: 'system / zh / en' },

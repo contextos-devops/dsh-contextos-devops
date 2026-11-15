@@ -414,13 +414,13 @@
       if (window.L) return Promise.resolve(window.L);
       if (!document.querySelector('link[data-cx-leaflet]')) {
         const link = document.createElement('link');
-        link.rel = 'stylesheet'; link.href = '/contextos-devops-dsh/leaflet/leaflet.css'; link.dataset.cxLeaflet = '1';
+        link.rel = 'stylesheet'; link.href = '/dsh-contextos-devops/leaflet/leaflet.css'; link.dataset.cxLeaflet = '1';
         document.head.appendChild(link);
       }
       if (window.__cxLeafletPromise) return window.__cxLeafletPromise;
       window.__cxLeafletPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = '/contextos-devops-dsh/leaflet/leaflet.js';
+        script.src = '/dsh-contextos-devops/leaflet/leaflet.js';
         script.async = true;
         script.onload = () => window.L ? resolve(window.L) : reject(new Error('leaflet not loaded'));
         script.onerror = () => reject(new Error('leaflet load failed'));

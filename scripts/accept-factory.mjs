@@ -15,7 +15,7 @@ const command = `web.chat.devops.${app}`;
 let space = '';
 
 async function api(op, body = {}) {
-  const res = await fetch(`${base}/contextos-devops-dsh/api`, {
+  const res = await fetch(`${base}/dsh-contextos-devops/api`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ op, node, ...body }),

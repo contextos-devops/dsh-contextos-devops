@@ -63,7 +63,7 @@ http://127.0.0.1:9191/s/<pod>/c/<cmd>  # 空间命令
 
 ## 四、配置存在哪
 
-`localStorage['contextos-devops-dsh:monitor-panels']`，最多 24 个面板。换机器/清缓存会丢，属于已知限制。
+`localStorage['dsh-contextos-devops:monitor-panels']`，最多 24 个面板。换机器/清缓存会丢，属于已知限制。
 
 ## 五、默认面板
 

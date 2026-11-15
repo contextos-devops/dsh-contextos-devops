@@ -301,7 +301,7 @@ gate added so the same bug cannot return silently
 
 - 事故：用多次重启试图加载 `createSpace` 修复，导致用户正在进行的回合被 `Task stopped`，且真正根因（`index.js` 未导入 `createSpace`）未被先验证。
 - 新硬规则（根 `AGENTS.md` 11/12）：任务中不重启宿主；先 API/DOM 复现；一次只改一个根因；修复后用同一 API 回读。
-- 验证：`POST /contextos-devops-dsh/api {"op":"createSpace"...}` 返回 `ok:true`，创建的探针空间已用 `deleteSpace` 清理。
+- 验证：`POST /dsh-contextos-devops/api {"op":"createSpace"...}` 返回 `ok:true`，创建的探针空间已用 `deleteSpace` 清理。
 
 
 ## 2026-11-13 — acceptance plugin + four-level contract

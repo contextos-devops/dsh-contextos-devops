@@ -1,8 +1,8 @@
     // ── ContextOS 配置中心：全局 / 会话（node space app avatar scene mode） ──
     const CTX_CFG_KEYS = ['node', 'space', 'app', 'avatar', 'scene', 'mode'];
     const CTX_CFG_DEFAULT = { node: null, space: '', app: '', avatar: '', scene: '', mode: 'factory' };
-    const CTX_CFG_NS = 'contextos-devops-dsh:cfg';
-    const CTX_CALLS_NS = 'contextos-devops-dsh:calls';
+    const CTX_CFG_NS = 'dsh-contextos-devops:cfg';
+    const CTX_CALLS_NS = 'dsh-contextos-devops:calls';
     const CTX_UI = { open: false, tab: 'global', sessionId: '', subs: new Set() };
     const CTX_DATA = { nodes: [], spaces: {}, apps: {}, avatars: [], scenes: [], loading: false };
     function ctxCfgEmit() { CTX_UI.subs.forEach((f) => { try { f(); } catch {} }); }

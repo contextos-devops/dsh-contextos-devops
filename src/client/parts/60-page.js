@@ -1506,12 +1506,12 @@
       inject: ['slots', 'layout'],
       apply(ctx) {
         try { CX_LAYOUT = ctx.layout || (ctx.get && ctx.get('layout')) || null; } catch {}
-        ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: 'contextos-devops-dsh', order: 20, label: () => 'ContextOS DevOps' }, Icon));
-        ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'contextos-devops-dsh' }, () => h(Boundary, null, h(Page))));
+        ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: 'dsh-contextos-devops', order: 20, label: () => 'ContextOS DevOps' }, Icon));
+        ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'dsh-contextos-devops' }, () => h(Boundary, null, h(Page))));
         // 输入框内最左：ContextOS 芯片（切换服务节点 / 打开控制台）
-        ctx.slots.inject('conversation.input.left', () => ctx.slots.register({ name: 'conversation.input.left', id: 'contextos-devops-dsh', order: 0 }, (props) => h(CtxChip, { sessionId: (props && props.sessionId) || '' })));
+        ctx.slots.inject('conversation.input.left', () => ctx.slots.register({ name: 'conversation.input.left', id: 'dsh-contextos-devops', order: 0 }, (props) => h(CtxChip, { sessionId: (props && props.sessionId) || '' })));
         // 会话标题栏右侧：ContextOS 按钮（打开控制台）
-        ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({ name: 'conversation.session.header.utilities', id: 'contextos-devops-dsh-center', order: 10 }, (props) => h(CtxHeaderButton, { sessionId: (props && props.sessionId) || '' })));
+        ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({ name: 'conversation.session.header.utilities', id: 'dsh-contextos-devops-center', order: 10 }, (props) => h(CtxHeaderButton, { sessionId: (props && props.sessionId) || '' })));
       },
     };
   },

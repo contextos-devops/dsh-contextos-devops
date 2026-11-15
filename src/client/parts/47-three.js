@@ -44,7 +44,7 @@
         let disposed = false;
         let cleanup = () => {};
         let observer = null;
-        import('/contextos-devops-dsh/three/three.module.js').then((THREE) => {
+        import('/dsh-contextos-devops/three/three.module.js').then((THREE) => {
           if (disposed || !ref.current) return;
           const host = ref.current;
           const scene = new THREE.Scene();

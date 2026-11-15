@@ -6,7 +6,7 @@
 > 生成物：`node scripts/docs-index.mjs --write`（2026-11-15）· 源：`src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA`
 > 手改会被下一次生成覆盖；要改内容改代码里的源头。
 
-## 1. 浏览器侧（localStorage，前缀 `contextos-devops-dsh:`）
+## 1. 浏览器侧（localStorage，前缀 `dsh-contextos-devops:`）
 
 | 键 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
@@ -49,7 +49,7 @@
 | `session` | JSON | `null` | 会话：{ v, 会话键: 消息 } |
 | `chat` | JSON | `[]` | 消息缓存：旧版单键；现按 chat:<分身>:<计划> 分键 |
 
-## 2. 服务端（`~/.dsh/contextos-devops-dsh/state.json`）
+## 2. 服务端（`~/.dsh/dsh-contextos-devops/state.json`）
 
 | 名称 | 写入方 | 用途 |
 | --- | --- | --- |

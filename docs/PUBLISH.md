@@ -11,7 +11,7 @@
 
 | | 怎么做 | 用户怎么装 | 成本 | 适合 |
 |---|---|---|---|---|
-| **A 源码**（最快） | 仓库已满足安装条件，直接提教学 PR | `dsh plugin --profile desktop add github:shylinux/contextos-devops-dsh` | 0 依赖，安装时要拉仓库 | 先上架、先被看见 |
+| **A 源码**（最快） | 仓库已满足安装条件，直接提教学 PR | `dsh plugin --profile desktop add github:shylinux/dsh-contextos-devops` | 0 依赖，安装时要拉仓库 | 先上架、先被看见 |
 | **B npm**（体验最好） | 改名 → `npm publish` → 条目加 `npm:` | `dsh plugin --profile desktop add dsh-contextos-devops` | 一次改名 + 一次发布 | 正式对外 |
 | **C 私有索引** | 自建 `index.json`，用户加索引源 | 界面「索引源」填 URL | 要一台静态服务器 | 企业内网、不上市场 |
 
@@ -38,10 +38,10 @@ A 和 B 不冲突：**先 A 上架，再 B 提速**。
 ```sh
 # 1) fork awesome-dsh-plugin，克隆下来
 # 2) 复制现成条目（本仓库已准备好）
-cp <本仓库>/release/catalog-entry.yml data/plugins/shylinux__contextos-devops-dsh.yml
+cp <本仓库>/release/catalog-entry.yml data/plugins/shylinux__dsh-contextos-devops.yml
 # 3) 只加这一个文件，一个 PR 不超过 3 个条目
-git checkout -b add-contextos-devops-dsh && git add data/plugins/shylinux__contextos-devops-dsh.yml
-git commit -m "Add shylinux/contextos-devops-dsh" && git push
+git checkout -b add-dsh-contextos-devops && git add data/plugins/shylinux__dsh-contextos-devops.yml
+git commit -m "Add shylinux/dsh-contextos-devops" && git push
 ```
 
 CI 依次检查：条目数量 → `dsh.bundle` → 仓库年龄 → awesome-lint 与站点构建。
@@ -51,14 +51,14 @@ CI 依次检查：条目数量 → `dsh.bundle` → 仓库年龄 → awesome-lin
 ### 2.3 用户安装（A 路径的最终形态）
 
 ```sh
-dsh plugin --profile desktop add github:shylinux/contextos-devops-dsh
-# 装了新版后重载：plugin_manager set_plugin include:contextos-devops-dsh
+dsh plugin --profile desktop add github:shylinux/dsh-contextos-devops
+# 装了新版后重载：plugin_manager set_plugin include:dsh-contextos-devops
 ```
 
 ## 3. 路径 B：发 npm（推荐作为正式版）
 
-npm 上 `dsh-contextos-devops` 与 `contextos-devops-dsh` 都空闲。**不需要改本机包名**：
-本机 profile 用 `link:` 把仓库装成 `@local/contextos-devops-dsh`，改名会破坏本地安装，
+npm 上 `dsh-contextos-devops` 与 `dsh-contextos-devops` 都空闲。**不需要改本机包名**：
+本机 profile 用 `link:` 把仓库装成 `dsh-contextos-devops`，改名会破坏本地安装，
 所以发版时在临时目录里改名再打包 —— 一条命令：
 
 ```sh
@@ -91,7 +91,7 @@ node scripts/publish-npm.mjs --publish   # 已登录时直接发布
 
 ```json
 { "version": 1, "plugins": [
-  { "name": "contextos-devops-dsh", "spec": "github:shylinux/contextos-devops-dsh",
+  { "name": "dsh-contextos-devops", "spec": "github:shylinux/dsh-contextos-devops",
     "description": "ContextOS DevOps for DSH", "version": "1.48.23" } ] }
 ```
 

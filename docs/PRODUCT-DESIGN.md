@@ -637,7 +637,7 @@ DSH 创建任务 → 插件右侧任务列表刷新
 建议新增：
 
 ```text
-GET /contextos-devops-dsh/events   SSE
+GET /dsh-contextos-devops/events   SSE
 event: context-changed
 data: {...}
 ```
@@ -796,7 +796,7 @@ DSH 主对话问“当前在哪个空间/分身”
 
 ```bash
 # 插件目录
-cd usr/dsh-plugins/contextos-devops-dsh
+cd usr/dsh-plugins/dsh-contextos-devops
 
 # 语法检查
 node --check index.js
@@ -811,7 +811,7 @@ node --check client.js
 |---|---|---|
 | `CTX_ROOT` | `~/ContextOS` | 主仓根 |
 | `CTX_NODES_FILE` | `~/.contextos/nodes.json` | 节点台账 |
-| `CTX_DEVOPS_STATE` | `$DSH_HOME/contextos-devops-dsh` | 插件状态 |
+| `CTX_DEVOPS_STATE` | `$DSH_HOME/dsh-contextos-devops` | 插件状态 |
 | `CTX_MONACO_DIR` | `usr/macos-app/Resources/monaco` | Monaco |
 
 目录：

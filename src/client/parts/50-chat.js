@@ -224,7 +224,7 @@
       const reportTypeOptions = pmFilterOptions(allReports, 'type_name');
       const feedbackStatusOptions = pmFilterOptions(allFeedbacks, 'status_name');
       const calOnChange = useCallback((a, b) => { setCalStart(a); setCalEnd(b); }, []);
-      const sessionKey = `contextos-devops-dsh:chat:${avatar?.uid || 'anon'}:${activePlan?.uid || 'none'}`;
+      const sessionKey = `dsh-contextos-devops:chat:${avatar?.uid || 'anon'}:${activePlan?.uid || 'none'}`;
       useEffect(() => {
         /* 兜底：即使加载到旧样式（!important 12px），也强制输入框为 13px */
         const el = inputRef.current;
@@ -254,7 +254,7 @@
         return () => clearTimeout(t);
       }, [open, sessionKey]);
 
-      const scrollKeyOf = () => `contextos-devops-dsh:scroll:${sessionKey}`;
+      const scrollKeyOf = () => `dsh-contextos-devops:scroll:${sessionKey}`;
       const scrollRestorePendingRef = useRef(true);
       const scrollSaveTimer = useRef(null);
       useEffect(() => { scrollRestorePendingRef.current = true; }, [sessionKey]);

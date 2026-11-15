@@ -52,7 +52,7 @@ Each entry records: lesson → reusable abstraction → verification.
 ## 2026-11-15 · 插件根本加载不出来：构建片段清单漂移
 
 - Symptom: 用户报「ContextOS 的插件怎么没有加载成功」——侧栏有入口，点进去空白/不渲染。
-  `~/.dsh/contextos-devops-dsh/client-errors.log` 没有新记录（插件自己都还没跑起来，写不进日志）。
+  `~/.dsh/dsh-contextos-devops/client-errors.log` 没有新记录（插件自己都还没跑起来，写不进日志）。
 - Root cause: `build/client.mjs` 与 `scripts/gate.mjs` 各有一份**硬编码**的 `parts` 列表，
   新增的 `src/client/parts/08-store.js`、`49-msg.js` 没进列表 → 产物缺 `cxRead/cxWrite`，
   factory 顶层执行 `ctxCfgLoad()` 时抛 `ReferenceError: cxRead is not defined`，整个模块加载失败。

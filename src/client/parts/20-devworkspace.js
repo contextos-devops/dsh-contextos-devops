@@ -189,12 +189,12 @@
         monacoPromise = (async () => {
           if (!(window.require && window.require.config)) {
             try { if (window.require) delete window.require; } catch {}
-            await ensureScript('/contextos-devops-dsh/monaco/vs/loader.js');
+            await ensureScript('/dsh-contextos-devops/monaco/vs/loader.js');
           }
           return new Promise((res, rej) => {
             const req = window.require;
             if (!req || !req.config) return rej(new Error('monaco loader missing'));
-            req.config({ paths: { vs: '/contextos-devops-dsh/monaco/vs' } });
+            req.config({ paths: { vs: '/dsh-contextos-devops/monaco/vs' } });
             req(['vs/editor/editor.main'], () => {
               if (window.monaco && window.monaco.editor) { activity('加载 Monaco 编辑器', 'ok'); res(window.monaco); }
               else { monacoPromise = null; rej(new Error('monaco editor missing')); }
@@ -405,15 +405,15 @@
         let cancelled = false;
         (async () => {
           try {
-            ensureCss('/contextos-devops-dsh/xterm/xterm.css');
+            ensureCss('/dsh-contextos-devops/xterm/xterm.css');
             const evalScript = async (src) => {
               const code = await (await fetch(src)).text();
               const fn = new Function('module', 'exports', 'define', 'require', 'window', 'self', 'globalThis', code);
               fn(undefined, undefined, undefined, undefined, window, window, window);
             };
-            if (!window.Terminal) { activity('加载终端 xterm', 'info'); await evalScript('/contextos-devops-dsh/xterm/xterm.js'); activity('终端 xterm 就绪', 'ok'); }
+            if (!window.Terminal) { activity('加载终端 xterm', 'info'); await evalScript('/dsh-contextos-devops/xterm/xterm.js'); activity('终端 xterm 就绪', 'ok'); }
             if (!window.Terminal) throw new Error('xterm missing');
-            if (!(window.FitAddon && window.FitAddon.FitAddon)) await evalScript('/contextos-devops-dsh/xterm/addon-fit.js').catch(() => {});
+            if (!(window.FitAddon && window.FitAddon.FitAddon)) await evalScript('/dsh-contextos-devops/xterm/addon-fit.js').catch(() => {});
             const info = await api('spaceDir', { node, space: sp }).catch(() => ({ dir: '' }));
             for (const id of termIds) {
               if (termMapRef.current[id]) continue;
@@ -439,7 +439,7 @@
               if (restored) state.text = restored;
               const openWs = (cwd) => {
                 if (!state.alive) return;
-                const url = `${wsProto}://${wsHost}/contextos-devops-dsh/terminal?cwd=${encodeURIComponent(cwd || '')}`;
+                const url = `${wsProto}://${wsHost}/dsh-contextos-devops/terminal?cwd=${encodeURIComponent(cwd || '')}`;
                 state.switching = true;
                 try { state.ws && state.ws.close(); } catch {}
                 state.switching = false;
