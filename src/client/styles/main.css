@@ -3038,6 +3038,11 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-pm-side.right .cx-mapsec:not(.max) .cx-taskmap{flex:1 1 auto!important;min-height:0!important;display:flex;flex-direction:column}
 .cx-pm-side.right .cx-mapsec:not(.max) .cx-taskmap-leaflet{flex:1 1 auto!important;height:auto!important;min-height:0!important}
 
+/* 2026-11-15: 折叠态不再继承固定高度，收成标题条 */
+.cx-gantt-sec.folded{height:auto!important;min-height:0!important;flex:0 0 auto!important;overflow:visible!important}
+.cx-pm-side.right .cx-mapsec.folded{height:auto!important;min-height:0!important;flex:0 0 auto!important}
+.cx-pm-side .cx-gantt-sec.folded .cx-pm-h,.cx-pm-side .cx-mapsec.folded .cx-pm-h{min-height:0!important}
+
 /* 2026-11-13: gantt rows share the fixed section height so every plan stays visible */
 .cx-shell .cx-gantt-body{display:flex;flex-direction:column;gap:4px}
 .cx-shell .cx-gantt-row{padding:0!important}
