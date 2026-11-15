@@ -1202,13 +1202,7 @@
         : m.role === 'sys'
         ? h('div', { key: i, className: 'cx-sysline' }, h('span', { className: 'cx-sysdot' }), m.text)
         : h('div', { key: i, className: `cx-msg-wrap ${m.role}` },
-            h('div', { className: 'cx-msg-bar' },
-                h('div', { className: 'cx-msg-tools', style: { display: 'flex', alignItems: 'center', gap: 2 } },
-                m.trace ? h('button', { className: 'cx-msg-tool', title: T('查看请求的上下文与返回'), onClick: () => setTraceMsg(m) }, T('详情')) : null,
-                m.role === 'ai' ? h('button', { className: 'cx-msg-tool', title: T('重试'), onClick: () => { const prev = [...msgs.slice(0, i)].reverse().find((x) => x.role === 'user'); if (prev) handle(prev.text); } }, T('重试')) : null,
-                h('button', { className: 'cx-msg-tool', title: T('引用'), onClick: () => { const el = inputRef.current; if (!el) return; el.value = '> ' + String(m.text || '').split('\n').join('\n> ') + '\n'; el.focus(); } }, T('引用')),
-                h('button', { className: 'cx-msg-tool', title: T('复制'), onClick: () => { try { navigator.clipboard.writeText(m.text); } catch {} } }, T('复制')),
-                h('button', { className: 'cx-msg-tool danger', title: T('删除'), onClick: () => { setMsgs((list) => list.filter((_, j) => j !== i)); } }, T('删除')))),
+
             h('div', { className: `cx-msg ${m.role}`, style: { display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-start', gap: 8 } },
             h('span', { className: 'cx-msg-avatar' }, m.role === 'user' ? 'ME' : 'AI'),
             h('div', { className: 'cx-msg-main', style: { display: 'flex', flexDirection: 'column', alignItems: 'stretch', flex: '1 1 auto', minWidth: 0 } },
@@ -1218,6 +1212,12 @@
                 m.role === 'ai' && m.ms ? h('span', { className: 'cx-msg-metrics' }, `${(m.ms / 1000).toFixed(1)}s`) : null,
                 m.role === 'ai' && m.tokens ? h('span', { className: 'cx-msg-metrics' }, `${m.est ? '≈' : ''}${m.tokens} tok`) : null,
                 m.role === 'ai' && m.bytes ? h('span', { className: 'cx-msg-metrics' }, fmtBytes(m.bytes)) : null,
+                h('div', { className: 'cx-msg-tools', style: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 } },
+                m.trace ? h('button', { className: 'cx-msg-tool', title: T('查看请求的上下文与返回'), onClick: () => setTraceMsg(m) }, T('详情')) : null,
+                m.role === 'ai' ? h('button', { className: 'cx-msg-tool', title: T('重试'), onClick: () => { const prev = [...msgs.slice(0, i)].reverse().find((x) => x.role === 'user'); if (prev) handle(prev.text); } }, T('重试')) : null,
+                h('button', { className: 'cx-msg-tool', title: T('引用'), onClick: () => { const el = inputRef.current; if (!el) return; el.value = '> ' + String(m.text || '').split('\n').join('\n> ') + '\n'; el.focus(); } }, T('引用')),
+                h('button', { className: 'cx-msg-tool', title: T('复制'), onClick: () => { try { navigator.clipboard.writeText(m.text); } catch {} } }, T('复制')),
+                h('button', { className: 'cx-msg-tool danger', title: T('删除'), onClick: () => { setMsgs((list) => list.filter((_, j) => j !== i)); } }, T('删除'))),
               ),
               h('div', { className: 'cx-msg-body' },
                 h(RichText, { text: m.text }),
