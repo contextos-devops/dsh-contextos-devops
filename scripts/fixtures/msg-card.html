@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>msg-card</title>
+<link rel="stylesheet" href="{{CSS}}">
+<style>
+  html, body { margin: 0; background: #04101a; padding: 16px; }
+  .stage { width: 880px; }
+</style>
+</head>
+<body>
+<div class="cx-shell" data-theme="dark">
+  <div class="stage">
+    <!-- 与 50-chat.js 的 JSX 结构保持一致：wrap > msg > (avatar, main > (meta > 元信息 + tools, body)) -->
+    <div class="cx-msg-wrap user">
+      <div class="cx-msg user">
+        <span class="cx-msg-avatar">ME</span>
+        <div class="cx-msg-main">
+          <div class="cx-msg-meta">
+            <span>YOU</span><span>04:10 PM</span>
+            <div class="cx-msg-tools">
+              <button class="cx-msg-tool">引用</button>
+              <button class="cx-msg-tool">复制</button>
+              <button class="cx-msg-tool danger">删除</button>
+            </div>
+          </div>
+          <div class="cx-msg-body">请求参数去掉重复的信息吧，去掉 background 保留 scene。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cx-msg-wrap ai">
+      <div class="cx-msg ai">
+        <span class="cx-msg-avatar">AI</span>
+        <div class="cx-msg-main">
+          <div class="cx-msg-meta">
+            <span>COPILOT</span><span>04:10 PM</span>
+            <span class="cx-msg-metrics">2.1s</span><span class="cx-msg-metrics">381B</span>
+            <div class="cx-msg-tools">
+              <button class="cx-msg-tool">详情</button>
+              <button class="cx-msg-tool">重试</button>
+              <button class="cx-msg-tool">引用</button>
+              <button class="cx-msg-tool">复制</button>
+              <button class="cx-msg-tool danger">删除</button>
+            </div>
+          </div>
+          <div class="cx-msg-body">收到。scene 与 background 内容完全重复（同一赛博世界配置）。不过这段请求参数是客户端注入给我的上下文，我这里没有修改或裁剪它的接口，无法直接去掉 background。请把去重做在客户端上下文组装处（只注入 scene，不再注入 background），我不会再引用 background 字段。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

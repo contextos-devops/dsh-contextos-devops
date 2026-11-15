@@ -22,7 +22,8 @@
 三条命令先记住：
 
 ```sh
-npm run build:client     # 构建 + 9 道门禁（红了先修，不许带 FAIL 交付）
+npm run build:client     # 构建 + 10 道门禁（红了先修，不许带 FAIL 交付）
+npm run check:probe      # 离线渲染 fixture 量布局（需本机 Edge/Chrome）
 npm run verify:ui        # 真浏览器验收（需 Edge CDP 9223）
 node --check index.js    # 只改宿主时先做语法检查
 ```
@@ -36,11 +37,11 @@ node --check index.js    # 只改宿主时先做语法检查
 | 加/改一个后端动作 | `lib/core/ops.js` + `lib/core/<域>.js` | `npm run check:ops` |
 | 改请求转发/鉴权 | `index.js`（只允许查表分发，不许写业务分支） | `node --check index.js` + 重载 |
 | 加一个要保存的状态 | `src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA` | `node scripts/docs-index.mjs --write` |
-| 改界面/布局/组件 | `src/client/parts/*.js`、`src/client/styles/*.css` | `check:ui` + 真机截图 |
+| 改界面/布局/组件 | `src/client/parts/*.js`、`src/client/styles/*.css` | `check:ui` + `check:probe` + 真机截图 |
 | 加项目管理工作流 | `lib/core/project.js`（状态机唯一处） | 状态表进 `docs/MEMORY.md` |
 | 改 Copilot 提示词/动作 | `lib/core/copilot.js` + `docs/AI-CONVERSATION.md` | 三模式短路不许绕过 |
 | 改文档 | `docs/*.md`；新文档必须进 `docs/INDEX.md` | `npm run check:docs` |
-| 加门禁 | `scripts/*.mjs` + `package.json` 的 `build:client` 链 | 自测「能抓到该错误」 |
+| 加门禁 | `scripts/*.mjs` + `package.json` 的 `build:client` 链 | 自测「能抓到该错误」；布局类加 `ui-probe` 用例 |
 
 **不能碰**：`client.js`（构建产物）、`usr/icebergs/`、`usr/volcanos/`、`page/cache.css`、任何 `*.db`。
 
@@ -79,18 +80,23 @@ node --check index.js    # 只改宿主时先做语法检查
 
 ---
 
-## 四、DSH 工作流：每轮 RSI 循环（照做，不跳步）
+## 四、DSH 工作流：八步（每轮照做，不跳步）
 
-```text
-① 目标   一句话目标 + 可判定验收（没有验收句，不许开第一行代码）
-② 计划   范围 / 影响面 / 代价（时间、回归风险、要碰的文件）
-③ 取证   读代码与文档；能调工具先调；框架行为去源码确认，不猜
-④ 改动   最小改动；客户端 / 宿主 / 文档同一次提交
-⑤ 构建   npm run build:client（红了先修）
-⑥ 实测   接口：真实回执；界面：DOM + 截图；失败先复现再修再复现
-⑦ 抽象   重复第二遍 → 抽模板/词表/工具；第三遍 → 交给生成器
-⑧ 报告   落盘 + 门禁 + 规范，三件都要留
-```
+用户只给一句话也要走完这八步；每步都有**可判定的产出**，没有产出就还在上一步。
+
+| # | 步骤 | 做什么 | 产出（缺一不算做完） |
+| --- | --- | --- | --- |
+| ① | **分析** | 复述诉求 → 判断问题类型（`docs/DIAGNOSTICS.md` §一）→ 写目标句与验收句 | 目标 + 可判定验收 |
+| ② | **计划** | 范围 / 影响面 / 代价（时间、回归风险、要碰的文件）+ 3–6 条任务 | 计划表 + 任务清单 |
+| ③ | **读规范** | 按 `docs/INDEX.md` 只读本轮相关那一章，不整份塞 | 引用到的章节号 |
+| ④ | **选工具** | 先看 `docs/DIAGNOSTICS.md`「先跑哪条」；有现成门禁/取证脚本就不手搓 | 命令清单 |
+| ⑤ | **执行** | 调工具与模型，最小改动；长任务逐步报进度（做了什么、哪个数字变了） | 改动 + 进度 |
+| ⑥ | **产物** | 代码 + 文档改动 + 报告（`usr/local/WorkBuddy/dsh-reports/`） | 三件齐 |
+| ⑦ | **检测** | `npm run build:client` 全绿 + 对应验证矩阵 + 报告里贴证据 | exit 0 + 证据 |
+| ⑧ | **归纳** | 这是哪一类问题 → 补规范（本章/DIAGNOSTICS）→ 补工具（新断言/新脚本） | 至少一条新断言 |
+
+一句话记忆：**分析 → 计划 → 规范 → 工具 → 执行 → 产物 → 检测 → 归纳**。
+第 ⑧ 步是这套流程的复利来源：同类问题第二次出现时，应当靠断言而不是靠回忆解决。
 
 **每轮四件套（缺一不算完成）**
 
@@ -116,7 +122,7 @@ git add -A && git -c user.name="shy" -c user.email="shy@localhost" commit -m "�
 | 改动 | 最低验证 |
 | --- | --- |
 | 纯文档 | `npm run check:docs` |
-| 客户端 UI/样式 | `build:client` + `verify:ui`（或 headless 截图 + DOM 断言） |
+| 客户端 UI/样式 | `build:client` + `check:probe`（布局不变量）+ `verify:ui`（或 headless 截图 + DOM 断言） |
 | 宿主 `lib/*.js`、`index.js` | `build:client` + **重载插件** + 真实 `api` 调用回执 |
 | 新 op | `check:ops` + `curl`（PUT/POST/DELETE 与方法门一致）+ 回读 |
 | 存储键 | `check:store` + `docs-index --write` + 刷新后状态仍在 |

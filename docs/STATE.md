@@ -1,6 +1,6 @@
 # 状态索引 / STATE
 
-> 生成物：`node scripts/docs-index.mjs --write`（2026-11-14）· 源：`src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA`
+> 生成物：`node scripts/docs-index.mjs --write`（2026-11-15）· 源：`src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA`
 > 手改会被下一次生成覆盖；要改内容改代码里的源头。
 
 ## 1. 浏览器侧（localStorage，前缀 `contextos-devops-dsh:`）

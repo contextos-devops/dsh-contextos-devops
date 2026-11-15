@@ -426,3 +426,21 @@ gate added so the same bug cannot return silently
 - Evidence: 本地用真实 `assets/client.css` 渲染同一段消息结构（headless Edge）→ meta 独占一行、tools 右对齐、
   正文满宽；说明 CSS 本身正确，线上差异来自「加载了哪份 CSS」。`npm run build:client` 全绿（1.48.2）。
 - Lesson: 版本化资源不仅要换 URL，还要**改写已经挂在 DOM 上的旧 URL**；热重载场景下，DOM 生命周期比模块长。
+
+## 2026-11-15 · 一类问题：样式其实没错，错的是「生效的那一层」
+
+- Symptom: 一整天围绕同一条消息卡片反复返工——先「头与按钮挤一行、正文挤成窄栏」，
+  再「工具条位置不对」，再「字号高度不一致」，最后「折叠后卡片还是 218px」。
+  每次改完都像修好了，下一次又冒出来。
+- Root cause（三种，机制不同）:
+  1. **加载层**：`<link>` 只在不存在时注入，DSH 热重载换 JS 不换 DOM → 新 JS 配旧 CSS（`max-age=3600` 命中旧 URL）。
+  2. **级联层**：`.cx-msg-main{display:flex}` 被后面的 `!important`/旧规则改写成 row；
+     `--cx-sec-h:218px` 无条件生效，折叠态只是「没有内容」，高度仍在。
+  3. **污染层**：插件把 `--fs-*`/`--h-item` 这类通用令牌写到 `:root`，SPA 与宿主共用 document，把宿主界面也带歪。
+- Fix: ①prelude 版本跟随 + `clientCheck` 自报 `build/css/layout/geo/dom`；②关键布局改内联 style + 挂载后自愈；
+  ③令牌全部 `--cx-*` 并加 gate 第 12 项；④折叠态补 `height:auto!important` 例外。
+- Evidence: `check:probe` msg-card 6/6（正文 93%、工具条间隙 0.0px）；pm-folded 3/3（折叠 42.6/28.6px、展开 218px）；
+  `--css /dev/null` 自测 FAIL（证明断言真的依赖样式表）；`build:client` 10 道全绿。
+- Lesson: **「改了对不对」要看最终生效值，不是看源码里那条规则**。所以本轮把手工取证固化成
+  `scripts/ui-probe.mjs`：fixture 只写结构 + class，断言写在脚本里，双向自测（真 CSS 通过 / 空 CSS 失败）；
+  并把「症状 → 先读 → 先跑 → 断言」收进 `docs/DIAGNOSTICS.md`，下次同类问题先跑命令再动代码。

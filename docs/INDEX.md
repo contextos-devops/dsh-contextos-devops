@@ -18,6 +18,7 @@
 | --- | --- | --- |
 | 搞清方向：三纲五常 / 每轮四件套 / 抽象递减 | `DOCTRINE.md` | 全册 |
 | 改界面：布局/组件/主题/图标/文字 | `DESIGN-SYSTEM.md`；根 `USER-VIEW.md` | 全册 / §〇–§三 |
+| 布局出了问题（挤行/折叠过高/改了没变） | `DIAGNOSTICS.md` | §二 布局三条硬规则 |
 | 新页面/新组件，别造第二套样式 | `DESIGN-SYSTEM.md`、`FORM-FIELDS.md` | 组件清单 / 字段形态 |
 | 加接口、调接口、对报文 | `INTERFACE.md`、`URL-SPEC.md` | 五形态 / 两类 URL + 禁止清单 |
 | 加一个 op（后端动作） | `../lib/core/ops.js` + `CODE-INDEX.md` §3 | 注册表 + 门禁 |
@@ -34,6 +35,7 @@
 | 架构分层与目录职责 | `ARCHITECTURE.md` | 五层与边界 |
 | 找某个文件/组件/op 在哪 | `CODE-INDEX.md`（生成） | §1–§6 |
 | 复盘历史坑与决策 | `RSI-LEDGER.md` | 按日期 |
+| 界面/接口出问题，先查哪、先跑哪 | `DIAGNOSTICS.md` | §一 症状表、§二 布局三条硬规则 |
 | 运行期最高法则（Copilot 也注入） | `RSI-CONSTITUTION.md` | 十二条 |
 
 ## 三、规范类（人写，会变）

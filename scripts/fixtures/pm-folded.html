@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>pm-folded</title>
+<link rel="stylesheet" href="{{CSS}}">
+<style>
+  html, body { margin: 0; background: #04101a; padding: 0; }
+  .stage { width: 330px; height: 620px; display: flex; flex-direction: column; margin: 10px; }
+  .fill { flex: 1 1 auto; min-height: 0; overflow: auto; }
+</style>
+</head>
+<body>
+<div class="cx-shell" data-theme="dark">
+  <div class="stage">
+    <aside class="cx-pm-side">
+      <div class="cx-pm-scroll fill">
+        <div class="cx-pm-empty">计划列表占位</div>
+      </div>
+      <!-- 折叠态：只剩标题条，不应再继承 --cx-sec-h 的 218px -->
+      <div class="cx-gantt-sec folded" id="gantt">
+        <div class="cx-pm-h">进度 PROGRESS</div>
+      </div>
+      <!-- 展开态对照组：必须仍是 218px 等高，否则说明整套高度规则没生效 -->
+      <div class="cx-gantt-sec" id="gantt-open">
+        <div class="cx-pm-h">进度 PROGRESS（展开）</div>
+        <div class="cx-gantt"><div style="height:180px"></div></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="cx-shell" data-theme="dark">
+  <div class="stage">
+    <aside class="cx-pm-side right">
+      <div class="fill"></div>
+      <div class="cx-mapsec folded" id="map">
+        <div class="cx-pm-h">地点 LOCATION</div>
+      </div>
+    </aside>
+  </div>
+</div>
+</body>
+</html>

@@ -97,6 +97,7 @@
 | `scripts/op-check.mjs` | OPS ↔ 客户端 api() 契约 |
 | `scripts/store-check.mjs` | 持久化唯一出口 + schema 登记 |
 | `scripts/ui-check.mjs` | UI 结构与组件复用断言 |
+| `scripts/ui-probe.mjs` | — |
 | `scripts/ui-verify.mjs` | 真浏览器验收（Edge CDP 9223） |
 
 ## 6. 文档
@@ -112,16 +113,17 @@
 | `docs/CODE-MAP.md` | 78 | 人写 |
 | `docs/CONTEXTOS-SUMMARY.md` | 225 | 人写 |
 | `docs/DESIGN-SYSTEM.md` | 255 | 人写 |
+| `docs/DIAGNOSTICS.md` | 84 | 人写 |
 | `docs/DOCTRINE.md` | 105 | 人写 |
 | `docs/DSH-COS.md` | 111 | 人写 |
 | `docs/FORM-FIELDS.md` | 38 | 人写 |
 | `docs/IAM.md` | 148 | 人写 |
-| `docs/INDEX.md` | 78 | 索引 |
+| `docs/INDEX.md` | 80 | 索引 |
 | `docs/INTERFACE.md` | 407 | 人写 |
 | `docs/MEMORY.md` | 63 | 人写 |
 | `docs/MONITOR.md` | 80 | 人写 |
 | `docs/PRODUCT-DESIGN.md` | 1663 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 108 | 人写 |
-| `docs/RSI-LEDGER.md` | 429 | 人写 |
+| `docs/RSI-LEDGER.md` | 447 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 240 | 人写 |

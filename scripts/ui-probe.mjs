@@ -1,0 +1,177 @@
+#!/usr/bin/env node
+// 布局取证门禁（离线）：用真实 assets/client.css 在无头浏览器里渲染 fixture，
+// 量出盒子与计算样式，对「布局不变量」断言。这是把「先量后改」从手工动作变成一条命令。
+//
+// 用法:
+//   node scripts/ui-probe.mjs                  # 跑全部用例
+//   node scripts/ui-probe.mjs --case msg-card  # 只跑一个
+//   node scripts/ui-probe.mjs --png /tmp/out   # 顺手存截图给人工看
+//   node scripts/ui-probe.mjs --css /dev/null  # 自测：故意换错样式表，应当 FAIL
+//   node scripts/ui-probe.mjs --verbose        # 打印量到的每个盒子
+//
+// 退出码: 0 全过 / 1 断言失败 / 2 没有可用浏览器（跳过，不算完成）
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const args = process.argv.slice(2);
+const arg = (name, def) => {
+  const i = args.indexOf(`--${name}`);
+  return i === -1 ? def : args[i + 1] ?? true;
+};
+const only = arg('case', '');
+const soft = args.includes('--soft'); // 构建链里用：没有浏览器时降级为 SKIP，不算失败（但会打印提示）
+const pngDir = arg('png', '');
+const cssPath = path.resolve(root, arg('css', 'assets/client.css'));
+const verbose = args.includes('--verbose');
+
+const BROWSERS = [
+  process.env.EDGE_BIN,
+  '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/Applications/Chromium.app/Contents/MacOS/Chromium',
+  '/usr/bin/google-chrome',
+  '/usr/bin/chromium',
+].filter(Boolean);
+const browser = BROWSERS.find((p) => fs.existsSync(p));
+if (!browser) {
+  console.log('[ui-probe] SKIP 找不到 Edge/Chrome，无法做离线渲染取证（不算通过，请装浏览器或设 EDGE_BIN）');
+  process.exit(soft ? 0 : 2);
+}
+if (!fs.existsSync(cssPath)) {
+  console.error(`[ui-probe] FAIL 样式表不存在: ${cssPath}`);
+  process.exit(1);
+}
+
+// ── 布局不变量：每条都对应一个真实回归 ───────────────────────────────
+// 断言函数拿到 measurements: { '.sel': {x,y,w,h,right,display,flexDirection,marginLeft,opacity,fontSize,lineHeight} }
+const CASES = [
+  {
+    name: 'msg-card',
+    fixture: 'scripts/fixtures/msg-card.html',
+    window: '920,420',
+    sels: ['.cx-msg.ai', '.cx-msg.ai .cx-msg-main', '.cx-msg.ai .cx-msg-meta', '.cx-msg.ai .cx-msg-tools', '.cx-msg.ai .cx-msg-body'],
+    assert: (m) => {
+      const card = m['.cx-msg.ai'];
+      const main = m['.cx-msg.ai .cx-msg-main'];
+      const meta = m['.cx-msg.ai .cx-msg-meta'];
+      const tools = m['.cx-msg.ai .cx-msg-tools'];
+      const body = m['.cx-msg.ai .cx-msg-body'];
+      const gap = Math.abs(tools.right - meta.right);
+      return [
+        [!!main && main.display === 'flex', '正文容器是 flex'],
+        [!!main && main.flexDirection === 'column', '状态行与正文竖排（不是两栏）'],
+        [gap <= 2, '工具条贴在状态行右端', `间隙 ${gap.toFixed(1)}px`],
+        [!!body && !!card && body.w / card.w >= 0.85, '正文占卡片宽度 ≥85%', `${((body?.w || 0) / (card?.w || 1) * 100).toFixed(0)}%`],
+        [!!tools && tools.fontSize === meta.fontSize, '工具条字号继承状态行', `${tools?.fontSize} vs ${meta?.fontSize}`],
+        [!!tools && tools.lineHeight === meta.lineHeight, '工具条行高继承状态行', `${tools?.lineHeight} vs ${meta?.lineHeight}`],
+      ];
+    },
+  },
+  {
+    name: 'pm-folded',
+    fixture: 'scripts/fixtures/pm-folded.html',
+    window: '720,700',
+    sels: ['#gantt', '#map', '#gantt-open'],
+    assert: (m) => {
+      const g = m['#gantt'];
+      const mp = m['#map'];
+      const go = m['#gantt-open'];
+      return [
+        [!!g && g.h <= 60, '折叠后进度卡片收缩到标题条', `高 ${g?.h}px`],
+        [!!mp && mp.h <= 60, '折叠后地图卡片收缩到标题条', `高 ${mp?.h}px`],
+        [!!go && go.h >= 200, '展开态仍是 218px 等高（规则没被折叠例外连坐）', `高 ${go?.h}px`],
+      ];
+    },
+  },
+];
+
+const MEASURE = `<script>
+window.__PROBE_SELS__ = __SELS__;
+(function () {
+  function measure() {
+    var out = {};
+    (window.__PROBE_SELS__ || []).forEach(function (sel) {
+      var n = document.querySelector(sel);
+      if (!n) { out[sel] = null; return; }
+      var r = n.getBoundingClientRect();
+      var c = getComputedStyle(n);
+      out[sel] = {
+        x: +r.x.toFixed(1), y: +r.y.toFixed(1), w: +r.width.toFixed(1), h: +r.height.toFixed(1), right: +r.right.toFixed(1),
+        display: c.display, flexDirection: c.flexDirection, marginLeft: c.marginLeft, opacity: c.opacity,
+        fontSize: c.fontSize, lineHeight: c.lineHeight
+      };
+    });
+    document.title = 'PROBE:' + JSON.stringify(out);
+  }
+  window.addEventListener('load', function () { setTimeout(measure, 200); });
+})();
+</script>`;
+
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cx-probe-'));
+let failed = 0;
+
+for (const c of CASES) {
+  if (only && c.name !== only) continue;
+  const fixture = path.join(root, c.fixture);
+  if (!fs.existsSync(fixture)) {
+    console.error(`[ui-probe] FAIL 缺 fixture: ${c.fixture}`);
+    failed += 1;
+    continue;
+  }
+  const html = fs.readFileSync(fixture, 'utf8')
+    .replace('{{CSS}}', `file://${cssPath}`)
+    .replace('</body>', MEASURE.replace('__SELS__', JSON.stringify(c.sels)) + '\n</body>');
+  const file = path.join(tmp, `${c.name}.html`);
+  fs.writeFileSync(file, html);
+
+  const profile = path.join(tmp, `profile-${c.name}`);
+  const common = ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
+    `--user-data-dir=${profile}`, '--virtual-time-budget=1500', `--window-size=${c.window}`];
+  let dom = '';
+  try {
+    dom = execFileSync(browser, [...common, '--dump-dom', `file://${file}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch (e) {
+    dom = String(e.stdout || '');
+  }
+  if (pngDir) {
+    fs.mkdirSync(pngDir, { recursive: true });
+    try {
+      execFileSync(browser, [...common, `--screenshot=${path.join(pngDir, c.name + '.png')}`, `file://${file}`], { stdio: 'ignore' });
+    } catch {}
+  }
+
+  const hit = dom.match(/<title>PROBE:(.*?)<\/title>/s);
+  if (!hit) {
+    console.error(`[ui-probe] FAIL ${c.name} 页面没有回报测量值（fixture 脚本没跑起来？）`);
+    failed += 1;
+    continue;
+  }
+  let measured;
+  try { measured = JSON.parse(hit[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&')); } catch (e) {
+    console.error(`[ui-probe] FAIL ${c.name} 测量值解析失败: ${e.message}`);
+    failed += 1;
+    continue;
+  }
+
+  const results = c.assert(measured);
+  const bad = results.filter(([ok]) => !ok);
+  console.log(`[ui-probe] ${c.name}: ${results.length - bad.length}/${results.length} 通过`);
+  for (const [ok, label, detail] of results) {
+    console.log(`  ${ok ? 'OK  ' : 'FAIL'} ${label}${detail ? ' · ' + detail : ''}`);
+  }
+  if (verbose) {
+    for (const sel of c.sels) console.log(`  · ${sel} ${JSON.stringify(measured[sel])}`);
+  }
+  failed += bad.length;
+}
+
+fs.rmSync(tmp, { recursive: true, force: true });
+if (failed) {
+  console.error(`[ui-probe] FAIL ${failed} 条布局不变量不成立`);
+  process.exit(1);
+}
+console.log('[ui-probe] PASS 布局不变量全部成立');
