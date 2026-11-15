@@ -17,5 +17,4 @@ description:
   zh: 'DSH 里的 ContextOS 运维台：部署服务节点、创建项目空间、生成并编译代码、管理数字分身与项目看板、扫描同网与蓝牙设备，并让内置 Copilot 直接执行这些操作。'
 icon: https://raw.githubusercontent.com/contextos-devops/dsh-contextos-devops/master/assets/icon-180.png
 
-# 发到 npm 之后再取消注释（npm 安装更快，且免 allowBuilds 授权）
-# npm: dsh-contextos-devops
+npm: dsh-contextos-devops

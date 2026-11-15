@@ -154,3 +154,18 @@ git add -A && git commit -m "release: vX.Y.Z" && npm run push:all
 - ✅ `release/catalog-entry.yml` 可直接复制进教学仓库
 - ⬜ GitHub 仓库加 topic `dsh-plugin`（网页操作，一次性）
 - ✅ `scripts/publish-npm.mjs`：临时目录改名打包（不动本机 link 安装），已产出 0.95MB 包；npm 发布需你 `npm login` 后执行一条命令
+
+### 3.3 发布后的可见延迟
+
+`npm publish` 返回 `202` 与「Your package is being processed」时，版本要过几分钟才出现在 registry
+（2026-11-15 实测：04:24 发布 → 04:25 可 `npm view` 到；此前一轮约 20 分钟）。判断是否成功不要只看
+命令输出，看这三处：
+
+```sh
+npm view dsh-contextos-devops versions --json      # 版本列表里有没有
+npm view dsh-contextos-devops dist-tags --json     # latest 指向哪个版本
+curl -sI https://registry.npmjs.org/dsh-contextos-devops/-/dsh-contextos-devops-<v>.tgz | head -1
+```
+
+`latest` 被占位版本（如 `0.0.0-stage`）占住时：`npm dist-tag add dsh-contextos-devops@<v> latest`，
+旧占位用 `npm deprecate dsh-contextos-devops@0.0.0-stage "placeholder"` 标掉。
