@@ -142,7 +142,7 @@
 | `docs/INTERFACE.md` | 419 | 人写 |
 | `docs/MONITOR.md` | 83 | 人写 |
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
-| `docs/PUBLISH.md` | 133 | 人写 |
+| `docs/PUBLISH.md` | 143 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
 | `docs/RSI-LEDGER.md` | 136 | 人写 |
 | `docs/STATE.md` | — | 生成 |

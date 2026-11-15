@@ -77,6 +77,16 @@ node scripts/publish-npm.mjs --publish   # 已登录时直接发布
 | 自检 | name / patch / `index.js`+`client.js`+`assets/client.css` 三者一致，`private` 已移除 |
 | 重新打包 | 仓库根目录产出 `dsh-contextos-devops-<版本>.tgz`（`.gitignore` 已忽略） |
 | `--publish` | 先 `npm whoami`，未登录直接报错退出，不会带病上传 |
+| `--publish --otp=123456` | 账号开了 2FA 时用一次性验证码发布（30 秒有效） |
+
+### 3.1 2FA 与令牌（踩过两次）
+
+| 报错 | 含义 | 解法 |
+|---|---|---|
+| `E403 ... granular access token with bypass 2fa enabled is required` | 现有令牌没有「跳过 2FA」权限 | npm 网页 → Access Tokens → Granular Access Token，勾 **Bypass 2FA**，权限给 `dsh-contextos-devops` 的 Read and write |
+| `EOTP ... requires a one-time password` | 令牌有效但每次发布要验证码 | 加 `--otp=<6 位>`，或换上面的 bypass 令牌 |
+
+令牌写进 `~/.npmrc` 的 `//registry.npmjs.org/:_authToken=...`，然后 `npm whoami` 应返回 `contextos-devops`。
 
 发布后两件事：① 把 `release/catalog-entry.yml` 里 `npm:` 行取消注释再提 PR；
 ② 想让自己也换成 npm 安装，把 profile 的 `link:` 改成 `dsh-contextos-devops@<版本>`。

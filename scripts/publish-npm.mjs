@@ -10,6 +10,7 @@
 //   node scripts/publish-npm.mjs                     # 只打包，打印下一步命令（默认）
 //   node scripts/publish-npm.mjs --name xyz          # 换发布名
 //   node scripts/publish-npm.mjs --publish           # 真的发（需要先 npm login）
+//   node scripts/publish-npm.mjs --publish --otp=123456   # 开了 2FA 时带验证码
 //   node scripts/publish-npm.mjs --keep              # 保留临时目录便于检查
 import fs from 'node:fs';
 import os from 'node:os';
@@ -24,6 +25,7 @@ const arg = (k, d) => {
   return i >= 0 ? argv[i + 1] : d;
 };
 const PUBLISH = argv.includes('--publish');
+const OTP = arg('--otp', '');
 const KEEP = argv.includes('--keep');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const target = arg('--name', 'dsh-contextos-devops');
@@ -97,7 +99,8 @@ if (PUBLISH) {
     process.exit(1);
   }
   console.log('[publish-npm] npm publish …');
-  const out = execSync(`npm publish ${JSON.stringify(outTgz)} --access public`, { cwd: root, encoding: 'utf8' });
+  const otpFlag = OTP ? ` --otp=${OTP}` : '';
+  const out = execSync(`npm publish ${JSON.stringify(outTgz)} --access public${otpFlag}`, { cwd: root, encoding: 'utf8' });
   console.log(out.trim());
   console.log(`PASS  已发布 ${target}@${version}`);
   console.log(`下一步：把 release/catalog-entry.yml 的 npm 行取消注释（npm: ${target}）再提 PR`);
