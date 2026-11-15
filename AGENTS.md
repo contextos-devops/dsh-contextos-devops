@@ -26,6 +26,16 @@ node --check index.js    # 只改宿主时先做语法检查
 
 ---
 
+## 〇之二、代码库与发布（两个远端，同源镜像）
+
+| 远端 | 地址 | 用途 |
+| --- | --- | --- |
+| `origin` | https://shylinux.com/x/contextos-devops-dsh | 主库（ContextOS 自家） |
+| `github` | https://github.com/shylinux/contextos-devops-dsh | GitHub 镜像（对外） |
+
+提交后**两个都要推**：`npm run push:all`（= `git push origin master && git push github master`）。
+两个远端必须同 commit；只推一个会导致「别人拉到的和你看的不是同一份代码」。
+
 ## 一、工作范式
 
 **三纲**：集群化部署 → 让所有设备互联互通；模块化开发 → 让所有代码自动生成；自动化应用 → 让所有数据自由流动。

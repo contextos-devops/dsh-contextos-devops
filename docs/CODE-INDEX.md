@@ -116,6 +116,7 @@
 | `npm run verify:ui` | 真浏览器验收（Edge CDP 9223） |
 | `npm run release` | build:client + verify:ui |
 | `npm run stats:ledger` | LEDGER 条目统计与归纳提醒 |
+| `npm run push:all` | git push origin master && git push github master |
 | `npm run check:<名>` | 单跑某道门禁：ui / probe / context / i18n / hooks / ops / store / docs / load / budget |
 
 ## 6. 文档

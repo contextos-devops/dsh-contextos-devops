@@ -141,9 +141,43 @@ const write = (f, text) => {
     return true;
   }
   fs.writeFileSync(abs, text);
-  console.log(`wrote ${f} (${text.split('\n').length} lines)`);
+  if (!globalThis.__printed) globalThis.__printed = new Set();
+  if (!globalThis.__printed.has(f)) { globalThis.__printed.add(f); console.log(`wrote ${f} (${text.split('\n').length} lines)`); }
   return true;
 };
-const ok1 = write('docs/CODE-INDEX.md', code);
-const ok2 = write('docs/STATE.md', state);
-if (check && !(ok1 && ok2)) process.exit(1);
+// ── INDEX 行数同步（自愈，避免「改了代码索引却忘了改 INDEX 的行数」）
+// 计行方式必须与 docs-check 一致：split('\n').length（不是 wc -l）。
+const lineCount = (f) => fs.readFileSync(path.join(root, f), 'utf8').split('\n').length;
+const syncIndex = () => {
+  const abs = path.join(root, 'docs/INDEX.md');
+  if (!fs.existsSync(abs)) return 0;
+  const before = fs.readFileSync(abs, 'utf8');
+  let changed = 0;
+  const after = before.replace(/\|\s*`([A-Za-z0-9._-]+\.md)`\s*\|\s*(\d+)\s*\|/g, (m, f, n) => {
+    const target = path.join(root, 'docs', f);
+    if (!fs.existsSync(target)) return m;
+    const real = lineCount(path.join('docs', f));
+    if (String(real) === n) return m;
+    changed++;
+    return `| \`${f}\` | ${real} |`;
+  });
+  if (!changed) return 0;
+  if (!check) fs.writeFileSync(abs, after);
+  return changed;
+};
+
+// INDEX 与生成物互相列行数，迭代到稳定（最多 4 轮，通常 2 轮）
+const printed = new Set();
+let okAll = true;
+for (let i = 0; i < 4; i++) {
+  const synced = syncIndex();
+  const c = write('docs/CODE-INDEX.md', code);
+  const st = write('docs/STATE.md', state);
+  okAll = c && st;
+  if (check) {
+    if (synced) { console.log(`FAIL  docs/INDEX.md 有 ${synced} 处行数过期：跑 node scripts/docs-index.mjs --write`); okAll = false; }
+    break;
+  }
+  if (synced === 0 && i > 0) break;
+}
+if (!okAll) process.exit(1);

@@ -146,3 +146,12 @@ Each entry records: lesson → reusable abstraction → verification.
   ② LEDGER 51 → 正册 6 条 + `docs/archive/LEDGER-2026H1.md` 45 条；③ 新增 `scripts/docs-budget.mjs` 接进构建（第 11 道）。
 - 数字: 19 份 49220 tokens 全部在预算内；路由实付 0 / 1661 / 3912 / 1673；LEDGER 4523 → 6 条；`build:client` exit 0。
 - 固化: `docs-budget.mjs` 超预算即红 + 「11 道门禁」口径；报告 `2026-11-15-context-budget.md`。
+
+## 2026-11-15 · 两个代码库地址（自建 + GitHub 镜像）
+
+- Symptom: 远端一直只有 `https://shylinux.com/x/...`，push 曾长期失败；用户告知同时存在 GitHub 镜像，两个必须同 commit。
+- Root cause: 流程层 —— 发布口径没写进规范，远端靠口头记忆。
+- 类别: 流程层（同类第 1 次）。
+- Fix: 加 `github` 远端；`npm run push:all`（origin + github 一起推）；AGENTS 新增「〇之二 代码库与发布」表。
+- 数字: 落后 39 个提交 → 两个远端均推到 e93879e（0 落后，rc=0）。
+- 固化: AGENTS §〇之二 + `push:all` 脚本；另把 `docs-index --write` 改成自动同步 INDEX 行数（本轮又一次被行数过期卡住）。
