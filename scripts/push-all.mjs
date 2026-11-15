@@ -18,6 +18,8 @@ const USER_BY_HOST = { 'github.com': 'contextos-devops' };
 
 // 任何一步都不许停下来要口令：拿不到凭据就失败，卡住会让整轮任务挂死
 const ENV = { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_ASKPASS: '/usr/bin/true', SSH_ASKPASS: '/usr/bin/true' };
+// 本机存在会拖死 github.com 的代理配置；显式清空后 TLS 直连只需 ~1s
+const NO_PROXY = ['-c', 'http.proxy=', '-c', 'https.proxy='];
 
 function git(args, opts = {}) {
   return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: ENV, timeout: 45000, ...opts }).trim();
@@ -68,7 +70,7 @@ let failed = 0;
 for (const [name, url] of list) {
   const host = hostOf(url);
   const helper = helperFor(host, creds);
-  const args = [...(helper || []), 'push', name, BRANCH];
+  const args = [...NO_PROXY, ...(helper || []), 'push', name, BRANCH];
   console.log(`PUSH  ${name} (${host}) …`);
   try {
     const out = execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: ENV, timeout: 60000 });
