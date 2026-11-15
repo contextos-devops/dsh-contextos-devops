@@ -30,15 +30,15 @@
 | `lib/core/deploy-log.js` | 84 | `deployLogPath()` `resetDeployLog()` `traceDeployRequest()` `traceDeployResponse()` `appendDeployLog()` `readDeployLog()` |
 | `lib/core/device.js` | 149 | `discoverDevices()` |
 | `lib/core/files.js` | 153 | `listDir()` `readFile()` `writeFile()` `listTree()` `makeDir()` `renamePath()` `removePath()` `gitStatus()` |
-| `lib/core/gobuild.js` | 69 | `goBinary()` `runGo()` `goTidyBuild()` |
+| `lib/core/gobuild.js` | 99 | `goBinary()` `runGo()` `goTidyBuild()` |
 | `lib/core/iam.js` | 123 | `iamCommand()` `iamList()` `iamCall()` `commandExists()` `subjectEndpoints()` `iamEndpoints()` `IAM` `SUBJECTS` …9 个 |
 | `lib/core/identity.js` | 23 | `activeAvatarUid()` `resolveActorUid()` |
 | `lib/core/init.js` | 205 | `getInitStatus()` `startInit()` |
 | `lib/core/installer.js` | 311 | `hostTarget()` `normalizeTarget()` `binaryNameFor()` `platformOptions()` `mirrorOf()` `projectNameOf()` `codeAddressOf()` `resolveSources()` …18 个 |
-| `lib/core/nodes.js` | 965 | `sshHosts()` `sysControl()` `deployNode()` `stopWatchdog()` `watchdogState()` `startWatchdog()` `startNode()` `stopNode()` …20 个 |
+| `lib/core/nodes.js` | 967 | `sshHosts()` `sysControl()` `deployNode()` `stopWatchdog()` `watchdogState()` `startWatchdog()` `startNode()` `stopNode()` …20 个 |
 | `lib/core/ops.js` | 321 | `opIndex()` `OPS` |
 | `lib/core/project.js` | 394 | `fieldOptions()` `pmList()` `optionValue()` `pmCreateItem()` `pmLog()` `pmFieldsFor()` `pmModifyItem()` `pmRemoveItem()` …13 个 |
-| `lib/core/spaces.js` | 405 | `baseDirOf()` `spaceBase()` `spaceDir()` `startSpace()` `stopSpace()` `compileSpace()` `listSpaces()` `initSpace()` …20 个 |
+| `lib/core/spaces.js` | 411 | `baseDirOf()` `spaceBase()` `spaceDir()` `startSpace()` `stopSpace()` `compileSpace()` `listSpaces()` `initSpace()` …20 个 |
 | `lib/core/terminal.js` | 138 | `terminalUpgrade()` |
 | `lib/core/terminal2.js` | 142 | `terminalUpgrade()` |
 | `lib/core/toolchain.js` | 221 | `cmpVer()` `goVersionOf()` `goCandidates()` `findGoInPath()` `findGo()` `ensureGo()` `goEnv()` `envDoctor()` …10 个 |

@@ -102,6 +102,18 @@ await step('分身列表回读', async () => {
   return list;
 });
 await step('创建赛博世界', async () => createBackground({ node: port, name: 'E2E 世界' }));
+await step('空间代理探活', async () => {
+  // 空间是否被节点正确代理：/s/<pod>/ 返回 HTML 才算通，
+  // 返回 {"detail":[...]} 是节点的 echo 兜底（空间没注册到节点）。
+  const rows = [];
+  for (const sp of await listSpaces({ node: port })) {
+    const r = await http(port, `/s/${sp.name}/`, { timeout: 8000 });
+    const echo = /"detail"\s*:/.test(r.text);
+    rows.push({ space: sp.name, status: r.status, bytes: r.size, echo });
+    if (echo) throw new Error(`空间 ${sp.name} 没有被节点代理（/s/${sp.name}/ 返回 echo ${r.size}B）；节点日志里应有 warn not found space`);
+  }
+  return rows;
+});
 await step('创建项目实例', async () => ensureProject({ node: port }));
 
 // 4) 汇总
