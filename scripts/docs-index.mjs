@@ -80,14 +80,31 @@ const purpose = {
   'i18n-check.mjs': '中英文案键与大小写',
   'context-check.mjs': 'AI 上下文包与硬规则仍在',
   'docs-check.mjs': '文档索引、链接、生成物一致',
+  'docs-budget.mjs': '文档 token 预算（棘轮）与路由实付',
   'ui-verify.mjs': '真浏览器验收（Edge CDP 9223）',
   'edge-refresh.mjs': 'CDP 刷新页面',
   'accept-factory.mjs': '一次性空间跑通软件工厂',
 };
 for (const f of scripts) code += `| \`scripts/${f}\` | ${purpose[f] || '—'} |\n`;
+const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+const npmPurpose = {
+  'build:client': '构建 + 全部门禁（11 道，红先修）',
+  'watch:client': '监听片段变化重建（不跑门禁）',
+  'release': 'build:client + verify:ui',
+  'verify:ui': '真浏览器验收（Edge CDP 9223）',
+  'verify:factory': 'factory 模式端到端验收',
+  'stats:ledger': 'LEDGER 条目统计与归纳提醒',
+};
+code += `\n### 5.1 npm 脚本\n\n| 命令 | 作用 |\n| --- | --- |\n`;
+for (const [k, v] of Object.entries(pkg.scripts || {})) {
+  if (k.startsWith('check:')) continue;
+  code += `| \`npm run ${k}\` | ${npmPurpose[k] || v.slice(0, 60)} |\n`;
+}
+code += `| \`npm run check:<名>\` | 单跑某道门禁：${Object.keys(pkg.scripts || {}).filter((k) => k.startsWith('check:')).map((k) => k.slice(6)).join(' / ')} |\n`;
 code += `\n## 6. 文档\n\n| 文档 | 行数 | 性质 |\n| --- | ---: | --- |\n`;
 const generated = new Set(['docs/CODE-INDEX.md', 'docs/STATE.md']);
 for (const f of walk('docs', '.md').sort()) {
+  if (f.includes('/archive/')) continue;
   const kind = generated.has(f) ? '生成' : (f === 'docs/INDEX.md' ? '索引' : '人写');
   // 生成物列自己的行数会自我指涉、每次都不一致，所以不写
   code += `| \`${f}\` | ${generated.has(f) ? '—' : lines(f)} | ${kind} |\n`;

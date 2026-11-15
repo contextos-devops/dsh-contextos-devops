@@ -90,6 +90,7 @@
 | --- | --- |
 | `scripts/accept-factory.mjs` | 一次性空间跑通软件工厂 |
 | `scripts/context-check.mjs` | AI 上下文包与硬规则仍在 |
+| `scripts/docs-budget.mjs` | 文档 token 预算（棘轮）与路由实付 |
 | `scripts/docs-check.mjs` | 文档索引、链接、生成物一致 |
 | `scripts/docs-index.mjs` | — |
 | `scripts/edge-refresh.mjs` | CDP 刷新页面 |
@@ -103,6 +104,19 @@
 | `scripts/ui-check.mjs` | UI 结构与组件复用断言 |
 | `scripts/ui-probe.mjs` | — |
 | `scripts/ui-verify.mjs` | 真浏览器验收（Edge CDP 9223） |
+
+### 5.1 npm 脚本
+
+| 命令 | 作用 |
+| --- | --- |
+| `npm run build:client` | 构建 + 全部门禁（11 道，红先修） |
+| `npm run watch:client` | 监听片段变化重建（不跑门禁） |
+| `npm run verify:factory` | factory 模式端到端验收 |
+| `npm run gate` | node scripts/gate.mjs |
+| `npm run verify:ui` | 真浏览器验收（Edge CDP 9223） |
+| `npm run release` | build:client + verify:ui |
+| `npm run stats:ledger` | LEDGER 条目统计与归纳提醒 |
+| `npm run check:<名>` | 单跑某道门禁：ui / probe / context / i18n / hooks / ops / store / docs / load / budget |
 
 ## 6. 文档
 
@@ -124,6 +138,6 @@
 | `docs/MONITOR.md` | 83 | 人写 |
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
-| `docs/RSI-LEDGER.md` | 495 | 人写 |
+| `docs/RSI-LEDGER.md` | 149 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 243 | 人写 |

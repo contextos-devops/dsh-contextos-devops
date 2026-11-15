@@ -1,6 +1,6 @@
 {
   "name": "@local/contextos-devops-dsh",
-  "version": "1.48.21",
+  "version": "1.48.22",
   "private": true,
   "type": "module",
   "description": "ContextOS DevOps for DeepSeek Harness: tech dashboard for cluster nodes, project spaces, platform apps and data.",
@@ -39,7 +39,7 @@
     }
   },
   "scripts": {
-    "build:client": "node build/client.mjs && node scripts/gate.mjs && node scripts/load-check.mjs && node scripts/hook-order-check.mjs && node scripts/op-check.mjs && node scripts/store-check.mjs && node scripts/ui-check.mjs && node scripts/ui-probe.mjs --soft && node scripts/i18n-check.mjs && node scripts/context-check.mjs && node scripts/docs-check.mjs",
+    "build:client": "node build/client.mjs && node scripts/gate.mjs && node scripts/load-check.mjs && node scripts/hook-order-check.mjs && node scripts/op-check.mjs && node scripts/store-check.mjs && node scripts/ui-check.mjs && node scripts/ui-probe.mjs --soft && node scripts/i18n-check.mjs && node scripts/context-check.mjs && node scripts/docs-check.mjs && node scripts/docs-budget.mjs --check",
     "watch:client": "node build/client.mjs --watch",
     "check:ui": "node scripts/ui-check.mjs",
     "check:probe": "node scripts/ui-probe.mjs",
@@ -54,6 +54,7 @@
     "check:store": "node scripts/store-check.mjs",
     "check:docs": "node scripts/docs-check.mjs",
     "check:load": "node scripts/load-check.mjs",
-    "stats:ledger": "node scripts/ledger-stats.mjs"
+    "stats:ledger": "node scripts/ledger-stats.mjs",
+    "check:budget": "node scripts/docs-budget.mjs --check"
   }
 }

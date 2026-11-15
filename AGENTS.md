@@ -14,11 +14,11 @@
 | 规模 | 宿主 345 行 + `lib/**` 5.6k 行 + 客户端 24 片段 7.6k 行 + CSS 3.3k 行 + 102 个 op |
 | 代码在哪 | 宿主 `index.js` + `lib/**`；客户端 `src/client/parts/*.js`（拼成 `client.js`）；样式 `src/client/styles/*.css` |
 | 一条请求怎么走 | 组件 → `api(op)` → `index.js` 查 `lib/core/ops.js` → `lib/core/<域>.js` → ContextOS HTTP |
-| 怎么算改完 | `npm run build:client` 全绿（10 道门禁）+ 有证据 + 报告落盘 |
+| 怎么算改完 | `npm run build:client` 全绿（11 道门禁）+ 有证据 + 报告落盘 |
 | 下一步干什么 | §七 验收标准 → §十三 本轮优先级：红门禁 > 已知限制 > 用户需求 |
 
 ```sh
-npm run build:client     # 构建 + 10 道门禁（红了先修，不许带 FAIL 交付）
+npm run build:client     # 构建 + 11 道门禁（红了先修，不许带 FAIL 交付）
 npm run check:probe      # 离线渲染 fixture 量布局（需本机 Edge/Chrome）
 npm run verify:ui        # 真浏览器验收（需 Edge CDP 9223），exit 0 才算过
 node --check index.js    # 只改宿主时先做语法检查
@@ -67,7 +67,7 @@ node --check index.js    # 只改宿主时先做语法检查
 ### 3.1 五层
 
 ```
-页面/视图（60-page 装配，chat / manage / dev / monitor）
+页面/视图（60-page 装配：chat / manage / dev / monitor）
    ↓
 组件片段（src/client/parts/*.js：卡片、表单、消息、PM、地图、编辑器、监控…）
    ↓ api(op)                         ← 唯一客户端出口，op 必须登记在 ops.js
@@ -78,65 +78,19 @@ node --check index.js    # 只改宿主时先做语法检查
 ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 ```
 
-### 3.2 文件地图
+### 3.2 逐文件清单（别抄在这里）
 
-| 路径 | 行数 | 职责 |
-| --- | --- | --- |
-| `index.js` | 345 | 宿主接线：`export const inject=['tools','webServer','llm']`、工具注册、HTTP/WS 路由、静态资源 |
-| `lib/core/ops.js` | 299 | **op 注册表**（102 条）：`{ method, noUser, run }`；`index.js` 只查表 |
-| `lib/core/nodes.js` | 627 | 节点：列表/部署/启停/探活/端口 |
-| `lib/core/spaces.js` | 406 | 空间：列表/创建/构建/目录树 |
-| `lib/core/apps.js` | 675 | 应用：列表/创建/打开/商店 |
-| `lib/core/project.js` | 393 | 项目管理状态机（PM 唯一处） |
-| `lib/core/copilot.js` | 419 | 对话：提示词、三模式短路、动作白名单 |
-| `lib/core/codegen.js` | 401 | 代码生成（factory 模式） |
-| `lib/core/avatar.js` | 289 | 数字分身 |
-| `lib/core/vocab.js` | 158 | 词表（字段/概念唯一命名） |
-| `lib/base/url.js` | 178 | 两类 URL 构造（`apiPath` / `webUrl`） |
-| `lib/base/http.js` | 140 | 请求与鉴权（`user.uid`/sessid） |
-| `lib/base/registry.js` | 186 | 节点/空间注册与缓存 |
-| `lib/base/state.js` | 45 | 服务端状态目录（`state.json`） |
+| 想知道 | 看 |
+| --- | --- |
+| 服务端每个文件多少行、导出什么 | `docs/CODE-INDEX.md` §1 |
+| 客户端 24 个片段各多少行、有哪些组件 | `docs/CODE-INDEX.md` §2 |
+| op 契约（102 条）与服务端专用 op | `docs/CODE-INDEX.md` §3 |
+| 脚本与门禁、npm 命令 | `docs/CODE-INDEX.md` §5 + §5.1 |
+| 浏览器 38 个键、服务端 9 项状态 | `docs/STATE.md` |
+| 某处代码该放哪一层 | `docs/ARCHITECTURE.md` §1、§8 |
 
-客户端 24 片段（构建顺序即文件名序）：
-
-| 片段 | 行数 | 干什么 |
-| --- | --- | --- |
-| `00-prelude.js` | 310 | 启动、样式注入（版本跟随）、i18n、工具函数 |
-| `05-bootstrap.js` | 61 | React/Monaco/xterm 加载与降级 |
-| `08-store.js` | 85 | **唯一持久化出口**（`CX_STORE_SCHEMA` + `cxRead/cxWrite`） |
-| `10-ui.js` | 188 | 基础组件（按钮、标签、空态、加载） |
-| `12-debug.js` | 361 | 底部控制台、DEBUG/STATE 页 |
-| `15-layout.js` | 86 | 壳层布局与侧栏 |
-| `20-devworkspace.js` | 789 | DEV 工作台：终端会话、预览、分栏 |
-| `25-editor-ui.js` | 28 | 编辑器工具条 |
-| `30-modals.js` | 85 | 模态框底座 |
-| `32-cards.js` | 176 | 节点/空间/应用卡片 |
-| `34-forms.js` | 176 | 表单与字段 |
-| `36-data.js` | 267 | 数据表格 |
-| `40-project.js` | 430 | PM 数据层（计划/任务/报告/反馈）+ 农历 |
-| `45-map.js` | 109 | 地图卡片（Leaflet） |
-| `46-pm.js` | 158 | PM 交互（选择/筛选） |
-| `47-three.js` | 324 | 三维场景（赛博世界） |
-| `49-msg.js` | 167 | 消息子组件（引用/表单/实体卡） |
-| `50-chat.js` | 1422 | 会话面板（消息流、工具条、自愈、上传） |
-| `51-pmselection.js` | 31 | PM 选中态 |
-| `52-pmdata.js` | 29 | PM 数据派生 |
-| `55-pm.js` | 146 | PM 视图装配 |
-| `58-config.js` | 381 | 插件配置（主题/语言/模型/调用） |
-| `59-monitor.js` | 262 | 监控面板 |
-| `60-page.js` | 1518 | 页面装配、视图切换、`clientCheck` 自报 |
-
-样式：`tokens.css`（2）+ `main.css`（3294）+ `kit.css`（20）→ 构建成 `assets/client.css`。
-
-**构建产物**：`client.js`（7590 行）、`assets/client.css` —— 只由 `build/client.mjs` 生成，不许手改。
-
-### 3.3 数据与状态
-
-- 浏览器：38 个键，全部登记在 `src/client/parts/08-store.js` 的 `CX_STORE_SCHEMA`，键表见 `docs/STATE.md`。
-- 服务端：`~/.dsh/contextos-devops-dsh/state.json`（节点缓存、终端缓冲、请求日志、选择记忆、prefs、clientCheck）。
-- 生成物：`docs/CODE-INDEX.md`（代码索引）、`docs/STATE.md`（状态表）—— 改代码后跑 `node scripts/docs-index.mjs --write`。
-
----
+生成物过期时：`node scripts/docs-index.mjs --write`。
+**构建产物** `client.js`、`assets/client.css` 只由 `build/client.mjs` 生成，不许手改。
 
 ## 四、文档索引（19 份，入口 `docs/INDEX.md`）
 
@@ -302,39 +256,17 @@ YYYY-MM-DD — <一句话现象>
 
 ## 十、脚本（现成能用什么）
 
-### 10.1 npm 脚本
+本轮只需要记住三条：
 
-| 命令 | 作用 |
-| --- | --- |
-| `npm run build:client` | 构建 + 10 道门禁（gate → load → hook-order → op → store → ui → probe → i18n → context → docs） |
-| `npm run check:probe` | 离线渲染 fixture，断言布局不变量（`--case` / `--verbose` / `--png` / `--css`） |
-| `npm run verify:ui` | 真浏览器验收（Edge CDP 9223），`exit 0/1/2` |
-| `npm run check:ops` / `check:store` / `check:ui` / `check:hooks` / `check:load` / `check:i18n` / `check:context` / `check:docs` | 单跑某道门禁 |
-| `npm run watch:client` | 监听片段变化重建（不跑门禁） |
-| `npm run release` | `build:client` + `verify:ui` |
+```sh
+npm run build:client    # 构建 + 11 道门禁（红先修，不许带 FAIL 交付）
+npm run check:probe     # 离线量布局（改 UI 时）
+npm run verify:ui       # 真浏览器验收（Edge CDP 9223）
+```
 
-### 10.2 脚本文件
-
-| 脚本 | 干什么 | 典型用法 |
-| --- | --- | --- |
-| `build/client.mjs` | 拼 24 片段 → `client.js`，拼 CSS → `client.css`，注入构建哈希与版本 | `node build/client.mjs --watch` |
-| `scripts/gate.mjs` | 产物哈希/语法/CSS 版本/`:root` 令牌/README+AGENTS 结构 | `npm run gate` |
-| `scripts/load-check.mjs` | 片段清单 vs 目录哈希 + `vm` 里真执行 `factory()` | `npm run check:load` |
-| `scripts/hook-order-check.mjs` | hook 依赖数组引用未声明变量（TDZ） | `npm run check:hooks` |
-| `scripts/op-check.mjs` | 客户端每个 `api('x')` 都有 op；方法与注册表一致 | `npm run check:ops` |
-| `scripts/store-check.mjs` | 只准走 `08-store.js`；schema 与 helper 类型一致（棘轮） | `npm run check:store` |
-| `scripts/ui-check.mjs` | 静态 UI 断言（字号/图标/控件尺寸/禁用写法，88 条） | `npm run check:ui` |
-| `scripts/ui-probe.mjs` | 无头渲染真实 CSS，量盒子并断言（消息结构/折叠高度） | `npm run check:probe -- --verbose` |
-| `scripts/i18n-check.mjs` | 中英文案成对、词表一致 | `npm run check:i18n` |
-| `scripts/context-check.mjs` | `ai-context.json` 文档存在 + 硬规则仍被注入提示词 | `npm run check:context` |
-| `scripts/docs-index.mjs` | 生成 `CODE-INDEX.md` / `STATE.md`（`--write` 或 `--check`） | `node scripts/docs-index.mjs --write` |
-| `scripts/docs-check.mjs` | 孤儿文档、死链、生成物过期、已删文档复活 | `npm run check:docs` |
-| `scripts/ui-verify.mjs` | 真机验收：结构/尺寸/下拉/本地化/控制台 | `npm run verify:ui` |
-| `scripts/edge-refresh.mjs` | 通过 CDP 刷新页面（改完客户端用） | `node scripts/edge-refresh.mjs` |
-| `scripts/accept-factory.mjs` | factory 模式端到端验收 | `npm run verify:factory` |
-| `scripts/ledger-stats.mjs` | 数 LEDGER 条目、距上次全面归纳的条数、缺字段条目 | `node scripts/ledger-stats.mjs --check` |
-
----
+**每个脚本干什么、参数怎么写、门禁顺序**：`docs/CODE-INDEX.md` §5 脚本表 + §5.1 npm 脚本；
+单跑某道门禁用 `npm run check:<名>`（ui / probe / hooks / ops / store / load / i18n / context / docs / budget）。
+凡是「人工检查超过两次」的事，第三次必须变成脚本或断言（§九）。
 
 ## 十一、经验（以前踩过什么，现在怎么处理）
 
