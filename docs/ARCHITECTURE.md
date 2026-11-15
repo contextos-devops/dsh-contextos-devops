@@ -112,7 +112,7 @@ PM 请求只有一种形状（当前节点 + 分身 + 选中 id）；每个交�
 | 关注 | 归属 | 备注 |
 | --- | --- | --- |
 | PM 状态机 | `lib/core/project.js` | 客户端不复制状态规则 |
-| 部署节点 | `lib/core/nodes.js` | `deployNode` 默认 `auto`：clone→编译，否则复用/下载二进制 |
+| 部署节点 | `lib/core/nodes.js` + `installer.js` | `deployOptions` 探测 git/go；`buildInstallPlan` 选 source/binary/copy；9 个可用平台 |
 | 建空间 | `lib/core/spaces.js` | `createSpace`/`initSpace` 把节点二进制复制进空间 `bin/ice.bin` |
 | 代码生成 | `lib/core/codegen.js` | 见 [CODE-GEN.md](CODE-GEN.md) |
 | 对话 | `lib/core/copilot.js` | 见 [AI-CONVERSATION.md](AI-CONVERSATION.md) |

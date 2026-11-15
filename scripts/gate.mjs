@@ -160,6 +160,20 @@ if (!/URL-SPEC/.test(read('docs/URL-SPEC.md'))) err('URL 规范：docs/URL-SPEC.
   if (claimed && claimed[1] !== pkg.version) err(`README.md: 版本 ${claimed[1]} 与 package.json ${pkg.version} 不一致`);
 }
 
+// 13) 工具链：go 必须可自举（git 由 ContextOS 自带）
+{
+  const tc = read('lib/core/toolchain.js');
+  for (const k of ['export async function ensureGo', 'export function goEnv', 'export async function envDoctor', 'findGo']) {
+    if (!tc.includes(k)) err(`lib/core/toolchain.js: missing ${k}（go 无法按需安装）`);
+  }
+  const gb = read('lib/core/gobuild.js');
+  if (!/ensureGo\(/.test(gb)) err('lib/core/gobuild.js: 编译前必须 ensureGo（首编自动装 go）');
+  const doc = read('docs/CODE-GEN.md');
+  for (const k of ['git 自带', '按需下载', 'usr/local/go']) if (!doc.includes(k)) err(`docs/CODE-GEN.md: missing ${k}`);
+  const ops = read('lib/core/ops.js');
+  for (const k of ['envDoctor:', 'goEnsure:']) if (!ops.includes(k)) err(`lib/core/ops.js: missing ${k}`);
+}
+
 // 12) 样式不得污染宿主：:root 只能声明 --cx- 前缀令牌，顶层选择器必须带 cx
 {
   const css = read('assets/client.css').replace(/\/\*[\s\S]*?\*\//g, '');

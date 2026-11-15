@@ -15,7 +15,7 @@
       const m = s.match(/^(?:\d{4}-)?(\d{2}-\d{2})[ T](\d{2}:\d{2})/);
       return m ? `${m[1]} ${m[2]}` : (s || '');
     };
-    // 版本号兜底：老接口会把整张 /c/version 表塞进 version，这里只取 vX.Y.Z-xxx
+    // 版本号兜底：老接口会把整张 /c/runtime 表塞进 version，这里只取 vX.Y.Z-xxx
     const cardVer = (v) => {
       const raw = String(v || '').trim();
       if (!raw) return '';

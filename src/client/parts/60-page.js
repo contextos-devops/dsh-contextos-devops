@@ -748,14 +748,14 @@
         } catch { setBgData({ active: '', items: [] }); setBg(null); return null; }
       }, [applyScene]);
       const openInit = useCallback(() => {
-        setInitState({ phase: 'setup', running: false, done: false, error: '', params: { ...INIT_DEFAULTS }, steps: INIT_STEPS.map((x) => ({ ...x, status: 'wait', detail: '' })), logs: [] });
+        setInitState({ phase: 'setup', running: false, done: false, error: '', params: { ...INIT_DEFAULTS }, steps: INIT_STEPS.map((x) => ({ ...x, status: 'wait', detail: '' })), logs: [], console: '', apiConsole: '' });
       }, []);
       const runInit = useCallback(async (params = {}) => {
         if (initBusyRef.current) return;
         initBusyRef.current = true;
         const cfg = { ...INIT_DEFAULTS, ...params, avatar: { ...(params.avatar || {}) }, scene: { ...(params.scene || {}) }, project: { ...(params.project || {}) } };
         const steps = INIT_STEPS.map((x) => ({ ...x, status: 'wait', detail: '' }));
-        setInitState({ phase: 'running', running: true, done: false, error: '', params: cfg, steps, logs: [] });
+        setInitState({ phase: 'running', running: true, done: false, error: '', params: cfg, steps, logs: [], console: '', apiConsole: '' });
         const trace = (entry) => setInitState((prev) => {
           if (!prev) return prev;
           const logs = [...(prev.logs || [])];
@@ -765,18 +765,103 @@
           return { ...prev, logs };
         });
         const brief = (v) => { try { const raw = JSON.stringify(v || {}); return raw.length > 360 ? raw.slice(0, 360) + '…' : raw; } catch { return ''; } };
+        const consoleArgs = (v) => { try { const copy = JSON.parse(JSON.stringify(v || {})); const walk = (x) => { if (!x || typeof x !== 'object') return; for (const [k, val] of Object.entries(x)) { if (k === 'image' && typeof val === 'string' && val.startsWith('data:')) x[k] = `[data-url ${val.length}B]`; else walk(val); } }; walk(copy); const raw = JSON.stringify(copy); return raw; } catch { return ''; } };
+        const appendConsole = (text) => { if (!text) return; setInitState((prev) => prev ? ({ ...prev, console: (prev.console || '') + String(text) }) : prev); };
+        const appendApi = (text) => { if (!text) return; setInitState((prev) => prev ? ({ ...prev, apiConsole: (prev.apiConsole || '') + String(text) }) : prev); };
+        const traceApi = (d) => {
+          if (!d || d.op === 'deployLog') return;
+          const at = String(d.at || new Date().toISOString()).slice(11, 23);
+          if (d.phase === 'request') appendApi(`\n[${at}] → ${d.method} ${d.endpoint}\n${consoleArgs(d.body)}\n`);
+          else if (d.phase === 'response') {
+            const body = String(d.text || '');
+            appendApi(`[${at}] ← ${d.status} ${d.bytes}B ${d.ms}ms\n${body.length > 200000 ? body.slice(0, 200000) + `\n… truncated ${body.length}B` : body}\n`);
+          } else if (d.phase === 'error') appendApi(`[${at}] ← ERROR ${d.error || ''}\n`);
+        };
+        window.__CX_API_TRACE__ = traceApi;
+        let stopDeployPoll = null;
         const call = async (op, args) => {
           const id = `api-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
           const t = new Date().toLocaleTimeString();
           trace({ id, t, op: `API ${op}`, impact: brief(args), status: 'run' });
+          appendConsole(`\n$ API ${op} ${consoleArgs(args)}\n`);
           const started = Date.now();
-          try { const r = await api(op, args); trace({ id, t, op: `API ${op}`, impact: brief(args), ms: Date.now() - started, status: 'ok' }); return r; }
-          catch (e) { trace({ id, t, op: `API ${op}`, impact: brief(args), ms: Date.now() - started, status: 'error' }); throw e; }
+          try { const r = await api(op, args); trace({ id, t, op: `API ${op}`, impact: brief(args), ms: Date.now() - started, status: 'ok' }); appendConsole(`[api ${op}] ok ${consoleArgs(r)}\n`); return r; }
+          catch (e) { trace({ id, t, op: `API ${op}`, impact: brief(args), ms: Date.now() - started, status: 'error' }); appendConsole(`[api ${op}] ERROR ${String(e?.message || e)}\n`); throw e; }
+        };
+        const deployConsole = async (args) => {
+          const id = `api-deploy-${Date.now()}`;
+          const t = new Date().toLocaleTimeString();
+          const port = Number(args.port) || 9188;
+          trace({ id, t, op: 'API deploy', impact: brief(args), status: 'run' });
+          appendConsole(`\n$ contextos deploy ${consoleArgs(args)}\n`);
+          let busy = false;
+          const poll = async () => {
+            if (busy) return; busy = true;
+            try { const r = await api('deployLog', { port }); if (r && typeof r.text === 'string') setInitState((prev) => prev ? ({ ...prev, console: r.text }) : prev); } catch { /* deploy log may not exist yet */ }
+            finally { busy = false; }
+          };
+          const timer = setInterval(poll, 500);
+          stopDeployPoll = () => clearInterval(timer);
+          void poll();
+          const started = Date.now();
+          try {
+            const r = await api('deploy', args);
+            await poll();
+            trace({ id, t, op: 'API deploy', impact: brief(args), ms: Date.now() - started, status: 'ok' });
+            appendConsole(`\n[deploy] done\n`);
+            return r;
+          } catch (e) {
+            await poll();
+            trace({ id, t, op: 'API deploy', impact: brief(args), ms: Date.now() - started, status: 'error' });
+            appendConsole(`\n[deploy] ERROR: ${String(e?.message || e)}\n`);
+            throw e;
+          } finally { /* keep polling through later init API calls */ }
         };
         const mark = (id, status, detail = '') => { trace({ op: `${status.toUpperCase()} ${id}`, impact: detail, status }); setInitState((prev) => prev ? ({ ...prev, steps: prev.steps.map((x) => x.id === id ? { ...x, status, detail } : x) }) : prev); };
         const finish = () => setInitState((prev) => prev ? ({ ...prev, phase: 'done', running: false, done: true, steps: prev.steps.map((x) => ({ ...x, status: x.status === 'wait' ? 'done' : x.status })) }) : prev);
         let current = 'node';
         try {
+          if (cfg.mode === 'local') {
+            const port = Number(cfg.port) || 9188;
+            const started = await call('initProject', { node: port, params: cfg });
+            if (!started?.started && !started?.alreadyRunning) throw new Error(started?.error || '初始化作业未启动');
+            let timer = null;
+            try {
+              await new Promise((resolve, reject) => {
+                const tick = async () => {
+                  try {
+                    const st = await api('initStatus', { port });
+                    if (st?.steps) {
+                      setInitState((prev) => prev ? {
+                        ...prev,
+                        steps: prev.steps.map((x) => ({ ...x, status: st.steps[x.id] || x.status })),
+                      } : prev);
+                    }
+                    if (st?.current) current = st.current;
+                    const lg = await api('deployLog', { port });
+                    if (lg?.text) setInitState((prev) => prev ? ({ ...prev, console: lg.text }) : prev);
+                    if (st?.state === 'done') { resolve(st); return; }
+                    if (st?.state === 'error') { reject(new Error(st.error || '初始化失败')); return; }
+                  } catch { /* transient while the job starts */ }
+                  timer = setTimeout(tick, 500);
+                };
+                void tick();
+              });
+            } finally {
+              if (timer) clearTimeout(timer);
+            }
+            setNode(port);
+            await loadSpaces(port);
+            await loadAvatars(port);
+            await loadBackgrounds(port).catch(() => null);
+            await loadApps(port, '', actorUid);
+            cxWriteText('init', '1');
+            setViewMode('chat');
+            setChatFull(true);
+            mark('chat', 'done', T('对话已就绪'));
+            finish();
+            return;
+          }
           let nodePort = 0;
           if (cfg.mode === 'remote') {
             mark('node', 'run', cfg.remoteUrl || '');
@@ -809,8 +894,17 @@
                 await call('start', { port: Number(cfg.port) });
                 nodePort = existing.port;
               } else {
-                const mode = 'auto';
-                await call('deploy', { port: Number(cfg.port) || 9188, dir: cfg.dir, repo: cfg.repo, mode });
+                await deployConsole({
+                  port: Number(cfg.port) || 9188,
+                  dir: cfg.dir,
+                  repo: cfg.repo || '',
+                  codeSource: cfg.codeSource || '',
+                  mirror: cfg.mirror || '',
+                  mode: 'auto',
+                  method: cfg.method || 'auto',
+                  ctxName: cfg.dir || '',
+                  goPolicy: cfg.goPolicy || 'auto',
+                });
                 nodePort = Number(cfg.port) || 9188;
               }
             }
@@ -825,12 +919,13 @@
           const wanted = cfg.spaces?.length ? cfg.spaces : ['community', 'enterprise'];
           let have = [];
           try { have = await api('spaces', { node: nodePort }) || []; } catch {}
+          const binarySpaces = !!cfg.binaryMode;
           const hasKey = (k) => have.some((sp) => String(sp.name || '').includes(k));
           const missing = wanted.filter((k) => !hasKey(k));
           if (!missing.length) {
             mark('spaces', 'done', T('已存在，跳过'));
           } else {
-            await call('officialSpaces', { node: nodePort, keys: missing });
+            await call('officialSpaces', { node: nodePort, keys: missing, binaryMode: binarySpaces });
             mark('spaces', 'done', T('云社区 + 云办公已就绪'));
           }
 
@@ -883,6 +978,8 @@
           const label = (INIT_STEPS.find((x) => x.id === current) || {}).label || current;
           setInitState((prev) => prev ? { ...prev, phase: 'error', running: false, done: false, failedStep: current, error: `${label}失败：${String(e?.message || e)}`, steps: prev.steps.map((x) => x.id === current || x.status === 'run' ? { ...x, status: 'err' } : x) } : prev);
         } finally {
+          if (stopDeployPoll) { stopDeployPoll(); stopDeployPoll = null; }
+          window.__CX_API_TRACE__ = null;
           initBusyRef.current = false;
         }
       }, [loadNodes, loadAvatars, loadBackgrounds, loadSpaces, loadApps]);
@@ -1488,7 +1585,7 @@
             h('button', { onClick: () => { setWebMenu(null); setApp(webMenu.tab.app); setModal('code'); } }, T('编辑代码')),
             h('button', { onClick: () => { setWebMenu(null); setApp(webMenu.tab.app); setViewMode('chat'); setFormReq({ app: webMenu.tab.app, at: Date.now() }); } }, T('添加数据')),
             h('button', { onClick: () => { setWebMenu(null); setApp(webMenu.tab.app); setModal('instance'); } }, T('创建应用实例'))) : null) : null,
-        modal === 'deploy' ? h(DeployModal, { onClose: () => setModal(null), onDone: () => { setModal(null); act('LOAD NODES', loadNodes); }, onScan: () => { setModal(null); setShowDevices(true); } }) : null,
+        modal === 'deploy' ? h(DeployModal, { onClose: () => setModal(null), onDone: () => { act('LOAD NODES', loadNodes); }, onScan: () => { setModal(null); setShowDevices(true); } }) : null,
         modal === 'space' ? h(SpaceModal, { node, onClose: () => setModal(null), onDone: (name) => { setModal(null); act('LOAD SPACES', async () => { await loadSpaces(node); setSpace(name); }); } }) : null,
         modal === 'app' ? h(AppModal, { node, space, onClose: () => setModal(null), onDone: (r) => { setModal(null); const synthetic = { name: r.name, title: r.help, command: r.command, space: r.space, path: r.path, place: r.place || '', functions: [], recent: false }; setApps((xs) => [synthetic, ...xs.filter((a) => !(a.name === synthetic.name && a.command === synthetic.command))]); setApp(synthetic); openApp(synthetic); act('LOAD RECENT', () => loadApps(node, space, actorUid)); } }) : null,
         modal === 'data' && currentApp ? h(DataModal, { node, space: currentApp.space || space, app: currentApp, onClose: () => setModal(null) }) : null,

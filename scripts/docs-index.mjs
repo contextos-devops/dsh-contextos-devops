@@ -47,7 +47,8 @@ const now = new Date().toISOString().slice(0, 10);
 const head = (title, when, elsewhere, what) => `# ${title}\n\n> 读这份当：${when}\n> 不读这份当 → ${elsewhere}\n>\n> 生成物：\`node scripts/docs-index.mjs --write\`（${now}）· ${what}\n> 手改会被下一次生成覆盖；要改内容改代码里的源头。\n`;
 
 // ── CODE-INDEX.md
-let code = head('代码索引 / CODE INDEX',
+const buildCode = () => {
+  let code = head('代码索引 / CODE INDEX',
   '要找某个文件 / 组件 / op / 脚本在哪，或核对接口契约。',
   '架构分层与模块归属 → [ARCHITECTURE.md](ARCHITECTURE.md)；产品设计 → [PRODUCT-DESIGN.md](PRODUCT-DESIGN.md)',
   '源：`src/client/parts/*.js`、`lib/**/*.js`、`scripts/*.mjs`、`docs/*.md`');
@@ -105,10 +106,13 @@ code += `\n## 6. 文档\n\n| 文档 | 行数 | 性质 |\n| --- | ---: | --- |\n`
 const generated = new Set(['docs/CODE-INDEX.md', 'docs/STATE.md']);
 for (const f of walk('docs', '.md').sort()) {
   if (f.includes('/archive/')) continue;
+  if (f === 'docs/CODE-INDEX.md') continue;
   const kind = generated.has(f) ? '生成' : (f === 'docs/INDEX.md' ? '索引' : '人写');
   // 生成物列自己的行数会自我指涉、每次都不一致，所以不写
   code += `| \`${f}\` | ${generated.has(f) ? '—' : lines(f)} | ${kind} |\n`;
 }
+  return code;
+};
 
 // ── STATE.md
 let state = head('状态索引 / STATE',
@@ -171,6 +175,7 @@ const printed = new Set();
 let okAll = true;
 for (let i = 0; i < 4; i++) {
   const synced = syncIndex();
+  const code = buildCode();
   const c = write('docs/CODE-INDEX.md', code);
   const st = write('docs/STATE.md', state);
   okAll = c && st;

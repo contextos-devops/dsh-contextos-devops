@@ -58,7 +58,7 @@ Unverified: <明确列出，不能省略>
 ## 5. API 验收清单
 
 - 方法门：create/insert→PUT；modify/update→POST；remove/delete→DELETE；其余 POST。
-- 不拿 `GET /action/` 探活；探活只用 `/c/version`、`/c/dream`。
+- 不拿 `GET /action/` 探活；探活只用 `/c/runtime`、`/c/dream`。
 - 200、`_status:0x0`、`count:0x0` 都不等于成功；按 `append` 回读关键字段。
 - UID 是 32 位 hash；字段名用 `target_uid/plan_uid/task_uid/report_uid/feedback_uid`。
 - 平台查询必须带 `place_uid`，不能跨实例读写。
@@ -76,8 +76,8 @@ Unverified: <明确列出，不能省略>
 
 ## 7. 软件工厂验收
 
-1. `deploy`：节点 `/c/version` 可访问，`/v/index.css` 返回 200。
-2. `createSpace`：只发送 `name`；`/c/dream` 出现日期前缀名称，空间 `/c/version` 可访问。
+1. `deploy`：节点 `/c/runtime` 可访问，`/v/index.css` 返回 200。
+2. `createSpace`：只发送 `name`；`/c/dream` 出现日期前缀名称，空间 `/c/runtime` 可访问。
    请求应为 `PUT /c/dream/action/create?name=<fullName>`，不得带 `binary`、`space.noecho`、`repos` 或 `user.uid`。
 3. `autogenApp`：空间内生成 `src/<zone>/main.shy`，编译无 warn/error。
 4. `createApp`：生成的命令可写一条记录并读回；字段名符合 ContextOS 规范。

@@ -181,7 +181,7 @@ window.__ModuleLoader__.load({
     };
     if (typeof window !== 'undefined') window.addEventListener('pagehide', cxSessionFlush);
     const NS = 'contextosDevops';
-    const OFFICIAL = [['community','云社区','20240724-community','20240724'],['enterprise','云办公','20240724-enterprise','20240724'],['operation','云研发','20240903-operation','20240903'],['knowledge','云知识','20250520-knowledge','20250520'],['education','云教育','20240724-education','20240724'],['healthy','云健康','20250520-healthy','20250520'],['tourism','云文旅','20250520-tourism','20250520'],['charity','云公益','20250520-charity','20250520'],['industry','云工业','20250520-industry','20250520'],['agriculture','云农业','20250520-agriculture','20250520']];
+    const OFFICIAL = [['community','云社区','20240724-community','20240724'],['enterprise','云办公','20240724-enterprise','20240724'],['operation','云研发','20240903-operation','20240903'],['knowledge','云知识','20250520-knowledge','20250520'],['healthy','云健康','20250520-healthy','20250520'],['tourism','云文旅','20250520-tourism','20250520'],['charity','云公益','20250520-charity','20250520'],['education','云教育','20240724-education','20240724'],['industry','云工业','20250520-industry','20250520'],['agriculture','云农业','20250520-agriculture','20250520']];
     const OFFICIAL_KEY = Object.fromEntries(OFFICIAL.flatMap(([k, n]) => [[k, k], [n, k]]));
     const PRODUCT_NOTES = {
       avatar: { tag: '身份层', title: '数字分身', text: '只做两件事：用当前分身（user.uid / 城市 / 公司）创建应用实例、添加数据。不部署节点、不建空间、不生成代码。' },

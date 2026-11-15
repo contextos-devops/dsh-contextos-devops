@@ -18,6 +18,19 @@ Each entry records: lesson → reusable abstraction → verification.
 正册只保留**最近 6–8 条**（滚动窗口，含本次上架；超过 8 条就把最旧的移入归档）；查旧坑先看这份，不够再进归档。
 
 
+## 2026-11-15 · 会话越用越慢：提示词每次重拼，缓存一次没命中
+
+- 现象：同一条链路，聊得越久越慢；实测一次「你好」要 1.58s，`usage.cacheReadTokens` 恒为 0，输入 tokens 稳定在 3.2k。
+- 根因：**流程层**。`chatWithDSH` 把 system 规则、Current context（截断 6000 字）、history（8×1200）、用户话全拼成**一条 user 消息**——
+  没有 `system` 角色，provider 无法复用前缀，每轮全量重算；工具型调用（`resolveWrite`）继承 profile 默认 `reasoningEffort=high`，5s 只为一个字段抽取。
+- 类别：流程层（同类第 1 次：请求链路的成本从未被量化过）。
+- 固化：① `buildChatPrompt()` 把 system / user 拆开，system 逐轮字节一致；`compactContext()` 只留白名单字段（≤2KB）；
+  history 8×1200 → 6×600；② `resolveChatModel` 加 5 分钟模型缓存，省掉每次 `listModels` 往返；
+  ③ `streamWithEffort()` 把 `reasoningEffort` 显式传入（`CX_CHAT_EFFORT`/`CX_UTIL_EFFORT` 默认 `low`，`CX_CHAT_MAX_TOKENS=900`），
+  适配器不认就回落默认；④ `scripts/bench-chat.mjs` 成第 14 道门禁：断言 prompt 预算、system 稳定、compactContext 不带 `background`。
+- 数字：system+context+history 约 36KB → 14.2KB；对话输入 tokens 3192 → 2402（首轮）/ 226（次轮，`cacheReadTokens=2176`）；
+  `resolveWrite` 5.07s → 2.49s/1.98s；`build:client` 14 道门禁全绿。
+
 ## 2026-11-15 · 改名后「插件好像没了」：模块 id 变了，宿主还在找旧目录
 
 - 现象：目录/包名从 `contextos-devops-dsh` 改成 `dsh-contextos-devops` 后，界面里插件打不开；正在跑的宿主返回 `/dsh-contextos-devops/api?op=health` 404。
@@ -93,43 +106,3 @@ Each entry records: lesson → reusable abstraction → verification.
   缺口：静态门禁仍无法断言「页面上已挂载的旧 link」，列为 §8.2 第 ③ 步的待升级项。
 - Lesson: 版本化资源不仅要换 URL，还要**改写已经挂在 DOM 上的旧 URL**；热重载场景下，DOM 生命周期比模块长。
 
-## 2026-11-15 · 一类问题：样式其实没错，错的是「生效的那一层」
-
-- Symptom: 一整天围绕同一条消息卡片反复返工——先「头与按钮挤一行、正文挤成窄栏」，
-  再「工具条位置不对」，再「字号高度不一致」，最后「折叠后卡片还是 218px」。
-  每次改完都像修好了，下一次又冒出来。
-- Root cause（三种，机制不同）:
-  1. **加载层**：`<link>` 只在不存在时注入，DSH 热重载换 JS 不换 DOM → 新 JS 配旧 CSS（`max-age=3600` 命中旧 URL）。
-  2. **级联层**：`.cx-msg-main{display:flex}` 被后面的 `!important`/旧规则改写成 row；
-     `--cx-sec-h:218px` 无条件生效，折叠态只是「没有内容」，高度仍在。
-  3. **污染层**：插件把 `--fs-*`/`--h-item` 这类通用令牌写到 `:root`，SPA 与宿主共用 document，把宿主界面也带歪。
-- Fix: ①prelude 版本跟随 + `clientCheck` 自报 `build/css/layout/geo/dom`；②关键布局改内联 style + 挂载后自愈；
-  ③令牌全部 `--cx-*` 并加 gate 第 12 项；④折叠态补 `height:auto!important` 例外。
-- Evidence: `check:probe` msg-card 6/6（正文 93%、工具条间隙 0.0px）；pm-folded 3/3（折叠 42.6/28.6px、展开 218px）；
-  `--css /dev/null` 自测 FAIL（证明断言真的依赖样式表）；`build:client` 10 道全绿。
-- Lesson: **「改了对不对」要看最终生效值，不是看源码里那条规则**。所以本轮把手工取证固化成
-  `scripts/ui-probe.mjs`：fixture 只写结构 + class，断言写在脚本里，双向自测（真 CSS 通过 / 空 CSS 失败）；
-  并把「症状 → 先读 → 先跑 → 断言」收进 `docs/DIAGNOSTICS.md`，下次同类问题先跑命令再动代码。
-
-## 2026-11-15 — 全面归纳 #1（插件架构与界面长战役）
-
-> AGENTS.md §8.2 的第一次执行：聚类 → 找规律 → 升级门禁 → 补症状表 → 写报告。
-
-| 类别 | 次数 | 典型症状 | 已固化为 |
-| --- | --- | --- | --- |
-| 加载层（产物/清单/缓存） | 3 | 插件整体不加载（parts 手抄漏片段）；新 JS 配旧 CSS；`:root` 通用令牌污染宿主 | `load-check`（真执行 factory）、prelude href 版本跟随、gate 第 12 项 `--cx-*` |
-| 级联层（布局/覆盖） | 7 | 消息头与正文挤两栏；工具条位置四次调整；字号行高不等；折叠后仍 218px | `ui-probe` 的 `msg-card`（6 断言）/`pm-folded`（3 断言）；关键布局写 JSX 内联 |
-| 流程层（门禁/文档） | 4 | README/AGENTS 结构失配；docs 孤儿与死链；gate 关键字随标题漂移 | `docs-check`、gate 第 11 项（README/AGENTS 结构）、`docs-index --write` |
-| 数据层（接口/持久化） | 3 | `seedProject` 从未路由（静默 404）；`llmInfo` 调未导出函数；`feedback_count` 恒 0 | `op-check`（客户端调用 ↔ 注册表）、`store-check` 棘轮 |
-| 索引层 | 2 | 手册式索引过时；文档重复三份验收 | `CODE-INDEX.md`/`STATE.md` 生成器、`docs/INDEX.md` 唯一入口 |
-
-**规律**：出问题的往往不是「写的那一层」，而是「生效的那一层」——
-产物没被执行（加载层）、后写的覆盖没说清为什么赢（级联层）、规则只写在文档里没有断言（流程层）。
-因此固化的方向统一为：**把规则搬到可执行产物上**（真执行、真渲染、真计数）。
-
-**本轮新增**：`scripts/ledger-stats.mjs`（数条目、距上次归纳条数、缺「根因/固化」点名，`--check` 阈值 10）；
-`AGENTS.md` §八 定义单次五问与全面归纳六动作。
-
-**下轮建议**：① 给「已挂载旧 link 被改写」加可判定证据（服务端校验 `clientCheck.build` 与静态路由版本一致）；
-② 把 `ledger-stats --check` 以 soft 方式接进 `build:client`（只提示不阻断）；
-③ 每次 retro 必须新增一个 `ui-probe` 用例或一条 gate 断言。

@@ -15,14 +15,15 @@
   │      → appOp({text, mode:'write'})：resolveWrite 定位应用/功能 → appFields 取字段 → 消息区表单
   │    avatar 模式 + 读意图（查看/查询/列出/统计/多少条…）且含数据词（数据/记录/列表/明细/清单…）
   │      → appOp({text, mode:'read'})：readData → 消息区表格
-  │    成功即结束本轮，不再请求模型
+  │    成功即结束本轮
   │
   ├─ 1. 组装请求
-  │    POST /api?op=chat   { message, history[≤8], context, mode }
+  │    POST /api?op=chat   { message, history[≤6], context, mode }
   │
-  ├─ 2. 宿主拼 prompt（lib/core/copilot.js）
-  │    system 规则（按 mode 追加）＋ Current context（JSON，截断 6000 字）
-  │    ＋ HISTORY（最近 8 条，截断）＋ USER（截断 2000 字）
+  ├─ 2. 宿主拼 prompt（lib/core/copilot.js → buildChatPrompt）
+  │    system 消息：只有规则（按 mode 追加），逐轮字节一致 → 可命中前缀缓存
+  │    user 消息：   CONTEXT（compactContext，≤2KB）＋ HISTORY（≤4.2KB）＋ USER（≤1200 字）
+  │    预算由 scripts/bench-chat.mjs 守住（system ≤12KB、user ≤8KB）
   │
   ├─ 3. 模型返回
   │    {"reply":"…","action":{op,args}}   或   {"reply":"…","actions":[…]}
@@ -118,7 +119,19 @@
 | `warn: not allow` | 动作不存在或无权限（不是「参数错」） |
 | 客户端「执行失败：…」 | `executeAction` 抛错，错误原文透出 |
 
-## 七、已知缺口
+## 七、延迟与调优（改了请求链路要看）
+
+可调项都在 `lib/core/copilot.js`：
+
+| 变量 | 默认 | 作用 |
+| --- | --- | --- |
+| `CX_CHAT_EFFORT` | `low` | 对话推理强度；调高更慢更稳 |
+| `CX_UTIL_EFFORT` | `low` | 工具型 JSON 调用（resolveWrite/codegenPlan/planProject）的强度 |
+| `CX_CHAT_MAX_TOKENS` | `900` | 输出上限；压尾延迟最直接 |
+
+规则（`bench-chat.mjs` 守着）：system 只放规则（变化内容进 user，否则缓存失效）；context 只走 `compactContext`（≤2KB）；`llmJson` 单条 user + 低强度。自检看响应的 `prompt`（`cachedTokens`/`effort`/`*Bytes`）。
+
+## 八、已知缺口
 
 1. `history` 只带文本，不带上一轮的动作与结果 → 多轮「继续」容易重复执行；
 2. `context` 截断 6000 字符，`apps`/`nodes` 很长时会被截掉尾部；

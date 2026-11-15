@@ -14,11 +14,11 @@
 | 规模 | 宿主 345 行 + `lib/**` 5.6k 行 + 客户端 24 片段 7.6k 行 + CSS 3.3k 行 + 102 个 op |
 | 代码在哪 | 宿主 `index.js` + `lib/**`；客户端 `src/client/parts/*.js`（拼成 `client.js`）；样式 `src/client/styles/*.css` |
 | 一条请求怎么走 | 组件 → `api(op)` → `index.js` 查 `lib/core/ops.js` → `lib/core/<域>.js` → ContextOS HTTP |
-| 怎么算改完 | `npm run build:client` 全绿（12 道门禁）+ 有证据 + 报告落盘 |
+| 怎么算改完 | `npm run build:client` 全绿（14 道门禁）+ 有证据 + 报告落盘 |
 | 下一步干什么 | §七 验收标准 → §十三 本轮优先级：红门禁 > 已知限制 > 用户需求 |
 
 ```sh
-npm run build:client     # 构建 + 12 道门禁（红了先修，不许带 FAIL 交付）
+npm run build:client     # 构建 + 14 道门禁（红了先修，不许带 FAIL 交付）
 npm run check:probe      # 离线渲染 fixture 量布局（需本机 Edge/Chrome）
 npm run verify:ui        # 真浏览器验收（需 Edge CDP 9223），exit 0 才算过
 node --check index.js    # 只改宿主时先做语法检查
@@ -272,7 +272,7 @@ YYYY-MM-DD — <一句话现象>
 本轮只需要记住三条：
 
 ```sh
-npm run build:client    # 构建 + 12 道门禁（红先修，不许带 FAIL 交付）
+npm run build:client    # 构建 + 14 道门禁（红先修，不许带 FAIL 交付）
 npm run check:probe     # 离线量布局（改 UI 时）
 npm run verify:ui       # 真浏览器验收（Edge CDP 9223）
 ```
@@ -296,6 +296,7 @@ npm run verify:ui       # 真浏览器验收（Edge CDP 9223）
 | 接口 404/405 | `check:ops` + 方法门（create→PUT / remove→DELETE / 其余 POST） | `INTERFACE.md` |
 | 数据写入 200 但丢字段 | 值里不能带半角 `/`；写完必须回读 | `URL-SPEC.md` |
 | 门禁红了但看不出原因 | 单跑对应脚本，看它打印的定位行 | 各脚本 `FAIL` 行 |
+| 编译报 `go: command not found` / `go build failed` | 先跑 `envDoctor` 看 go 是否 ≥1.25；`buildSpace` 会自动 `ensureGo` 下载到 `<node>/usr/local/go`（镜像顺序 aliyun → golang.google.cn），下载失败看错误里的镜像列表 | `docs/CODE-GEN.md` §四点五 |
 | 同一个坑踩第二次 | 到本表加一行 + 在 §二 第 ⑧ 步补断言 | 本文件 §二 |
 
 完整复盘按日期在 `docs/RSI-LEDGER.md`；症状路由在 `docs/DIAGNOSTICS.md`。

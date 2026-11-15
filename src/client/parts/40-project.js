@@ -6,6 +6,12 @@
       const [dir, setDir] = useState(state.params?.dir || INIT_DEFAULTS.dir);
       const [port, setPort] = useState(String(state.params?.port || INIT_DEFAULTS.port));
       const [repo, setRepo] = useState(state.params?.repo ?? INIT_DEFAULTS.repo);
+      const [method, setMethod] = useState(state.params?.method || 'auto');
+      const [codeSource, setCodeSource] = useState(state.params?.codeSource || '');
+      const [mirror, setMirror] = useState(state.params?.mirror || '');
+      const [goPolicy, setGoPolicy] = useState(state.params?.goPolicy || 'auto');
+      const [deployOpt, setDeployOpt] = useState(null);
+      const [advanced, setAdvanced] = useState(false);
       const [image, setImage] = useState('shylinux/contextos:latest');
       const [host, setHost] = useState('');
       const [sshUser, setSshUser] = useState('shy');
@@ -32,7 +38,13 @@
       };
       const avatarRef = useRef(null);
       const sceneRef = useRef(null);
+      const consoleRef = useRef(null);
       const icon = (s) => s === 'done' ? '✓' : s === 'run' ? '◍' : s === 'err' ? '✗' : '○';
+      useEffect(() => {
+        const el = consoleRef.current;
+        if (!el) return;
+        if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) el.scrollTop = el.scrollHeight;
+      }, [state.console, state.apiConsole, logExpanded]);
       const total = (state.steps || []).length;
       const doneCount = (state.steps || []).filter((x) => x.status === 'done').length;
       const pct = total ? Math.round((doneCount / total) * 100) : 0;
@@ -54,7 +66,8 @@
         };
         reader.readAsDataURL(file);
       };
-      const start = () => onStart({ mode, dir, port: Number(port) || 9188, repo, image, host, sshUser, sshPort: Number(sshPort) || 22, remoteUrl, remoteUser, remotePass, avatar, scene, project, spaces: spaceKeys });
+      const binaryMode = method === 'binary' || method === 'copy' || (!!deployOpt && !deployOpt.git);
+      const start = () => onStart({ mode, dir, port: Number(port) || 9188, repo, codeSource, mirror, method, goPolicy, image, host, sshUser, sshPort: Number(sshPort) || 22, remoteUrl, remoteUser, remotePass, binaryMode, avatar, scene, project, spaces: spaceKeys });
       const doLogin = async () => {
         setLoginBusy(true); setLogin(null);
         try { const r = await onLoginRemote({ url: remoteUrl, user: remoteUser, pass: remotePass }); setLogin(r); }
@@ -64,6 +77,15 @@
       const field = (label, node) => h('label', { className: 'cx-field full' }, label, node);
       const input = (value, set, props = {}) => h('input', { className: 'cx-input', value, onChange: (e) => set(e.target.value), ...props });
       useEffect(() => { if (probedRef.current) return; probedRef.current = true; probePort(); }, []);
+      useEffect(() => {
+        if (mode !== 'local') return;
+        let alive = true;
+        api('deployOptions', { dir }).then((r) => {
+          if (!alive) return;
+          setDeployOpt(r);
+        }).catch(() => {});
+        return () => { alive = false; };
+      }, [mode, dir]);
       const stepHead = h('div', { className: 'cx-init-wiz' }, [['01', '部署', 'DEPLOY'], ['02', '分身与场景', 'DIGITAL AVATAR & CYBER WORLD'], ['03', '项目', 'PROJECT']].map(([n, t, en], i) =>
         h('button', { key: n, type: 'button', className: `cx-init-tab${step === i ? ' on' : ''}${step > i ? ' done' : ''}`, onClick: () => phase === 'setup' && setStep(i) },
           h('b', null, n), h('span', null, T(t)), h('i', null, en))));
@@ -75,7 +97,15 @@
         modeChip(['remoteDeploy', '远程部署', 'ssh 到远端建节点']),
         modeChip(['remote', '远程连接', '登录远端换 sessid']));
       const modeForm = mode === 'local' ? h('div', { className: 'cx-form' },
-        field(T('源码地址'), input(repo, setRepo, { placeholder: 'https://shylinux.com/x/ContextOS' })),
+        h(InstallToolbar, { opt: deployOpt, advanced, onToggle: () => setAdvanced((v) => !v), hostLabel: `${T('本机')} ${deployOpt?.host || '…'}` }),
+        advanced ? field(T('安装方式'), h('select', { className: 'cx-select', value: method, onChange: (e) => setMethod(e.target.value) },
+          h('option', { value: 'auto' }, T('自动') + ' / auto'),
+          h('option', { value: 'source' }, T('源码构建') + ' / source'),
+          h('option', { value: 'binary' }, T('二进制') + ' / binary'),
+          h('option', { value: 'copy' }, T('复制本机') + ' / copy'))) : null,
+        advanced ? field(T('源码地址'), input(repo, setRepo, { placeholder: 'https://shylinux.com/x/ContextOS' })) : null,
+        advanced ? field(T('代码源（可选）'), input(codeSource, setCodeSource, { placeholder: '留空使用源码地址' })) : null,
+        advanced ? field(T('镜像源（可选）'), input(mirror, setMirror, { placeholder: '留空使用源码地址的主机地址' })) : null,
         field(T('部署目录'), input(dir, setDir, { placeholder: '~/ContextOS-9188' })),
         h('label', { className: 'cx-field full' }, T('端口'), h('div', { className: 'cx-port-row' }, input(port, setPort, { inputMode: 'numeric' }), h('button', { className: 'cx-btn', type: 'button', disabled: probeBusy, onClick: probePort }, probeBusy ? T('探测中…') : T('探测端口')))),
         h('div', { className: 'cx-field full' }, T('标准空间'), h(StandardSpaces, { value: spaceKeys, onChange: setSpaceKeys })))
@@ -122,6 +152,9 @@
           h('span', { className: 'st' }, icon(s.status)),
           h('div', { style: { flex: 1, minWidth: 0 } }, h('span', { className: 'idx' }, String(i + 1).padStart(2, '0')), T(s.label), s.detail ? h('div', { className: 'sd' }, s.detail) : null)))) : null,
         state.error ? h(ErrorBox, { text: state.error }) : null,
+        (state.console || state.apiConsole) ? h('div', { className: 'cx-init-console-wrap' },
+          h('div', { className: 'cx-init-debug-h' }, T('接口 / 命令行输出'), h('span', { className: 'cx-init-console-live' }, T('完整输出')), h('button', { className: 'cx-btn xs', onClick: () => setLogExpanded((v) => !v) }, T(logExpanded ? '收起日志' : '展开日志'))),
+          h('pre', { ref: consoleRef, className: `cx-init-console${logExpanded ? ' expanded' : ''}`, 'aria-label': T('完整接口与命令行输出') }, `${state.apiConsole || ''}${state.apiConsole && state.console ? '\n' : ''}${state.console || ''}`)) : null,
         (state.logs || []).length ? h('div', { className: 'cx-init-debug-h' }, T('执行过程'), h('button', { className: 'cx-btn xs', onClick: () => setLogExpanded((v) => !v) }, T(logExpanded ? '收起日志' : '展开日志'))) : null,
         (state.logs || []).length ? h('div', { className: `cx-init-debug${logExpanded ? ' expanded' : ''}` }, h('table', { className: 'cx-init-log' },
           h('thead', null, h('tr', null, ['时间', '耗时', '操作', '影响 / 接口', '状态'].map((x) => h('th', { key: x }, T(x))))),

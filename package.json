@@ -1,6 +1,6 @@
 {
   "name": "dsh-contextos-devops",
-  "version": "1.48.37",
+  "version": "1.48.54",
   "type": "module",
   "description": "ContextOS DevOps for DeepSeek Harness: one dashboard for cluster nodes, project spaces, apps, avatars, PM boards and IoT devices, with an in-app Copilot that can deploy and scaffold.",
   "exports": {
@@ -40,7 +40,7 @@
     }
   },
   "scripts": {
-    "build:client": "node build/client.mjs && node scripts/gate.mjs && node scripts/load-check.mjs && node scripts/hook-order-check.mjs && node scripts/op-check.mjs && node scripts/store-check.mjs && node scripts/ui-check.mjs && node scripts/ui-probe.mjs --soft && node scripts/i18n-check.mjs && node scripts/context-check.mjs && node scripts/docs-check.mjs && node scripts/docs-budget.mjs --check && node scripts/publish-check.mjs",
+    "build:client": "node build/client.mjs && node scripts/gate.mjs && node scripts/load-check.mjs && node scripts/hook-order-check.mjs && node scripts/op-check.mjs && node scripts/install-check.mjs && node scripts/store-check.mjs && node scripts/ui-check.mjs && node scripts/ui-probe.mjs --soft && node scripts/i18n-check.mjs && node scripts/context-check.mjs && node scripts/docs-check.mjs && node scripts/docs-budget.mjs --check && node scripts/bench-chat.mjs && node scripts/publish-check.mjs",
     "watch:client": "node build/client.mjs --watch",
     "check:ui": "node scripts/ui-check.mjs",
     "check:probe": "node scripts/ui-probe.mjs",
@@ -52,6 +52,7 @@
     "release": "npm run build:client && node scripts/ui-verify.mjs",
     "check:hooks": "node scripts/hook-order-check.mjs",
     "check:ops": "node scripts/op-check.mjs",
+    "check:install": "node scripts/install-check.mjs",
     "check:store": "node scripts/store-check.mjs",
     "check:docs": "node scripts/docs-check.mjs",
     "check:load": "node scripts/load-check.mjs",
@@ -60,7 +61,8 @@
     "push:all": "node scripts/push-all.mjs",
     "catalog:pr": "node scripts/catalog-pr.mjs",
     "check:publish": "node scripts/publish-check.mjs",
-    "publish:npm": "node scripts/publish-npm.mjs"
+    "publish:npm": "node scripts/publish-npm.mjs",
+    "check:prompt": "node scripts/bench-chat.mjs"
   },
   "license": "MIT",
   "author": {

@@ -118,6 +118,30 @@
 .cx-form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .cx-field{display:flex;flex-direction:column;gap:4px;font-size:var(--cx-fs-body);color:var(--cx-muted);letter-spacing:.06em}
 .cx-field.full{grid-column:1/-1}
+.cx-cap-row{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:2px 0 4px}
+.cx-cap{font:600 var(--cx-fs-meta) var(--cx-font-mono);letter-spacing:.08em;padding:3px 7px;border:1px solid var(--cx-border);border-radius:4px;color:var(--cx-text-dim);background:var(--cx-surface-2)}
+.cx-cap.ok{color:var(--cx-green);border-color:color-mix(in srgb,var(--cx-green) 45%,var(--cx-border))}
+.cx-cap.off{color:var(--cx-red);border-color:color-mix(in srgb,var(--cx-red) 45%,var(--cx-border))}
+.cx-cap.host{margin-left:auto;color:var(--cx-cyan)}
+.cx-cap b{color:inherit;font-weight:700}
+.cx-advanced-btn{margin-left:2px}
+.cx-advanced-btn.on{border-color:color-mix(in srgb,var(--cx-cyan) 50%,var(--cx-border));color:var(--cx-cyan)}
+.cx-adv-caret{margin-left:5px;font-size:10px;opacity:.8}
+.cx-install-matrix{grid-column:1/-1;display:flex;flex-direction:column;gap:5px;margin-top:4px;padding-top:8px;border-top:1px solid var(--cx-border)}
+.cx-install-matrix-head{font:600 var(--cx-fs-meta) var(--cx-font-mono);letter-spacing:.08em;color:var(--cx-text-faint);text-transform:uppercase}
+.cx-install-row{display:grid;grid-template-columns:150px 1fr auto;gap:8px;align-items:center;text-align:left;padding:7px 8px;border:1px solid var(--cx-border);border-radius:4px;background:var(--cx-surface-2);color:var(--cx-text-dim);cursor:pointer}
+.cx-install-row:hover{border-color:var(--cx-border-strong);color:var(--cx-text)}
+.cx-install-row.on{border-color:var(--cx-cyan);background:color-mix(in srgb,var(--cx-cyan) 9%,var(--cx-surface-2))}
+.cx-install-row b{font:600 var(--cx-fs-body) var(--cx-font);color:var(--cx-text)}
+.cx-install-row span{font-size:var(--cx-fs-meta);line-height:1.45}
+.cx-install-row code{font:var(--cx-fs-meta) var(--cx-font-mono);color:var(--cx-cyan)}
+.cx-install-plan{grid-column:1/-1;display:flex;flex-direction:column;gap:4px;padding:8px;border:1px solid var(--cx-border);border-radius:4px;background:var(--cx-surface-2)}
+.cx-install-plan-head{font:600 var(--cx-fs-meta) var(--cx-font-mono);color:var(--cx-cyan);letter-spacing:.06em}
+.cx-install-step{display:grid;grid-template-columns:110px 1fr;gap:8px;font-size:var(--cx-fs-meta);line-height:1.5}
+.cx-install-step b{color:var(--cx-text)}
+.cx-install-step span{color:var(--cx-text-dim);overflow-wrap:anywhere}
+.cx-install-plan>code{font:var(--cx-fs-meta) var(--cx-font-mono);color:var(--cx-cyan);overflow-wrap:anywhere}
+.cx-install-warn{grid-column:1/-1;color:var(--cx-orange);font-size:var(--cx-fs-meta);line-height:1.5}
 .cx-input,.cx-select,.cx-area{font:var(--cx-fs)/1.5 var(--cx-font);color:var(--cx-text);background:#04101a;border:1px solid var(--cx-line2);padding:7px 8px;outline:none;width:100%}
 .cx-input:focus,.cx-select:focus,.cx-area:focus{border-color:var(--cx-cyan);box-shadow:0 0 0 1px rgba(var(--cx-hue-rgb),.15)}
 .cx-area{min-height:90px;resize:vertical}
@@ -3302,6 +3326,10 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-ver-tag{margin-left:6px;padding:0 6px;border-radius:999px;font-size:calc(var(--cx-fs-10) + 1px);color:#04121a;background:var(--cx-accent-2)}
 .cx-upd-state{padding:10px 12px;border-radius:8px;border:1px solid var(--cx-line2);background:var(--cx-surface-1);color:var(--cx-muted);font-size:var(--cx-fs-12)}
 .cx-upd-state.on{border-color:var(--cx-accent-2);color:var(--cx-text)}
+.cx-init-console-wrap{margin-top:12px}
+.cx-init-console-live{font-size:var(--cx-fs-meta);letter-spacing:.08em;color:var(--cx-green);text-transform:none}
+.cx-init-console{max-height:280px;overflow:auto;margin-top:4px;padding:10px 12px;border:1px solid var(--cx-border);border-radius:4px;background:#08151c;color:#c8f5e8;font:12px/1.55 var(--cx-mono);white-space:pre-wrap;word-break:break-word;tab-size:2}
+.cx-init-console.expanded{max-height:520px}
 .cx-section{display:flex;flex-direction:column;gap:8px;min-width:0}
 .cx-section-h{font-size:var(--cx-fs);font-weight:600;color:var(--cx-cyan);letter-spacing:.06em;text-transform:uppercase;opacity:.85}
 .cx-btn.cx-sm{padding:2px 7px;font-size:var(--cx-fs)}

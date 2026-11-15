@@ -343,12 +343,6 @@ const (
 )
 ```
 
-### 2.5.4 只用规范内的东西
-
-- **禁用自定义数据类型**：字段类型只用 `string`（框架统一存字符串）；
-- **禁用自定义函数**：只用框架给的 `s.Select / s.ValueCreate / s.ValueModify / s.ValueRemove / m.Push / m.Echo / m.Cmdy / m.Table / m.PushButton / m.Action / m.Option / m.Config`；
-- 需要新能力时先在 `docs/CODE-GEN.md` 登记，再由框架侧提供。
-
 ## 三、可用的既有能力（不要自己造）
 
 | 用途 | 写法 |
@@ -384,6 +378,26 @@ http://127.0.0.1:<node>/s/<pod>/c/<command>
 - 动作返回 `count 1xN` 且列表里出现新行 → 写入路径通
 - 浏览器里出现工具栏页签与行内按钮 → `m.Action` / `m.PushButton` 生效
 - 编译 200 且 `bin/ice.bin` 更新 → 编译通
+
+## 四点五、工具链：git 自带，go 按需下载
+
+编译要 **Go 1.25+**，DSH 与 ContextOS 都不带 go；git 由 ContextOS 自带。
+
+| 依赖 | 来源 |
+| --- | --- |
+| git | ContextOS 自带（创建带 `repos` 的空间可直接用） |
+| go | 首次编译时自动装到 `<node>/usr/local/go` |
+| node / python | DSH 自带 |
+
+```js
+findGo({ node })    // 节点 → 本仓库 → PATH，且 ≥ GO_MIN
+ensureGo({ node })  // 缺则下载并解压到 <node>/usr/local/go
+goEnv({ node, go }) // PATH / GOROOT / GOPROXY / GOWORK=off
+envDoctor({ node }) // 自检 go / git / node / 空间目录
+```
+
+- 镜像顺序：`GODOWN` → aliyun → golang.google.cn → dl.google.com；文件 < 1MB 或 20s 无速度即换下一个。
+- 编译前必须 `ensureGo`；失败文案要带「已试哪些镜像」，不许只报 `go build failed`。
 
 ## 五、插件的入口
 

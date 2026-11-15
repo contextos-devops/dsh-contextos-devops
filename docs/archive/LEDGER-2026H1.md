@@ -425,3 +425,54 @@ gate added so the same bug cannot return silently
 - Fix: 加 `github` 远端；`npm run push:all`（origin + github 一起推）；AGENTS 新增「〇之二 代码库与发布」表。
 - 数字: 落后 39 个提交 → 两个远端均推到 e93879e（0 落后，rc=0）。
 - 固化: AGENTS §〇之二 + `push:all` 脚本；另把 `docs-index --write` 改成自动同步 INDEX 行数（本轮又一次被行数过期卡住）。
+
+## 2026-11-15 · 源码/镜像语义
+
+- 修复：Go 低版本仍显示版本；代码源/镜像源统一；binary 标准空间带 binary= 跳过 build；binary 探 `/c/runtime` 等 180s。
+- 证据：bintest/community binary 创建并清理；ui 102，install 4/10，docs/publish 通过；1.48.43。
+- Lesson：安装方式贯穿空间创建；binary 判活看版本。
+
+
+## 2026-11-15 · 全量接口日志
+
+- api 事件+后端 HTTP 落盘 9444 runtime 200 1.48.49
+
+## 2026-11-15 · 一类问题：样式其实没错，错的是「生效的那一层」
+
+- Symptom: 一整天围绕同一条消息卡片反复返工——先「头与按钮挤一行、正文挤成窄栏」，
+  再「工具条位置不对」，再「字号高度不一致」，最后「折叠后卡片还是 218px」。
+  每次改完都像修好了，下一次又冒出来。
+- Root cause（三种，机制不同）:
+  1. **加载层**：`<link>` 只在不存在时注入，DSH 热重载换 JS 不换 DOM → 新 JS 配旧 CSS（`max-age=3600` 命中旧 URL）。
+  2. **级联层**：`.cx-msg-main{display:flex}` 被后面的 `!important`/旧规则改写成 row；
+     `--cx-sec-h:218px` 无条件生效，折叠态只是「没有内容」，高度仍在。
+  3. **污染层**：插件把 `--fs-*`/`--h-item` 这类通用令牌写到 `:root`，SPA 与宿主共用 document，把宿主界面也带歪。
+- Fix: ①prelude 版本跟随 + `clientCheck` 自报 `build/css/layout/geo/dom`；②关键布局改内联 style + 挂载后自愈；
+  ③令牌全部 `--cx-*` 并加 gate 第 12 项；④折叠态补 `height:auto!important` 例外。
+- Evidence: `check:probe` msg-card 6/6（正文 93%、工具条间隙 0.0px）；pm-folded 3/3（折叠 42.6/28.6px、展开 218px）；
+  `--css /dev/null` 自测 FAIL（证明断言真的依赖样式表）；`build:client` 10 道全绿。
+- Lesson: **「改了对不对」要看最终生效值，不是看源码里那条规则**。所以本轮把手工取证固化成
+  `scripts/ui-probe.mjs`：fixture 只写结构 + class，断言写在脚本里，双向自测（真 CSS 通过 / 空 CSS 失败）；
+  并把「症状 → 先读 → 先跑 → 断言」收进 `docs/DIAGNOSTICS.md`，下次同类问题先跑命令再动代码。
+
+## 2026-11-15 — 全面归纳 #1（插件架构与界面长战役）
+
+- 根因：这段时间的界面问题不在「写的样式」，而在「生效的那一层」——加载层（旧 JS/旧 link/手抄清单）、级联层（!important 与固定高度）、污染层（:root 通用令牌）。
+
+- 固化：类别表 + `scripts/ledger-stats.mjs`（计数与缺字段点名）+ §八 全面归纳流程；规律「出问题的往往是生效的那一层」写进 DIAGNOSTICS。
+
+| 类别 | 次数 | 典型症状 | 已固化为 |
+| --- | --- | --- | --- |
+| 加载层（产物/清单/缓存） | 3 | 插件整体不加载（parts 手抄漏片段）；新 JS 配旧 CSS；`:root` 通用令牌污染宿主 | `load-check`（真执行 factory）、prelude href 版本跟随、gate 第 12 项 `--cx-*` |
+| 级联层（布局/覆盖） | 7 | 消息头与正文挤两栏；工具条位置四次调整；字号行高不等；折叠后仍 218px | `ui-probe` 的 `msg-card`（6 断言）/`pm-folded`（3 断言）；关键布局写 JSX 内联 |
+| 流程层（门禁/文档） | 4 | README/AGENTS 结构失配；docs 孤儿与死链；gate 关键字随标题漂移 | `docs-check`、gate 第 11 项（README/AGENTS 结构）、`docs-index --write` |
+| 数据层（接口/持久化） | 3 | `seedProject` 从未路由（静默 404）；`llmInfo` 调未导出函数；`feedback_count` 恒 0 | `op-check`（客户端调用 ↔ 注册表）、`store-check` 棘轮 |
+| 索引层 | 2 | 手册式索引过时；文档重复三份验收 | `CODE-INDEX.md`/`STATE.md` 生成器、`docs/INDEX.md` 唯一入口 |
+
+**规律**：出问题的往往不是「写的那一层」，而是「生效的那一层」——
+产物没被执行（加载层）、后写的覆盖没说清为什么赢（级联层）、规则只写在文档里没有断言（流程层）。
+因此固化的方向统一为：**把规则搬到可执行产物上**（真执行、真渲染、真计数）。
+
+**下轮建议**：① 给「已挂载旧 link 被改写」加可判定证据（服务端校验 `clientCheck.build` 与静态路由版本一致）；
+② 把 `ledger-stats --check` 以 soft 方式接进 `build:client`（只提示不阻断）；
+③ 每次 retro 必须新增一个 `ui-probe` 用例或一条 gate 断言。

@@ -2,6 +2,7 @@ const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-e
     async function api(op, params) {
       const body = { op, ...(params || {}) };
       const started = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      const apiTrace = (d) => { try { window.__CX_API_TRACE__?.(d); } catch {} };
       const brief = (() => {
         try {
           const raw = JSON.stringify(body);
@@ -16,6 +17,7 @@ const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-e
       if (method === 'GET') qs.set('_', String(Date.now()));
       const query = method === 'GET' ? '?' + qs.toString() : '';
       const endpoint = method === 'GET' ? `${API}${query}` : API;
+      apiTrace({ phase: 'request', op, method, endpoint, body: body, at: new Date().toISOString() });
 
       const longOps = new Set(['deploy', 'dockerDeploy', 'remoteDeploy', 'remoteLogin', 'pipeline', 'buildSpace', 'initSpace', 'compile', 'chat']);
       const controller = new AbortController();
@@ -28,6 +30,7 @@ const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-e
         text = await res.text();
       } catch (e) {
         const error = e?.name === 'AbortError' ? `请求超时：${op}` : String(e?.message || e);
+        apiTrace({ phase: 'error', op, method, endpoint, error, ms: Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - started), at: new Date().toISOString() });
         emitEvent({ kind: 'api', ok: false, op, text: brief, ms: Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - started), error });
         throw new Error(error);
       } finally { clearTimeout(timer); }
@@ -35,6 +38,7 @@ const emitEvent = (detail) => { try { window.dispatchEvent(new CustomEvent('cx-e
       const logId = responseHeaders['log-id'] || `local-${Date.now().toString(36)}`;
       const elapsed = Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - started);
       const bytes = (() => { try { return new TextEncoder().encode(text).length; } catch { return text.length; } })();
+      apiTrace({ phase: 'response', op, method, endpoint, status: res.status, bytes, ms: elapsed, text, at: new Date().toISOString() });
       let payload;
       try { payload = JSON.parse(text); } catch {
         emitEvent({ kind: 'api', ok: false, op, text: brief, ms: Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - started), error: `HTTP ${res.status}` });

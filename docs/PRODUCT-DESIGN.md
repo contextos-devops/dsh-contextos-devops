@@ -81,7 +81,7 @@
 
 | # | 能力 | 用户操作 | 后端动作 |
 |---|---|---|---|
-| 1 | 部署服务节点 | `+ 节点` / 初始化 | `deploy` → `forever start` → `/c/version` |
+| 1 | 部署服务节点 | `+ 节点` / 初始化 | `deploy` → `forever start` → `/c/runtime` |
 | 2 | 创建项目空间 | `+ 空间` | `dream create` → `git.status init` → 编译 |
 | 3 | 生成应用模板 | 应用模板/应用商店 | `service/autogen` → `portal.json` + 五角色 |
 | 4 | 添加应用代码 | CODE 编辑器 | 读写 `src/<app>/*` → `compile` |
