@@ -710,6 +710,9 @@
 
 /* unified design tokens: typography + surfaces */
 :root{--cx-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;--cx-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--cx-radius-sm:5px;--cx-radius-md:8px;--cx-radius-lg:14px}
+/* 宿主槽位里的零件（输入框芯片、多级列表）在 .cx-shell 之外，这里给一份最小调色板 */
+:root{--cx-fs-10:10px;--cx-fs-12:12px;--cx-fs-14:14px;--cx-fs:12px;--cx-fs-body:10px;--cx-fs-title:14px;--cx-surface-0:#03080e;--cx-surface-1:#08141f;--cx-surface-2:#0b1c2a;--cx-surface-3:#102738;--cx-text:#c6e5f1;--cx-text-strong:#effcff;--cx-text-dim:#7fa5b6;--cx-text-faint:#54788a;--cx-border:#16384d;--cx-border-strong:#1d4a63;--cx-accent:#35d0e0;--cx-accent-soft:rgba(53,208,224,.12);--cx-shadow:0 18px 44px rgba(0,0,0,.55)}
+@media (prefers-color-scheme: light){:root{--cx-surface-0:#e5f0f6;--cx-surface-1:#ffffff;--cx-surface-2:#f4fafd;--cx-surface-3:#e8f3f9;--cx-text:#294c5d;--cx-text-strong:#102f3e;--cx-text-dim:#5e7f8f;--cx-text-faint:#8ba5b1;--cx-border:#c9dde8;--cx-border-strong:#8fc5d9;--cx-accent:#0b7f9f;--cx-accent-soft:rgba(11,127,159,.08);--cx-shadow:0 16px 38px rgba(31,73,94,.12)}}
 .cx-shell{font-family:var(--cx-font);font-size:var(--cx-fs);line-height:1.55;letter-spacing:.01em;color:var(--cx-text);background:var(--cx-bg)}
 .cx-shell button,.cx-shell input,.cx-shell textarea,.cx-shell select{font-family:var(--cx-font);font-size:var(--cx-fs)}
 .cx-shell .cx-mono,.cx-shell .cx-md-code,.cx-shell .cx-md-inline{font-family:var(--cx-mono)}
@@ -3367,6 +3370,23 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 /* 会话标签里的配置面板：铺满标签内容区，内部自己滚动 */
 .cx-ctx-inline{height:100%;min-height:0;display:flex;flex-direction:column;background:var(--cx-surface-0);overflow:hidden}
 .cx-ctx-inline>.cx-ctx-body{flex:1;min-height:0;overflow:auto}
+
+/* 输入框多级列表：服务节点 → 项目空间 → 最近应用 */
+.cx-ctx-chipwrap{position:relative;display:inline-flex;min-width:0}
+.cx-cascade{position:absolute;left:0;bottom:calc(100% + 8px);z-index:1400;width:min(720px,86vw);max-height:min(420px,68vh);display:flex;flex-direction:column;background:var(--cx-surface-1);border:1px solid var(--cx-border-strong);border-radius:var(--cx-radius-md);box-shadow:var(--cx-shadow);overflow:hidden}
+.cx-cascade-body{display:flex;flex:1;min-height:0}
+.cx-cascade-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--cx-border)}
+.cx-cascade-col:last-child{border-right:0}
+.cx-cascade-h{flex:none;padding:7px 10px;font-size:10px;letter-spacing:.08em;color:var(--cx-text-faint);background:var(--cx-surface-2);border-bottom:1px solid var(--cx-border)}
+.cx-cascade-list{flex:1;min-height:0;overflow:auto;padding:4px}
+.cx-cascade-item{display:flex;flex-direction:column;gap:2px;width:100%;padding:6px 8px;border:0;border-radius:var(--cx-radius-sm);background:transparent;color:var(--cx-text);text-align:left;cursor:pointer}
+.cx-cascade-item .nm{font-size:12px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-cascade-item .sub{font-size:10px;color:var(--cx-text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-cascade-item:hover{background:var(--cx-surface-3)}
+.cx-cascade-item.on{background:var(--cx-accent-soft);color:var(--cx-accent)}
+.cx-cascade-empty{padding:10px;font-size:11px;color:var(--cx-text-faint)}
+.cx-cascade-f{flex:none;display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--cx-surface-2);border-top:1px solid var(--cx-border)}
+.cx-cascade-cur{flex:1;min-width:0;font-size:10px;color:var(--cx-text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cx-section{display:flex;flex-direction:column;gap:8px;min-width:0}
 .cx-section-h{font-size:var(--cx-fs);font-weight:600;color:var(--cx-cyan);letter-spacing:.06em;text-transform:uppercase;opacity:.85}
 .cx-btn.cx-sm{padding:2px 7px;font-size:var(--cx-fs)}

@@ -1,6 +1,6 @@
     // ── ContextOS 配置中心：全局 / 会话（node space app avatar scene mode） ──
     const CTX_CFG_KEYS = ['node', 'space', 'app', 'avatar', 'scene', 'mode'];
-    const CTX_CFG_DEFAULT = { node: null, space: '', app: '', avatar: '', scene: '', mode: 'factory' };
+    const CTX_CFG_DEFAULT = { node: null, space: '', app: '', avatar: '', scene: '', mode: 'factory', recent: [] };
     const CTX_CFG_NS = 'dsh-contextos-devops:cfg';
     const CTX_CALLS_NS = 'dsh-contextos-devops:calls';
     const CTX_UI = { open: false, tab: 'global', sessionId: '', subs: new Set() };
@@ -17,6 +17,7 @@
       d.global = { ...CTX_CFG_DEFAULT, ...(d.global || {}) };
       d.sessions = d.sessions || {};
       d.commands = d.commands || {};
+      if (!Array.isArray(d.recent)) d.recent = [];
       d.dev = { space: '', zone: 'devops', template: 'Hash', compile: true, registerAsTool: true, fallback: '', ...(d.dev || {}) };
       return d;
     }
@@ -200,33 +201,99 @@
       return h('canvas', { className: 'cx-comet', ref, 'aria-hidden': 'true' });
     }
 
+    function setSession(sid, k, v) { if (sid) ctxCfgSetSession(sid, k, v); else ctxCfgSetGlobal(k, v); }
+    function pushRecent(node, space, app, title) {
+      const list = Array.isArray(CTX_CFG.recent) ? CTX_CFG.recent : [];
+      const key = `${node}:${space || ''}:${app || ''}`;
+      const next = [{ node, space: space || '', app: app || '', title: title || '', t: Date.now() }, ...list.filter((r) => `${r.node}:${r.space || ''}:${r.app || ''}` !== key)];
+      CTX_CFG.recent = next.slice(0, 20); ctxCfgSave();
+    }
+    // 输入框里的多级列表：服务节点 → 项目空间 → 最近应用
+    function CtxCascade({ sessionId, onClose, onOpenConfig }) {
+      ctxCfgUse();
+      const sid = sessionId || '';
+      const eff = ctxCfgResolve(sid);
+      const node = Number(eff.node) || null;
+      const spaces = node ? (CTX_DATA.spaces[node] || []) : [];
+      const apps = node ? (CTX_DATA.apps[`${node}:${eff.space || ''}`] || []) : [];
+      const recent = (Array.isArray(CTX_CFG.recent) ? CTX_CFG.recent : []).filter((r) => !node || Number(r.node) === node);
+      useEffect(() => {
+        (async () => {
+          if (!CTX_DATA.nodes.length) await ctxLoadNodes();
+          if (node) await ctxLoadSpaces(node);
+          if (node) await ctxLoadApps(node, eff.space);
+        })();
+      }, [node, eff.space]);
+      useEffect(() => {
+        const onKey = (e) => { if (e.key === 'Escape') onClose && onClose(); };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+      }, []);
+      const pickNode = (p) => {
+        setSession(sid, 'node', p);
+        setSession(sid, 'space', '');
+        setSession(sid, 'app', '');
+        ctxLoadSpaces(p);
+      };
+      const pickSpace = (name) => {
+        setSession(sid, 'space', name);
+        setSession(sid, 'app', '');
+        ctxLoadApps(node, name);
+      };
+      const pickApp = (a) => {
+        const cmd = a.command || a.name || '';
+        setSession(sid, 'app', cmd);
+        pushRecent(node, eff.space || '', cmd, a.title || a.name || cmd);
+        onClose && onClose();
+      };
+      const col = (title, rows, empty, onPick, active) => h('div', { className: 'cx-cascade-col' },
+        h('div', { className: 'cx-cascade-h' }, title),
+        h('div', { className: 'cx-cascade-list' },
+          rows.length ? rows.map((r, i) => h('button', {
+            key: `${i}-${r.key}`, className: `cx-cascade-item${r.key === active ? ' on' : ''}`, title: r.title || r.label,
+            onClick: () => onPick(r),
+          }, h('span', { className: 'nm' }, r.label), r.sub ? h('span', { className: 'sub' }, r.sub) : null))
+            : h('div', { className: 'cx-cascade-empty' }, empty)));
+      const nodeRows = (CTX_DATA.nodes || []).map((n) => ({ key: String(n.port), label: `:${n.port}`, sub: n.name || (n.state === 'running' ? 'running' : 'offline'), raw: n }));
+      const spaceRows = spaces.map((sp) => ({ key: String(sp.name), label: sp.name, sub: sp.status || '', raw: sp }));
+      const appRows = (recent.length ? recent.map((r) => ({ key: `r-${r.app}`, label: r.title || r.app, sub: `最近 · ${r.app}`, raw: { command: r.app, title: r.title } })) : [])
+        .concat(apps.map((a) => ({ key: `a-${a.command || a.name}`, label: a.title || a.command || a.name, sub: a.command || a.name, raw: a })));
+      return h('div', { className: 'cx-cascade', onMouseDown: (e) => e.stopPropagation() },
+        h('div', { className: 'cx-cascade-body' },
+          col('服务节点 / NODE', nodeRows, T('暂无节点'), (r) => pickNode(Number(r.key)), node ? String(node) : ''),
+          col('项目空间 / SPACE', spaceRows, node ? T('暂无空间') : T('先选节点'), (r) => pickSpace(r.key), eff.space || ''),
+          col('最近应用 / APP', appRows, node && eff.space ? T('暂无应用') : T('先选空间'), (r) => pickApp(r.raw || {}), eff.app || '')),
+        h('div', { className: 'cx-cascade-f' },
+          h('span', { className: 'cx-cascade-cur' }, [node ? `:${node}` : T('未绑定节点'), eff.space || T('未选空间'), eff.app || T('未选应用')].join(' · ')),
+          h('button', { className: 'cx-btn xs', onClick: () => { onOpenConfig && onOpenConfig(); } }, T('全部配置'))));
+    }
+
     function CtxChip({ sessionId, selectView }) {
       ctxCfgUse();
       const [open, setOpen] = useState(false);
+      const [cfg, setCfg] = useState(false);
       const eff = ctxCfgResolve(sessionId);
-      return h(React.Fragment, null,
+      const openCfg = () => {
+        if (typeof selectView === 'function') { setOpen(false); selectView('contextos'); return; }
+        setOpen(false); setCfg(true);
+      };
+      useEffect(() => {
+        if (!open) return;
+        const onDoc = (e) => { if (!e.target.closest || !e.target.closest('.cx-ctx-chipwrap')) setOpen(false); };
+        document.addEventListener('mousedown', onDoc);
+        return () => document.removeEventListener('mousedown', onDoc);
+      }, [open]);
+      return h('div', { className: 'cx-ctx-chipwrap' },
         h('button', {
-          className: 'cx-ctx-chip', title: 'ContextOS 会话配置',
+          className: 'cx-ctx-chip', title: '选择服务节点 / 项目空间 / 最近应用',
           onPointerDown: (e) => { e.stopPropagation(); },
-          onClick: (e) => { e.stopPropagation(); if (typeof selectView === 'function') selectView('contextos'); else setOpen(true); },
+          onClick: (e) => { e.stopPropagation(); setOpen((v) => !v); },
         },
           h('span', { className: 'cx-ctx-chip-k' }, 'ContextOS'),
           h('span', { className: 'cx-ctx-chip-v' }, eff.node ? `:${eff.node}` : T('未绑定')),
           eff.space ? h('span', { className: 'cx-ctx-chip-s' }, eff.space) : null),
-        open ? h(CtxCenter, { sessionId: sessionId || '', onClose: () => setOpen(false) }) : null);
-    }
-
-    function CtxHeaderButton({ sessionId, selectView }) {
-      ctxCfgUse();
-      const [open, setOpen] = useState(false);
-      const eff = ctxCfgResolve(sessionId);
-      return h(React.Fragment, null,
-        h('button', {
-          className: 'cx-ctx-hbtn', title: `ContextOS 会话配置 ${eff.node ? ':' + eff.node : ''}`,
-          onPointerDown: (e) => { e.stopPropagation(); },
-          onClick: (e) => { e.stopPropagation(); if (typeof selectView === 'function') selectView('contextos'); else setOpen(true); },
-        }, h('span', { className: 'cx-ctx-hdot' }), 'ContextOS'),
-        open ? h(CtxCenter, { sessionId: sessionId || '', onClose: () => setOpen(false) }) : null);
+        open ? h(CtxCascade, { sessionId: sessionId || '', onClose: () => setOpen(false), onOpenConfig: openCfg }) : null,
+        cfg ? h(CtxCenter, { sessionId: sessionId || '', onClose: () => setCfg(false) }) : null);
     }
 
     function CtxField({ label, children }) { return h('label', { className: 'cx-field' }, label, children); }

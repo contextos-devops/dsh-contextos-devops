@@ -74,9 +74,9 @@
 | `src/client/parts/51-pmselection.js` | 32 | `usePmSelection` |
 | `src/client/parts/52-pmdata.js` | 30 | `usePmData` |
 | `src/client/parts/55-pm.js` | 147 | `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` `PmSectionHead` `PM_STATUS_ORDER` |
-| `src/client/parts/58-config.js` | 386 | `CTX_CFG_KEYS` `CTX_CFG_DEFAULT` `CTX_CFG_NS` `CTX_CALLS_NS` `CTX_UI` `CTX_DATA` `MODE_INTRO_SEEN` `ModeIntro` `WelcomeBurst` `CursorComet` |
+| `src/client/parts/58-config.js` | 453 | `CTX_CFG_KEYS` `CTX_CFG_DEFAULT` `CTX_CFG_NS` `CTX_CALLS_NS` `CTX_UI` `CTX_DATA` `MODE_INTRO_SEEN` `ModeIntro` `WelcomeBurst` `CursorComet` |
 | `src/client/parts/59-monitor.js` | 263 | `MonitorDonut` `R` `MonitorSpark` `MonitorTwin` `MON_PANELS` `MON_DEFAULT` `MonitorPanel` `MonitorBoard` `MonitorView` |
-| `src/client/parts/60-page.js` | 1643 | `PipeSelect` `Page` `Boundary` |
+| `src/client/parts/60-page.js` | 1641 | `PipeSelect` `Page` `Boundary` |
 
 ## 3. 接口契约
 
@@ -142,7 +142,7 @@
 | `docs/AI-CONVERSATION.md` | 140 | 人写 |
 | `docs/ARCHITECTURE.md` | 135 | 人写 |
 | `docs/CODE-GEN.md` | 424 | 人写 |
-| `docs/DESIGN-SYSTEM.md` | 280 | 人写 |
+| `docs/DESIGN-SYSTEM.md` | 281 | 人写 |
 | `docs/DIAGNOSTICS.md` | 98 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |
 | `docs/DSH-COS.md` | 114 | 人写 |

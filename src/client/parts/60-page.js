@@ -1634,8 +1634,6 @@
           (props) => h('div', { className: 'cx-view-host' }, h(Boundary, null, h(CtxCenter, { sessionId: (props && props.sessionId) || '', inline: true })))));
         // 输入框内最左：ContextOS 芯片（切换服务节点 / 打开控制台）
         ctx.slots.inject('conversation.input.left', () => ctx.slots.register({ name: 'conversation.input.left', id: 'dsh-contextos-devops', order: 0 }, (props) => h(CtxChip, { sessionId: (props && props.sessionId) || '', selectView: props && props.selectView })));
-        // 会话标题栏右侧：ContextOS 按钮（打开控制台）
-        ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({ name: 'conversation.session.header.utilities', id: 'dsh-contextos-devops-center', order: 10 }, (props) => h(CtxHeaderButton, { sessionId: (props && props.sessionId) || '', selectView: props && props.selectView })));
       },
     };
   },
