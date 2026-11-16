@@ -148,7 +148,7 @@
       if (onClick || as === 'button') return h('button', { type: 'button', className: cls, title, disabled, onClick, ...rest }, ...content);
       return h('span', { className: cls, title, ...rest }, ...content);
     }
-    function StandardSpaces({ value, onChange }) {
+    function StandardSpaces({ value, onChange, zh = false }) {
       const selected = new Set(value || []);
       const toggle = (key) => {
         if (key === 'community' || key === 'enterprise') return;
@@ -162,9 +162,9 @@
         return h('label', { key, className: `cx-space-check${on ? ' on' : ''}${forced ? ' forced' : ''}` },
           h('input', { type: 'checkbox', checked: on, disabled: forced, onChange: () => toggle(key) }),
           h('span', { className: 'cx-space-ico', dangerouslySetInnerHTML: spaceIconHtml(name, 14) }),
-          h('span', { className: 'cx-space-name' }, T(name)),
+          h('span', { className: 'cx-space-name' }, zh ? name : T(name)),
           h('em', { className: 'cx-space-en' }, en || ''),
-          forced ? h('i', null, T('默认')) : null);
+          forced ? h('i', null, zh ? '默认' : T('默认')) : null);
       }));
     }
     function KeyValueTable({ rows, className = '' }) {

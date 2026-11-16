@@ -133,7 +133,7 @@ const tools = [
   },
   {
     name: 'contextos_space_open',
-    description: "Open a project space's home page (http://localhost:<node>/s/<space>/) in the system browser.",
+    description: "Open a project space's home page (http://localhost:<node>/s/<space>) in the system browser.",
     parameters: { type: 'object', properties: { node: { type: 'number' }, space: { type: 'string' } }, required: ['node', 'space'] },
     async execute(args) { return openSpace({ node: args.node, space: args.space }); },
   },

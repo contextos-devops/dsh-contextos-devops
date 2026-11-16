@@ -638,7 +638,7 @@
           isDir && open ? renderDir(key, depth + 1) : null);
       });
 
-      const previewUrl = node && space ? `http://127.0.0.1:${node}/s/${space}/` : '';
+      const previewUrl = node && space ? `http://127.0.0.1:${node}/s/${space}` : '';
       const previewKindOf = (p) => {
         const e = String(p || '').split('.').pop().toLowerCase();
         if (['html', 'htm', 'xhtml'].includes(e)) return 'html';

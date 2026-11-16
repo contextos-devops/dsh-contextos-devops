@@ -225,7 +225,7 @@
 .cx-init-step .idx{color:rgba(var(--cx-hue-rgb),.5);margin-right:6px;font-size:var(--cx-fs-body)}
 .cx-init-step .st{width:16px;flex:none;text-align:center}
 .cx-init-step.done{color:var(--cx-green);text-shadow:0 0 8px rgba(var(--cx-green-rgb),.35)}
-.cx-init-step.run{color:var(--cx-orange);text-shadow:0 0 8px rgba(255,180,84,.4)}
+.cx-init-step.run{color:#ffd166;text-shadow:0 0 8px rgba(255,209,102,.55)}
 .cx-init-step.run .st{animation:cx-init-blink 1s steps(2) infinite}
 @keyframes cx-init-blink{50%{opacity:.25}}
 .cx-init-step.err{color:var(--cx-red)}
@@ -3327,4 +3327,37 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-init-console-wrap{margin-top:12px}
 .cx-init-console-live{font-size:var(--cx-fs-meta);letter-spacing:.08em;color:var(--cx-green);text-transform:none}
 .cx-init-console{max-height:280px;overflow:auto;margin-top:4px;padding:10px 12px;border:1px solid var(--cx-border);border-radius:4px;background:#08151c;color:#c8f5e8;font:12px/1.55 var(--cx-mono);white-space:pre-wrap;word-break:break-word;tab-size:2}
-.cx-init-console.expanded{max-height:520px}
+.cx-init-console.collapsed{display:none}
+.cx-init-methods{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-left:auto;justify-content:flex-end}
+.cx-init-methods .cx-filter-chip{font-size:10px;padding:3px 6px;line-height:1.2}
+.cx-init-dl{display:flex;align-items:center;gap:8px;padding:4px 0 2px;font-size:10px;color:var(--cx-muted)}
+.cx-init-dl .track{flex:1;height:4px;background:rgba(var(--cx-hue-rgb),.12);border:1px solid rgba(var(--cx-hue-rgb),.2);overflow:hidden}
+.cx-init-dl .bar{height:100%;background:linear-gradient(90deg,var(--cx-cyan),var(--cx-green));transition:width .3s ease}
+.cx-init-dl span{white-space:nowrap;color:var(--cx-cyan);letter-spacing:.06em}
+.cx-init .cx-init-card{height:min(760px,calc(100vh - 150px));max-height:calc(100vh - 90px);overflow:hidden;display:flex;flex-direction:column}
+.cx-init .cx-init-body{flex:1;min-height:0;overflow:auto;padding-right:2px}
+.cx-init .cx-foot{flex:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(22,56,77,.55);background:linear-gradient(180deg,rgba(3,10,18,0),rgba(3,10,18,.96))}
+.cx-init-console{width:100%;max-width:100%;box-sizing:border-box;word-break:break-all;overflow-wrap:anywhere}
+.cx-init-subbar{display:flex;align-items:center;gap:8px;margin-top:6px;font:var(--cx-fs-body) var(--cx-mono);color:#ffd166}
+.cx-init-subbar .track{flex:1;height:3px;background:rgba(255,209,102,.14);border-radius:2px;overflow:hidden}
+.cx-init-subbar .bar{height:100%;background:#ffd166;box-shadow:0 0 8px rgba(255,209,102,.6);transition:width .3s ease}
+.cx-init-step .st.run{display:grid;place-items:center}
+.cx-init-dot{display:block;width:7px;height:7px;border-radius:50%;background:#ffd166;box-shadow:0 0 10px rgba(255,209,102,.95);animation:cx-yellow-blink 1s steps(2) infinite}
+.cx-init-dot.pulse{animation:cx-probe .55s ease-in-out 2}
+@keyframes cx-breath{0%,100%{opacity:.4;transform:scale(.78)}50%{opacity:1;transform:scale(1.18)}}
+@keyframes cx-probe{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(2.35)}}
+@keyframes cx-yellow-blink{50%{opacity:.18}}
+
+/* 初始化输出全屏：只把输出区域铺满视口，不改变初始化状态。 */
+.cx-init-console-wrap.max{position:fixed;left:var(--cx-shell-left,0);top:var(--cx-shell-top,0);width:var(--cx-shell-width,100vw);height:var(--cx-shell-height,100vh);z-index:10000;display:flex;flex-direction:column;box-sizing:border-box;padding:18px 20px;background:#07141b;margin:0}
+.cx-init-console-wrap.max .cx-init-debug-h{margin-bottom:8px}
+.cx-init-console-wrap.max .cx-init-console{flex:1;min-height:0;max-height:none;height:auto;margin-top:0}
+
+/* 加载模态可关闭：接口慢时不让用户被永久挡住。 */
+.cx-busy-card{position:relative}
+.cx-busy-close{position:absolute;right:6px;top:6px;width:26px;height:26px;border:0;border-radius:4px;background:transparent;color:var(--cx-muted);font-size:20px;line-height:1;cursor:pointer}
+.cx-busy-close:hover{color:var(--cx-cyan);background:rgba(var(--cx-hue-rgb),.12)}
+
+/* 会话标签视图宿主：占满标签内容区，避免被内容区高度压成 0 */
+.cx-view-host{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.cx-view-host>.cx-shell{height:100%;min-height:0;flex:1 1 auto}

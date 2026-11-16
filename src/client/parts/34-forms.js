@@ -47,8 +47,9 @@
         setBusy(true); setErr('');
         try {
           const r = await api('deploy', payload());
-          const binaryMode = r?.plan?.strategy === 'binary' || r?.method === 'binary' || (!opt?.git && !opt?.go);
-          const spaces = await api('officialSpaces', { node: Number(port), keys: spaceKeys, binaryMode });
+          const copyMode = method === 'copy' || r?.method === 'copy';
+          const binaryMode = copyMode || r?.plan?.strategy === 'binary' || r?.method === 'binary' || (!opt?.git && !opt?.go);
+          const spaces = await api('officialSpaces', { node: Number(port), keys: spaceKeys, binaryMode, copyMode, target: r?.target || '' });
           setResult({ ...r, officialSpaces: spaces });
           onDone();
         } catch (e) { setErr(String(e?.message || e)); } finally { setBusy(false); }

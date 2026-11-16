@@ -1,5 +1,27 @@
+    const compactInitLog = (text, method = 'ALL') => {
+      const out = [];
+      let pending = '';
+      for (const raw of String(text || '').split('\n')) {
+        const s = raw.trim();
+        const req = s.match(/^\[[0-9:.]+\]\s*→\s*(GET|PUT|POST|DELETE|PATCH)\b/);
+        if (req) {
+          pending = req[1];
+          if (method === 'ALL' || pending === method) out.push(s);
+          continue;
+        }
+        if (/^\[[0-9:.]+\]\s*←/.test(s)) {
+          if (pending && (method === 'ALL' || pending === method)) out.push(s);
+          continue;
+        }
+        if (/^\$ /.test(s) || /^\[(?:exit|start|deploy|api |download\])/.test(s)) {
+          if (method === 'ALL') out.push(s);
+        }
+      }
+      return out.join('\n');
+    };
     function InitOverlay({ state, onStart, onRetry, onLoginRemote, onClose }) {
       if (!state) return null;
+      const T = (s) => s;
       const phase = state.phase || (state.running ? 'running' : state.error ? 'error' : state.done ? 'done' : 'setup');
       const [step, setStep] = useState(0);
       const [mode, setMode] = useState('local');
@@ -27,7 +49,11 @@
       const [probeBusy, setProbeBusy] = useState(false);
       const probedRef = useRef(false);
       const [spaceKeys, setSpaceKeys] = useState(['community', 'enterprise']);
-      const [logExpanded, setLogExpanded] = useState(false);
+      const [logCollapsed, setLogCollapsed] = useState(false);
+      const [logMax, setLogMax] = useState(false);
+      const [methodFilter, setMethodFilter] = useState('ALL');
+      const [probePulse, setProbePulse] = useState(false);
+      const probeSeenRef = useRef(0);
       const probePort = async () => {
         setProbeBusy(true);
         try {
@@ -41,14 +67,30 @@
       const consoleRef = useRef(null);
       const icon = (s) => s === 'done' ? '✓' : s === 'run' ? '◍' : s === 'err' ? '✗' : '○';
       useEffect(() => {
+        if (!logMax) return;
+        const onKey = (e) => { if (e.key === 'Escape') setLogMax(false); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, [logMax]);
+      useEffect(() => {
         const el = consoleRef.current;
         if (!el) return;
         if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) el.scrollTop = el.scrollHeight;
-      }, [state.console, state.apiConsole, logExpanded]);
+      }, [state.console, state.apiConsole, logCollapsed]);
+      useEffect(() => {
+        const n = (String(state.console || '').match(/\[probe\]/g) || []).length;
+        if (n === probeSeenRef.current) return;
+        probeSeenRef.current = n;
+        setProbePulse(true);
+        const t = setTimeout(() => setProbePulse(false), 760);
+        return () => clearTimeout(t);
+      }, [state.console]);
       const total = (state.steps || []).length;
       const doneCount = (state.steps || []).filter((x) => x.status === 'done').length;
       const pct = total ? Math.round((doneCount / total) * 100) : 0;
-      const titles = { setup: `${T('初始化')} / INITIALIZE`, running: `${T('正在初始化')} / INITIALIZING`, done: `${T('初始化完成')} / INIT DONE`, error: `${T('初始化失败')} / INIT FAILED` };
+      const dlPcts = [...String(state.console || '').matchAll(/\[download\]\s+(\d+)%/g)].map((m) => Number(m[1]));
+      const downloadPct = dlPcts.length ? dlPcts[dlPcts.length - 1] : 0;
+      const titles = { setup: T('初始化'), running: T('正在初始化'), done: T('初始化完成'), error: T('初始化失败') };
       const readPic = (file, cb) => {
         if (!file) return;
         const reader = new FileReader();
@@ -86,7 +128,7 @@
         }).catch(() => {});
         return () => { alive = false; };
       }, [mode, dir]);
-      const stepHead = h('div', { className: 'cx-init-wiz' }, [['01', '部署', 'DEPLOY'], ['02', '分身与场景', 'DIGITAL AVATAR & CYBER WORLD'], ['03', '项目', 'PROJECT']].map(([n, t, en], i) =>
+      const stepHead = h('div', { className: 'cx-init-wiz' }, [['01', '部署', '部署节点'], ['02', '分身与场景', '分身与赛博世界'], ['03', '项目', '创建项目']].map(([n, t, en], i) =>
         h('button', { key: n, type: 'button', className: `cx-init-tab${step === i ? ' on' : ''}${step > i ? ' done' : ''}`, onClick: () => phase === 'setup' && setStep(i) },
           h('b', null, n), h('span', null, T(t)), h('i', null, en))));
       const modeChip = ([id, label, desc]) => h('button', { key: id, type: 'button', className: `cx-init-mode${mode === id ? ' on' : ''}`, onClick: () => setMode(id) },
@@ -108,7 +150,7 @@
         advanced ? field(T('镜像源（可选）'), input(mirror, setMirror, { placeholder: '留空使用源码地址的主机地址' })) : null,
         field(T('部署目录'), input(dir, setDir, { placeholder: '~/ContextOS-9188' })),
         h('label', { className: 'cx-field full' }, T('端口'), h('div', { className: 'cx-port-row' }, input(port, setPort, { inputMode: 'numeric' }), h('button', { className: 'cx-btn', type: 'button', disabled: probeBusy, onClick: probePort }, probeBusy ? T('探测中…') : T('探测端口')))),
-        h('div', { className: 'cx-field full' }, T('标准空间'), h(StandardSpaces, { value: spaceKeys, onChange: setSpaceKeys })))
+        h('div', { className: 'cx-field full' }, T('标准空间'), h(StandardSpaces, { value: spaceKeys, onChange: setSpaceKeys, zh: true })))
         : mode === 'docker' ? h('div', { className: 'cx-form' },
           field(T('镜像'), input(image, setImage, { placeholder: 'shylinux/contextos:latest' })),
           field(T('宿主机目录（可空）'), input(dir, setDir, { placeholder: '~/contextos-data' })),
@@ -146,24 +188,27 @@
             h('label', { className: 'cx-field full' }, T('目标描述'), h('textarea', { className: 'cx-input', rows: 3, value: project.goal, onChange: (e) => setProject((x) => ({ ...x, goal: e.target.value })) })),
             h('label', { className: 'cx-field full' }, T('计划描述'), h('textarea', { className: 'cx-input', rows: 3, value: project.plan, onChange: (e) => setProject((x) => ({ ...x, plan: e.target.value })) })),
             h('div', { className: 'cx-init-sum' }, `${T('将生成')}: 1 ${T('目标')} · 1 ${T('计划')}`));
+      const sp = state.spaceProgress;
+      const spaceBar = sp?.total ? h('div', { className: 'cx-init-subbar' },
+        h('div', { className: 'track' }, h('div', { className: 'bar', style: { width: `${Math.round((sp.done / sp.total) * 100)}%` } })),
+        h('span', null, `${T('部署项目空间')} ${sp.done}/${sp.total}${sp.done >= sp.total ? ` · ${T('完成')}` : sp.space ? ` · ${sp.name ? `${sp.name} · ` : ''}${sp.space}` : ''}`)) : null;
       const runView = h('div', null,
         total ? h('div', { className: 'cx-init-progress' }, h('div', { className: 'track' }, h('div', { className: 'bar', style: { width: `${pct}%` } })), h('span', null, `${doneCount}/${total} · ${pct}%`)) : null,
         (state.steps || []).length ? h('div', null, state.steps.map((s, i) => h('div', { key: s.id, className: `cx-init-step ${s.status || ''}` },
-          h('span', { className: 'st' }, icon(s.status)),
-          h('div', { style: { flex: 1, minWidth: 0 } }, h('span', { className: 'idx' }, String(i + 1).padStart(2, '0')), T(s.label), s.detail ? h('div', { className: 'sd' }, s.detail) : null)))) : null,
+          h('span', { className: `st${s.status === 'run' ? ' run' : ''}` }, s.status === 'run' ? h('i', { className: `cx-init-dot${probePulse ? ' pulse' : ''}` }) : icon(s.status)),
+          h('div', { style: { flex: 1, minWidth: 0 } },
+            h('span', { className: 'idx' }, String(i + 1).padStart(2, '0')), T(s.label),
+            s.detail ? h('div', { className: 'sd' }, s.detail) : null,
+            s.id === 'spaces' ? spaceBar : null)))) : null,
         state.error ? h(ErrorBox, { text: state.error }) : null,
-        (state.console || state.apiConsole) ? h('div', { className: 'cx-init-console-wrap' },
-          h('div', { className: 'cx-init-debug-h' }, T('接口 / 命令行输出'), h('span', { className: 'cx-init-console-live' }, T('完整输出')), h('button', { className: 'cx-btn xs', onClick: () => setLogExpanded((v) => !v) }, T(logExpanded ? '收起日志' : '展开日志'))),
-          h('pre', { ref: consoleRef, className: `cx-init-console${logExpanded ? ' expanded' : ''}`, 'aria-label': T('完整接口与命令行输出') }, `${state.apiConsole || ''}${state.apiConsole && state.console ? '\n' : ''}${state.console || ''}`)) : null,
-        (state.logs || []).length ? h('div', { className: 'cx-init-debug-h' }, T('执行过程'), h('button', { className: 'cx-btn xs', onClick: () => setLogExpanded((v) => !v) }, T(logExpanded ? '收起日志' : '展开日志'))) : null,
-        (state.logs || []).length ? h('div', { className: `cx-init-debug${logExpanded ? ' expanded' : ''}` }, h('table', { className: 'cx-init-log' },
-          h('thead', null, h('tr', null, ['时间', '耗时', '操作', '影响 / 接口', '状态'].map((x) => h('th', { key: x }, T(x))))),
-          h('tbody', null, state.logs.map((l, i) => h('tr', { key: l.id || i, className: l.status || '' },
-            h('td', null, String(l.t || '')),
-            h('td', null, l.ms ? `${l.ms} ms` : '—'),
-            h('td', null, String(l.op || '')),
-            h('td', { className: 'impact', title: String(l.impact || '') }, String(l.impact || '')),
-            h('td', null, T(l.status === 'error' ? '失败' : l.status === 'done' || l.status === 'ok' ? '完成' : '执行中'))))))) : null);
+        (state.console || state.apiConsole) ? h('div', { className: `cx-init-console-wrap${logMax ? ' max' : ''}` },
+          h('div', { className: 'cx-init-debug-h' },
+            T('接口 / 命令行输出'),
+            h('div', { className: 'cx-init-methods' }, ['ALL', 'GET', 'PUT', 'POST', 'DELETE'].map((x) => h('button', { key: x, type: 'button', className: `cx-filter-chip${methodFilter === x ? ' on' : ''}`, onClick: () => setMethodFilter(x) }, x === 'ALL' ? T('全部') : x))),
+            h('button', { className: 'cx-btn xs', onClick: () => setLogCollapsed((v) => !v) }, T(logCollapsed ? '展开日志' : '收起日志')),
+            h('button', { className: 'cx-btn xs', onClick: () => setLogMax((v) => !v) }, T(logMax ? '退出全屏' : '最大化'))),
+          downloadPct > 0 && downloadPct < 100 ? h('div', { className: 'cx-init-dl' }, h('div', { className: 'track' }, h('div', { className: 'bar', style: { width: `${downloadPct}%` } })), h('span', null, `${T('下载二进制')} ${downloadPct}%`)) : null,
+          h('pre', { ref: consoleRef, className: `cx-init-console${logCollapsed ? ' collapsed' : ''}`, 'aria-label': T('接口与命令行调用结果') }, compactInitLog(`${state.apiConsole || ''}${state.apiConsole && state.console ? '\n' : ''}${state.console || ''}`, methodFilter))) : null);
       const footer = h('div', { className: 'cx-foot' },
         h('button', { className: 'cx-btn', onClick: onClose }, phase === 'running' ? T('隐藏') : phase === 'done' ? T('稍后') : T('关闭')),
         phase === 'setup' ? h('div', { style: { display: 'flex', gap: 8 } },
@@ -171,7 +216,7 @@
           step < 2 ? h('button', { className: 'cx-btn pri', onClick: () => setStep((v) => v + 1) }, T('下一步'))
             : h('button', { className: 'cx-btn pri', onClick: start }, T('初始化')))
           : phase === 'done' ? h('button', { className: 'cx-btn pri', onClick: onClose }, T('进入')) : phase === 'error' ? h('button', { className: 'cx-btn pri', onClick: onRetry }, T('重试当前步骤')) : null);
-      return h('div', { className: `cx-init ${phase}` },
+      return h('div', { className: `cx-init ${phase}`, style: { '--cx-shell-left': '0px', '--cx-shell-top': '0px', '--cx-shell-width': '100vw', '--cx-shell-height': '100vh' } },
         h('div', { className: 'cx-init-grid' }),
         h('div', { className: 'cx-init-ring' }),
         h('div', { className: 'cx-init-scan' }),
@@ -186,7 +231,8 @@
             h('div', { style: { minWidth: 0 } },
               h('h2', null, titles[phase] || titles.setup),
               h('div', { className: 'desc' }, phase === 'setup' ? T('三步进入你的赛博世界：部署 → 数字分身与赛博世界 → 项目。') : T('部署节点 → 部署空间 → 数字分身 → 赛博世界 → 项目管理 → 进入对话')))),
-          phase === 'setup' ? h('div', null, stepHead, stepBody, footer) : h('div', null, footer, runView)));
+          h('div', { className: 'cx-init-body' }, phase === 'setup' ? h('div', null, stepHead, stepBody) : runView),
+          footer));
     }
 
     // ---- 农历 / 节气（1900-2100，移植自 volcanos/lib/date.js）----

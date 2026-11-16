@@ -586,7 +586,7 @@
         const who = ctx.uid || actorId();
         const place = ctx.place || a.place || 'system';
         // 接口 URL：/s/<pod>/c/<portal>/action/run/<cmd>/action/<action>/<k>/<v>?user.uid=&<place>_uid=&uid=
-        const scope = { [`${place}_uid`]: sysUid, 'user.uid': who, 'user_uid': who };
+        const scope = { [`${place}_uid`]: sysUid, 'user.uid': who };
         // user.uid = 当前分身身份；uid 只有「改/删某条记录」时才传
         const r = await api('writeData', { node: fNode, space: fSpace, command: cmd, action: m.action || 'create', fields: vals, scope });
         const uid = (r && (r.uid || r.id)) || '';

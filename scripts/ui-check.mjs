@@ -56,7 +56,7 @@ ok('Go detector checks common install paths', read('lib/core/toolchain.js').incl
 ok('Init log is a table', initUi.includes('cx-init-log'));
 ok('Init has retry action', initUi.includes('onRetry'));
 ok('Init port probe exists', initUi.includes('freePort') && read('lib/core/ops.js').includes('freePort:'));
-ok('Init uses Cyber World term', initUi.includes('DIGITAL AVATAR & CYBER WORLD'));
+ok('Init uses Cyber World term', initUi.includes('分身与赛博世界'));
 ok('Init shows execution log', initUi.includes('cx-init-debug'));
 ok('Init console streams full deploy output', initUi.includes('cx-init-console') && page.includes("api('deployLog'") && read('lib/core/nodes.js').includes('appendDeployLog') && read('lib/misc/shell.js').includes('onChunk'));
 ok('Deploy log API is exposed', read('lib/core/ops.js').includes('deployLog:') && fs.existsSync(path.join(root, 'lib/core/deploy-log.js')));
@@ -140,6 +140,26 @@ ok('update check never throws (falls back to cache)', read('lib/core/update.js')
 ok('deploy console traces every ContextOS API request', read('lib/base/http.js').includes('traceDeployRequest(port') && read('lib/base/http.js').includes('traceDeployResponse(port') && read('lib/core/deploy-log.js').includes('export function traceDeployRequest') && read('lib/core/deploy-log.js').includes('export function traceDeployResponse'));
 ok('direct fetch API paths are traced too', read('lib/core/nodes.js').includes("traceDeployRequest(p, 'GET', url)") && read('lib/core/nodes.js').includes("traceDeployRequest(rp, 'POST', loginUrl)"));
 ok('init logs every plugin API request', read('src/client/parts/05-bootstrap.js').includes('__CX_API_TRACE__') && page.includes('__CX_API_TRACE__') && initUi.includes('state.apiConsole') && page.includes("d.op === 'deployLog'"));
+ok('init console filters by HTTP method', initUi.includes("['ALL', 'GET', 'PUT', 'POST', 'DELETE']") && initUi.includes('compactInitLog(') && initUi.includes('methodFilter'));
+ok('init console has one output area and no execution table', initUi.includes('cx-init-methods') && !initUi.includes("className: 'cx-init-log'") && !initUi.includes("T('执行过程')"));
+ok('binary standard spaces still pass repos', read('lib/core/nodes.js').includes('repos: item.repo, binary'));
+ok('deploy waits before runtime probe', read('lib/core/nodes.js').includes('await sleep(3000)') && read('lib/core/nodes.js').includes("[wait] 等待 3s"));
+ok('space create waits before runtime probe', read('lib/core/spaces.js').includes('setTimeout(r, 3000)') && read('lib/core/spaces.js').includes('interval: 1500'));
+ok('download progress bar is rendered', initUi.includes('cx-init-dl') && initUi.includes('downloadPct') && read('lib/core/nodes.js').includes('[download] ${pct}%'));
+ok('init refreshes node list after deploy', page.includes('await loadNodes();\n            setNode(port);'));
+ok('download progress reaches 100 percent', read('lib/core/nodes.js').includes('[download] 100%'));
+ok('space progress is rendered from job status', initUi.includes('cx-init-subbar') && read('lib/core/init.js').includes('onProgress'));
+ok('copy mode is wired through official spaces', read('lib/core/ops.js').includes('copyMode') && read('src/client/parts/34-forms.js').includes('copyMode'));
+ok('current step dot is yellow', css.includes('background:#ffd166'));
+ok('init modal keeps header/footer fixed', css.includes('.cx-init .cx-init-card{height:min(760px') && css.includes('.cx-init .cx-init-body{flex:1;min-height:0;overflow:auto'));
+ok('init console wraps every character at full width', css.includes('.cx-init-console{width:100%;max-width:100%;box-sizing:border-box;word-break:break-all;overflow-wrap:anywhere}'));
+ok('runtime probes are hidden from console', read('lib/core/deploy-log.js').includes("endsWith('/c/runtime')"));
+ok('running step has a breathing probe dot', initUi.includes('cx-init-dot') && css.includes('@keyframes cx-probe'));
+ok('space URLs have no trailing slash', read('lib/core/nodes.js').includes('return { opened: `http://localhost:${Number(node)}/s/${space}` };'));
+ok('avatar step does not duplicate project creation', read('lib/core/init.js').includes('skipProject: true') && read('lib/core/avatar.js').includes('skipProject = false'));
+ok('Avatar user is created through community API', read('lib/core/avatar.js').includes('/c/web.team.gonganxitong.user/action/create') && !read('lib/core/avatar.js').includes('/c/aaa.user/action/create'));
+ok('ContextOS lives in the conversation tab strip', /name: 'conversation\.view'/.test(page) && /id: 'contextos'/.test(page) && !/openRightbar/.test(page));
+ok('conversation view host fills its tab', mainCss.includes('.cx-view-host{height:100%'));
 const failed = checks.filter((c) => !c.condition);
 for (const c of checks) console.log(`${c.condition ? 'PASS' : 'FAIL'}  ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
 if (failed.length) { console.error(`ui-check: ${failed.length} failed`); process.exit(1); }

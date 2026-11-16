@@ -3,7 +3,7 @@
 > 读这份当：要找某个文件 / 组件 / op / 脚本在哪，或核对接口契约。
 > 不读这份当 → 架构分层与模块归属 → [ARCHITECTURE.md](ARCHITECTURE.md)；产品设计 → [PRODUCT-DESIGN.md](PRODUCT-DESIGN.md)
 >
-> 生成物：`node scripts/docs-index.mjs --write`（2026-11-15）· 源：`src/client/parts/*.js`、`lib/**/*.js`、`scripts/*.mjs`、`docs/*.md`
+> 生成物：`node scripts/docs-index.mjs --write`（2026-11-16）· 源：`src/client/parts/*.js`、`lib/**/*.js`、`scripts/*.mjs`、`docs/*.md`
 > 手改会被下一次生成覆盖；要改内容改代码里的源头。
 
 ## 1. 服务端（宿主进程）
@@ -20,25 +20,25 @@
 | `lib/base/table.js` | 48 | `decodeCell()` `parseFixedTable()` `parseTable()` |
 | `lib/base/texttable.js` | 27 | `parseTextTable()` |
 | `lib/base/url.js` | 179 | `portalOf()` `placeUidKey()` `apiPath()` `dataPath()` `webUrl()` `systemUrl()` `spaceUrl()` `platformUrl()` …19 个 |
-| `lib/core/apps.js` | 680 | `storeApps()` `storeAction()` `createStoreInstance()` `listApps()` `scanApps()` `uniqueAppName()` `autogenSpec()` `autogenService()` …15 个 |
+| `lib/core/apps.js` | 679 | `storeApps()` `storeAction()` `createStoreInstance()` `listApps()` `scanApps()` `uniqueAppName()` `autogenSpec()` `autogenService()` …15 个 |
 | `lib/core/auth.js` | 111 | `toolToken()` `adminSessid()` `appSession()` `appSessid()` `peekNodeAuth()` `ensureNodeAuth()` `APP_COOKIE` `nodeToken` …9 个 |
-| `lib/core/avatar.js` | 326 | `avatarsFile()` `readAvatars()` `writeAvatars()` `defaultAvatar()` `listAvatars()` `createProjectForAvatar()` `ensureProject()` `createAvatar()` …20 个 |
+| `lib/core/avatar.js` | 351 | `avatarsFile()` `readAvatars()` `writeAvatars()` `defaultAvatar()` `listAvatars()` `createProjectForAvatar()` `ensureProject()` `createAvatar()` …20 个 |
 | `lib/core/backup.js` | 106 | `backupRoot()` `backupSpace()` `listBackups()` `sampleNodes()` `monitorQuery()` |
 | `lib/core/codegen.js` | 402 | `codegenCond()` `codegenList()` `codegenRender()` `codegenMerge()` `codegenPath()` `codegenWrite()` `detectClass()` `moduleInfo()` …13 个 |
 | `lib/core/copilot.js` | 544 | `setLlm()` `getLlm()` `chatProviders()` `compactContext()` `lastEffort()` `buildChatPrompt()` `chatWithDSH()` `llmJson()` …15 个 |
 | `lib/core/data.js` | 158 | `writeData()` `readData()` `removeData()` |
-| `lib/core/deploy-log.js` | 84 | `deployLogPath()` `resetDeployLog()` `traceDeployRequest()` `traceDeployResponse()` `appendDeployLog()` `readDeployLog()` |
+| `lib/core/deploy-log.js` | 88 | `deployLogPath()` `resetDeployLog()` `traceDeployRequest()` `traceDeployResponse()` `appendDeployLog()` `readDeployLog()` |
 | `lib/core/device.js` | 149 | `discoverDevices()` |
 | `lib/core/files.js` | 153 | `listDir()` `readFile()` `writeFile()` `listTree()` `makeDir()` `renamePath()` `removePath()` `gitStatus()` |
 | `lib/core/gobuild.js` | 99 | `goBinary()` `runGo()` `goTidyBuild()` |
 | `lib/core/iam.js` | 123 | `iamCommand()` `iamList()` `iamCall()` `commandExists()` `subjectEndpoints()` `iamEndpoints()` `IAM` `SUBJECTS` …9 个 |
 | `lib/core/identity.js` | 23 | `activeAvatarUid()` `resolveActorUid()` |
-| `lib/core/init.js` | 205 | `getInitStatus()` `startInit()` |
+| `lib/core/init.js` | 224 | `getInitStatus()` `startInit()` |
 | `lib/core/installer.js` | 311 | `hostTarget()` `normalizeTarget()` `binaryNameFor()` `platformOptions()` `mirrorOf()` `projectNameOf()` `codeAddressOf()` `resolveSources()` …18 个 |
-| `lib/core/nodes.js` | 967 | `sshHosts()` `sysControl()` `deployNode()` `stopWatchdog()` `watchdogState()` `startWatchdog()` `startNode()` `stopNode()` …20 个 |
-| `lib/core/ops.js` | 321 | `opIndex()` `OPS` |
-| `lib/core/project.js` | 394 | `fieldOptions()` `pmList()` `optionValue()` `pmCreateItem()` `pmLog()` `pmFieldsFor()` `pmModifyItem()` `pmRemoveItem()` …13 个 |
-| `lib/core/spaces.js` | 411 | `baseDirOf()` `spaceBase()` `spaceDir()` `startSpace()` `stopSpace()` `compileSpace()` `listSpaces()` `initSpace()` …20 个 |
+| `lib/core/nodes.js` | 1205 | `sshHosts()` `sysControl()` `deployNode()` `stopWatchdog()` `watchdogState()` `startWatchdog()` `startNode()` `stopNode()` …21 个 |
+| `lib/core/ops.js` | 322 | `opIndex()` `OPS` |
+| `lib/core/project.js` | 401 | `fieldOptions()` `pmList()` `optionValue()` `pmCreateItem()` `pmLog()` `pmFieldsFor()` `pmModifyItem()` `pmRemoveItem()` …13 个 |
+| `lib/core/spaces.js` | 421 | `baseDirOf()` `spaceBase()` `spaceDir()` `startSpace()` `stopSpace()` `compileSpace()` `listSpaces()` `initSpace()` …20 个 |
 | `lib/core/terminal.js` | 138 | `terminalUpgrade()` |
 | `lib/core/terminal2.js` | 142 | `terminalUpgrade()` |
 | `lib/core/toolchain.js` | 221 | `cmpVer()` `goVersionOf()` `goCandidates()` `findGoInPath()` `findGo()` `ensureGo()` `goEnv()` `envDoctor()` …10 个 |
@@ -63,9 +63,9 @@
 | `src/client/parts/25-editor-ui.js` | 29 | `GitSections` `EditorTabs` |
 | `src/client/parts/30-modals.js` | 107 | `DropSelect` `MenuButton` `Modal` `SceneModal` `AvatarEditModal` `UpdateModal` |
 | `src/client/parts/32-cards.js` | 177 | `CARD_TOOLS` `NodeCard` `SpaceCard` `ItemIcon` `AppRow` `StoreRow` `OfficialSpaces` |
-| `src/client/parts/34-forms.js` | 263 | `InstallToolbar` `DeployModal` `SpaceModal` `AppModal` `CodeModal` `InstanceModal` `StoreInstanceModal` |
+| `src/client/parts/34-forms.js` | 264 | `InstallToolbar` `DeployModal` `SpaceModal` `AppModal` `CodeModal` `InstanceModal` `StoreInstanceModal` |
 | `src/client/parts/36-data.js` | 268 | `AvatarModal` `QUESTIONS` `DeviceModal` `DataModal` `INIT_DEFAULTS` |
-| `src/client/parts/40-project.js` | 464 | `InitOverlay` `CX_LUNAR_INFO` `CX_TERM_INFO` `CX_TERM_NAME` `CX_GAN` `CX_ZHI` `CX_ANIMALS` `CX_NSTR1` `CX_NSTR2` `CX_NSTR3` |
+| `src/client/parts/40-project.js` | 510 | `InitOverlay` `T` `CX_LUNAR_INFO` `CX_TERM_INFO` `CX_TERM_NAME` `CX_GAN` `CX_ZHI` `CX_ANIMALS` `CX_NSTR1` `CX_NSTR2` |
 | `src/client/parts/45-map.js` | 110 | `TaskMap` `L` |
 | `src/client/parts/46-pm.js` | 159 | `PMModal` `RichText` |
 | `src/client/parts/47-three.js` | 325 | `ThreeAvatar` `ThreeCity` `TechBackdrop` |
@@ -76,12 +76,12 @@
 | `src/client/parts/55-pm.js` | 147 | `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` `PmSectionHead` `PM_STATUS_ORDER` |
 | `src/client/parts/58-config.js` | 382 | `CTX_CFG_KEYS` `CTX_CFG_DEFAULT` `CTX_CFG_NS` `CTX_CALLS_NS` `CTX_UI` `CTX_DATA` `MODE_INTRO_SEEN` `ModeIntro` `WelcomeBurst` `CursorComet` |
 | `src/client/parts/59-monitor.js` | 263 | `MonitorDonut` `R` `MonitorSpark` `MonitorTwin` `MON_PANELS` `MON_DEFAULT` `MonitorPanel` `MonitorBoard` `MonitorView` |
-| `src/client/parts/60-page.js` | 1636 | `PipeSelect` `Page` `Boundary` |
+| `src/client/parts/60-page.js` | 1643 | `PipeSelect` `Page` `Boundary` |
 
 ## 3. 接口契约
 
-- 注册表：`lib/core/ops.js` — **109** 个 op（GET 查询 / PUT 仅 pmCreate / POST 其余）。
-- 客户端调用 **79** 个；仅服务端 **31** 个：`health` `refreshNodes` `initProject` `openNode` `nodeTerminal` `dockerDeploy` `remoteDeploy` `pipeline` `spaceOpen` `spaceTerminal` `storageCheck` `backupSpace` `backups` `sampleNodes` `envDoctor` `goEnsure` `createApp` `codegenRender` `codegenInspect` `pmTree` `pmUpdate` `pmDelete` `deleteAvatar` `deleteBackground` `removeData` `llmInfo` `iamList` `iamCall` `iamSubjects` `iamEndpoints` `clientError`。
+- 注册表：`lib/core/ops.js` — **110** 个 op（GET 查询 / PUT 仅 pmCreate / POST 其余）。
+- 客户端调用 **79** 个；仅服务端 **32** 个：`health` `refreshNodes` `initProject` `containerBootstrap` `openNode` `nodeTerminal` `dockerDeploy` `remoteDeploy` `pipeline` `spaceOpen` `spaceTerminal` `storageCheck` `backupSpace` `backups` `sampleNodes` `envDoctor` `goEnsure` `createApp` `codegenRender` `codegenInspect` `pmTree` `pmUpdate` `pmDelete` `deleteAvatar` `deleteBackground` `removeData` `llmInfo` `iamList` `iamCall` `iamSubjects` `iamEndpoints` `clientError`。
 - 门禁：`scripts/op-check.mjs`（缺 op、方法不一致、路由层残留业务分支都会红）。
 
 ## 4. 持久化

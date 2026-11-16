@@ -748,14 +748,14 @@
         } catch { setBgData({ active: '', items: [] }); setBg(null); return null; }
       }, [applyScene]);
       const openInit = useCallback(() => {
-        setInitState({ phase: 'setup', running: false, done: false, error: '', params: { ...INIT_DEFAULTS }, steps: INIT_STEPS.map((x) => ({ ...x, status: 'wait', detail: '' })), logs: [], console: '', apiConsole: '' });
+        setInitState({ phase: 'setup', running: false, done: false, error: '', params: { ...INIT_DEFAULTS }, steps: INIT_STEPS.map((x) => ({ ...x, status: 'wait', detail: '' })), logs: [], console: '', apiConsole: '', spaceProgress: null });
       }, []);
       const runInit = useCallback(async (params = {}) => {
         if (initBusyRef.current) return;
         initBusyRef.current = true;
         const cfg = { ...INIT_DEFAULTS, ...params, avatar: { ...(params.avatar || {}) }, scene: { ...(params.scene || {}) }, project: { ...(params.project || {}) } };
         const steps = INIT_STEPS.map((x) => ({ ...x, status: 'wait', detail: '' }));
-        setInitState({ phase: 'running', running: true, done: false, error: '', params: cfg, steps, logs: [], console: '', apiConsole: '' });
+        setInitState({ phase: 'running', running: true, done: false, error: '', params: cfg, steps, logs: [], console: '', apiConsole: '', spaceProgress: null });
         const trace = (entry) => setInitState((prev) => {
           if (!prev) return prev;
           const logs = [...(prev.logs || [])];
@@ -769,13 +769,13 @@
         const appendConsole = (text) => { if (!text) return; setInitState((prev) => prev ? ({ ...prev, console: (prev.console || '') + String(text) }) : prev); };
         const appendApi = (text) => { if (!text) return; setInitState((prev) => prev ? ({ ...prev, apiConsole: (prev.apiConsole || '') + String(text) }) : prev); };
         const traceApi = (d) => {
-          if (!d || d.op === 'deployLog') return;
+          if (!d || d.op === 'deployLog' || d.op === 'initStatus') return;
           const at = String(d.at || new Date().toISOString()).slice(11, 23);
-          if (d.phase === 'request') appendApi(`\n[${at}] → ${d.method} ${d.endpoint}\n${consoleArgs(d.body)}\n`);
-          else if (d.phase === 'response') {
-            const body = String(d.text || '');
-            appendApi(`[${at}] ← ${d.status} ${d.bytes}B ${d.ms}ms\n${body.length > 200000 ? body.slice(0, 200000) + `\n… truncated ${body.length}B` : body}\n`);
-          } else if (d.phase === 'error') appendApi(`[${at}] ← ERROR ${d.error || ''}\n`);
+          if (d.phase === 'request') {
+            const body = consoleArgs(d.body);
+            appendApi(`\n[${at}] → ${d.method} ${d.endpoint}${body && body !== '{}' ? ` ${body.slice(0, 220)}` : ''}\n`);
+          } else if (d.phase === 'response') appendApi(`[${at}] ← ${d.status} ${d.bytes}B ${d.ms}ms\n`);
+          else if (d.phase === 'error') appendApi(`[${at}] ← ERROR ${String(d.error || '').slice(0, 180)}\n`);
         };
         window.__CX_API_TRACE__ = traceApi;
         let stopDeployPoll = null;
@@ -783,9 +783,9 @@
           const id = `api-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
           const t = new Date().toLocaleTimeString();
           trace({ id, t, op: `API ${op}`, impact: brief(args), status: 'run' });
-          appendConsole(`\n$ API ${op} ${consoleArgs(args)}\n`);
+          appendConsole(`\n$ API ${op} ${consoleArgs(args).slice(0, 220)}\n`);
           const started = Date.now();
-          try { const r = await api(op, args); trace({ id, t, op: `API ${op}`, impact: brief(args), ms: Date.now() - started, status: 'ok' }); appendConsole(`[api ${op}] ok ${consoleArgs(r)}\n`); return r; }
+          try { const r = await api(op, args); trace({ id, t, op: `API ${op}`, impact: brief(args), ms: Date.now() - started, status: 'ok' }); appendConsole(`[api ${op}] ok\n`); return r; }
           catch (e) { trace({ id, t, op: `API ${op}`, impact: brief(args), ms: Date.now() - started, status: 'error' }); appendConsole(`[api ${op}] ERROR ${String(e?.message || e)}\n`); throw e; }
         };
         const deployConsole = async (args) => {
@@ -793,7 +793,7 @@
           const t = new Date().toLocaleTimeString();
           const port = Number(args.port) || 9188;
           trace({ id, t, op: 'API deploy', impact: brief(args), status: 'run' });
-          appendConsole(`\n$ contextos deploy ${consoleArgs(args)}\n`);
+          appendConsole(`\n$ contextos deploy ${consoleArgs(args).slice(0, 220)}\n`);
           let busy = false;
           const poll = async () => {
             if (busy) return; busy = true;
@@ -821,7 +821,7 @@
         const finish = () => setInitState((prev) => prev ? ({ ...prev, phase: 'done', running: false, done: true, steps: prev.steps.map((x) => ({ ...x, status: x.status === 'wait' ? 'done' : x.status })) }) : prev);
         let current = 'node';
         try {
-          if (cfg.mode === 'local') {
+          if (cfg.mode === 'local' || cfg.mode === 'docker') {
             const port = Number(cfg.port) || 9188;
             const started = await call('initProject', { node: port, params: cfg });
             if (!started?.started && !started?.alreadyRunning) throw new Error(started?.error || '初始化作业未启动');
@@ -835,6 +835,7 @@
                       setInitState((prev) => prev ? {
                         ...prev,
                         steps: prev.steps.map((x) => ({ ...x, status: st.steps[x.id] || x.status })),
+                        spaceProgress: st.spaces || prev.spaceProgress,
                       } : prev);
                     }
                     if (st?.current) current = st.current;
@@ -843,13 +844,14 @@
                     if (st?.state === 'done') { resolve(st); return; }
                     if (st?.state === 'error') { reject(new Error(st.error || '初始化失败')); return; }
                   } catch { /* transient while the job starts */ }
-                  timer = setTimeout(tick, 500);
+                  timer = setTimeout(tick, 800);
                 };
                 void tick();
               });
             } finally {
               if (timer) clearTimeout(timer);
             }
+            await loadNodes();
             setNode(port);
             await loadSpaces(port);
             await loadAvatars(port);
@@ -1599,7 +1601,9 @@
         dataPulse ? h('div', { key: dataPulse, className: 'cx-data-flash', 'aria-hidden': 'true' }) : null,
         toast ? h('div', { key: toast.id, className: `cx-toast ${toast.kind}`, role: 'status', 'aria-live': 'polite' }, h('span', { className: 'cx-toast-mark' }, toast.kind === 'err' ? '!' : '✓'), h('span', null, toast.text)) : null,
         busy ? h('div', { className: 'cx-busy-overlay', role: 'status', 'aria-live': 'polite' },
-          h('div', { className: 'cx-busy-card' }, h('span', { className: 'cx-busy-spinner' }), h('div', null, h('b', null, busy), h('div', { className: 'cx-busy-sub' }, locale === 'zh' ? '正在等待接口返回…' : 'Waiting for API…')))) : null,
+          h('div', { className: 'cx-busy-card' },
+            h('button', { className: 'cx-busy-close', title: T('关闭'), 'aria-label': T('关闭'), onClick: () => setBusy('') }, '×'),
+            h('span', { className: 'cx-busy-spinner' }), h('div', null, h('b', null, busy), h('div', { className: 'cx-busy-sub' }, locale === 'zh' ? '正在等待接口返回…' : 'Waiting for API…')))) : null,
         viewMode !== 'chat' ? h('button', { className: 'cx-chat-fab', onClick: () => setViewMode('chat'), title: 'AI Copilot' }, 'AI') : null);
     }
 
@@ -1625,6 +1629,9 @@
         try { CX_LAYOUT = ctx.layout || (ctx.get && ctx.get('layout')) || null; } catch {}
         ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: 'dsh-contextos-devops', order: 20, label: () => 'ContextOS DevOps' }, Icon));
         ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'dsh-contextos-devops' }, () => h(Boundary, null, h(Page))));
+        // 会话标签条：ContextOS 作为「标签」出现（与 Chat / Trajectory 并列），点击切到本视图
+        ctx.slots.inject('conversation.view', () => ctx.slots.register({ name: 'conversation.view', id: 'contextos', order: 45, label: () => 'ContextOS' },
+          () => h('div', { className: 'cx-view-host' }, h(Boundary, null, h(Page)))));
         // 输入框内最左：ContextOS 芯片（切换服务节点 / 打开控制台）
         ctx.slots.inject('conversation.input.left', () => ctx.slots.register({ name: 'conversation.input.left', id: 'dsh-contextos-devops', order: 0 }, (props) => h(CtxChip, { sessionId: (props && props.sessionId) || '' })));
         // 会话标题栏右侧：ContextOS 按钮（打开控制台）
