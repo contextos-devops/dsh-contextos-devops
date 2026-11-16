@@ -159,6 +159,8 @@ ok('space URLs have no trailing slash', read('lib/core/nodes.js').includes('retu
 ok('avatar step does not duplicate project creation', read('lib/core/init.js').includes('skipProject: true') && read('lib/core/avatar.js').includes('skipProject = false'));
 ok('Avatar user is created through community API', read('lib/core/avatar.js').includes('/c/web.team.gonganxitong.user/action/create') && !read('lib/core/avatar.js').includes('/c/aaa.user/action/create'));
 ok('ContextOS lives in the conversation tab strip', /name: 'conversation\.view'/.test(page) && /id: 'contextos'/.test(page) && !/openRightbar/.test(page));
+ok('the tab renders the session config panel', page.includes('h(CtxCenter, { sessionId:') && page.includes('inline: true'));
+ok('config entries switch to the tab first', read('src/client/parts/58-config.js').includes("selectView('contextos')"));
 ok('conversation view host fills its tab', mainCss.includes('.cx-view-host{height:100%'));
 const failed = checks.filter((c) => !c.condition);
 for (const c of checks) console.log(`${c.condition ? 'PASS' : 'FAIL'}  ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);

@@ -200,15 +200,15 @@
       return h('canvas', { className: 'cx-comet', ref, 'aria-hidden': 'true' });
     }
 
-    function CtxChip({ sessionId }) {
+    function CtxChip({ sessionId, selectView }) {
       ctxCfgUse();
       const [open, setOpen] = useState(false);
       const eff = ctxCfgResolve(sessionId);
       return h(React.Fragment, null,
         h('button', {
-          className: 'cx-ctx-chip', title: 'ContextOS 控制台',
+          className: 'cx-ctx-chip', title: 'ContextOS 会话配置',
           onPointerDown: (e) => { e.stopPropagation(); },
-          onClick: (e) => { e.stopPropagation(); setOpen(true); },
+          onClick: (e) => { e.stopPropagation(); if (typeof selectView === 'function') selectView('contextos'); else setOpen(true); },
         },
           h('span', { className: 'cx-ctx-chip-k' }, 'ContextOS'),
           h('span', { className: 'cx-ctx-chip-v' }, eff.node ? `:${eff.node}` : T('未绑定')),
@@ -216,15 +216,15 @@
         open ? h(CtxCenter, { sessionId: sessionId || '', onClose: () => setOpen(false) }) : null);
     }
 
-    function CtxHeaderButton({ sessionId }) {
+    function CtxHeaderButton({ sessionId, selectView }) {
       ctxCfgUse();
       const [open, setOpen] = useState(false);
       const eff = ctxCfgResolve(sessionId);
       return h(React.Fragment, null,
         h('button', {
-          className: 'cx-ctx-hbtn', title: `ContextOS ${eff.node ? ':' + eff.node : ''}`,
+          className: 'cx-ctx-hbtn', title: `ContextOS 会话配置 ${eff.node ? ':' + eff.node : ''}`,
           onPointerDown: (e) => { e.stopPropagation(); },
-          onClick: (e) => { e.stopPropagation(); setOpen(true); },
+          onClick: (e) => { e.stopPropagation(); if (typeof selectView === 'function') selectView('contextos'); else setOpen(true); },
         }, h('span', { className: 'cx-ctx-hdot' }), 'ContextOS'),
         open ? h(CtxCenter, { sessionId: sessionId || '', onClose: () => setOpen(false) }) : null);
     }
@@ -329,7 +329,7 @@ th{color:#8fb8c9;background:#08131f}
 </body></html>`;
     }
 
-    function CtxCenter({ sessionId, onClose }) {
+    function CtxCenter({ sessionId, onClose, inline }) {
       ctxCfgUse();
       const [tab, setTab] = useState('global');
       const [msg, setMsg] = useState('');
@@ -360,22 +360,26 @@ th{color:#8fb8c9;background:#08131f}
           calls.length ? h('table', { className: 'cx-console-table' },
             h('thead', null, h('tr', null, ['时间', '操作', '节点', '空间', '结果'].map((k) => h('th', { key: k }, k)))),
             h('tbody', null, calls.slice(0, 100).map((c, i) => h('tr', { key: i }, h('td', null, String(c.t || '').slice(11, 19)), h('td', null, c.op || ''), h('td', null, c.node || ''), h('td', null, c.space || ''), h('td', null, c.ok === false ? 'ERR' : 'OK'))))) : h('div', { className: 'cx-ctx-empty' }, T('暂无调用')));
-      return h('div', { className: 'cx-ctx-drawer', onMouseDown: (e) => { if (e.target === e.currentTarget) close(); } },
-        h('div', { className: 'cx-ctx-panel' },
-          h('div', { className: 'cx-ctx-head' },
+      const head = h('div', { className: 'cx-ctx-head' },
             h('div', { className: 'cx-ctx-logo' }, 'CTX'),
             h('div', { className: 'cx-ctx-titles' },
               h('div', { className: 'cx-ctx-title' }, 'CONTEXTOS'),
               h('div', { className: 'cx-ctx-sub' }, `${T('控制台')} · v__CLIENT_CSS_VERSION__`)),
             h('div', { className: 'cx-ctx-acts' },
               h('button', { className: 'cx-icon-btn', title: T('刷新'), onClick: () => { ctxLoadNodes(); if (node) { ctxLoadSpaces(node); ctxLoadApps(node, eff.space); } } }, '↻'),
-              h('button', { className: 'cx-ctx-x', title: T('关闭'), onClick: close }, '✕'))),
-          h('div', { className: 'cx-ctx-sum' },
-            h('span', { className: `cx-ctx-pill${eff.node ? ' on' : ''}` }, eff.node ? `:${eff.node}` : T('未绑定节点')),
-            h('span', { className: 'cx-ctx-pill' }, eff.space || T('未选空间')),
-            h('span', { className: 'cx-ctx-pill' }, eff.mode || 'factory'),
-            h('span', { className: 'cx-ctx-pill dim' }, eff.app || T('未选应用'))),
-          h('div', { className: 'cx-ctx-tabs' }, tabs.map(([k, n]) => h('button', { key: k, className: `cx-ctx-tab${tab === k ? ' on' : ''}`, onClick: () => setTab(k) }, T(n)))),
-          msg ? h('div', { className: 'cx-ctx-msg' }, msg) : null,
-          h('div', { className: 'cx-ctx-body' }, body)));
+              inline ? null : h('button', { className: 'cx-ctx-x', title: T('关闭'), onClick: close }, '✕')));
+      const content = h(React.Fragment, null,
+        head,
+        h('div', { className: 'cx-ctx-sum' },
+          h('span', { className: `cx-ctx-pill${eff.node ? ' on' : ''}` }, eff.node ? `:${eff.node}` : T('未绑定节点')),
+          h('span', { className: 'cx-ctx-pill' }, eff.space || T('未选空间')),
+          h('span', { className: 'cx-ctx-pill' }, eff.mode || 'factory'),
+          h('span', { className: 'cx-ctx-pill dim' }, eff.app || T('未选应用'))),
+        h('div', { className: 'cx-ctx-tabs' }, tabs.map(([k, n]) => h('button', { key: k, className: `cx-ctx-tab${tab === k ? ' on' : ''}`, onClick: () => setTab(k) }, T(n)))),
+        msg ? h('div', { className: 'cx-ctx-msg' }, msg) : null,
+        h('div', { className: 'cx-ctx-body' }, body));
+      // 标签态：铺满内容区，不做浮层、不显示关闭按钮
+      if (inline) return h('div', { className: 'cx-ctx-inline' }, content);
+      return h('div', { className: 'cx-ctx-drawer', onMouseDown: (e) => { if (e.target === e.currentTarget) close(); } },
+        h('div', { className: 'cx-ctx-panel' }, content));
     }
