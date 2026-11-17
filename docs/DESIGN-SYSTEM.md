@@ -328,10 +328,11 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 加页面/组件/状态/接口/样式/动效，先 `npm run new -- <kind> <Name>`，再按 `docs/EXTENDING.md` 补接线；
 动效验收 `node scripts/ui-probe.mjs --case anim`（量 `animationName`/`animationDuration`）。
 
-### 20.7 滚动时的上下文栈
+### 20.7 滚动时的分节标题
 
-左右两栏各一块 `PmStickyStack`：每层一行「标签 + 当前项 + 状态 chip」，`position:sticky`；
-**只在滚动 >16px 后出现**，停在顶部与无选中都不渲染。门禁 `ui-probe --case pm-sticky`。
+分节标题（`.cx-pm-h`）在左右两栏的滚动区里 `position:sticky;top:0`，卡片从它下面穿过；
+滚到下一个分节时，新标题自然把上一个顶走——不做额外的悬浮条、不叠「当前项」摘要。
+门禁 `ui-probe --case pm-sticky-h`（吸顶、不塌缩、下个标题排在它下面）。
 
 ### 20.6 状态与类型的颜色语言
 

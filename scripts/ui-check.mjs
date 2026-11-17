@@ -173,11 +173,10 @@ ok('Header theme and language are single cycling buttons', (() => {
     && chat.includes("{ value: 'light', icon: 'sun'") && chat.includes("{ value: 'dark', icon: 'moon'")
     && !/h\(DropSelect, \{ value: (themeMode|langMode)/.test(chat);
 })());
-ok('Context stack only shows after scrolling', (() => {
-  const pm = read('src/client/parts/55-pm.js'), chat = read('src/client/parts/50-chat.js');
-  return pm.includes('function PmStickyStack({ rows, show })') && pm.includes('if (!show) return null;')
-    && (chat.match(/show: \(pmScroll\.(left|right) \|\| 0\) > 16/g) || []).length === 2
-    && chat.includes("onScroll: scrollSide('left')") && chat.includes("onScroll: scrollSide('right')");
+ok('Section headers stick to the top while scrolling', (() => {
+  const css = read('src/client/styles/kit.css'), pm = read('src/client/parts/55-pm.js'), chat = read('src/client/parts/50-chat.js');
+  return css.includes('.cx-pm-scroll>.cx-pm-h,.cx-pm-side.right>.cx-pm-h{position:sticky;top:0')
+    && !pm.includes('PmStickyStack') && !chat.includes('PmStickyStack') && !css.includes('.cx-pm-pin');
 })());
 ok('Report period types use their own colours', (() => {
   const pm = read('src/client/parts/55-pm.js'), css = read('src/client/styles/kit.css');
@@ -189,7 +188,6 @@ ok('Feedback score renders as stars inline', (() => {
   return ui.includes('function cxStars(') && pm.includes('cxStars(score)') && !pm.includes('cx-pm-stars') && pm.includes("className: 'cx-stars'") && form.includes('cxStars(o.value ?? o.label)');
 })());
 ok('PM card actions align left and keep the more button', (() => { const css = read('src/client/styles/main.css'); const pm = read('src/client/parts/55-pm.js'); return css.includes('.cx-pm-card-actions{display:flex;align-items:center;justify-content:flex-start') && css.includes('.cx-pm-card-actions .cx-menu-wrap{margin-left:0') && pm.includes('function PmActionMenu') && pm.includes('disabled: !list.length') && !/function PmActionMenu[^}]*return null/.test(pm); })());
-ok('PM panels pin a sticky context stack', (() => { const c = read('src/client/parts/55-pm.js') + read('src/client/parts/50-chat.js'); return c.includes('function PmStickyStack') && (c.match(/h\(PmStickyStack, \{ show:/g) || []).length === 2; })());
 ok('PM ops alias to pmCreate/pmAct', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('PM_OP_ALIAS') && c.includes("pmStart: ['pmAct', { action: 'process' }]") && c.includes("pmPlanCreate: ['pmCreate', { kind: 'plan' }]"); })());
 ok('PM create chains the parent uid it just created', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('const pmChain = useRef({})') && c.includes('chain[parentKind]'); })());
 ok('PM result card reuses the sidebar card', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('m.card.pm') && c.includes('h(PmCard, { item: m.card.pm.item'); })());

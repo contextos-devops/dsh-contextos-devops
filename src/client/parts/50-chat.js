@@ -8,8 +8,6 @@
       const [folds, setFolds] = useState({ map: true, targets: false, plans: false, tasks: false, reports: false, feedbacks: false });
       useEffect(() => cxWrite('folds', folds), [folds]);
       const fold = (k) => folds[k] === true;
-      const pmScrollRef = useRef({});
-      const [, setPmScrollTick] = useState(0);
       const [calFull, setCalFull] = useState(false);
       const calRef = useRef(null);
       const [mapFull, setMapFull] = useState(false);
@@ -1359,14 +1357,8 @@
         key: `${item.uid}:${cxCardSig(item)}`, item, kind, active, sub, traceIds, traceLog,
         onSelect: onClick, onAction: (action) => runPmAction(kind, item, action),
       });
-      const pmScroll = pmScrollRef.current || {};
-      const scrollSide = (side) => (e) => { const top = e.currentTarget.scrollTop || 0; pmScrollRef.current = { ...pmScrollRef.current, [side]: top }; setPmScrollTick((n) => n + 1); };
       const leftPanel = h('aside', { className: `cx-pm-side${pmRefreshing ? ' refreshing' : ''}` },
-        h('div', { className: 'cx-pm-scroll', onScroll: scrollSide('left') },
-        h(PmStickyStack, { show: (pmScroll.left || 0) > 16, rows: [
-          { kind: 'target', label: sectionTitle(tt('target'), 'TARGETS'), title: activeTarget?.title || '', status: pmStatusText(activeTarget?.status_name), statusKey: activeTarget?.status_name },
-          { kind: 'plan', label: sectionTitle(tt('plan'), 'PLANS'), title: activePlan?.title || '', status: pmStatusText(activePlan?.status_name), statusKey: activePlan?.status_name },
-        ] }),
+        h('div', { className: 'cx-pm-scroll' },
         h(PmSectionHead, { icon: 'target', title: sectionTitle(tt('target'), 'TARGETS'), count: targets.length, folded: fold('targets'), onToggle: () => setFolds((f) => ({ ...f, targets: !f.targets })), onRefresh: () => loadPm('target'), tools: pmOps('target') }),
         pmError ? h('div', { className: 'cx-pm-empty err' }, pmError) : null,
         !pm && !pmError ? h('div', { className: 'cx-pm-empty' }, T('加载中…')) : null,
@@ -1378,12 +1370,7 @@
         h('div', { className: `cx-gantt-sec${fold('gantt') ? ' folded' : ''}` },
           h(PmSectionHead, { icon: 'clock', title: sectionTitle('进度', 'PROGRESS'), count: plans.filter((p) => p.status_name === 'process').length, folded: fold('gantt'), onToggle: () => setFolds((f) => ({ ...f, gantt: !f.gantt })) }),
           fold('gantt') ? null : h(Gantt, { plans, activeUid: activePlan?.uid })));
-      const rightPanel = h('aside', { className: `cx-pm-side right${pmRefreshing ? ' refreshing' : ''}`, onScroll: scrollSide('right') },
-        h(PmStickyStack, { show: (pmScroll.right || 0) > 16, rows: [
-          { kind: 'task', label: sectionTitle(tt('task'), 'TASKS'), title: activeTask?.title || '', status: pmStatusText(activeTask?.status_name), statusKey: activeTask?.status_name },
-          { kind: 'report', label: sectionTitle(tt('report'), 'REPORTS'), title: activeReport?.title || '', status: pmStatusText(activeReport?.status_name), statusKey: activeReport?.status_name },
-          { kind: 'feedback', label: sectionTitle(tt('feedback'), 'FEEDBACK'), title: activeFeedback?.title || '', status: activeFeedback?.status_label || activeFeedback?.status_name, statusKey: activeFeedback?.status_name },
-        ] }),
+      const rightPanel = h('aside', { className: `cx-pm-side right${pmRefreshing ? ' refreshing' : ''}` },
         h('div', { className: `cx-calsec${calFull ? ' max' : ''}`, ref: calRef },
           h(PmSectionHead, { icon: 'clock', title: sectionTitle('时间', 'TIME'), folded: fold('cal'), style: { '--cx-hi': '0' }, onToggle: () => setFolds((f) => ({ ...f, cal: !f.cal })), tools: h(IconButton, { name: calFull ? 'restore' : 'fullscreen', className: 'cx-pm-max', onClick: () => { setCalFull((v) => !v); if (fold('cal')) setFolds((f) => ({ ...f, cal: false })); }, title: calFull ? T('还原') : T('最大化') }) }),
           fold('cal') ? null : h(PmCalendar, { tasks: allTasks, start: calStart, end: calEnd, onChange: calOnChange, locale })),

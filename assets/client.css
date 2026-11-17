@@ -562,16 +562,6 @@
 .cx-entity-status.is-failed{--tone:var(--cx-red)}
 .cx-entity-status.is-active{font-weight:700}
 
-/* 滚动栈：左侧 目标→计划，右侧 任务→报告→反馈，逐层贴在滚动区顶端。
-   没有当前项时整块不渲染（PmStickyStack 返回 null），不占高度。 */
-.cx-pm-sticky{position:sticky;top:0;z-index:7;display:flex;flex-direction:column;gap:2px;margin:-9px -9px 6px;padding:5px 9px;background:var(--cx-surface-2);border-bottom:1px solid var(--cx-border);box-shadow:0 4px 10px rgba(0,0,0,.16)}
-.cx-pm-sticky+.cx-pm-h{margin-top:0}
-.cx-pm-pin{display:flex;align-items:center;gap:6px;min-width:0;height:20px}
-.cx-pm-pin-k{flex:none;font:700 var(--cx-fs-10)/1 var(--cx-font);letter-spacing:.08em;color:var(--cx-text-faint);text-transform:uppercase}
-.cx-pm-pin-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--cx-text);font-size:var(--cx-fs-10)}
-.cx-shell[data-theme="light"] .cx-pm-sticky{background:#f2f9fc;box-shadow:0 3px 8px rgba(10,60,80,.10)}
-
-/* 三态分段控件（主题：自动/浅色/深色，语言：自动/中/EN） */
 .cx-seg-txt{font:600 var(--cx-fs-10)/1 var(--cx-font);letter-spacing:.02em}
 
 /* 三态切换按钮（标题栏的主题/语言：单按钮循环，不再并排三枚） */
@@ -585,6 +575,9 @@
 .cx-entity-status.is-rt-monthly{--tone:#60a5fa}
 .cx-entity-status.is-rt-quarterly{--tone:#a78bfa}
 .cx-entity-status.is-rt-annual{--tone:#f59e0b}
+
+/* 分节标题自然吸顶：滚动时当前分节的标题栏留在大卡片上，下一个标题栏把它顶走 */
+.cx-pm-scroll>.cx-pm-h,.cx-pm-side.right>.cx-pm-h{position:sticky;top:0;z-index:6;background-color:var(--cx-surface-1);background-image:linear-gradient(90deg,color-mix(in srgb,var(--cx-cyan) 14%,var(--cx-surface-1)),var(--cx-surface-1) 72%);box-shadow:0 6px 12px rgba(0,0,0,.18)}
 /* motion.css — 动效层（第 5 层，只放 keyframes 与动效工具类）
  * 规则：
  *   1) 时长/缓动只能用 tokens.css 的 --cx-dur* / --cx-ease*，不许写字面量；

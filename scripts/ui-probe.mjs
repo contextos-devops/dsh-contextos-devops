@@ -135,17 +135,16 @@ const CASES = [
     },
   },
   {
-    name: 'pm-sticky',
+    name: 'pm-sticky-h',
     fixture: 'scripts/fixtures/pm-sticky.html',
     window: '360,420',
-    sels: ['.cx-pm-sticky', '.cx-pm-pin', '.cx-pm-pin .cx-pm-pin-t', '.cx-pm-scroll'],
+    sels: ['.cx-pm-scroll', '.cx-pm-scroll .cx-pm-h:nth-child(1)', '.cx-pm-scroll .cx-pm-h:nth-child(4)'],
     assert: (m) => {
-      const stack = m['.cx-pm-sticky'], side = m['.cx-pm-scroll'], pin = m['.cx-pm-pin'];
+      const sc = m['.cx-pm-scroll'], h1 = m['.cx-pm-scroll .cx-pm-h:nth-child(1)'], h2 = m['.cx-pm-scroll .cx-pm-h:nth-child(4)'];
       return [
-        [!!stack && Math.abs(stack.y - side.y) <= 12, '滚动后上下文栈仍贴在滚动区顶端', `stack ${stack?.y} / scroll ${side?.y}`],
-        [!!pin && !!stack && pin.y >= stack.y - 1 && pin.y <= stack.y + stack.h, '第一行在栈内（不越界）', `${pin?.y}`],
-        [!!stack && stack.h >= 36, '两层各一行、不塌缩', `${stack?.h}px`],
-        [!!m['.cx-pm-pin .cx-pm-pin-t'], '当前项标题可读（有省略号容器）', m['.cx-pm-pin .cx-pm-pin-t']?.w + 'px'],
+        [!!h1 && !!sc && Math.abs(h1.y - sc.y) <= 12, '滚动后当前分节标题吸在顶端', `标题 ${h1?.y} / 滚动区 ${sc?.y}`],
+        [!!h1 && h1.h >= 24, '标题栏保持整行高度（不塌缩）', `${h1?.h}px`],
+        [!!h1 && !!h2 && h2.y >= h1.y + h1.h - 1, '下一个分节标题排在它下面（自然堆叠）', `${h2?.y} ≥ ${h1?.y + h1?.h}`],
       ];
     },
   },
