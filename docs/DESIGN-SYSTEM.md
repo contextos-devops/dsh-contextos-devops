@@ -286,12 +286,12 @@ UiAddressBar {
 
 | 层 | 文件 | 只放什么 | 不许放什么 |
 | --- | --- | --- | --- |
-| 1 令牌 | `styles/tokens.css` | `--cx-*` 字面量（颜色/间距/字号/尺寸/圆角/阴影/层级/动效）+ 主题覆盖 | 任何组件类 |
-| 2 基座 | `styles/base.css` | 元素默认值（字体继承、标题、`table`、`code`、滚动条、焦点环） | 具体组件 |
-| 3 布局 | `styles/layout.css` | `.cx-stack/.cx-row/.cx-col/.cx-grid`、`.cx-sec/.cx-hd/.cx-bd/.cx-ft`、`.cx-fill/.cx-scroll/.cx-center`、间距工具类 | 颜色/字号 |
-| 4 控件 | `styles/kit.css` | `.cx-btn(.pri/.danger/.ghost/.xs/.lg/.icon/.on)`、`.cx-input/.cx-select`、`.cx-field`、`.cx-chip`、`.cx-tag`、`.cx-tabs`、`.cx-list`、`.cx-panel`、`.cx-table`、`.cx-modal/.cx-mask/.cx-menu` | 业务布局 |
-| 5 动效 | `styles/motion.css` | `--cx-dur-*` 驱动的 `.cx-anim-*`；`prefers-reduced-motion` 一次关掉 | 业务动画 |
-| 6 业务 | `styles/main.css` | 只写「这个功能独有」的定位/网格/尺寸例外 | 重复的字体、颜色、圆角、间距 |
+| 1 令牌 | `tokens.css` | `--cx-*` 字面量 + 主题覆盖 | 组件类 |
+| 2 基座 | `base.css` | 元素默认值（字体继承、标题、`table`、`code`、滚动条、焦点环） | 组件 |
+| 3 布局 | `layout.css` | `.cx-row/.cx-col/.cx-sec/.cx-fill/.cx-scroll` + 间距工具类 | 颜色/字号 |
+| 4 控件 | `kit.css` | `.cx-btn/.cx-input/.cx-chip/.cx-tag/.cx-tabs/.cx-list/.cx-panel/.cx-table/.cx-modal` | 业务布局 |
+| 5 动效 | `motion.css` | `.cx-anim-*`；`prefers-reduced-motion` 一次关掉 | 业务动画 |
+| 6 业务 | `main.css` | 只写「这个功能独有」的定位/网格/尺寸例外 | 重复的字体/颜色/圆角/间距 |
 
 依赖方向：`main → motion → kit → layout → base → tokens`；反方向一律不接受。
 
@@ -330,9 +330,8 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 
 ### 20.7 滚动时的上下文栈
 
-左侧「目标 / 计划」、右侧「任务 / 报告 / 反馈」各有一块 `PmStickyStack`：每层一行
-`标题栏标签 + 当前项标题 + 状态 chip`，`position:sticky; top:0`，数据再多也贴着顶端堆叠；
-没有当前项时不渲染、不占高度。门禁 `node scripts/ui-probe.mjs --case pm-sticky`（4 条）。
+左右两栏各一块 `PmStickyStack`：每层一行「标签 + 当前项 + 状态 chip」，`position:sticky`；
+**只在滚动 >16px 后出现**，停在顶部与无选中都不渲染。门禁 `ui-probe --case pm-sticky`。
 
 ### 20.6 状态与类型的颜色语言
 
@@ -352,7 +351,7 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 
 标题栏的主题与语言用**单按钮循环**（`CtxCycle`）：主题 = 自动 ◐ → 浅色 ☀ → 深色 ☾，语言 = 自动 → 中 → EN；按钮显示当前档，点击进下一档（三枚并排太宽，已合并）。
 
-报告周期标签按周期长短配色：日报青 `#22d3ee` → 周报绿 `#34d399` → 月报蓝 `#60a5fa` → 季报紫 `#a78bfa` → 年报琥珀 `#f59e0b`（`.is-rt-*`，`PM_REPORT_TONE` 映射）。上下文栈只在滚动超过 16px 后出现，停在顶部不占高度。
+报告周期按长短配色：日报青 → 周报绿 → 月报蓝 → 季报紫 → 年报琥珀（`.is-rt-*` / `PM_REPORT_TONE`）。
 
 反馈评分一律用星星（`cxStars(n)`：`★`×n + `☆`×(5-n)）——卡片上并进副标题同一行（`.cx-stars`），表单里评分下拉的每个选项也显示星星；不再单独占一行。
 

@@ -148,7 +148,7 @@
 | `docs/AI-CONVERSATION.md` | 140 | 人写 |
 | `docs/ARCHITECTURE.md` | 135 | 人写 |
 | `docs/CODE-GEN.md` | 424 | 人写 |
-| `docs/DESIGN-SYSTEM.md` | 361 | 人写 |
+| `docs/DESIGN-SYSTEM.md` | 360 | 人写 |
 | `docs/DESIGN.md` | 123 | 人写 |
 | `docs/DIAGNOSTICS.md` | 105 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |
