@@ -106,6 +106,23 @@ const CASES = [
     },
   },
   {
+    name: 'form-controls',
+    fixture: 'scripts/fixtures/form-controls.html',
+    window: '760,420',
+    sels: ['#ta', '#sel', '#inp'],
+    assert: (m) => {
+      const ta = m['#ta'], sel = m['#sel'], inp = m['#inp'];
+      const lh = parseFloat(ta?.lineHeight || '0');
+      return [
+        [!!ta && ta.h >= lh * 3, '多行输入至少三行高', `${ta?.h}px ≥ ${(lh * 3).toFixed(1)}px`],
+        [!!ta && ta.sh <= ta.ch + 2, '多行输入内容不被裁切', `scroll ${ta?.sh} / client ${ta?.ch}`],
+        [!!sel && sel.sh <= sel.ch + 2, '下拉文字完整显示（不再被切一半）', `scroll ${sel?.sh} / client ${sel?.ch}`],
+        [!!sel && sel.paddingTop === '0px', '下拉垂直内边距为 0（固定高度靠居中）', sel?.paddingTop],
+        [!!inp && inp.h <= (ta?.h || 0), '单行输入仍是一行高', `${inp?.h}px`],
+      ];
+    },
+  },
+  {
     name: 'anim',
     fixture: 'scripts/fixtures/anim.html',
     window: '520,320',
@@ -139,7 +156,8 @@ window.__PROBE_SELS__ = __SELS__;
         display: c.display, flexDirection: c.flexDirection, marginLeft: c.marginLeft, opacity: c.opacity,
         fontSize: c.fontSize, lineHeight: c.lineHeight, position: c.position,
         left: +(off ? r.left - off.left : r.left).toFixed(1),
-        animationName: c.animationName, animationDuration: c.animationDuration
+        animationName: c.animationName, animationDuration: c.animationDuration,
+        sh: n.scrollHeight, ch: n.clientHeight, paddingTop: c.paddingTop
       };
     });
     document.title = 'PROBE:' + JSON.stringify(out);

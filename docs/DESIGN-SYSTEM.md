@@ -277,6 +277,7 @@ UiAddressBar {
 - 表头固定、KEY 列稳定、长值换行；详情高度随内容。
 - 加载/空/错误/长文本四态必须显式。
 - 输入框最左芯片是**多级列表**入口（节点 → 空间 → 最近应用，三列、向上展开），选中写会话配置；标题栏不放第二入口。
+- **控件高度**：单行 `input/select` 固定 `--cx-h-control` 且**垂直内边距为 0**（靠高度居中）；多行 `textarea/.cx-area` 用 `height:auto` + `min-height:calc(3 * 1.5em + 内边距)`，至少三行可见、不裁字。门禁 `ui-probe --case form-controls`。
 - **遮罩不越界**：`.cx-mask/.cx-modal/.cx-init/.cx-toast/.cx-busy-overlay` 用 `position:absolute`，定位上下文是 `.cx-shell`；宿主与插件共用 document，`fixed` 会盖住侧栏。门禁 `ui-probe --case modal-scope`。
 
 ## 20. 样式分层与结构原语（新增组件先读这一节）

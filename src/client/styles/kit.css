@@ -34,7 +34,7 @@
   background:var(--cx-surface-0);color:var(--cx-text);
   font:var(--cx-fs)/1.5 var(--cx-font);outline:none;
 }
-.cx-area{height:auto;min-height:90px;padding:var(--cx-sp-3);resize:vertical}
+.cx-area,textarea.cx-input{height:auto;min-height:calc(3 * 1.5em + 2 * var(--cx-sp-3));padding:var(--cx-sp-3);line-height:1.5;resize:vertical}
 .cx-input:focus,.cx-select:focus,.cx-area:focus{border-color:var(--cx-accent);box-shadow:var(--cx-shadow-focus)}
 .cx-input::placeholder,.cx-area::placeholder{color:var(--cx-text-faint)}
 .cx-field{display:flex;flex-direction:column;gap:var(--cx-sp-1);min-width:0}

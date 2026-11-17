@@ -53,7 +53,7 @@
 
 | 片段 | 行数 | 主要定义 |
 | --- | ---: | --- |
-| `src/client/parts/00-prelude.js` | 433 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
+| `src/client/parts/00-prelude.js` | 456 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
 | `src/client/parts/05-bootstrap.js` | 66 | `apiTrace` `QUERY_OPS` |
 | `src/client/parts/07-kit.js` | 66 | `cxCx` `CxStack` `CxRow` `CxCol` `CxSection` `CxField` `CX_BTN_VARIANT` `CX_BTN_SIZE` `CxBtn` `CxInput` |
 | `src/client/parts/08-store.js` | 86 | — |
@@ -148,7 +148,7 @@
 | `docs/AI-CONVERSATION.md` | 140 | 人写 |
 | `docs/ARCHITECTURE.md` | 135 | 人写 |
 | `docs/CODE-GEN.md` | 424 | 人写 |
-| `docs/DESIGN-SYSTEM.md` | 329 | 人写 |
+| `docs/DESIGN-SYSTEM.md` | 330 | 人写 |
 | `docs/DESIGN.md` | 123 | 人写 |
 | `docs/DIAGNOSTICS.md` | 105 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |

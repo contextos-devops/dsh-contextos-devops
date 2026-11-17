@@ -140,9 +140,11 @@
 .cx-install-step span{color:var(--cx-text-dim);overflow-wrap:anywhere}
 .cx-install-plan>code{font:var(--cx-fs-meta) var(--cx-font-mono);color:var(--cx-cyan);overflow-wrap:anywhere}
 .cx-install-warn{grid-column:1/-1;color:var(--cx-orange);font-size:var(--cx-fs-meta);line-height:1.5}
-.cx-input,.cx-select,.cx-area{font:var(--cx-fs)/1.5 var(--cx-font);color:var(--cx-text);background:#04101a;border:1px solid var(--cx-line2);padding:7px 8px;outline:none;width:100%}
+.cx-input,.cx-select,.cx-area{font:var(--cx-fs)/1.5 var(--cx-font);color:var(--cx-text);background:#04101a;border:1px solid var(--cx-line2);outline:none;width:100%}
+.cx-input,.cx-select{padding:0 8px}
+.cx-area,textarea.cx-input{height:auto;min-height:calc(3 * 1.5em + 14px);padding:7px 8px;line-height:1.5;resize:vertical}
 .cx-input:focus,.cx-select:focus,.cx-area:focus{border-color:var(--cx-cyan);box-shadow:0 0 0 1px rgba(var(--cx-hue-rgb),.15)}
-.cx-area{min-height:90px;resize:vertical}
+
 .cx-row{display:flex;gap:6px;align-items:center}
 .cx-table{width:100%;border-collapse:collapse;font-size:var(--cx-fs-body)}
 .cx-table th,.cx-table td{border-bottom:1px solid rgba(22,56,77,.6);padding:4px 5px;text-align:left;color:var(--cx-muted)}
