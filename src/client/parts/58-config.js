@@ -4,7 +4,7 @@
     const CTX_CFG_NS = 'dsh-contextos-devops:cfg';
     const CTX_CALLS_NS = 'dsh-contextos-devops:calls';
     const CTX_UI = { open: false, tab: 'global', sessionId: '', subs: new Set() };
-    const CTX_DATA = { nodes: [], spaces: {}, apps: {}, avatars: [], scenes: [], loading: false };
+    const CTX_DATA = { nodes: [], spaces: {}, apps: {}, commands: {}, avatars: [], scenes: [], loading: false };
     function ctxCfgEmit() { CTX_UI.subs.forEach((f) => { try { f(); } catch {} }); }
     function ctxCfgUse() {
       const [, set] = useState(0);
@@ -18,7 +18,7 @@
       d.sessions = d.sessions || {};
       d.commands = d.commands || {};
       if (!Array.isArray(d.recent)) d.recent = [];
-      d.dev = { space: '', zone: 'devops', template: 'Hash', compile: true, registerAsTool: true, fallback: '', ...(d.dev || {}) };
+      d.dev = { space: '', zone: 'devops', template: 'Hash', compile: true, registerAsTool: true, fallback: '', namePrefix: 'cx_tool', timeout: 120, allowNetwork: false, prompt: '', ...(d.dev || {}) };
       return d;
     }
     let CTX_CFG = ctxCfgLoad();
@@ -53,6 +53,14 @@
       const key = `${node}:${space || ''}`;
       try { const d = await api('apps', { node, space: space || '', uid: '' }); CTX_DATA.apps[key] = d || []; } catch { CTX_DATA.apps[key] = []; }
       ctxCfgEmit();
+    }
+    async function ctxLoadCommands(node, space) {
+      if (!node) return;
+      const key = `${node}:${space || ''}`;
+      CTX_DATA.loading = true; ctxCfgEmit();
+      try { const d = await api('scanCommands', { node, space: space || '' }); CTX_DATA.commands[key] = d.items || []; }
+      catch { CTX_DATA.commands[key] = []; }
+      finally { CTX_DATA.loading = false; ctxCfgEmit(); }
     }
     async function ctxLoadAvatars(node) {
       if (!node) return;
@@ -274,8 +282,18 @@
       const [cfg, setCfg] = useState(false);
       const eff = ctxCfgResolve(sessionId);
       const openCfg = () => {
-        if (typeof selectView === 'function') { setOpen(false); selectView('contextos'); return; }
-        setOpen(false); setCfg(true);
+        setOpen(false);
+        try { if (typeof selectView === 'function') { selectView('contextos'); return; } } catch {}
+        try {
+          if (CX_LAYOUT && typeof CX_LAYOUT.selectView === 'function') { CX_LAYOUT.selectView('contextos'); return; }
+          if (CX_LAYOUT && typeof CX_LAYOUT.openView === 'function') { CX_LAYOUT.openView('contextos'); return; }
+        } catch {}
+        // Last resort: click the existing conversation tab instead of opening a drawer.
+        try {
+          const tab = Array.from(document.querySelectorAll('button,[role=tab]')).find((el) => String(el.textContent || '').trim() === 'ContextOS');
+          if (tab) { tab.click(); return; }
+        } catch {}
+        setCfg(true);
       };
       useEffect(() => {
         if (!open) return;
@@ -297,29 +315,39 @@
     }
 
     function CtxField({ label, children }) { return h('label', { className: 'cx-field' }, label, children); }
-    function CtxSelect({ label, value, options, onChange, placeholder }) {
+    function CtxSelect({ label, value, options, onChange, placeholder, inherit }) {
       return h(CtxField, { label },
         h('select', { className: 'cx-input', value: value == null ? '' : String(value), onChange: (e) => onChange(e.target.value) },
-          h('option', { value: '' }, placeholder || '—'),
+          h('option', { value: '' }, inherit ? '使用全局配置' : (placeholder || '—')),
           (options || []).map((o) => h('option', { key: String(o.value), value: String(o.value) }, o.label))));
     }
 
     function CtxConfigForm({ scope, sessionId }) {
       const eff = scope === 'global' ? CTX_CFG.global : ctxCfgResolve(sessionId);
-      const set = (k, v) => (scope === 'global' ? ctxCfgSetGlobal(k, v) : ctxCfgSetSession(sessionId || '', k, v));
+      const raw = scope === 'global' ? CTX_CFG.global : ctxCfgSession(sessionId || '');
+      const val = (k) => (raw[k] == null ? '' : raw[k]);
+      const set = (k, v) => {
+        if (scope === 'global') { ctxCfgSetGlobal(k, v); return; }
+        const sid = sessionId || '';
+        if (!sid) return;
+        if (v === '' || v == null) delete CTX_CFG.sessions[sid][k];
+        else CTX_CFG.sessions[sid] = { ...ctxCfgSession(sid), [k]: v };
+        ctxCfgSave();
+      };
       const node = Number(eff.node) || null;
       const spaces = (CTX_DATA.spaces[node] || []).map((s) => ({ value: s.name, label: s.name }));
       const apps = (CTX_DATA.apps[`${node}:${eff.space || ''}`] || []).map((a) => ({ value: a.command || a.name, label: a.title || a.command || a.name }));
       const avatars = (CTX_DATA.avatars || []).map((a) => ({ value: a.uid, label: a.name || a.uid }));
       const scenes = (CTX_DATA.scenes || []).map((b) => ({ value: b.id, label: b.name || b.id }));
+      const inherit = scope === 'session';
       return h('div', { className: 'cx-ctx-form' },
-        h(CtxSelect, { label: 'node', value: eff.node, placeholder: T('选择节点'), options: (CTX_DATA.nodes || []).map((n) => ({ value: n.port, label: `:${n.port} · ${n.name || (n.state === 'running' ? 'running' : 'offline')}` })), onChange: (v) => { set('node', Number(v) || null); ctxLoadSpaces(Number(v) || null); } }),
-        h(CtxSelect, { label: 'space', value: eff.space, placeholder: T('选择空间'), options: spaces, onChange: (v) => { set('space', v); ctxLoadApps(node, v); } }),
-        h(CtxSelect, { label: 'app', value: eff.app, placeholder: T('选择应用'), options: apps, onChange: (v) => set('app', v) }),
-        h(CtxSelect, { label: 'avatar', value: eff.avatar, placeholder: T('选择分身'), options: avatars, onChange: (v) => set('avatar', v) }),
-        h(CtxSelect, { label: 'scene', value: eff.scene, placeholder: T('选择场景'), options: scenes, onChange: (v) => set('scene', v) }),
-        h(CtxSelect, { label: 'mode', value: eff.mode, placeholder: 'factory', options: [{ value: 'factory', label: 'factory' }, { value: 'avatar', label: 'avatar' }, { value: 'iot', label: 'iot' }], onChange: (v) => set('mode', v) }),
-        scope === 'session' ? h(CtxField, { label: 'project' }, h('input', { className: 'cx-input', value: ctxCfgSession(sessionId || '').project || '', placeholder: '项目管理 place_uid', onChange: (e) => ctxCfgSetSession(sessionId || '', 'project', e.target.value) })) : null,
+        h(CtxSelect, { label: 'node', value: val('node'), inherit, placeholder: T('选择节点'), options: (CTX_DATA.nodes || []).map((n) => ({ value: n.port, label: `:${n.port} · ${n.name || (n.state === 'running' ? 'running' : 'offline')}` })), onChange: (v) => { set('node', v ? Number(v) : ''); set('space', ''); set('app', ''); ctxLoadSpaces(v ? Number(v) : node); } }),
+        h(CtxSelect, { label: 'space', value: val('space'), inherit, placeholder: T('选择空间'), options: spaces, onChange: (v) => { set('space', v); set('app', ''); ctxLoadApps(node, v); } }),
+        h(CtxSelect, { label: 'app', value: val('app'), inherit, placeholder: T('选择应用'), options: apps, onChange: (v) => set('app', v) }),
+        h(CtxSelect, { label: 'avatar', value: val('avatar'), inherit, placeholder: T('选择分身'), options: avatars, onChange: (v) => set('avatar', v) }),
+        h(CtxSelect, { label: 'scene', value: val('scene'), inherit, placeholder: T('选择场景'), options: scenes, onChange: (v) => set('scene', v) }),
+        h(CtxSelect, { label: 'mode', value: val('mode'), inherit, placeholder: '—', options: [{ value: 'factory', label: 'factory' }, { value: 'avatar', label: 'avatar' }, { value: 'iot', label: 'iot' }], onChange: (v) => set('mode', v) }),
+        scope === 'session' ? h(CtxField, { label: 'project' }, h('input', { className: 'cx-input', value: ctxCfgSession(sessionId || '').project || '', placeholder: '项目管理 place_uid', onChange: (e) => set('project', e.target.value) })) : null,
         h('div', { className: 'cx-ctx-actions' },
           h('button', { className: 'cx-btn', onClick: () => { if (scope === 'session' && sessionId) { delete CTX_CFG.sessions[sessionId]; ctxCfgSave(); } else { CTX_CFG.global = { ...CTX_CFG_DEFAULT }; ctxCfgSave(); } } }, T('重置')),
           h('button', { className: 'cx-btn pri', onClick: () => { ctxCfgSave(); ctxCallLog({ op: 'config.save', scope, node: eff.node, space: eff.space }); } }, T('保存'))));
@@ -327,31 +355,48 @@
 
     function CtxCommands({ node, space, sessionId }) {
       const key = `${node}:${space || ''}`;
-      const apps = CTX_DATA.apps[key] || [];
+      const commands = CTX_DATA.commands[key] || [];
       const map = (sessionId && CTX_CFG.commands[sessionId]) || {};
+      const [scanning, setScanning] = useState(false);
       const setCmd = (cmd, patch) => { if (!sessionId) return; CTX_CFG.commands[sessionId] = { ...map, [cmd]: { ...(map[cmd] || {}), ...patch } }; ctxCfgSave(); };
+      const scan = async () => {
+        if (!node || scanning) return;
+        setScanning(true);
+        await ctxLoadCommands(node, space);
+        setScanning(false);
+      };
+      useEffect(() => { if (node) scan(); }, [key]);
       if (!node) return h('div', { className: 'cx-ctx-empty' }, T('先绑定节点'));
-      if (!apps.length) return h('div', { className: 'cx-ctx-empty' }, T('该节点/空间暂无命令，点右上角刷新'));
       return h('div', { className: 'cx-ctx-list' },
-        apps.map((a) => {
+        h('div', { className: 'cx-ctx-actions' },
+          h('span', { className: 'cx-ctx-hint' }, `${commands.length} 个命令 · 自动扫描自 :${node}${space ? ` / ${space}` : ''}`),
+          h('button', { className: 'cx-btn xs', disabled: scanning, onClick: scan }, scanning ? T('扫描中…') : T('重新扫描'))),
+        commands.length ? commands.map((a) => {
           const cmd = a.command || a.name;
           const st = map[cmd] || { enabled: true, purpose: a.title || a.help || '' };
           return h('div', { key: cmd, className: 'cx-ctx-cmd' },
             h('input', { type: 'checkbox', checked: st.enabled !== false, onChange: (e) => setCmd(cmd, { enabled: e.target.checked }) }),
             h('span', { className: 'nm' }, cmd),
+            h('span', { className: 'cx-ctx-cmd-meta' }, a.title || a.space || ''),
             h('input', { className: 'cx-input', value: st.purpose || '', placeholder: '这个命令用来做什么', onChange: (e) => setCmd(cmd, { purpose: e.target.value }) }));
-        }));
+        }) : h('div', { className: 'cx-ctx-empty' }, scanning ? T('正在扫描命令…') : T('该节点/空间暂无命令，点“重新扫描”'))
+      );
     }
 
     function CtxDev() {
       const dev = CTX_CFG.dev;
       const set = (k, v) => { CTX_CFG.dev[k] = v; ctxCfgSave(); };
       return h('div', { className: 'cx-ctx-form' },
+        h('div', { className: 'cx-ctx-hint' }, '这些参数会注入 AI 造工具时的生成上下文，不需要每次在对话里重复。'),
         h(CtxField, { label: '生成空间' }, h('input', { className: 'cx-input', value: dev.space || '', placeholder: '留空则用会话空间', onChange: (e) => set('space', e.target.value) })),
         h(CtxField, { label: 'zone' }, h('input', { className: 'cx-input', value: dev.zone || '', onChange: (e) => set('zone', e.target.value) })),
         h(CtxField, { label: 'template' }, h('input', { className: 'cx-input', value: dev.template || '', onChange: (e) => set('template', e.target.value) })),
+        h(CtxField, { label: '工具名前缀' }, h('input', { className: 'cx-input', value: dev.namePrefix || '', placeholder: 'cx_tool', onChange: (e) => set('namePrefix', e.target.value) })),
+        h(CtxField, { label: '生成超时（秒）' }, h('input', { className: 'cx-input', type: 'number', min: '10', value: dev.timeout || 120, onChange: (e) => set('timeout', Number(e.target.value) || 120) })),
         h(CtxField, { label: '自动编译' }, h('input', { type: 'checkbox', checked: !!dev.compile, onChange: (e) => set('compile', e.target.checked) })),
         h(CtxField, { label: '注册为工具' }, h('input', { type: 'checkbox', checked: !!dev.registerAsTool, onChange: (e) => set('registerAsTool', e.target.checked) })),
+        h(CtxField, { label: '允许联网' }, h('input', { type: 'checkbox', checked: !!dev.allowNetwork, onChange: (e) => set('allowNetwork', e.target.checked) })),
+        h(CtxField, { label: '额外生成规范' }, h('textarea', { className: 'cx-input', rows: 4, value: dev.prompt || '', placeholder: '例如：必须使用 mdb；禁止手写 SQL；必须提供列表/创建/修改/删除…', onChange: (e) => set('prompt', e.target.value) })),
         h(CtxField, { label: '失败回退' }, h('input', { className: 'cx-input', value: dev.fallback || '', onChange: (e) => set('fallback', e.target.value) })));
     }
 

@@ -796,7 +796,7 @@ DSH 主对话问“当前在哪个空间/分身”
 
 ```bash
 # 插件目录
-cd usr/dsh-plugins/dsh-contextos-devops
+cd usr/dsh-contextos-devops
 
 # 语法检查
 node --check index.js

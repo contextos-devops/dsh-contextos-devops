@@ -101,7 +101,7 @@ index.js    接线：工具注册 + HTTP/WS 路由 + 静态资源（不写业务
 1. **Tokens**：`src/client/styles/tokens.css` 是颜色/字号/间距/圆角唯一来源，组件只用 `--cx-*`。
 2. **UI kit**：`10-ui.js`；新 UI 尽量组合它，不重写裸 `<table>`/`<button>` 标记。
 3. **Domain**：`lib/core/*` 拥有 ContextOS 调用、状态规则与动作矩阵；客户端只渲染 `item.actions`。
-4. **Specs**：UI 硬规则见 [ACCEPTANCE.md](ACCEPTANCE.md) §12 与根 `USER-VIEW.md`。
+4. **Specs**：UI 硬规则见 [ACCEPTANCE.md](ACCEPTANCE.md) §12 与根 `../../../USER-VIEW.md`。
 5. **Gate**：`npm run check:ui` 随 `build:client` 跑。
 
 规则：新代码不写裸设计值；有原语就不复制标记；客户端不推断状态/动作；面板未挂载不预取；

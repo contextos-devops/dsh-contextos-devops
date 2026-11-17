@@ -1,0 +1,50 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   layout.css — 结构原语（第三层：只管位置、方向、伸缩、滚动）
+
+   组件 = 布局类 + 控件类，不写 font-size / color / border。
+     h('div',{className:'cx-sec'}, h('div',{className:'cx-hd'}, '标题'), h('div',{className:'cx-bd'}, ...))
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── 容器 ─────────────────────────────────────────────────────────────────── */
+.cx-stack{display:flex;flex-direction:column;min-width:0;min-height:0}
+.cx-row{display:flex;align-items:center;gap:var(--cx-sp-3)}
+.cx-col{display:flex;flex-direction:column;min-width:0;min-height:0}
+.cx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--cx-sp-4)}
+
+.cx-sec{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.cx-hd{display:flex;align-items:center;gap:var(--cx-sp-3);flex:none;min-height:var(--cx-h-row);padding:0 var(--cx-sp-5)}
+.cx-bd{flex:1 1 auto;min-height:0;min-width:0;overflow:auto}
+.cx-ft{display:flex;align-items:center;gap:var(--cx-sp-3);flex:none;padding:var(--cx-sp-2) var(--cx-sp-5)}
+
+/* ── 伸缩与滚动 ───────────────────────────────────────────────────────────── */
+.cx-fill{flex:1 1 auto;min-width:0;min-height:0}
+.cx-none{flex:none}
+.cx-scroll{overflow:auto;min-height:0}
+.cx-center{display:flex;align-items:center;justify-content:center}
+
+/* ── 文本收敛 ─────────────────────────────────────────────────────────────── */
+.cx-ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.cx-nowrap{white-space:nowrap}
+.cx-wrap{white-space:normal;overflow-wrap:anywhere}
+
+/* ── 间距 utilities（只在结构层用，不要在组件里写孤立像素） ───────────────── */
+.cx-g1{gap:var(--cx-sp-1)}
+.cx-g2{gap:var(--cx-sp-2)}
+.cx-g3{gap:var(--cx-sp-3)}
+.cx-g4{gap:var(--cx-sp-4)}
+.cx-g5{gap:var(--cx-sp-5)}
+.cx-p3{padding:var(--cx-sp-3)}
+.cx-p4{padding:var(--cx-sp-4)}
+.cx-p5{padding:var(--cx-sp-5)}
+.cx-px5{padding-left:var(--cx-sp-5);padding-right:var(--cx-sp-5)}
+.cx-divide{border-top:1px solid var(--cx-border)}
+.cx-divide-b{border-bottom:1px solid var(--cx-border)}
+
+/* ── 可见性 ───────────────────────────────────────────────────────────────── */
+.cx-hide{display:none!important}
+.cx-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* 段落角色（CxSection 的默认结构）：标题 / 副标题 / 右侧动作 */
+.cx-hd-t{font-size:var(--cx-fs-10);letter-spacing:var(--cx-ls-caps);text-transform:uppercase;color:var(--cx-cyan)}
+.cx-hd-s{font-size:var(--cx-fs-10);color:var(--cx-text-dim)}
+.cx-hd-a{margin-left:auto;display:flex;align-items:center;gap:var(--cx-sp-2)}

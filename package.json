@@ -1,6 +1,6 @@
 {
   "name": "dsh-contextos-devops",
-  "version": "1.48.70",
+  "version": "1.48.88",
   "type": "module",
   "description": "ContextOS DevOps for DeepSeek Harness: one dashboard for cluster nodes, project spaces, apps, avatars, PM boards and IoT devices, with an in-app Copilot that can deploy and scaffold.",
   "exports": {
@@ -40,9 +40,10 @@
     }
   },
   "scripts": {
-    "build:client": "node build/client.mjs && node scripts/gate.mjs && node scripts/load-check.mjs && node scripts/hook-order-check.mjs && node scripts/op-check.mjs && node scripts/install-check.mjs && node scripts/store-check.mjs && node scripts/ui-check.mjs && node scripts/ui-probe.mjs --soft && node scripts/i18n-check.mjs && node scripts/context-check.mjs && node scripts/docs-check.mjs && node scripts/docs-budget.mjs --check && node scripts/bench-chat.mjs && node scripts/publish-check.mjs",
+    "build:client": "node build/client.mjs && node scripts/gate.mjs && node scripts/load-check.mjs && node scripts/hook-order-check.mjs && node scripts/op-check.mjs && node scripts/install-check.mjs && node scripts/store-check.mjs && node scripts/ui-check.mjs && node scripts/ui-probe.mjs --soft && node scripts/css-check.mjs && node scripts/i18n-check.mjs && node scripts/context-check.mjs && node scripts/docs-check.mjs && node scripts/docs-budget.mjs --check && node scripts/bench-chat.mjs && node scripts/publish-check.mjs",
     "watch:client": "node build/client.mjs --watch",
     "check:ui": "node scripts/ui-check.mjs",
+    "check:css": "node scripts/css-check.mjs",
     "check:probe": "node scripts/ui-probe.mjs",
     "check:context": "node scripts/context-check.mjs",
     "verify:factory": "node scripts/accept-factory.mjs",

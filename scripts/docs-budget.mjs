@@ -22,8 +22,8 @@ const BUDGET = {
   'RSI-LEDGER.md': 3600, // 滚动窗口：正册只留最近 10 条
   'ACCEPTANCE.md': 3800,
   'URL-SPEC.md': 3600,
-  'CODE-INDEX.md': 3300, // 生成物：随代码增长，单独给余量；新增部署控制台模块后 3221，保留约 80 tokens 余量
-  'DESIGN-SYSTEM.md': 2800,
+  'CODE-INDEX.md': 3600, // 生成物：随代码增长，单独给余量；新增 07-kit/css-check 后 3347，保留约 250 tokens 余量
+  'DESIGN-SYSTEM.md': 3800, // 新增 §20 样式分层与结构原语（3547），留余量
   'AI-CONVERSATION.md': 2600,
   'ARCHITECTURE.md': 2300,
   'INDEX.md': 2300,

@@ -1,2 +1,298 @@
-/* canonical design tokens: colors, typography, spacing, radii */
-:root{--cx-bg:#050a12;--cx-panel:#08131f;--cx-panel2:#0b1b2b;--cx-line:#16384d;--cx-line2:#1d4d66;--cx-cyan:#3ee7ff;--cx-icon-12:18px;--cx-icon-10:14px;--cx-icon-14:18px;--cx-bar-h:38px;--cx-bar-px:10px;--cx-bar-gap:8px;--cx-bar-item-h:30px;--cx-hue-rgb:62,231,255;--cx-green-rgb:66,245,167;--cx-cyan2:#18b6d8;--cx-green:#42f5a7;--cx-orange:#ffb454;--cx-red:#ff5c7a;--cx-text:#d9f4ff;--cx-muted:#6f9bb3;--cx-font:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--cx-control-h:36px;--cx-line-h:20px;--cx-meta-h:14px;--cx-icon-stroke:1.4;--cx-gap:6px;--cx-pad:10px}
+/* ─────────────────────────────────────────────────────────────────────────────
+   tokens.css — 唯一字面量层（颜色 / 间距 / 字号 / 尺寸 / 圆角 / 阴影 / 层级 / 动效）
+
+   规则（scripts/css-check.mjs 强制）：
+   1. 只有本文件允许出现字面量颜色、px 字号、px 间距；其它文件一律 var(--cx-*)。
+   2. 命名按「用途」不按「外观」：--cx-surface-1 而不是 --cx-dark-blue。
+   3. 语义层（surface/text/border/state）优先于调色板层；组件只消费语义层。
+   4. 宿主槽位（.cx-shell 之外）用 :root 的默认值；应用内用 .cx-shell[data-theme] 覆盖。
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── 1. 调色板与语义（暗色为默认） ─────────────────────────────────────────── */
+:root{
+  /* 背景 */
+  --cx-bg:#050b12;
+  --cx-surface-0:#03080e;
+  --cx-surface-1:#08141f;
+  --cx-surface-2:#0b1c2a;
+  --cx-surface-3:#102738;
+  --cx-glass:rgba(6,18,29,.9);
+  /* 文字 */
+  --cx-text-strong:#effcff;
+  --cx-text:#c6e5f1;
+  --cx-text-dim:#7fa5b6;
+  --cx-text-faint:#54788a;
+  /* 描边 */
+  --cx-border:#16384d;
+  --cx-border-strong:#1d4a63;
+  --cx-line:#16384d;
+  --cx-line2:#1d4a63;
+  /* 强调 */
+  --cx-accent:#35d0e0;
+  --cx-accent-soft:rgba(53,208,224,.12);
+  --cx-cyan:#3ee7ff;
+  --cx-cyan2:#18b6d8;
+  --cx-hue-rgb:62,231,255;
+  /* 状态 */
+  --cx-green:#42f5a7;
+  --cx-green-rgb:66,245,167;
+  --cx-orange:#ffb454;
+  --cx-red:#ff5c7a;
+  --cx-muted:#6f9bb3;
+  /* 旧名别名（勿在新代码使用） */
+  --cx-panel:var(--cx-surface-1);
+  --cx-panel2:var(--cx-surface-2);
+
+  /* ── 2. 间距（4 的倍数为主） ─────────────────────────────────────────────── */
+  --cx-sp-0:0px;
+  --cx-sp-1:2px;
+  --cx-sp-2:4px;
+  --cx-sp-3:6px;
+  --cx-sp-4:8px;
+  --cx-sp-5:10px;
+  --cx-sp-6:12px;
+  --cx-sp-7:16px;
+  --cx-sp-8:20px;
+  --cx-sp-9:24px;
+  --cx-pad:var(--cx-sp-5);
+  --cx-gap:var(--cx-sp-3);
+
+  /* ── 3. 字体 ─────────────────────────────────────────────────────────────── */
+  --cx-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --cx-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --cx-fs-10:10px;
+  --cx-fs-11:11px;
+  --cx-fs-12:12px;
+  --cx-fs-13:13px;
+  --cx-fs-14:14px;
+  --cx-fs-16:16px;
+  --cx-fs-20:20px;
+  --cx-fs-22:22px;
+  --cx-fs-56:56px;
+  --cx-fs:var(--cx-fs-12);
+  --cx-fs-body:var(--cx-fs-10);
+  --cx-fs-meta: var(--cx-fs-10);
+
+  /* 历史别名（main.css 早期写法），新代码请用右侧语义令牌 */
+  --cx-rose: var(--cx-red);
+  --cx-panel-2: var(--cx-surface-2);
+  --cx-text-2: var(--cx-text);
+  --cx-text-3: var(--cx-text-dim);
+  --cx-fg: var(--cx-text);
+  --cx-dim: var(--cx-text-dim);
+  --cx-mut: var(--cx-muted);
+  --cx-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --cx-fs-title:var(--cx-fs-14);
+  --cx-fs-status:var(--cx-fs-10);
+  --cx-lh-tight:1.2;
+  --cx-lh-body:1.55;
+  --cx-ls-caps:.08em;
+
+  /* ── 4. 尺寸 ─────────────────────────────────────────────────────────────── */
+  --cx-h-control:28px;
+  --cx-h-control-sm:22px;
+  --cx-h-control-lg:32px;
+  --cx-h-bar:38px;
+  --cx-h-row:32px;
+  --cx-icon-10:14px;
+  --cx-icon-12:18px;
+  --cx-icon-14:20px;
+  --cx-bar-h:38px;
+  --cx-bar-px:10px;
+  --cx-bar-gap:8px;
+  --cx-bar-item-h:30px;
+  --cx-control-h:36px;
+  --cx-line-h:20px;
+  --cx-meta-h:14px;
+
+  /* ── 5. 圆角 / 阴影 / 层级 / 动效 ────────────────────────────────────────── */
+  --cx-r-xs:4px;
+  --cx-r-sm:6px;
+  --cx-r-md:8px;
+  --cx-r-lg:14px;
+  --cx-r-pill:999px;
+  --cx-radius-sm:var(--cx-r-sm);
+  --cx-radius-md:var(--cx-r-md);
+  --cx-radius-lg:var(--cx-r-lg);
+  --cx-shadow:0 18px 44px rgba(0,0,0,.55);
+  --cx-shadow-1:0 2px 8px rgba(0,0,0,.28);
+  --cx-shadow-2:0 14px 36px rgba(0,0,0,.5);
+  --cx-shadow-focus:0 0 0 2px var(--cx-accent-soft);
+  --cx-z-bar:10;
+  --cx-z-menu:1000;
+  --cx-z-pop:1400;
+  --cx-z-modal:2000;
+  --cx-dur:.12s;
+  --cx-ease:ease;
+  --cx-icon-stroke:1.4;
+}
+
+@media (prefers-color-scheme: light){:root{
+    color-scheme:light;
+    --cx-bg:#edf5fa;
+    --cx-surface-0:#e5f0f6;
+    --cx-surface-1:#ffffff;
+    --cx-surface-2:#f4fafd;
+    --cx-surface-3:#e8f3f9;
+    --cx-glass:rgba(255,255,255,.92);
+    --cx-text-strong:#102f3e;
+    --cx-text:#294c5d;
+    --cx-text-dim:#5e7f8f;
+    --cx-text-faint:#8ba5b1;
+    --cx-border:#c9dde8;
+    --cx-border-strong:#8fc5d9;
+    --cx-line:#c7dbe7;
+    --cx-line2:#a8c9da;
+    --cx-accent:#0b7f9f;
+    --cx-accent-soft:rgba(11,127,159,.08);
+    --cx-cyan:#0b7f9f;
+    --cx-cyan2:#09677f;
+    --cx-hue-rgb:11,127,159;
+    --cx-green:#07845a;
+    --cx-green-rgb:7,132,90;
+    --cx-orange:#a96700;
+    --cx-red:#c73550;
+    --cx-muted:#5e7d8e;
+    --cx-shadow:0 16px 38px rgba(31,73,94,.12);
+    --cx-shadow-1:0 2px 8px rgba(31,73,94,.10);
+    --cx-shadow-2:0 14px 36px rgba(31,73,94,.16);
+  }}
+
+/* 显式主题优先于系统偏好：插件外壳始终自己声明 data-theme */
+.cx-shell:not([data-theme="light"]){
+  /* 背景 */
+  --cx-bg:#050b12;
+  --cx-surface-0:#03080e;
+  --cx-surface-1:#08141f;
+  --cx-surface-2:#0b1c2a;
+  --cx-surface-3:#102738;
+  --cx-glass:rgba(6,18,29,.9);
+  /* 文字 */
+  --cx-text-strong:#effcff;
+  --cx-text:#c6e5f1;
+  --cx-text-dim:#7fa5b6;
+  --cx-text-faint:#54788a;
+  /* 描边 */
+  --cx-border:#16384d;
+  --cx-border-strong:#1d4a63;
+  --cx-line:#16384d;
+  --cx-line2:#1d4a63;
+  /* 强调 */
+  --cx-accent:#35d0e0;
+  --cx-accent-soft:rgba(53,208,224,.12);
+  --cx-cyan:#3ee7ff;
+  --cx-cyan2:#18b6d8;
+  --cx-hue-rgb:62,231,255;
+  /* 状态 */
+  --cx-green:#42f5a7;
+  --cx-green-rgb:66,245,167;
+  --cx-orange:#ffb454;
+  --cx-red:#ff5c7a;
+  --cx-muted:#6f9bb3;
+  /* 旧名别名（勿在新代码使用） */
+  --cx-panel:var(--cx-surface-1);
+  --cx-panel2:var(--cx-surface-2);
+
+  /* ── 2. 间距（4 的倍数为主） ─────────────────────────────────────────────── */
+  --cx-sp-0:0px;
+  --cx-sp-1:2px;
+  --cx-sp-2:4px;
+  --cx-sp-3:6px;
+  --cx-sp-4:8px;
+  --cx-sp-5:10px;
+  --cx-sp-6:12px;
+  --cx-sp-7:16px;
+  --cx-sp-8:20px;
+  --cx-sp-9:24px;
+  --cx-pad:var(--cx-sp-5);
+  --cx-gap:var(--cx-sp-3);
+
+  /* ── 3. 字体 ─────────────────────────────────────────────────────────────── */
+  --cx-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --cx-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --cx-fs-10:10px;
+  --cx-fs-11:11px;
+  --cx-fs-12:12px;
+  --cx-fs-13:13px;
+  --cx-fs-14:14px;
+  --cx-fs-16:16px;
+  --cx-fs-20:20px;
+  --cx-fs-22:22px;
+  --cx-fs-56:56px;
+  --cx-fs:var(--cx-fs-12);
+  --cx-fs-body:var(--cx-fs-10);
+  --cx-fs-title:var(--cx-fs-14);
+  --cx-fs-status:var(--cx-fs-10);
+  --cx-lh-tight:1.2;
+  --cx-lh-body:1.55;
+  --cx-ls-caps:.08em;
+
+  /* ── 4. 尺寸 ─────────────────────────────────────────────────────────────── */
+  --cx-h-control:28px;
+  --cx-h-control-sm:22px;
+  --cx-h-control-lg:32px;
+  --cx-h-bar:38px;
+  --cx-h-row:32px;
+  --cx-icon-10:14px;
+  --cx-icon-12:18px;
+  --cx-icon-14:20px;
+  --cx-bar-h:38px;
+  --cx-bar-px:10px;
+  --cx-bar-gap:8px;
+  --cx-bar-item-h:30px;
+  --cx-control-h:36px;
+  --cx-line-h:20px;
+  --cx-meta-h:14px;
+
+  /* ── 5. 圆角 / 阴影 / 层级 / 动效 ────────────────────────────────────────── */
+  --cx-r-xs:4px;
+  --cx-r-sm:6px;
+  --cx-r-md:8px;
+  --cx-r-lg:14px;
+  --cx-r-pill:999px;
+  --cx-radius-sm:var(--cx-r-sm);
+  --cx-radius-md:var(--cx-r-md);
+  --cx-radius-lg:var(--cx-r-lg);
+  --cx-shadow:0 18px 44px rgba(0,0,0,.55);
+  --cx-shadow-1:0 2px 8px rgba(0,0,0,.28);
+  --cx-shadow-2:0 14px 36px rgba(0,0,0,.5);
+  --cx-shadow-focus:0 0 0 2px var(--cx-accent-soft);
+  --cx-z-bar:10;
+  --cx-z-menu:1000;
+  --cx-z-pop:1400;
+  --cx-z-modal:2000;
+  --cx-dur:.12s;
+  --cx-ease:ease;
+  --cx-icon-stroke:1.4;
+}
+
+.cx-shell[data-theme="light"]{
+    color-scheme:light;
+    --cx-bg:#edf5fa;
+    --cx-surface-0:#e5f0f6;
+    --cx-surface-1:#ffffff;
+    --cx-surface-2:#f4fafd;
+    --cx-surface-3:#e8f3f9;
+    --cx-glass:rgba(255,255,255,.92);
+    --cx-text-strong:#102f3e;
+    --cx-text:#294c5d;
+    --cx-text-dim:#5e7f8f;
+    --cx-text-faint:#8ba5b1;
+    --cx-border:#c9dde8;
+    --cx-border-strong:#8fc5d9;
+    --cx-line:#c7dbe7;
+    --cx-line2:#a8c9da;
+    --cx-accent:#0b7f9f;
+    --cx-accent-soft:rgba(11,127,159,.08);
+    --cx-cyan:#0b7f9f;
+    --cx-cyan2:#09677f;
+    --cx-hue-rgb:11,127,159;
+    --cx-green:#07845a;
+    --cx-green-rgb:7,132,90;
+    --cx-orange:#a96700;
+    --cx-red:#c73550;
+    --cx-muted:#5e7d8e;
+    --cx-shadow:0 16px 38px rgba(31,73,94,.12);
+    --cx-shadow-1:0 2px 8px rgba(31,73,94,.10);
+    --cx-shadow-2:0 14px 36px rgba(31,73,94,.16);
+  }

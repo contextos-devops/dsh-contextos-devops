@@ -63,7 +63,7 @@ From source — useful when you want to change it:
 ```sh
 git clone https://github.com/contextos-devops/dsh-contextos-devops
 cd dsh-contextos-devops
-npm run build:client            # build + 14 gates, must be all green
+npm run build:client            # build + 15 gates, must be all green
 dsh plugin --profile desktop add link:$PWD
 ```
 
@@ -224,7 +224,7 @@ prompt cannot talk its way into an action the mode does not allow.
 │   ├── parts/             # 24 parts → build/client.mjs → client.js
 │   └── styles/            # tokens / main / kit → assets/client.css
 ├── docs/                  # entry point: docs/INDEX.md
-├── scripts/               # build + 14 gates
+├── scripts/               # build + 15 gates
 └── build/client.mjs       # the only bundler entry
 ```
 
@@ -241,11 +241,11 @@ npm run check:docs      # docs index / links / generated files in sync
 npm run publish:npm     # dry-run npm packaging; --publish to actually ship
 ```
 
-Build chain (14 gates):
+Build chain (15 gates):
 
 ```
 gate → load-check → hook-order-check → op-check → install-check → store-check
-     → ui-check → ui-probe → i18n-check → context-check
+     → ui-check → ui-probe → css-check → i18n-check → context-check
      → docs-check → docs-budget → bench-chat → publish-check
 ```
 
@@ -288,7 +288,7 @@ gate → load-check → hook-order-check → op-check → install-check → stor
 - **Stable**: nodes, spaces, apps, data CRUD, code generation, monitoring panels, the three modes.
 - **Known limits**: see the open items in [`docs/RSI-LEDGER.md`](docs/RSI-LEDGER.md) (web-tab session isolation, remote node credential renewal, monitoring has no history).
 - **Version**: `package.json` is the source of truth, and every change bumps it because the client cache key follows the version.
-- **Scale**: 102 ops, 24 client parts, ~7.6k lines of client code, 14 gates.
+- **Scale**: 102 ops, 25 client parts, ~7.6k lines of client code, 15 gates.
 
 ---
 

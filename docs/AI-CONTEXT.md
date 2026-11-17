@@ -2,7 +2,7 @@
 
 
 > 读这份当：每次开工，先拿到根规范路由与插件硬规则。
-> 不读这份当 → 全量规范 → 根 `SPEC-CODE.md` / `USER-VIEW.md` 各册
+> 不读这份当 → 全量规范 → 根 `../../../SPEC-CODE.md` / `../../../USER-VIEW.md` 各册
 Read these in order. The root ContextOS documents are authoritative; this file
 only routes the relevant sections and records plugin-specific hard rules.
 

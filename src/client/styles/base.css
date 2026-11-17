@@ -1,0 +1,75 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   base.css — 元素与排版默认值（第二层）
+
+   目标：组件只写「结构差异」，字号/颜色/行高/盒模型全部由这里继承。
+   - 应用内作用域：.cx-shell
+   - 宿主槽位作用域：.cx-host（输入框芯片、多级列表等挂在 DSH 里的零件）
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.cx-shell,
+.cx-host{
+  font-family:var(--cx-font);
+  font-size:var(--cx-fs);
+  line-height:var(--cx-lh-body);
+  letter-spacing:.01em;
+  color:var(--cx-text);
+  -webkit-font-smoothing:antialiased;
+  box-sizing:border-box;
+}
+
+.cx-shell *,
+.cx-host *{box-sizing:border-box}
+
+/* 控件默认继承字体，别再逐个写 font-size / font-family */
+.cx-shell button,
+.cx-shell input,
+.cx-shell select,
+.cx-shell textarea,
+.cx-host button,
+.cx-host input,
+.cx-host select,
+.cx-host textarea{
+  font-family:inherit;
+  font-size:inherit;
+  line-height:inherit;
+  letter-spacing:inherit;
+  color:inherit;
+}
+
+.cx-shell h1,.cx-shell h2,.cx-shell h3,.cx-shell h4,.cx-host h1,.cx-host h2,.cx-host h3,.cx-host h4{
+  margin:0;
+  font-weight:650;
+  line-height:var(--cx-lh-tight);
+  letter-spacing:.02em;
+  color:var(--cx-text-strong);
+}
+.cx-shell h1,.cx-host h1{font-size:var(--cx-fs-20)}
+.cx-shell h2,.cx-host h2{font-size:var(--cx-fs-16)}
+.cx-shell h3,.cx-host h3{font-size:var(--cx-fs-14)}
+.cx-shell h4,.cx-host h4{font-size:var(--cx-fs-12)}
+
+.cx-shell p,.cx-host p{margin:0 0 var(--cx-sp-2)}
+.cx-shell p:last-child,.cx-host p:last-child{margin-bottom:0}
+.cx-shell ul,.cx-shell ol,.cx-host ul,.cx-host ol{margin:0;padding-left:var(--cx-sp-7)}
+.cx-shell li,.cx-host li{margin:var(--cx-sp-1) 0}
+
+.cx-shell code,.cx-shell pre,.cx-shell kbd,.cx-shell samp,
+.cx-host code,.cx-host pre,.cx-host kbd,.cx-host samp,
+.cx-shell .cx-mono,.cx-host .cx-mono{font-family:var(--cx-mono)}
+
+.cx-shell table,.cx-host table{border-collapse:collapse;width:100%}
+.cx-shell img,.cx-host img{max-width:100%;vertical-align:top}
+.cx-shell a,.cx-host a{color:var(--cx-accent);text-decoration:none}
+.cx-shell a:hover,.cx-host a:hover{text-decoration:underline}
+
+.cx-shell ::selection,.cx-host ::selection{background:var(--cx-accent-soft);color:var(--cx-text-strong)}
+
+/* 滚动条：默认不抢眼，悬停才明显 */
+.cx-shell *,.cx-host *{scrollbar-width:thin;scrollbar-color:var(--cx-border-strong) transparent}
+.cx-shell ::-webkit-scrollbar,.cx-host ::-webkit-scrollbar{width:10px;height:10px}
+.cx-shell ::-webkit-scrollbar-thumb,.cx-host ::-webkit-scrollbar-thumb{background:var(--cx-border);border:2px solid transparent;background-clip:padding-box;border-radius:var(--cx-r-pill)}
+.cx-shell ::-webkit-scrollbar-thumb:hover,.cx-host ::-webkit-scrollbar-thumb:hover{background:var(--cx-border-strong);background-clip:padding-box}
+.cx-shell ::-webkit-scrollbar-track,.cx-host ::-webkit-scrollbar-track{background:transparent}
+
+/* 焦点环：键盘可见，鼠标不打扰 */
+.cx-shell :focus-visible,.cx-host :focus-visible{outline:2px solid var(--cx-accent);outline-offset:2px}

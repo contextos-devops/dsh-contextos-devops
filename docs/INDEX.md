@@ -28,9 +28,11 @@
 
 | 我要做的事 | 文档 | 章节 |
 | --- | --- | --- |
+| 统一界面/功能术语、沟通口径 | `GLOSSARY.md` | 全册（215 行） |
 | 改界面：布局 / 组件 / 主题 / 图标 / 文字 | `DESIGN-SYSTEM.md` | 全册（276 行） |
 | 改表单、字段取值 | `DESIGN-SYSTEM.md` | §18 表单取值 |
 | 加 UI 回归断言 | `DESIGN-SYSTEM.md` | §19 UI 不变量 |
+| 写新组件 / 加样式 | `DESIGN-SYSTEM.md` | §20 样式分层与结构原语 |
 | 布局出问题（挤行 / 折叠过高 / 改了没变） | `DIAGNOSTICS.md` | §二 布局三条硬规则 |
 | 接口 / 报文 / 五种形态 | `INTERFACE.md` | §1–§10；PM 排序看 §11 |
 | 构造任何 URL 之前 | `URL-SPEC.md` | 全册（239 行） |
@@ -61,15 +63,16 @@
 | 接口 404 / 405 / 写丢字段 | `npm run check:ops` | `INTERFACE.md`、`URL-SPEC.md` |
 | 门禁红了看不出原因 | 单跑该脚本，看 `FAIL` 行 | `../AGENTS.md` §十 脚本表 |
 
-## 四、文档地图（人写 18 份 + 生成 2 份）
+## 四、文档地图（人写 19 份 + 生成 2 份）
 
 | 文档 | 行数 | 一句话 | 读这份当 | 不读这份当 → 见 |
 | --- | --- | --- | --- | --- |
+| `GLOSSARY.md` | 207 | 界面/功能/流程统一术语 | 沟通有歧义 | 具体规范 → `DESIGN-SYSTEM.md` |
 | `AI-CONTEXT.md` | 76 | 根规范路由 + 插件硬规则 | 每次开工 | — |
 | `DOCTRINE.md` | 108 | 三纲五常 / 四件套 / 抽象递减 | 判断方向 | 具体做法 → `../AGENTS.md` |
 | `RSI-CONSTITUTION.md` | 111 | 十二条运行期法则 | 任何 AI 对话 | 落地流程 → `../AGENTS.md` §二 |
 | `DIAGNOSTICS.md` | 98 | 出问题先查哪、先跑哪 | 有故障 | 历史坑 → `RSI-LEDGER.md` |
-| `DESIGN-SYSTEM.md` | 281 | 视觉/组件/表单/UI 不变量 | 任何界面改动 | 产品取舍 → `PRODUCT-DESIGN.md` |
+| `DESIGN-SYSTEM.md` | 331 | 视觉/组件/表单/UI 不变量 | 任何界面改动 | 产品取舍 → `PRODUCT-DESIGN.md` |
 | `INTERFACE.md` | 419 | 五种形态/认证/PM 排序 | 接口设计与排障 | URL 形状 → `URL-SPEC.md` |
 | `URL-SPEC.md` | 243 | 两类 URL 与禁止清单 | 构造 URL 前 | 接口语义 → `INTERFACE.md` |
 | `CODE-GEN.md` | 424 | 代码生成规范与工厂要点 | factory 模式 | 架构 → `ARCHITECTURE.md` |
@@ -80,9 +83,9 @@
 | `DSH-COS.md` | 114 | DSH 宿主能力与边界 | 判断能不能做到 | 版本差异 → `RSI-LEDGER.md` |
 | `ACCEPTANCE.md` | 247 | 唯一验收口径 | 说「完成」之前 | 流程 → `../AGENTS.md` §七 |
 | `PRODUCT-DESIGN.md` | 843 | 产品与技术设计稿 | 做方案/查设计取舍 | 现状 → `../README.md` 能力矩阵 |
-| `RSI-LEDGER.md` | 109 | 踩坑与决策台账 | 复盘/避免重复 | 症状路由 → `DIAGNOSTICS.md` |
+| `RSI-LEDGER.md` | 127 | 踩坑与决策台账 | 复盘/避免重复 | 症状路由 → `DIAGNOSTICS.md` |
 | `INSTALL.md` | 108 | 节点安装矩阵与平台选择 | 部署/跨平台 | 节点生命周期 → `ARCHITECTURE.md` |
-| `CODE-INDEX.md` | 160 | 文件-行数-导出-契约索引 | 找东西 | 生成物，勿手改 |
+| `CODE-INDEX.md` | 163 | 文件-行数-导出-契约索引 | 找东西 | 生成物，勿手改 |
 | `STATE.md` | 66 | 存储键表 | 加/查状态 | 生成物，勿手改 |
 | `INDEX.md` | 本文件 | 唯一入口 | 每次开工 | — |
 

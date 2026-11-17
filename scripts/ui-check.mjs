@@ -133,7 +133,9 @@ ok('detail reuses DetailTabs', debug.includes('h(DetailTabs'));
 ok('task process uses reportCreate', project.includes("status === 'process'") && project.includes("reportCreate"));
 ok('danger actions are in context menu', pm.includes("new Set(['modify', 'remove', 'cancel', 'reject', 'handover'])"));
 ok('Chat context has one scene source', chat.includes('function stripSceneAliases') && chat.includes('const requestContext = stripSceneAliases(context);') && chat.includes('context: requestContext'));
-ok('Chat message body is a vertical column', css.includes('.cx-shell .cx-msg .cx-msg-main{display:flex!important;flex-direction:column!important') && css.includes('.cx-shell .cx-msg .cx-msg-body{width:100%!important;min-width:0}'));
+ok('Workspace has exactly one grid definition', (css.match(/^\.cx-body\{/gm) || []).length === 1);
+  ok('Workspace keeps four columns with horizontal scroll', css.includes('grid-template-columns:minmax(320px,480px) minmax(320px,480px) minmax(320px,480px) minmax(420px,1fr)') && css.includes('overflow-x:auto') && css.includes('overscroll-behavior-x:contain'));
+  ok('Chat message body is a vertical column', css.includes('.cx-shell .cx-msg .cx-msg-main{display:flex!important;flex-direction:column!important') && css.includes('.cx-shell .cx-msg .cx-msg-body{width:100%!important;min-width:0}'));
 ok('version chip opens update modal', read('src/client/parts/60-page.js').includes("className: `cx-ver${upd && upd.hasUpdate ? ' upd' : ''}`") && read('src/client/parts/60-page.js').includes('h(UpdateModal, { info: upd'));
 ok('update check is a GET op with noUser', read('lib/core/ops.js').includes("checkUpdate: { method: 'GET', noUser: true") && read('src/client/parts/05-bootstrap.js').includes("'checkUpdate']"));
 ok('update check never throws (falls back to cache)', read('lib/core/update.js').includes('if (cache.value) return { ...cache.value, local, cached: true, stale: true, error: msg };'));
@@ -142,6 +144,9 @@ ok('direct fetch API paths are traced too', read('lib/core/nodes.js').includes("
 ok('init logs every plugin API request', read('src/client/parts/05-bootstrap.js').includes('__CX_API_TRACE__') && page.includes('__CX_API_TRACE__') && initUi.includes('state.apiConsole') && page.includes("d.op === 'deployLog'"));
 ok('init console filters by HTTP method', initUi.includes("['ALL', 'GET', 'PUT', 'POST', 'DELETE']") && initUi.includes('compactInitLog(') && initUi.includes('methodFilter'));
 ok('init console has one output area and no execution table', initUi.includes('cx-init-methods') && !initUi.includes("className: 'cx-init-log'") && !initUi.includes("T('执行过程')"));
+ok('space home has no trailing slash', !page.includes("u.pathname += '%2F'") && read('lib/core/nodes.js').includes('opened: `http://localhost:${Number(node)}/s/${space}`'));
+ok('view tabs scroll horizontally when narrow', css.includes('.cx-shell .cx-header .cx-views') && css.includes('justify-content:safe center') && css.includes('.cx-views>.cx-view{flex:0 0 auto}'));
+ok('header style settings collapse at narrow widths', page.includes("className: 'cx-header-compact'") && css.includes('.cx-header .cx-actions{display:none}') && !css.includes('.cx-pipe>.cx-stage,.cx-pipe>.cx-arrow') && css.includes('.cx-header-cfg-grid'));
 ok('binary standard spaces still pass repos', read('lib/core/nodes.js').includes('repos: item.repo, binary'));
 ok('deploy waits before runtime probe', read('lib/core/nodes.js').includes('await sleep(3000)') && read('lib/core/nodes.js').includes("[wait] 等待 3s"));
 ok('space create waits before runtime probe', read('lib/core/spaces.js').includes('setTimeout(r, 3000)') && read('lib/core/spaces.js').includes('interval: 1500'));
@@ -155,7 +160,7 @@ ok('init modal keeps header/footer fixed', css.includes('.cx-init .cx-init-card{
 ok('init console wraps every character at full width', css.includes('.cx-init-console{width:100%;max-width:100%;box-sizing:border-box;word-break:break-all;overflow-wrap:anywhere}'));
 ok('runtime probes are hidden from console', read('lib/core/deploy-log.js').includes("endsWith('/c/runtime')"));
 ok('running step has a breathing probe dot', initUi.includes('cx-init-dot') && css.includes('@keyframes cx-probe'));
-ok('space URLs have no trailing slash', read('lib/core/nodes.js').includes('return { opened: `http://localhost:${Number(node)}/s/${space}` };'));
+ok('space home URLs have no trailing slash', read('lib/core/nodes.js').includes('return { opened: `http://localhost:${Number(node)}/s/${space}` };'));
 ok('avatar step does not duplicate project creation', read('lib/core/init.js').includes('skipProject: true') && read('lib/core/avatar.js').includes('skipProject = false'));
 ok('Avatar user is created through community API', read('lib/core/avatar.js').includes('/c/web.team.gonganxitong.user/action/create') && !read('lib/core/avatar.js').includes('/c/aaa.user/action/create'));
 ok('ContextOS lives in the conversation tab strip', /name: 'conversation\.view'/.test(page) && /id: 'contextos'/.test(page) && !/openRightbar/.test(page));
@@ -168,3 +173,6 @@ const failed = checks.filter((c) => !c.condition);
 for (const c of checks) console.log(`${c.condition ? 'PASS' : 'FAIL'}  ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
 if (failed.length) { console.error(`ui-check: ${failed.length} failed`); process.exit(1); }
 console.log(`ui-check: ${checks.length} passed`);
+
+ok('structure primitives exist', read('src/client/parts/07-kit.js').includes('function CxSection') && read('src/client/parts/07-kit.js').includes('function CxBtn') && read('src/client/parts/07-kit.js').includes('function CxTabs'));
+ok('UpdateModal uses structure primitives', read('src/client/parts/30-modals.js').includes('h(CxStack, null,') && read('src/client/parts/30-modals.js').includes("h(CxBtn, { variant: 'primary'"));

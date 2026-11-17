@@ -91,16 +91,23 @@
       const has = !!info?.hasUpdate;
       const cmd = 'npm i -g dsh-contextos-devops && dsh plugin --profile desktop add dsh-contextos-devops';
       const copy = (text) => { try { navigator.clipboard.writeText(text); } catch {} };
-      return h(Modal, { title: T('检查更新') + ' / CHECK UPDATES', desc: T('本地版本以 package.json 为准，最新版本来自 npm registry（缓存 30 分钟）。'), onClose },
-        h('div', { className: 'cx-form' },
-          h('label', { className: 'cx-field' }, T('当前版本'), h('input', { className: 'cx-input', readOnly: true, value: `v${local}` })),
-          h('label', { className: 'cx-field' }, T('最新版本'), h('input', { className: 'cx-input', readOnly: true, value: info?.ok ? `v${latest}` : (info?.error || T('检查失败')) })),
-          h('label', { className: 'cx-field full' }, T('检查时间'), h('input', { className: 'cx-input', readOnly: true, value: info?.checkedAt ? new Date(info.checkedAt).toLocaleString() : '—' })),
-          h('div', { className: 'cx-field full' }, h('div', { className: `cx-upd-state${has ? ' on' : ''}` },
-            has ? `↑ ${T('有新版本')}：v${local} → v${latest}` : (info?.stale || !info?.ok ? T('暂时查不到最新版本（网络或 registry 不可用）') : T('已是最新版本'))))),
-        h('div', { className: 'cx-foot' },
-          h('button', { className: 'cx-btn', onClick: () => copy(cmd), title: cmd }, T('复制更新命令')),
-          h('button', { className: 'cx-btn', onClick: onCheck, disabled: busy }, busy ? T('检查中…') : T('重新检查')),
-          info?.npm ? h('button', { className: 'cx-btn', onClick: () => { try { window.open(info.npm, '_blank'); } catch {} } }, T('打开发布页')) : null,
-          h('button', { className: 'cx-btn pri', onClick: onClose }, T('关闭'))));
+      const stateText = has
+        ? `↑ ${T('有新版本')}：v${local} → v${latest}`
+        : (info?.stale || !info?.ok ? T('暂时查不到最新版本（网络或 registry 不可用）') : T('已是最新版本'));
+      return h(Modal, {
+        title: T('检查更新') + ' / CHECK UPDATES',
+        desc: T('本地版本以 package.json 为准，最新版本来自 npm registry（缓存 30 分钟）。'),
+        onClose,
+      },
+        h(CxStack, null,
+          h(CxRow, { gap: 3 },
+            h(CxField, { label: T('当前版本') }, h(CxInput, { readOnly: true, value: `v${local}` })),
+            h(CxField, { label: T('最新版本') }, h(CxInput, { readOnly: true, value: info?.ok ? `v${latest}` : (info?.error || T('检查失败')) }))),
+          h(CxField, { label: T('检查时间'), full: true }, h(CxInput, { readOnly: true, value: info?.checkedAt ? new Date(info.checkedAt).toLocaleString() : '—' })),
+          h(CxField, { full: true }, h('div', { className: `cx-upd-state${has ? ' on' : ''}` }, stateText))),
+        h(CxRow, { gap: 2, className: 'cx-foot' },
+          h(CxBtn, { onClick: () => copy(cmd), title: cmd }, T('复制更新命令')),
+          h(CxBtn, { onClick: onCheck, loading: busy }, busy ? T('检查中…') : T('重新检查')),
+          info?.npm ? h(CxBtn, { onClick: () => { try { window.open(info.npm, '_blank'); } catch {} } }, T('打开发布页')) : null,
+          h(CxBtn, { variant: 'primary', onClick: onClose }, T('关闭'))));
     }

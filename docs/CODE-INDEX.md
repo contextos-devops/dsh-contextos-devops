@@ -3,7 +3,7 @@
 > 读这份当：要找某个文件 / 组件 / op / 脚本在哪，或核对接口契约。
 > 不读这份当 → 架构分层与模块归属 → [ARCHITECTURE.md](ARCHITECTURE.md)；产品设计 → [PRODUCT-DESIGN.md](PRODUCT-DESIGN.md)
 >
-> 生成物：`node scripts/docs-index.mjs --write`（2026-11-16）· 源：`src/client/parts/*.js`、`lib/**/*.js`、`scripts/*.mjs`、`docs/*.md`
+> 生成物：`node scripts/docs-index.mjs --write`（2026-11-17）· 源：`src/client/parts/*.js`、`lib/**/*.js`、`scripts/*.mjs`、`docs/*.md`
 > 手改会被下一次生成覆盖；要改内容改代码里的源头。
 
 ## 1. 服务端（宿主进程）
@@ -20,12 +20,12 @@
 | `lib/base/table.js` | 48 | `decodeCell()` `parseFixedTable()` `parseTable()` |
 | `lib/base/texttable.js` | 27 | `parseTextTable()` |
 | `lib/base/url.js` | 179 | `portalOf()` `placeUidKey()` `apiPath()` `dataPath()` `webUrl()` `systemUrl()` `spaceUrl()` `platformUrl()` …19 个 |
-| `lib/core/apps.js` | 679 | `storeApps()` `storeAction()` `createStoreInstance()` `listApps()` `scanApps()` `uniqueAppName()` `autogenSpec()` `autogenService()` …15 个 |
+| `lib/core/apps.js` | 682 | `storeApps()` `storeAction()` `createStoreInstance()` `listApps()` `scanApps()` `uniqueAppName()` `autogenSpec()` `autogenService()` …15 个 |
 | `lib/core/auth.js` | 111 | `toolToken()` `adminSessid()` `appSession()` `appSessid()` `peekNodeAuth()` `ensureNodeAuth()` `APP_COOKIE` `nodeToken` …9 个 |
 | `lib/core/avatar.js` | 351 | `avatarsFile()` `readAvatars()` `writeAvatars()` `defaultAvatar()` `listAvatars()` `createProjectForAvatar()` `ensureProject()` `createAvatar()` …20 个 |
 | `lib/core/backup.js` | 106 | `backupRoot()` `backupSpace()` `listBackups()` `sampleNodes()` `monitorQuery()` |
 | `lib/core/codegen.js` | 402 | `codegenCond()` `codegenList()` `codegenRender()` `codegenMerge()` `codegenPath()` `codegenWrite()` `detectClass()` `moduleInfo()` …13 个 |
-| `lib/core/copilot.js` | 544 | `setLlm()` `getLlm()` `chatProviders()` `compactContext()` `lastEffort()` `buildChatPrompt()` `chatWithDSH()` `llmJson()` …15 个 |
+| `lib/core/copilot.js` | 546 | `setLlm()` `getLlm()` `chatProviders()` `compactContext()` `lastEffort()` `buildChatPrompt()` `chatWithDSH()` `llmJson()` …15 个 |
 | `lib/core/data.js` | 158 | `writeData()` `readData()` `removeData()` |
 | `lib/core/deploy-log.js` | 88 | `deployLogPath()` `resetDeployLog()` `traceDeployRequest()` `traceDeployResponse()` `appendDeployLog()` `readDeployLog()` |
 | `lib/core/device.js` | 149 | `discoverDevices()` |
@@ -36,7 +36,7 @@
 | `lib/core/init.js` | 224 | `getInitStatus()` `startInit()` |
 | `lib/core/installer.js` | 311 | `hostTarget()` `normalizeTarget()` `binaryNameFor()` `platformOptions()` `mirrorOf()` `projectNameOf()` `codeAddressOf()` `resolveSources()` …18 个 |
 | `lib/core/nodes.js` | 1205 | `sshHosts()` `sysControl()` `deployNode()` `stopWatchdog()` `watchdogState()` `startWatchdog()` `startNode()` `stopNode()` …21 个 |
-| `lib/core/ops.js` | 322 | `opIndex()` `OPS` |
+| `lib/core/ops.js` | 339 | `opIndex()` `OPS` |
 | `lib/core/project.js` | 401 | `fieldOptions()` `pmList()` `optionValue()` `pmCreateItem()` `pmLog()` `pmFieldsFor()` `pmModifyItem()` `pmRemoveItem()` …13 个 |
 | `lib/core/spaces.js` | 421 | `baseDirOf()` `spaceBase()` `spaceDir()` `startSpace()` `stopSpace()` `compileSpace()` `listSpaces()` `initSpace()` …20 个 |
 | `lib/core/terminal.js` | 138 | `terminalUpgrade()` |
@@ -55,13 +55,14 @@
 | --- | ---: | --- |
 | `src/client/parts/00-prelude.js` | 322 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
 | `src/client/parts/05-bootstrap.js` | 66 | `apiTrace` `QUERY_OPS` |
+| `src/client/parts/07-kit.js` | 66 | `cxCx` `CxStack` `CxRow` `CxCol` `CxSection` `CxField` `CX_BTN_VARIANT` `CX_BTN_SIZE` `CxBtn` `CxInput` |
 | `src/client/parts/08-store.js` | 86 | — |
-| `src/client/parts/10-ui.js` | 189 | `CtxMark` `Ico` `Icon` `Panel` `TOKENS` `Btn` `Toolbar` `Section` `Field` `EmptyState` |
+| `src/client/parts/10-ui.js` | 192 | `CtxMark` `Ico` `Icon` `Panel` `TOKENS` `Btn` `Toolbar` `Section` `Field` `EmptyState` |
 | `src/client/parts/12-debug.js` | 362 | `ANSI_COLORS` `ANSI_NAMES` `AnsiText` `terminalTheme` `TerminalLog` `CONSOLE_TERMS` `ConsoleTerminal` `DebugDetail` |
 | `src/client/parts/15-layout.js` | 87 | `SingleLineTitle` `DoubleLineTitle` `UiBar` `UiWorkspace` `UiAddressBar` `MenuList` `UiCardList` `UiTableList` `UiTreeList` |
 | `src/client/parts/20-devworkspace.js` | 790 | `DevWorkspace` `termActiveRef` `termPendingRef` `termIdsRef` `termKeyRef` `termHostsRef` `termMapRef` `termAct` |
 | `src/client/parts/25-editor-ui.js` | 29 | `GitSections` `EditorTabs` |
-| `src/client/parts/30-modals.js` | 107 | `DropSelect` `MenuButton` `Modal` `SceneModal` `AvatarEditModal` `UpdateModal` |
+| `src/client/parts/30-modals.js` | 114 | `DropSelect` `MenuButton` `Modal` `SceneModal` `AvatarEditModal` `UpdateModal` |
 | `src/client/parts/32-cards.js` | 177 | `CARD_TOOLS` `NodeCard` `SpaceCard` `ItemIcon` `AppRow` `StoreRow` `OfficialSpaces` |
 | `src/client/parts/34-forms.js` | 264 | `InstallToolbar` `DeployModal` `SpaceModal` `AppModal` `CodeModal` `InstanceModal` `StoreInstanceModal` |
 | `src/client/parts/36-data.js` | 268 | `AvatarModal` `QUESTIONS` `DeviceModal` `DataModal` `INIT_DEFAULTS` |
@@ -70,18 +71,18 @@
 | `src/client/parts/46-pm.js` | 159 | `PMModal` `RichText` |
 | `src/client/parts/47-three.js` | 325 | `ThreeAvatar` `ThreeCity` `TechBackdrop` |
 | `src/client/parts/49-msg.js` | 168 | `Elapsed` `FN_LABEL` `ACT_LABEL` `FN_LABEL_EN` `ACT_LABEL_EN` `FIELD_ZH` `FIELD_EN` `KIND_META` `CxEntityCard` `L` |
-| `src/client/parts/50-chat.js` | 1423 | `ChatPanel` `userUpRef` `ToolRow` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` |
+| `src/client/parts/50-chat.js` | 1424 | `ChatPanel` `userUpRef` `ToolRow` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` |
 | `src/client/parts/51-pmselection.js` | 32 | `usePmSelection` |
 | `src/client/parts/52-pmdata.js` | 30 | `usePmData` |
 | `src/client/parts/55-pm.js` | 147 | `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` `PmSectionHead` `PM_STATUS_ORDER` |
-| `src/client/parts/58-config.js` | 453 | `CTX_CFG_KEYS` `CTX_CFG_DEFAULT` `CTX_CFG_NS` `CTX_CALLS_NS` `CTX_UI` `CTX_DATA` `MODE_INTRO_SEEN` `ModeIntro` `WelcomeBurst` `CursorComet` |
+| `src/client/parts/58-config.js` | 498 | `CTX_CFG_KEYS` `CTX_CFG_DEFAULT` `CTX_CFG_NS` `CTX_CALLS_NS` `CTX_UI` `CTX_DATA` `MODE_INTRO_SEEN` `ModeIntro` `WelcomeBurst` `CursorComet` |
 | `src/client/parts/59-monitor.js` | 263 | `MonitorDonut` `R` `MonitorSpark` `MonitorTwin` `MON_PANELS` `MON_DEFAULT` `MonitorPanel` `MonitorBoard` `MonitorView` |
-| `src/client/parts/60-page.js` | 1641 | `PipeSelect` `Page` `Boundary` |
+| `src/client/parts/60-page.js` | 1667 | `PipeSelect` `Page` `Boundary` |
 
 ## 3. 接口契约
 
-- 注册表：`lib/core/ops.js` — **110** 个 op（GET 查询 / PUT 仅 pmCreate / POST 其余）。
-- 客户端调用 **79** 个；仅服务端 **32** 个：`health` `refreshNodes` `initProject` `containerBootstrap` `openNode` `nodeTerminal` `dockerDeploy` `remoteDeploy` `pipeline` `spaceOpen` `spaceTerminal` `storageCheck` `backupSpace` `backups` `sampleNodes` `envDoctor` `goEnsure` `createApp` `codegenRender` `codegenInspect` `pmTree` `pmUpdate` `pmDelete` `deleteAvatar` `deleteBackground` `removeData` `llmInfo` `iamList` `iamCall` `iamSubjects` `iamEndpoints` `clientError`。
+- 注册表：`lib/core/ops.js` — **111** 个 op（GET 查询 / PUT 仅 pmCreate / POST 其余）。
+- 客户端调用 **80** 个；仅服务端 **32** 个：`health` `refreshNodes` `initProject` `containerBootstrap` `openNode` `nodeTerminal` `dockerDeploy` `remoteDeploy` `pipeline` `spaceOpen` `spaceTerminal` `storageCheck` `backupSpace` `backups` `sampleNodes` `envDoctor` `goEnsure` `createApp` `codegenRender` `codegenInspect` `pmTree` `pmUpdate` `pmDelete` `deleteAvatar` `deleteBackground` `removeData` `llmInfo` `iamList` `iamCall` `iamSubjects` `iamEndpoints` `clientError`。
 - 门禁：`scripts/op-check.mjs`（缺 op、方法不一致、路由层残留业务分支都会红）。
 
 ## 4. 持久化
@@ -97,6 +98,7 @@
 | `scripts/bench-chat.mjs` | — |
 | `scripts/catalog-pr.mjs` | — |
 | `scripts/context-check.mjs` | AI 上下文包与硬规则仍在 |
+| `scripts/css-check.mjs` | — |
 | `scripts/docs-budget.mjs` | 文档 token 预算（棘轮）与路由实付 |
 | `scripts/docs-check.mjs` | 文档索引、链接、生成物一致 |
 | `scripts/docs-index.mjs` | — |
@@ -131,7 +133,7 @@
 | `npm run push:all` | node scripts/push-all.mjs |
 | `npm run catalog:pr` | node scripts/catalog-pr.mjs |
 | `npm run publish:npm` | node scripts/publish-npm.mjs |
-| `npm run check:<名>` | 单跑某道门禁：ui / probe / context / i18n / hooks / ops / install / store / docs / load / budget / publish / prompt |
+| `npm run check:<名>` | 单跑某道门禁：ui / css / probe / context / i18n / hooks / ops / install / store / docs / load / budget / publish / prompt |
 
 ## 6. 文档
 
@@ -142,18 +144,19 @@
 | `docs/AI-CONVERSATION.md` | 140 | 人写 |
 | `docs/ARCHITECTURE.md` | 135 | 人写 |
 | `docs/CODE-GEN.md` | 424 | 人写 |
-| `docs/DESIGN-SYSTEM.md` | 281 | 人写 |
+| `docs/DESIGN-SYSTEM.md` | 331 | 人写 |
 | `docs/DIAGNOSTICS.md` | 98 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |
 | `docs/DSH-COS.md` | 114 | 人写 |
+| `docs/GLOSSARY.md` | 207 | 人写 |
 | `docs/IAM.md` | 151 | 人写 |
-| `docs/INDEX.md` | 107 | 索引 |
+| `docs/INDEX.md` | 110 | 索引 |
 | `docs/INSTALL.md` | 108 | 人写 |
 | `docs/INTERFACE.md` | 419 | 人写 |
 | `docs/MONITOR.md` | 83 | 人写 |
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
 | `docs/PUBLISH.md` | 172 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
-| `docs/RSI-LEDGER.md` | 109 | 人写 |
+| `docs/RSI-LEDGER.md` | 127 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 243 | 人写 |

@@ -278,3 +278,53 @@ UiAddressBar {
 - 同一区块不出现重复标题（如 REQUEST 之上再一个「请求信息」）。
 - 加载/空/错误/长文本四态必须显式。
 - 输入框最左的 ContextOS 芯片是**多级列表**入口（服务节点 → 项目空间 → 最近应用，三列并排、向上展开），选中即写入会话配置；标题栏右侧不再放第二入口。
+
+## 20. 样式分层与结构原语（新增组件先读这一节）
+
+### 20.1 五层，只允许单向依赖
+
+| 层 | 文件 | 只放什么 | 不许放什么 |
+| --- | --- | --- | --- |
+| 1 令牌 | `styles/tokens.css` | `--cx-*` 字面量（颜色/间距/字号/尺寸/圆角/阴影/层级/动效）+ 主题覆盖 | 任何组件类 |
+| 2 基座 | `styles/base.css` | 元素默认值（字体继承、标题、`table`、`code`、滚动条、焦点环） | 具体组件 |
+| 3 布局 | `styles/layout.css` | 结构类：`.cx-stack/.cx-row/.cx-col/.cx-grid`、`.cx-sec/.cx-hd/.cx-bd/.cx-ft`、`.cx-fill/.cx-scroll/.cx-center`、间距 utilities | 颜色/字号 |
+| 4 控件 | `styles/kit.css` | 控件默认值 + 变体：`.cx-btn(.pri/.danger/.ghost/.xs/.lg/.icon/.on)`、`.cx-input/.cx-select`、`.cx-field`、`.cx-chip`、`.cx-tag`、`.cx-tabs`、`.cx-list`、`.cx-panel`、`.cx-table`、`.cx-modal/.cx-mask/.cx-menu` | 业务布局 |
+| 5 业务 | `styles/main.css` | 只写「这个功能独有」的定位/网格/尺寸例外 | 重复的字体、颜色、圆角、间距 |
+
+依赖方向：`main → kit → layout → base → tokens`。反方向（令牌引用组件、kit 里写业务类）一律不接受。
+
+### 20.2 新组件的默认写法
+
+先在 `07-kit.js` 里找现成原语，用它们拼结构，不要再写 `className`：
+
+```js
+// 段落 + 字段 + 按钮：类名全部由原语给出
+h(CxSection, { title: T('部署节点'), actions: h(CxBtn, { size: 'sm', onClick: reload }, T('刷新')) },
+  h(CxRow, { gap: 3 },
+    h(CxField, { label: T('端口') }, h(CxInput, { value: port, onChange: onPort })),
+    h(CxField, { label: T('名称') }, h(CxInput, { value: name, onChange: onName }))),
+  h(CxToggle, { tabs: MODES, value: mode, onChange: setMode }));
+```
+
+| 原语 | 位置 | 作用 |
+| --- | --- | --- |
+| `CxStack/CxRow/CxCol` | `07-kit.js` | 纵向/横向/列布局，`gap` 走 `--cx-g1..g5` |
+| `CxSection` | 同上 | 段落：标题 / 副标题 / 右侧动作 / 内容区 |
+| `CxField` | 同上 | 表单字段：标签 + 控件 + 提示，`full` 占满一行 |
+| `CxBtn` | 同上 | 按钮：`variant`（primary/danger/ghost）+ `size`（sm/md/lg）+ `icon/active/loading` |
+| `CxInput/CxSelect` | 同上 | 输入/下拉默认值 |
+| `CxChip/CxTabs` | 同上 | 胶囊与页签 |
+| `CxToggle/CxSegmented`（待抽） | 同上 | 平铺分组控件 |
+
+需要新样式时的顺序：① 能不能用已有类拼出来 → ② 能否给 `kit.css` 加一个**变体** → ③ 才在 `main.css` 写业务规则（且只写定位/网格）。
+
+### 20.3 门禁（`scripts/css-check.mjs`，构建链第 8 道）
+
+| 规则 | 判据 |
+| --- | --- |
+| 令牌层纯净 | `tokens.css` 只准 `:root` / `.cx-shell` 选择器 |
+| 不新增重复 | `main.css` 字面量色 ≤562、`rgba(` ≤302、`!important` ≤689、重复声明率 ≤72.8%、行数 ≤3400（棘轮，只降不升） |
+| 令牌有效 | 每个 `var(--cx-*)` 必须已声明、带 fallback、或属于 JS 运行时令牌（`--cx-shell-*`、`--cx-a/--cx-b`…） |
+| 死类 | 只报 WARN，供清理参考 |
+
+调高基线必须在报告里写清「为什么旧上限不够」，否则视为放宽断言（AGENTS §六 红线 13）。

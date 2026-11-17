@@ -172,7 +172,7 @@ node scripts/accept-factory.mjs --url http://127.0.0.1:<当前DSH端口> --node 
 
 ## 12. UI 硬规则与视觉检查
 
-> 产品口径以根目录 `USER-VIEW.md` 为准；这里只记插件额外加的机器可查项。
+> 产品口径以根目录 `../../../USER-VIEW.md` 为准；这里只记插件额外加的机器可查项。
 
 **硬规则**
 

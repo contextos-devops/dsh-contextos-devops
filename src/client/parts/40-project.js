@@ -216,7 +216,7 @@
           step < 2 ? h('button', { className: 'cx-btn pri', onClick: () => setStep((v) => v + 1) }, T('下一步'))
             : h('button', { className: 'cx-btn pri', onClick: start }, T('初始化')))
           : phase === 'done' ? h('button', { className: 'cx-btn pri', onClick: onClose }, T('进入')) : phase === 'error' ? h('button', { className: 'cx-btn pri', onClick: onRetry }, T('重试当前步骤')) : null);
-      return h('div', { className: `cx-init ${phase}`, style: { '--cx-shell-left': '0px', '--cx-shell-top': '0px', '--cx-shell-width': '100vw', '--cx-shell-height': '100vh' } },
+      return h('div', { className: `cx-init ${phase}${logMax ? ' maxlog' : ''}`, style: { '--cx-shell-left': '0px', '--cx-shell-top': '0px', '--cx-shell-width': '100vw', '--cx-shell-height': '100vh' } },
         h('div', { className: 'cx-init-grid' }),
         h('div', { className: 'cx-init-ring' }),
         h('div', { className: 'cx-init-scan' }),

@@ -1,7 +1,7 @@
 # AGENTS · 插件工作契约
 
 > 约束两类智能体：**外部 DSH 代理**（有 bash/文件工具，改本仓库）与**插件内 Copilot**（`/api?op=chat`，在界面里对话）。
-> 冲突优先级：根 `../../../AGENTS.md`（平台铁律）> 本文件 > `docs/*`。
+> 冲突优先级：根 `../../AGENTS.md`（平台铁律）> 本文件 > `docs/*`。
 > 每次对话：**本文件 §〇 → §二 流程 → `docs/INDEX.md` 对应一行**，只读本轮需要的那一章。
 
 ---
@@ -14,11 +14,11 @@
 | 规模 | 宿主 345 行 + `lib/**` 5.6k 行 + 客户端 24 片段 7.6k 行 + CSS 3.3k 行 + 102 个 op |
 | 代码在哪 | 宿主 `index.js` + `lib/**`；客户端 `src/client/parts/*.js`（拼成 `client.js`）；样式 `src/client/styles/*.css` |
 | 一条请求怎么走 | 组件 → `api(op)` → `index.js` 查 `lib/core/ops.js` → `lib/core/<域>.js` → ContextOS HTTP |
-| 怎么算改完 | `npm run build:client` 全绿（14 道门禁）+ 有证据 + 报告落盘 |
+| 怎么算改完 | `npm run build:client` 全绿（15 道门禁）+ 有证据 + 报告落盘 |
 | 下一步干什么 | §七 验收标准 → §十三 本轮优先级：红门禁 > 已知限制 > 用户需求 |
 
 ```sh
-npm run build:client     # 构建 + 14 道门禁（红了先修，不许带 FAIL 交付）
+npm run build:client     # 构建 + 15 道门禁（红了先修，不许带 FAIL 交付）
 npm run check:probe      # 离线渲染 fixture 量布局（需本机 Edge/Chrome）
 npm run verify:ui        # 真浏览器验收（需 Edge CDP 9223），exit 0 才算过
 node --check index.js    # 只改宿主时先做语法检查
@@ -111,7 +111,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 | 理念：三纲五常 / 四件套 / 抽象递减 | `docs/DOCTRINE.md` |
 | 每轮判据（Copilot 也注入） | `docs/RSI-CONSTITUTION.md` |
 | **出问题了先查哪、先跑哪** | `docs/DIAGNOSTICS.md` |
-| 界面：布局/组件/主题/图标/文字 | `docs/DESIGN-SYSTEM.md` + 根 `USER-VIEW.md` |
+| 界面：布局/组件/主题/图标/文字 | `docs/DESIGN-SYSTEM.md` + 根 `../../USER-VIEW.md` |
 | 表单取值 / 字段形态 | `docs/DESIGN-SYSTEM.md` §18 |
 | 接口五形态 / 两类 URL / 禁止清单 | `docs/INTERFACE.md`、`docs/URL-SPEC.md` |
 | 代码生成（factory）两类模块与词表 | `docs/CODE-GEN.md` |
@@ -272,7 +272,7 @@ YYYY-MM-DD — <一句话现象>
 本轮只需要记住三条：
 
 ```sh
-npm run build:client    # 构建 + 14 道门禁（红先修，不许带 FAIL 交付）
+npm run build:client    # 构建 + 15 道门禁（红先修，不许带 FAIL 交付）
 npm run check:probe     # 离线量布局（改 UI 时）
 npm run verify:ui       # 真浏览器验收（Edge CDP 9223）
 ```

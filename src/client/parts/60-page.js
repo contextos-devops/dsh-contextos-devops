@@ -97,6 +97,7 @@
           .finally(() => setUpdBusy(false));
       };
       const [pipeMenu, setPipeMenu] = useState(null);
+      const [hdrCfg, setPipeCfg] = useState(false);
       const [sidebarHidden, setSidebarHidden] = useState(false);
       useEffect(() => {
         const el = shellRef.current;
@@ -851,6 +852,10 @@
             } finally {
               if (timer) clearTimeout(timer);
             }
+            // Stop the init trace before the post-init page hydration. Those
+            // calls (spaces/pmList/git/tree/readFile/stateSet) are not part of
+            // deployment and should not pollute the init console.
+            if (window.__CX_API_TRACE__ === traceApi) window.__CX_API_TRACE__ = null;
             await loadNodes();
             setNode(port);
             await loadSpaces(port);
@@ -1103,23 +1108,31 @@
           const u = new URL(raw, window.location.origin);
           if (!/^(127\.0\.0\.1|localhost)$/.test(u.hostname)) return raw;
           if (u.searchParams.has('sessid')) return raw;
-          // 统一去掉项目空间路径末尾的 /（/s/<space>/ → /s/<space>）
           if (/^\/s\/[^/]+\/$/.test(u.pathname)) u.pathname = u.pathname.slice(0, -1);
-          // user.uid 只对「应用级」命令有意义：/s/<pod>/c/web.team.<mod>.portal 及其子命令。
-          // 系统级命令（/c/dream、/c/xterm、/c/vimer、/s/<pod>/c/runtime …）不认它，带上只会污染日志。
+          if (/^\/s\/[^/]+%2F$/i.test(u.pathname)) u.pathname = u.pathname.slice(0, -3);
+          // ContextOS 空间首页和页面内的 /chat/action 都依赖 user.uid；缺失时服务端
+          // 返回 _process:_cookie，而第三方 iframe 里 document.cookie 不能可靠写入。
           const appLevel = /^\/s\/[^/]+\/c\/web\.team\.[^/]+\.[^/]+/.test(u.pathname);
+          const spaceHome = /^\/s\/[^/]+$/.test(u.pathname);
           let actor = avatar?.uid || '';
           if (!actor) actor = cxReadText('actor', '');
-          if (appLevel && actor) u.searchParams.set('user.uid', actor);
+          if ((appLevel || spaceHome) && actor) u.searchParams.set('user.uid', actor);
           return u.toString();
         } catch { return raw; }
       };
       const withView = (raw) => {
         try {
           const u = new URL(raw, window.location.origin);
+          // 不要把插件主题/语言注入 ContextOS iframe URL：ContextOS 页头会因此调用
+          // /header?theme=…，并通过 osascript 修改宿主外观；每个 iframe 加载都会触发。
+          return u.toString();
+        } catch { return raw; }
+      };
+      const displayUrl = (raw) => {
+        try {
+          const u = new URL(raw, window.location.origin);
           if (/^\/s\/[^/]+\/$/.test(u.pathname)) u.pathname = u.pathname.slice(0, -1);
-          u.searchParams.set('theme', theme);
-          u.searchParams.set('language', locale === 'zh' ? 'zh' : 'en');
+          if (/^\/s\/[^/]+%2F$/i.test(u.pathname)) u.pathname = u.pathname.slice(0, -3);
           return u.toString();
         } catch { return raw; }
       };
@@ -1168,7 +1181,7 @@
       const [webMax, setWebMax] = useState(false);
       const webBoxRef = useRef(null);
       useEffect(() => { if (!webMax) return; return cxMaxApply(webBoxRef.current); }, [webMax]);
-      useEffect(() => { setWebAddr(activeTab?.base || activeTab?.url || ''); }, [activeTab?.id, activeTab?.base]);
+      useEffect(() => { setWebAddr(displayUrl(activeTab?.base || activeTab?.url || '')); }, [activeTab?.id, activeTab?.base]);
       useEffect(() => { if (!activeTab) return; const u = activeTab.base || activeTab.url; setWebHist((h) => (h[activeTab.id] ? h : { ...h, [activeTab.id]: { list: [u], idx: 0 } })); }, [activeTab?.id]);
       const setWebUrl = (id, url) => setWebTabs((tabs) => tabs.map((t) => { if (t.id !== id) return t; const b = withActor(url); return { ...t, base: b, url: withView(b), title: b, reload: (t.reload || 0) + 1 }; }));
       const goBack = () => { const cur = activeTab && webHist[activeTab.id]; if (!cur || cur.idx <= 0) return; const idx = cur.idx - 1; setWebHist((h) => ({ ...h, [activeTab.id]: { ...cur, idx } })); setWebUrl(activeTab.id, cur.list[idx]); };
@@ -1199,7 +1212,7 @@
         });
       };
       const closeAll = () => { setWebTabs([]); setActiveWeb(null); setApp(null); };
-      const reloadTab = (id) => setWebTabs((tabs) => tabs.map((t) => t.id === id ? { ...t, url: withView(t.base || t.url), reload: (t.reload || 0) + 1 } : t));
+      const reloadTab = (id) => setWebTabs((tabs) => tabs.map((t) => t.id === id ? { ...t, url: withView(withActor(t.base || t.url)), reload: (t.reload || 0) + 1 } : t));
       const navWeb = (id, url) => {
         const raw = String(url || '').trim();
         if (!raw) return;
@@ -1469,6 +1482,19 @@
             h(DropSelect, { value: themeMode, title: t('light') + ' / ' + t('dark'), onChange: setThemeMode, options: [{ value: 'system', label: t('system') }, { value: 'light', label: t('light') }, { value: 'dark', label: t('dark') }] }),
             h(DropSelect, { value: langMode, title: t('chinese') + ' / English', onChange: setLangMode, options: [{ value: 'system', label: t('system') }, { value: 'zh', label: '中文' }, { value: 'en', label: 'English' }] }),
             h('button', { className: 'cx-btn', onClick: openInit, disabled: !!initState?.running, title: t('initialize') }, t('initialize')))),
+        h('div', { className: 'cx-header-compact' },
+          h(IconButton, { name: 'gear', className: 'cx-btn xs cx-icon-btn', title: T('界面设置'), onClick: () => setHdrCfg((v) => !v) }),
+          h(IconButton, { name: 'init', className: 'cx-btn xs cx-icon-btn', title: T('初始化'), onClick: openInit })),
+        hdrCfg ? h('div', { className: 'cx-header-cfg' },
+          h('div', { className: 'cx-header-cfg-h' }, h('b', null, T('界面设置')), h(IconButton, { name: 'close', className: 'cx-btn xs cx-icon-btn', title: T('关闭'), onClick: () => setHdrCfg(false) })),
+          h('div', { className: 'cx-header-cfg-grid' },
+            h('label', null, T('声效'), h(DropSelect, { value: fx.sound, onChange: (v) => fxSet('sound', v), options: [{ value: 'soft', label: T('柔和') }, { value: 'cs', label: T('CS 风') }, { value: 'ra', label: T('红警风') }, { value: 'wow', label: T('魔兽风') }, { value: 'sc2', label: T('星际风') }, { value: 'chip', label: T('8-bit') }, { value: 'off', label: T('静音') }] })),
+            h('label', null, T('动效'), h(DropSelect, { value: fx.light, onChange: (v) => fxSet('light', v), options: [{ value: 'high', label: T('动效·强') }, { value: 'mid', label: T('动效·中') }, { value: 'low', label: T('动效·弱') }, { value: 'micro', label: T('动效·微') }, { value: 'off', label: T('动效·关') }] })),
+            h('label', null, T('色系'), h(DropSelect, { value: fx.color, onChange: (v) => fxSet('color', v), options: [{ value: 'cyan', label: T('青') }, { value: 'green', label: T('绿') }, { value: 'violet', label: T('紫') }, { value: 'amber', label: T('琥珀') }, { value: 'rose', label: T('玫红') }, { value: 'ice', label: T('冰蓝') }, { value: 'warm', label: T('暖橙') }] })),
+            h('label', null, T('风格'), h(DropSelect, { value: fx.style, onChange: (v) => fxSet('style', v), options: [{ value: 'tech', label: T('科技风') }, { value: 'classic', label: T('古典风') }, { value: 'desert', label: T('沙漠风') }, { value: 'rainforest', label: T('雨林风') }, { value: 'cyber', label: T('赛博风') }, { value: 'steam', label: T('蒸汽风') }, { value: 'minimal', label: T('极简风') }] })),
+            h('label', null, T('主题'), h(DropSelect, { value: themeMode, onChange: setThemeMode, options: [{ value: 'system', label: t('system') }, { value: 'light', label: t('light') }, { value: 'dark', label: t('dark') }] })),
+            h('label', null, T('语言'), h(DropSelect, { value: langMode, onChange: setLangMode, options: [{ value: 'system', label: t('system') }, { value: 'zh', label: '中文' }, { value: 'en', label: 'English' }] }))
+          )) : null,
         h('div', { className: 'cx-pipe' },
           h(UiAffordance, { as: 'span', icon: 'server', zh: t('serve'), mode: 'short', iconSize: 18, onClick: (e) => openPipe(e, t('serve'), (nodes || []).map((n) => ({ label: `:${n.port} · ${n.name || n.state}`, on: n.port === node, go: () => setNode(n.port) })), 'server'), className: `cx-stage cx-stage-title${stage >= 1 ? ' on' : ''}` }, h('span', { className: 'cx-aff-value' }, activeNode ? `:${activeNode.port}` : t('deploy'))),
           h('span', { className: 'cx-arrow' }, '›'),
@@ -1528,7 +1554,7 @@
                 h('input', { className: 'cx-addr-input', value: webAddr, placeholder: 'https://…', onChange: (e) => setWebAddr(e.target.value), onKeyDown: (e) => { if (e.key === 'Enter') navWeb(activeTab.id, webAddr); } }),
                 h(IconButton, { name: webMax ? 'restore' : 'fullscreen', className: 'nav', onClick: () => setWebMax((v) => !v), title: webMax ? T('恢复') : T('最大化') }),
                 h(MenuButton, { items: [
-                  { label: '复制地址', action: () => { try { navigator.clipboard.writeText(activeTab.base || activeTab.url); } catch {} } },
+                  { label: '复制地址', action: () => { try { navigator.clipboard.writeText(displayUrl(activeTab.base || activeTab.url)); } catch {} } },
                   { label: '在浏览器打开', action: () => { try { window.open(activeTab.base || activeTab.url, '_blank'); } catch {} } },
                   { label: '刷新', action: reloadWeb },
                   { label: '关闭标签', danger: true, action: () => closeWeb(activeTab.id) },
@@ -1539,7 +1565,7 @@
                   : viewMode !== 'manage'
                     ? h('div', { className: 'cx-empty' }, '切换到管理视图加载网页')
                     : [webTabs.map((t) => h('iframe', {
-                        key: `${t.id}#${t.reload || 0}`, src: t.url, title: t.title || 'web', allow: 'clipboard-read; clipboard-write',
+                        key: `${t.id}#${t.reload || 0}`, src: withView(withActor(t.base || t.url)), title: t.title || 'web', allow: 'clipboard-read; clipboard-write',
                         className: t.id === activeTab?.id ? 'on' : '',
                         onLoad: () => setWebLoaded((m) => m[t.id] ? m : { ...m, [t.id]: 1 }),
                       })),
@@ -1630,7 +1656,7 @@
         ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: 'dsh-contextos-devops', order: 20, label: () => 'ContextOS DevOps' }, Icon));
         ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'dsh-contextos-devops' }, () => h(Boundary, null, h(Page))));
         // 会话标签条：ContextOS 作为「标签」出现（与 Chat / Trajectory 并列），点击切到本视图
-        ctx.slots.inject('conversation.view', () => ctx.slots.register({ name: 'conversation.view', id: 'contextos', order: 45, label: () => 'ContextOS' },
+        ctx.slots.inject('conversation.view', () => ctx.slots.register({ name: 'conversation.view', id: 'contextos', order: 5, label: () => 'ContextOS' },
           (props) => h('div', { className: 'cx-view-host' }, h(Boundary, null, h(CtxCenter, { sessionId: (props && props.sessionId) || '', inline: true })))));
         // 输入框内最左：ContextOS 芯片（切换服务节点 / 打开控制台）
         ctx.slots.inject('conversation.input.left', () => ctx.slots.register({ name: 'conversation.input.left', id: 'dsh-contextos-devops', order: 0 }, (props) => h(CtxChip, { sessionId: (props && props.sessionId) || '', selectView: props && props.selectView })));

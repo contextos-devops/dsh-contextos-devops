@@ -1050,6 +1050,7 @@
           app: selectedApp,
           avatar: selectedAvatar,
           scene: selectedScene,
+          dev: (typeof CTX_CFG !== 'undefined' ? CTX_CFG.dev : null),
           web: webPage,
           editor: editorFile,
           experience: { sound: fx?.sound, light: fx?.light, color: fx?.color, style: fx?.style },

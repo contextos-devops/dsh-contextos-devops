@@ -24,8 +24,10 @@ const hashInputs = [
   pkg.version,
   ...parts.map((p) => read(`src/client/parts/${p}`)),
   read('src/client/styles/tokens.css').trimEnd(),
-  read('src/client/styles/main.css').trimEnd(),
+  read('src/client/styles/base.css').trimEnd(),
+  read('src/client/styles/layout.css').trimEnd(),
   read('src/client/styles/kit.css').trimEnd(),
+  read('src/client/styles/main.css').trimEnd(),
 ].join('\n---\n');
 const expect = crypto.createHash('sha1').update(hashInputs).digest('hex').slice(0, 12);
 const built = read('client.js');
