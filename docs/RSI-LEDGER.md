@@ -12,6 +12,23 @@ Workflow: 目标 → 计划（时间/金钱预期）→ 分析决策 → 任务�
 
 Each entry records: lesson → reusable abstraction → verification.
 
+## 2026-11-17 — 加一类东西要问一遍「放哪、怎么接」，因为流程只写在脑子里
+
+- **现象**：用户要把「加页面/组件/状态/接口/样式/动效」变成可复用流程（m07175）；此前每次都要现场翻
+  「片段编号、schema 位置、OPS 写法、CSS 层」，同一个新人问题重复问，动效更是每次重写 keyframes。
+- **根因**：流程层 —— 扩展路径没落成**脚本 + 文档 + 断言**三件套；动效也没有独立层，散落在 main.css
+  各处（`.cx-toast` 自带 keyframes、`.cx-busy-spinner` 引用了不存在的 `cx-spin`）。
+- **类别**：流程层 · 第 5 次（前四次：门禁缺失、parts 手抄、验收口径、预算/索引漂移）。
+- **固化**：
+  ① 新增第 6 个样式层 `styles/motion.css`（7 个 keyframes + `.cx-anim-*` + reduced-motion 统一关闭），
+     `build/client.mjs`/`gate.mjs`/`css-check.mjs` 三处同步；
+  ② `scripts/scaffold.mjs`（`npm run new -- <kind> <Name>`，6 类）+ `npm run check:extend` 自检；
+  ③ `scripts/ui-probe.mjs` 新增 `anim` 用例（量 `animationName/animationDuration`），把「动效有没有接上」变成断言；
+  ④ 新增 `docs/EXTENDING.md`（六类扩展的固定入口与接线表）+ `DESIGN-SYSTEM.md` §20.4/§20.5 + `INDEX.md` 路由行；
+  ⑤ `AGENTS.md` 岗位表加一行「加页面/组件/状态/接口/样式/动效 → 先 scaffold」。
+- **数字**：样式层 5 → **6**；扩展路径 0 → **6 类脚本化**；`anim` 用例 5/5；`check:extend` PASS；
+  门禁 15 道（+`css-check` 之后未再新增）；`build:client` exit 0。
+
 ## 2026-11-17 — 样式全写在一个文件里，新组件只能复制粘贴
 
 - **现象**：新增一个弹窗/卡片要复制 15~20 行 CSS（字号、颜色、flex 三段式），`main.css` 3396 行里
@@ -87,40 +104,3 @@ Each entry records: lesson → reusable abstraction → verification.
   88 ui-check, i18n, context, docs). `node --check client.js` passes.
 - Lesson: an index that a human must remember to update is not an index; make
   the generator + the check the same script, and let the gate fail on drift.
-
-## 2026-11-15 · 插件根本加载不出来：构建片段清单漂移
-
-- Symptom: 用户报「ContextOS 的插件怎么没有加载成功」——侧栏有入口，点进去空白/不渲染。
-  `~/.dsh/dsh-contextos-devops/client-errors.log` 没有新记录（插件自己都还没跑起来，写不进日志）。
-- Root cause: `build/client.mjs` 与 `scripts/gate.mjs` 各有一份**硬编码**的 `parts` 列表，
-  新增的 `src/client/parts/08-store.js`、`49-msg.js` 没进列表 → 产物缺 `cxRead/cxWrite`，
-  factory 顶层执行 `ctxCfgLoad()` 时抛 `ReferenceError: cxRead is not defined`，整个模块加载失败。
-  静态门禁（gate/ui-check/i18n/context）全绿也发现不了：它们只读文本，从没执行过产物。
-- Fix: (1) 片段列表改为**目录推导**（`readdirSync` + 字典序），build 与 gate 共用同一规则；
-  (2) 产物头部写 `// @parts <file>:<sha8>,…` 清单；
-  (3) 新增 `scripts/load-check.mjs`：清单 vs 目录逐项比对 + 在模拟宿主（React/DOM/localStorage 桩）
-  里 vm 执行 `client.js`、调用 `factory(require)`、断言导出 `apply`/`inject`；
-  (4) 接入 `build:client`（gate 之后），新增 `npm run check:load`。
-- Evidence: 修复前 `node scripts/load-check.mjs` → `factory() 抛错：cxRead is not defined`（可复现）；
-  修复后 `PASS client bundle 可加载（24 片段、factory 正常导出 apply/inject）`；
-  全链 gate PASS / load-check PASS / ui-check 88 / i18n / context / docs 全绿；版本 1.48.1。
-- Lesson: **凡是「列表」就必须由目录或注册表推导，不能手抄**；凡是「产物」就必须被**执行**过一次，
-  文本断言替代不了加载测试。静态门禁全绿 ≠ 能加载。
-
-## 2026-11-15 · 新 JS + 旧 CSS：界面“还是乱的”
-
-- Symptom: 插件能加载后，消息行布局错乱——COPILOT/时间/指标与「详情 重试 引用 复制 删除」挤成一行，
-  正文被挤到右侧窄栏（看起来像两栏），与源码里的 `.cx-msg-main{display:flex;flex-direction:column}` 不符。
-- Root cause: 样式靠 `<link data-cx-client-css>` 注入，旧逻辑是「**只要已存在就不再注入**」；
-  DSH 热重载只换 JS 模块、不清 DOM，于是 `<link href="…?v=旧版本">` 一直留着。
-  静态资源路由是 `cache-control: max-age=3600`，旧 URL 命中旧缓存 → 新 JS 配旧 CSS。
-  这正是「改了半天样式，界面没变」的机制性原因。
-- Fix: prelude 改为**版本跟随**——已存在且 href 不等于当前 `CLIENT_CSS` 就改写 href（并记 ACTIVITY 日志）；
-  同时 `clientCheck` 自报 `build`（构建哈希）、`css`（页面上所有 cx 样式链接）、`layout`
-  （`.cx-msg-main/meta/tools` 的 display/flex-direction/margin-left），下次可直接读真实 DOM 计算值。
-- Evidence: 本地用真实 `assets/client.css` 渲染同一段消息结构（headless Edge）→ meta 独占一行、tools 右对齐、
-  正文满宽；说明 CSS 本身正确，线上差异来自「加载了哪份 CSS」。`npm run build:client` 全绿（1.48.2）。
-- 固化: `00-prelude` 的 href 版本跟随（自动生效）+ `clientCheck` 的 `build`/`css`/`layout` 字段（可判定）。
-  缺口：静态门禁仍无法断言「页面上已挂载的旧 link」，列为 §8.2 第 ③ 步的待升级项。
-- Lesson: 版本化资源不仅要换 URL，还要**改写已经挂在 DOM 上的旧 URL**；热重载场景下，DOM 生命周期比模块长。
-

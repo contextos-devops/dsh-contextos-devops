@@ -122,8 +122,13 @@
   --cx-z-menu:1000;
   --cx-z-pop:1400;
   --cx-z-modal:2000;
-  --cx-dur:.12s;
+  --cx-dur-fast:.12s;
+  --cx-dur:.18s;
+  --cx-dur-slow:.28s;
   --cx-ease:ease;
+  --cx-ease-out:cubic-bezier(.22,.61,.36,1);
+  --cx-ease-in:cubic-bezier(.4,0,1,1);
+  --cx-ease-spring:cubic-bezier(.34,1.56,.64,1);
   --cx-icon-stroke:1.4;
 }
 
@@ -261,8 +266,6 @@
   --cx-z-menu:1000;
   --cx-z-pop:1400;
   --cx-z-modal:2000;
-  --cx-dur:.12s;
-  --cx-ease:ease;
   --cx-icon-stroke:1.4;
 }
 

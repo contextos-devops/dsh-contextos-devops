@@ -328,3 +328,16 @@ h(CxSection, { title: T('部署节点'), actions: h(CxBtn, { size: 'sm', onClick
 | 死类 | 只报 WARN，供清理参考 |
 
 调高基线必须在报告里写清「为什么旧上限不够」，否则视为放宽断言（AGENTS §六 红线 13）。
+
+### 20.4 动效层（第 6 个文件，`styles/motion.css`）
+
+动效不是"业务 CSS 的一部分"，它有自己的层，理由是：**时长/缓动要统一，且必须一次关掉**。
+
+令牌 `--cx-dur-fast(.12s)/--cx-dur(.18s)/--cx-dur-slow(.28s)` + `--cx-ease(-out/-spring)`；
+工具类 `.cx-anim-{fade,rise,pop,slide-left,slide-right,shake,spin}`、交错用 `.cx-anim-stagger` + `--cx-i`。
+`@media (prefers-reduced-motion: reduce)` 统一关闭，业务代码不要再写一份。
+验收：`node scripts/ui-probe.mjs --case anim`（量 `animationName`/`animationDuration`）。
+
+### 20.5 六类扩展的固定入口
+
+加页面 / 组件 / 状态 / 接口 / 样式 / 动效，先跑 `npm run new -- <kind> <Name>`，再按 `docs/EXTENDING.md` 的清单补接线。骨架负责位置与命名，门禁负责不漂移。

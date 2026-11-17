@@ -1,0 +1,36 @@
+/* motion.css — 动效层（第 5 层，只放 keyframes 与动效工具类）
+ * 规则：
+ *   1) 时长/缓动只能用 tokens.css 的 --cx-dur* / --cx-ease*，不许写字面量；
+ *   2) 动效只做「出现/消失/反馈」，不做装饰性循环（spinner 例外）；
+ *   3) 一律 animation-fill-mode:both，避免结束回弹；
+ *   4) 尊重系统设置：prefers-reduced-motion 时全部关闭。
+ * 新增动效：优先复用下面的工具类，确实需要新效果再加 keyframes。
+ */
+
+/* ── 出现 ───────────────────────────────────────────────── */
+@keyframes cx-fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes cx-rise { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes cx-pop { from { opacity: 0; transform: scale(.96) } to { opacity: 1; transform: scale(1) } }
+@keyframes cx-slide-left { from { opacity: 0; transform: translateX(10px) } to { opacity: 1; transform: translateX(0) } }
+@keyframes cx-slide-right { from { opacity: 0; transform: translateX(-10px) } to { opacity: 1; transform: translateX(0) } }
+
+/* ── 反馈 ───────────────────────────────────────────────── */
+@keyframes cx-shake { 0%,100% { transform: translateX(0) } 25% { transform: translateX(-3px) } 75% { transform: translateX(3px) } }
+@keyframes cx-spin { to { transform: rotate(360deg) } }
+
+/* ── 工具类 ─────────────────────────────────────────────── */
+.cx-anim-fade { animation: cx-fade var(--cx-dur) var(--cx-ease) both }
+.cx-anim-rise { animation: cx-rise var(--cx-dur) var(--cx-ease-out) both }
+.cx-anim-pop { animation: cx-pop var(--cx-dur) var(--cx-ease-spring) both }
+.cx-anim-slide-left { animation: cx-slide-left var(--cx-dur) var(--cx-ease-out) both }
+.cx-anim-slide-right { animation: cx-slide-right var(--cx-dur) var(--cx-ease-out) both }
+.cx-anim-shake { animation: cx-shake var(--cx-dur-slow) var(--cx-ease) both }
+.cx-anim-spin { animation: cx-spin 1s linear infinite }
+
+/* 交错出现：给列表项加 --cx-i（0,1,2…），最多延迟 5 档 */
+.cx-anim-stagger { animation: cx-rise var(--cx-dur) var(--cx-ease-out) both; animation-delay: calc(var(--cx-i, 0) * var(--cx-dur-fast)) }
+
+/* ── 无障碍与省电 ───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  [class*="cx-anim-"] { animation: none !important; transition: none !important }
+}

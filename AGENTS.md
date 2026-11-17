@@ -75,7 +75,7 @@ GitHub 组织仓库要用 `contextos-devops` 账号令牌（`~/.git-credentials`
 
 ## 三、代码索引（架构与现状）
 
-### 3.1 五层
+### 3.1 分层（样式六层，代码五层）
 
 ```
 页面/视图（60-page 装配：chat / manage / dev / monitor）
@@ -138,6 +138,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 
 | 想做的事 | 改哪里 | 顺手必须做 |
 | --- | --- | --- |
+| **加页面/组件/状态/接口/样式/动效** | 先 `npm run new -- <kind> <Name>`，再按 `docs/EXTENDING.md` 补接线 | 对应 `check:*` + `npm run build:client` |
 | 加/改后端动作 | `lib/core/ops.js` + `lib/core/<域>.js` | `npm run check:ops` |
 | 改请求转发/鉴权 | `index.js`（只许查表分发） | `node --check index.js` + 重载插件 |
 | 加持久化状态 | `08-store.js` 的 `CX_STORE_SCHEMA` | `node scripts/docs-index.mjs --write` |
@@ -147,6 +148,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 | 改文档 | `docs/*.md` | 登记 `INDEX.md` + `check:docs` |
 | 加门禁脚本 | `scripts/*.mjs` + `build:client` 链 | 自测「能抓到该错误」 |
 | 加布局不变量 | `scripts/fixtures/*.html` + `ui-probe` 的 `CASES` | `--css /dev/null` 必须 FAIL |
+| 加扩展骨架 | `scripts/scaffold.mjs`（`npm run new`） | `npm run check:extend` |
 
 **可直接调用的宿主工具**：`contextos_list_nodes`、`contextos_list_spaces`、`contextos_read_data`、
 `contextos_write_data`、`contextos_create_space`、`contextos_create_app`、`contextos_deploy_node`、

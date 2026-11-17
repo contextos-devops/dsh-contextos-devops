@@ -27,6 +27,7 @@ const hashInputs = [
   read('src/client/styles/base.css').trimEnd(),
   read('src/client/styles/layout.css').trimEnd(),
   read('src/client/styles/kit.css').trimEnd(),
+  read('src/client/styles/motion.css').trimEnd(),
   read('src/client/styles/main.css').trimEnd(),
 ].join('\n---\n');
 const expect = crypto.createHash('sha1').update(hashInputs).digest('hex').slice(0, 12);

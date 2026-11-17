@@ -114,6 +114,7 @@
 | `scripts/publish-check.mjs` | — |
 | `scripts/publish-npm.mjs` | — |
 | `scripts/push-all.mjs` | — |
+| `scripts/scaffold.mjs` | — |
 | `scripts/store-check.mjs` | 持久化唯一出口 + schema 登记 |
 | `scripts/ui-check.mjs` | UI 结构与组件复用断言 |
 | `scripts/ui-probe.mjs` | — |
@@ -133,7 +134,8 @@
 | `npm run push:all` | node scripts/push-all.mjs |
 | `npm run catalog:pr` | node scripts/catalog-pr.mjs |
 | `npm run publish:npm` | node scripts/publish-npm.mjs |
-| `npm run check:<名>` | 单跑某道门禁：ui / css / probe / context / i18n / hooks / ops / install / store / docs / load / budget / publish / prompt |
+| `npm run new` | node scripts/scaffold.mjs |
+| `npm run check:<名>` | 单跑某道门禁：ui / css / probe / context / i18n / hooks / ops / install / store / docs / load / budget / publish / prompt / extend |
 
 ## 6. 文档
 
@@ -144,19 +146,20 @@
 | `docs/AI-CONVERSATION.md` | 140 | 人写 |
 | `docs/ARCHITECTURE.md` | 135 | 人写 |
 | `docs/CODE-GEN.md` | 424 | 人写 |
-| `docs/DESIGN-SYSTEM.md` | 331 | 人写 |
+| `docs/DESIGN-SYSTEM.md` | 344 | 人写 |
 | `docs/DIAGNOSTICS.md` | 98 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |
 | `docs/DSH-COS.md` | 114 | 人写 |
+| `docs/EXTENDING.md` | 135 | 人写 |
 | `docs/GLOSSARY.md` | 207 | 人写 |
 | `docs/IAM.md` | 151 | 人写 |
-| `docs/INDEX.md` | 110 | 索引 |
+| `docs/INDEX.md` | 111 | 索引 |
 | `docs/INSTALL.md` | 108 | 人写 |
 | `docs/INTERFACE.md` | 419 | 人写 |
 | `docs/MONITOR.md` | 83 | 人写 |
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
 | `docs/PUBLISH.md` | 172 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
-| `docs/RSI-LEDGER.md` | 127 | 人写 |
+| `docs/RSI-LEDGER.md` | 107 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 243 | 人写 |

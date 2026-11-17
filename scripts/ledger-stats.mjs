@@ -50,7 +50,7 @@ const missing = real
 const out = {
   file: path.relative(root, file),
   entries: real.length,
-  lastEntry: real.length ? real[real.length - 1].head.split(/\s+/)[0] : null,
+  lastEntry: real.length ? real.map((e) => e.head.slice(0, 10)).sort().at(-1) : null,
   lastRetro: retroIdx >= 0 ? entries[retroIdx].head : null,
   sinceLastRetro: since,
   missingFields: missing.map((e) => e.head),

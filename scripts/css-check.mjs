@@ -13,6 +13,7 @@ const read = (f) => fs.readFileSync(path.join(styles, f), 'utf8');
 const tokens = read('tokens.css');
 const main = read('main.css');
 const kit = read('kit.css');
+const motion = read('motion.css');
 const layout = read('layout.css');
 const parts = fs.readdirSync(path.join(root, 'src/client/parts')).filter((f) => f.endsWith('.js'))
   .map((f) => fs.readFileSync(path.join(root, 'src/client/parts', f), 'utf8')).join('\n');
@@ -57,7 +58,7 @@ ok(missing.length === 0, `未定义且无 fallback 的令牌：${[...new Set(mis
 
 // 4) 死类 WARN
 const classes = [...main.matchAll(/^\.([a-z][\w-]*)/gm)].map((m) => m[1]);
-const dead = [...new Set(classes)].filter((c) => !parts.includes(c) && !kit.includes(c) && !layout.includes(c));
+const dead = [...new Set(classes)].filter((c) => !parts.includes(c) && !kit.includes(c) && !layout.includes(c) && !motion.includes(c));
 if (dead.length) warns.push(`疑似死类 ${dead.length} 个：${dead.slice(0, 8).join(', ')}`);
 
 if (process.argv.includes('--json')) {

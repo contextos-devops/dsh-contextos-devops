@@ -87,6 +87,22 @@ const CASES = [
       ];
     },
   },
+  {
+    name: 'anim',
+    fixture: 'scripts/fixtures/anim.html',
+    window: '520,320',
+    sels: ['.cx-modal', '.cx-cascade', '.cx-toast', '.cx-anim-pop'],
+    assert: (m) => {
+      const modal = m['.cx-modal'], casc = m['.cx-cascade'], toast = m['.cx-toast'], pop = m['.cx-anim-pop'];
+      return [
+        [!!modal && modal.animationName === 'cx-fade', '弹窗遮罩淡入', modal?.animationName],
+        [!!modal && modal.animationDuration === '0.12s', '弹窗时长走 --cx-dur-fast', modal?.animationDuration],
+        [!!casc && casc.animationName === 'cx-rise', '多级列表上浮', casc?.animationName],
+        [!!toast && toast.animationName === 'cx-fade', 'Toast 淡入（已收敛到 motion.css）', toast?.animationName],
+        [!!pop && pop.animationName === 'cx-pop', '动效工具类可用', pop?.animationName],
+      ];
+    },
+  },
 ];
 
 const MEASURE = `<script>
@@ -102,7 +118,8 @@ window.__PROBE_SELS__ = __SELS__;
       out[sel] = {
         x: +r.x.toFixed(1), y: +r.y.toFixed(1), w: +r.width.toFixed(1), h: +r.height.toFixed(1), right: +r.right.toFixed(1),
         display: c.display, flexDirection: c.flexDirection, marginLeft: c.marginLeft, opacity: c.opacity,
-        fontSize: c.fontSize, lineHeight: c.lineHeight
+        fontSize: c.fontSize, lineHeight: c.lineHeight,
+        animationName: c.animationName, animationDuration: c.animationDuration
       };
     });
     document.title = 'PROBE:' + JSON.stringify(out);
