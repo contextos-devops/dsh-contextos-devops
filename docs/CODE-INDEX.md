@@ -53,7 +53,7 @@
 
 | 片段 | 行数 | 主要定义 |
 | --- | ---: | --- |
-| `src/client/parts/00-prelude.js` | 463 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
+| `src/client/parts/00-prelude.js` | 465 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
 | `src/client/parts/05-bootstrap.js` | 66 | `apiTrace` `QUERY_OPS` |
 | `src/client/parts/07-kit.js` | 66 | `cxCx` `CxStack` `CxRow` `CxCol` `CxSection` `CxField` `CX_BTN_VARIANT` `CX_BTN_SIZE` `CxBtn` `CxInput` |
 | `src/client/parts/08-store.js` | 86 | — |
@@ -70,8 +70,8 @@
 | `src/client/parts/45-map.js` | 110 | `TaskMap` `L` |
 | `src/client/parts/46-pm.js` | 165 | `PMModal` `RichText` |
 | `src/client/parts/47-three.js` | 325 | `ThreeAvatar` `ThreeCity` `TechBackdrop` |
-| `src/client/parts/49-msg.js` | 168 | `Elapsed` `FN_LABEL` `ACT_LABEL` `FN_LABEL_EN` `ACT_LABEL_EN` `FIELD_ZH` `FIELD_EN` `KIND_META` `CxEntityCard` `L` |
-| `src/client/parts/50-chat.js` | 1501 | `ChatPanel` `userUpRef` `ToolRow` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` `PM_OP_ALIAS` |
+| `src/client/parts/49-msg.js` | 161 | `Elapsed` `FN_LABEL` `ACT_LABEL` `FN_LABEL_EN` `ACT_LABEL_EN` `FIELD_ZH` `FIELD_EN` `KIND_META` `CxEntityCard` `L` |
+| `src/client/parts/50-chat.js` | 1512 | `ChatPanel` `userUpRef` `ToolRow` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` `PM_OP_ALIAS` |
 | `src/client/parts/51-pmselection.js` | 32 | `usePmSelection` |
 | `src/client/parts/52-pmdata.js` | 30 | `usePmData` |
 | `src/client/parts/55-pm.js` | 181 | `PM_REPORT_TONE` `PM_STATUS_TONE` `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` |

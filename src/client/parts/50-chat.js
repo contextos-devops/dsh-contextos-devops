@@ -1310,10 +1310,11 @@
                     h('div', { className: 'cx-app-card-title' }, m.card.app.title || '应用'),
                     h('div', { className: 'cx-app-card-sub' }, m.card.app.meta || '')),
                   m.card.app.link ? h('button', { className: 'cx-app-card-open', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.app.link.url, m.card.app.title || '打开'); } }, 'OPEN') : null)
-                  : m.card ? h('div', { className: 'cx-result-card' },
-                  h('div', { className: 'cx-result-title' }, m.card.title || '结果'),
-                  h('div', { className: 'cx-result-rows' }, (m.card.rows || []).map(([k, v], j) => h('div', { key: j, className: 'cx-result-row' }, h('span', null, k), h('b', null, String(v ?? '—'))))),
-                  m.card.link ? h('button', { className: 'cx-result-link', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.link.url, m.card.link.label || '管理'); } }, m.card.link.label || '打开') : null) : null))));
+                  : m.card ? h(CxSection, { className: 'cx-msg-card', title: m.card.title || T('结果') },
+                  h('div', { className: 'cx-kv' }, (m.card.rows || []).map(([k, v], j) => h('div', { key: j, className: 'cx-kv-row' },
+                    h('span', { className: 'cx-kv-k' }, k),
+                    h('b', { className: 'cx-kv-v' }, String(v ?? '—'))))),
+                  m.card.link ? h('div', { className: 'cx-foot' }, h(CxBtn, { size: 'sm', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.link.url, m.card.link.label || '管理'); } }, m.card.link.label || T('打开'))) : null) : null))));
 
       const uidCtx = (it) => uidFieldMap(it);
       const openPm = (kind, mode = 'create', item = null) => {
@@ -1359,13 +1360,17 @@
       });
       const leftPanel = h('aside', { className: `cx-pm-side${pmRefreshing ? ' refreshing' : ''}` },
         h('div', { className: 'cx-pm-scroll' },
+        h('div', { className: 'cx-pm-sec' },
         h(PmSectionHead, { icon: 'target', title: sectionTitle(tt('target'), 'TARGETS'), count: targets.length, folded: fold('targets'), onToggle: () => setFolds((f) => ({ ...f, targets: !f.targets })), onRefresh: () => loadPm('target'), tools: pmOps('target') }),
         pmError ? h('div', { className: 'cx-pm-empty err' }, pmError) : null,
         !pm && !pmError ? h('div', { className: 'cx-pm-empty' }, T('加载中…')) : null,
         fold('targets') ? null : targets.length ? h(UiCardList, { items: targets, render: (t) => pmItem(t, activeTarget?.uid === t.uid, () => { setTargetId(t.uid); setPlanId(''); setTaskId(''); setReportId(''); setFeedbackId(''); }, `${t.plans?.length || 0} 个计划`, 'target') }) : h(PmEmpty, { label: T('创建目标'), onCreate: pm?.project && pmCanCreate('target') ? () => openPm('target') : null }, pm?.project ? T('还没有目标') : T('请先初始化项目管理')),
-        h(PmSectionHead, { icon: 'plan', title: sectionTitle(tt('plan'), 'PLANS'), count: plans.length, folded: fold('plans'), style: { marginTop: 12 }, onToggle: () => setFolds((f) => ({ ...f, plans: !f.plans })), onRefresh: () => loadPm('plan'), tools: pmOps('plan') }),
+        ),
+        h('div', { className: 'cx-pm-sec' },
+        h(PmSectionHead, { icon: 'plan', title: sectionTitle(tt('plan'), 'PLANS'), count: plans.length, folded: fold('plans'), style: { marginTop: 0 }, onToggle: () => setFolds((f) => ({ ...f, plans: !f.plans })), onRefresh: () => loadPm('plan'), tools: pmOps('plan') }),
         fold('plans') ? null : (planStatusOptions.length > 1 ? h(PmFilter, { label: tt('status'), options: planStatusOptions, value: planStatusFilter, onChange: setPlanStatusFilter }) : null),
         fold('plans') ? null : plans.length ? h(UiCardList, { items: plans, render: (p) => pmItem(p, activePlan?.uid === p.uid, () => { setPlanId(p.uid); setTaskId(''); setReportId(''); setFeedbackId(''); }, `${p.tasks?.length || 0} 任务`, 'plan') }) : h(PmEmpty, { label: T('创建计划'), onCreate: activeTarget && pmCanCreate('plan') ? () => openPm('plan') : null }, activeTarget ? T('该目标下还没有计划') : T('选择目标后显示计划')),
+        ),
         ),
         h('div', { className: `cx-gantt-sec${fold('gantt') ? ' folded' : ''}` },
           h(PmSectionHead, { icon: 'clock', title: sectionTitle('进度', 'PROGRESS'), count: plans.filter((p) => p.status_name === 'process').length, folded: fold('gantt'), onToggle: () => setFolds((f) => ({ ...f, gantt: !f.gantt })) }),
@@ -1374,15 +1379,21 @@
         h('div', { className: `cx-calsec${calFull ? ' max' : ''}`, ref: calRef },
           h(PmSectionHead, { icon: 'clock', title: sectionTitle('时间', 'TIME'), folded: fold('cal'), style: { '--cx-hi': '0' }, onToggle: () => setFolds((f) => ({ ...f, cal: !f.cal })), tools: h(IconButton, { name: calFull ? 'restore' : 'fullscreen', className: 'cx-pm-max', onClick: () => { setCalFull((v) => !v); if (fold('cal')) setFolds((f) => ({ ...f, cal: false })); }, title: calFull ? T('还原') : T('最大化') }) }),
           fold('cal') ? null : h(PmCalendar, { tasks: allTasks, start: calStart, end: calEnd, onChange: calOnChange, locale })),
+        h('div', { className: 'cx-pm-sec' },
         h(PmSectionHead, { icon: 'task', title: sectionTitle(tt('task'), 'TASKS'), count: tasks.length, folded: fold('tasks'), style: { '--cx-hi': '1' }, onToggle: () => setFolds((f) => ({ ...f, tasks: !f.tasks })), onRefresh: () => loadPm('task'), tools: pmOps('task') }),
         fold('tasks') ? null : (taskStatusOptions.length > 1 ? h(PmFilter, { label: tt('status'), options: taskStatusOptions, value: taskStatusFilter, onChange: setTaskStatusFilter }) : null),
         fold('tasks') ? null : tasks.length ? h(UiCardList, { items: tasks, render: (t) => pmItem(t, activeTask?.uid === t.uid, () => { setTaskId(t.uid); setReportId(''); setFeedbackId(''); }, `${t.reports?.length || 0} 报告`, 'task') }) : (allTasks.length ? h('div', { className: 'cx-pm-empty' }, `有 ${allTasks.length} 条任务被筛选条件隐藏 `, h('button', { className: 'cx-btn xs', onClick: () => { setCalStart(''); setCalEnd(''); setTaskStatusFilter([]); } }, T('清除筛选'))) : h(PmEmpty, { label: T('创建任务'), onCreate: activePlan && pmCanCreate('task') ? () => openPm('task') : null }, activePlan ? T('该计划下还没有任务') : T('先选择一个计划'))),
-        h(PmSectionHead, { icon: 'report', title: sectionTitle(tt('report'), 'REPORTS'), count: reports.length, folded: fold('reports'), style: { '--cx-hi': '2', marginTop: 12 }, onToggle: () => setFolds((f) => ({ ...f, reports: !f.reports })), onRefresh: () => loadPm('report'), tools: pmOps('report') }),
+        ),
+        h('div', { className: 'cx-pm-sec' },
+        h(PmSectionHead, { icon: 'report', title: sectionTitle(tt('report'), 'REPORTS'), count: reports.length, folded: fold('reports'), style: { '--cx-hi': '2' }, onToggle: () => setFolds((f) => ({ ...f, reports: !f.reports })), onRefresh: () => loadPm('report'), tools: pmOps('report') }),
         fold('reports') ? null : (reportTypeOptions.length > 1 ? h(PmFilter, { label: tt('type'), options: reportTypeOptions, value: reportTypeFilter, onChange: setReportTypeFilter }) : null),
         fold('reports') ? null : reports.length ? h(UiCardList, { items: reports, render: (r) => pmItem(r, activeReport?.uid === r.uid, () => { setReportId(r.uid); setFeedbackId(''); }, `${r.feedbacks?.length || 0} 反馈`, 'report') }) : h(PmEmpty, { label: T('创建报告'), onCreate: activeTask && pmCanCreate('report') ? () => openPm('report') : null }, activeTask ? T('该任务下还没有报告') : T('先选择一个任务')),
-        h(PmSectionHead, { icon: 'feedback', title: sectionTitle(tt('feedback'), 'FEEDBACK'), count: feedbacks.length, folded: fold('feedbacks'), style: { '--cx-hi': '3', marginTop: 12 }, onToggle: () => setFolds((f) => ({ ...f, feedbacks: !f.feedbacks })), onRefresh: () => loadPm('feedback'), tools: pmOps('feedback') }),
+        ),
+        h('div', { className: 'cx-pm-sec' },
+        h(PmSectionHead, { icon: 'feedback', title: sectionTitle(tt('feedback'), 'FEEDBACK'), count: feedbacks.length, folded: fold('feedbacks'), style: { '--cx-hi': '3' }, onToggle: () => setFolds((f) => ({ ...f, feedbacks: !f.feedbacks })), onRefresh: () => loadPm('feedback'), tools: pmOps('feedback') }),
         fold('feedbacks') ? null : (feedbackStatusOptions.length > 1 ? h(PmFilter, { label: tt('status'), options: feedbackStatusOptions, value: feedbackStatusFilter, onChange: setFeedbackStatusFilter }) : null),
         fold('feedbacks') ? null : feedbacks.length ? h(UiCardList, { items: feedbacks, render: (f) => pmItem(f, activeFeedback?.uid === f.uid, () => setFeedbackId(f.uid), `${f.score || 0} 分`, 'feedback') }) : h(PmEmpty, { label: T('创建反馈'), onCreate: activeReport && pmCanCreate('feedback') ? () => openPm('feedback') : null }, activeReport ? T('该报告下还没有反馈') : T('先选择一个报告')),
+        ),
         h('div', { className: `cx-mapsec${fold('map') ? ' folded' : ''}${mapFull ? ' max' : ''}`, ref: mapSecRef },
           h(PmSectionHead, { icon: 'map', title: sectionTitle('地点', 'LOCATION'), folded: fold('map'), style: { '--cx-hi': '4' }, onToggle: () => setFolds((f) => ({ ...f, map: !f.map })), tools: [
             h(IconButton, { key: 'loc', name: 'locate', onClick: () => mapApiRef.current && mapApiRef.current.locate && mapApiRef.current.locate(), title: T('定位') }),

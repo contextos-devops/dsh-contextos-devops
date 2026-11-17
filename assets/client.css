@@ -969,7 +969,11 @@
 
 /* 分节标题自然吸顶：滚动时当前分节的标题栏留在大卡片上，下一个标题栏把它顶走 */
 .cx-pm-scroll,.cx-pm-side.right{scroll-padding-top:44px}
-.cx-pm-scroll>.cx-pm-h,.cx-pm-side.right>.cx-pm-h{position:sticky;top:0;z-index:6;background-color:var(--cx-surface-1);background-image:linear-gradient(90deg,color-mix(in srgb,var(--cx-cyan) 14%,var(--cx-surface-1)),var(--cx-surface-1) 72%);box-shadow:0 6px 12px rgba(0,0,0,.18)}
+/* 每一节自成一个「堆叠容器」：标题吸在自己的节顶上，当前卡片吸在标题下面。
+   节的边界就是吸顶的边界，所以滚出本节时它们一起让位，不会互相遮挡。 */
+.cx-pm-sec{position:relative}
+.cx-pm-sec>.cx-pm-h{position:sticky;top:0;z-index:7;background-color:var(--cx-surface-1);background-image:linear-gradient(90deg,color-mix(in srgb,var(--cx-cyan) 14%,var(--cx-surface-1)),var(--cx-surface-1) 72%);box-shadow:0 6px 12px rgba(0,0,0,.18)}
+.cx-pm-sec .cx-pm-card.on{position:sticky;top:34px;z-index:6;box-shadow:0 8px 18px rgba(0,0,0,.28)}
 
 /* 确认对话框：与卡片同一套风格（替代 window.confirm） */
 .cx-confirm{width:min(420px,calc(100% - 36px));display:flex;flex-direction:column;gap:var(--cx-sp-3)}
@@ -1008,6 +1012,17 @@
 .cx-dt-num{flex:0 0 40px;width:40px;height:22px;text-align:center;font:var(--cx-fs-body)/1 var(--cx-mono);padding:0 2px;-moz-appearance:textfield}
 .cx-dt-num::-webkit-outer-spin-button,.cx-dt-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .cx-dt-foot{display:flex;justify-content:flex-end;gap:4px;padding-top:6px}
+
+/* 消息里的结果卡与内联表单：复用 kit 的节/字段/按钮，只补三种结构 */
+.cx-msg-card{width:100%;max-width:560px;margin-top:8px;border:1px solid var(--cx-line);border-radius:var(--cx-r-sm);background:var(--cx-surface-2);padding:10px 12px}
+.cx-kv{display:flex;flex-direction:column;gap:2px}
+.cx-kv-row{display:flex;align-items:baseline;gap:10px;padding:2px 0;border-bottom:1px dashed var(--cx-line)}
+.cx-kv-row:last-child{border-bottom:0}
+.cx-kv-k{flex:0 0 96px;color:var(--cx-text-dim);font-size:var(--cx-fs-10)}
+.cx-kv-v{flex:1;min-width:0;color:var(--cx-text);font-weight:600;overflow-wrap:anywhere}
+.cx-field-lite{display:flex;flex-direction:column;gap:3px;margin-bottom:6px}
+.cx-field-lite .cx-label{font-size:var(--cx-fs-10);color:var(--cx-text-dim);letter-spacing:.04em}
+.cx-msg-card .cx-foot,.cx-wform .cx-foot{margin-top:8px}
 /* motion.css — 动效层（第 5 层，只放 keyframes 与动效工具类）
  * 规则：
  *   1) 时长/缓动只能用 tokens.css 的 --cx-dur* / --cx-ease*，不许写字面量；

@@ -95,10 +95,7 @@
       const a = msg.app || {};
       const title = L(`${ACT_LABEL[msg.action || 'create'] || '创建'}${FN_LABEL[msg.fn] || msg.fn || ''}`, `${ACT_LABEL_EN[msg.action || 'create'] || 'Create'} ${FN_LABEL_EN[msg.fn] || msg.fn || ''}`.trim());
       const home = msg.home || '';
-      return h('div', { className: `cx-wform${done ? ' done' : ''}` },
-        h('div', { className: 'cx-wform-h' },
-          h('span', { className: 't' }, title),
-          h('span', { className: 's' }, done ? L('已提交', 'Submitted') : `${fields.length} ${L('个字段', 'fields')}`)),
+      return h(CxSection, { className: `cx-wform${done ? ' done' : ''}`, title, sub: done ? L('已提交', 'Submitted') : `${fields.length} ${L('个字段', 'fields')}` },
         h('div', {
           className: `cx-wform-app${home ? ' link' : ''}`,
           title: home ? '打开实例首页' : '',
@@ -108,20 +105,20 @@
           h('span', { className: 'body' },
             h('span', { className: 'name' }, a.title || a.name || '应用'),
             h('span', { className: 'sub' }, [a.city_name || a.city, a.company_name || a.company, a.template || a.service_name, a.space].filter(Boolean).join(' · ')))),
-        done ? fields.map((f) => h('div', { key: f.name, className: 'cx-wform-row ro' },
-          h('span', { className: 'k' }, fLabel(f), f.required ? h('i', { className: 'req' }, '*') : null),
-          h('span', { className: 'v' }, vals[f.name] || '—'))) : fields.map((f) => h('label', { key: f.name, className: 'cx-wform-row' },
-          h('span', { className: 'k' }, fLabel(f), f.required ? h('i', { className: 'req' }, '*') : null),
-          f.type === 'select'
-            ? h('select', { className: 'cx-wform-input', value: vals[f.name] ?? '', disabled: busy, onChange: (e) => set(f.name, e.target.value) },
-                (f.options || []).map((o) => h('option', { key: o.value, value: o.value }, o.label)))
-            : h('input', { className: 'cx-wform-input', value: vals[f.name] ?? '', disabled: busy, placeholder: f.label || f.name, onChange: (e) => set(f.name, e.target.value) }))),
+        h('div', { className: 'cx-kv' },
+          (fields || []).map((f) => (done
+            ? h('div', { key: f.name, className: 'cx-kv-row' }, h('span', { className: 'cx-kv-k' }, fLabel(f)), h('b', { className: 'cx-kv-v' }, vals[f.name] || '—'))
+            : h(CxField, { key: f.name, className: 'cx-field-lite', label: `${fLabel(f)}${f.required ? ' *' : ''}` },
+                f.type === 'select'
+                  ? h(CxSelect, { value: vals[f.name] ?? '', disabled: busy, onChange: (e) => set(f.name, e.target.value) },
+                      (f.options || []).map((o) => h('option', { key: o.value, value: o.value }, o.label)))
+                  : h(CxInput, { value: vals[f.name] ?? '', disabled: busy, placeholder: f.label || f.name, onChange: (e) => set(f.name, e.target.value) }))))),
         err ? h('div', { className: 'cx-wform-err' }, err) : null,
-        done && link ? h('div', { className: 'cx-wform-acts' },
-          h('button', { className: 'cx-wform-open', onClick: () => onOpen?.(link, msg.app?.title || msg.app?.name || '详情') }, L('查看详情', 'View details'))) : null,
-        done ? null : h('div', { className: 'cx-wform-acts' },
+        done && link ? h('div', { className: 'cx-foot' },
+          h(CxBtn, { size: 'sm', onClick: () => onOpen?.(link, msg.app?.title || msg.app?.name || '详情') }, L('查看详情', 'View details'))) : null,
+        done ? null : h('div', { className: 'cx-foot' },
           h('button', {
-            className: 'cx-wform-submit', disabled: busy || done,
+            className: 'cx-btn pri', disabled: busy || done,
             onClick: async () => {
               if (busy || done) return;
               setBusy(true); setErr('');
@@ -151,17 +148,13 @@
         setSub(true);
         try { await onSubmit(m, vals); } finally { setSub(false); }
       };
-      return h('div', { className: 'cx-wform' },
-        h('div', { className: 'cx-wform-head' },
-          h('span', { className: 'cx-wform-title' }, (m.ask && m.ask.title) || ''),
-          h('span', { className: 'cx-wform-count' }, done ? L('已确认', 'Confirmed') : `${fields.length} ${L('个参数', 'fields')}`)),
-        (m.ask && m.ask.note) ? h('div', { className: 'cx-wform-note' }, m.ask.note) : null,
-        fields.map((f) => h('label', { key: f.name, className: `cx-wform-row${done ? ' ro' : ''}` },
-          h('span', { className: 'cx-wform-label' }, f.label || f.name, f.required ? h('i', { className: 'req' }, '*') : null),
+      return h(CxSection, { className: 'cx-wform', title: (m.ask && m.ask.title) || '', sub: done ? L('已确认', 'Confirmed') : `${fields.length} ${L('个参数', 'fields')}` },
+        (m.ask && m.ask.note) ? h('div', { className: 'cx-hint' }, m.ask.note) : null,
+        fields.map((f) => h(CxField, { key: f.name, className: 'cx-field-lite', label: `${f.label || f.name}${f.required ? ' *' : ''}` },
           f.options
-            ? h('select', { className: 'cx-wform-input', value: vals[f.name] == null ? '' : vals[f.name], disabled: done, onChange: (e) => set(f.name, e.target.value) },
+            ? h(CxSelect, { value: vals[f.name] == null ? '' : vals[f.name], disabled: done, onChange: (e) => set(f.name, e.target.value) },
               f.options.map((o) => h('option', { key: String(o.value ?? o), value: String(o.value ?? o) }, String(o.label ?? o))))
-            : h('input', { className: 'cx-wform-input', value: vals[f.name] == null ? '' : vals[f.name], placeholder: f.hint || '', title: f.hint || '', disabled: done, onChange: (e) => set(f.name, e.target.value) }))),
-        done ? null : h('div', { className: 'cx-wform-foot' },
-          h('button', { className: 'cx-btn pri', disabled: sub, onClick: submit }, sub ? L('创建中…', 'Creating…') : L('确认创建', 'Confirm'))));
+            : h(CxInput, { value: vals[f.name] == null ? '' : vals[f.name], placeholder: f.hint || '', title: f.hint || '', disabled: done, onChange: (e) => set(f.name, e.target.value) }))),
+        done ? null : h('div', { className: 'cx-foot' },
+          h(CxBtn, { variant: 'primary', disabled: sub, onClick: submit }, sub ? L('创建中…', 'Creating…') : L('确认创建', 'Confirm'))));
     }

@@ -183,10 +183,19 @@ ok('Selected cards scroll into view below the sticky header', (() => {
     pm.includes('if (active) cxReveal(cardRef.current)') && pm.includes('ref: cardRef') &&
     kit.includes('scroll-padding-top:44px');
 })());
-ok('Section headers stick to the top while scrolling', (() => {
-  const css = read('src/client/styles/kit.css'), pm = read('src/client/parts/55-pm.js'), chat = read('src/client/parts/50-chat.js');
-  return css.includes('.cx-pm-scroll>.cx-pm-h,.cx-pm-side.right>.cx-pm-h{position:sticky;top:0')
-    && !pm.includes('PmStickyStack') && !chat.includes('PmStickyStack') && !css.includes('.cx-pm-pin');
+ok('Chat cards and inline forms reuse the kit', (() => {
+  const chat = read('src/client/parts/50-chat.js'), msg = read('src/client/parts/49-msg.js'), css = read('src/client/styles/kit.css');
+  return chat.includes("h(CxSection, { className: 'cx-msg-card'") && chat.includes("className: 'cx-kv'")
+    && msg.includes('function CxWriteForm') && msg.includes('h(CxField,') && msg.includes('h(CxBtn,')
+    && css.includes('.cx-kv-row{') && css.includes('.cx-field-lite{');
+})());
+ok('Each section stacks its header and current card', (() => {
+  const css = read('src/client/styles/kit.css'), chat = read('src/client/parts/50-chat.js');
+  return css.includes('.cx-pm-sec{position:relative}')
+    && css.includes('.cx-pm-sec>.cx-pm-h{position:sticky;top:0')
+    && css.includes('.cx-pm-sec .cx-pm-card.on{position:sticky;top:34px')
+    && (chat.match(/className: 'cx-pm-sec'/g) || []).length >= 5
+    && !css.includes('.cx-pm-pin');
 })());
 ok('Report period types use their own colours', (() => {
   const pm = read('src/client/parts/55-pm.js'), css = read('src/client/styles/kit.css');

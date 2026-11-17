@@ -121,6 +121,21 @@ const CASES = [
     },
   },
   {
+    name: 'pm-stack',
+    fixture: 'scripts/fixtures/pm-stack.html',
+    window: '360,340',
+    sels: ['#sc', '#s1', '#h1', '#cur1', '#h2'],
+    assert: (m) => {
+      const sc = m['#sc'], h1 = m['#h1'], cur1 = m['#cur1'], h2 = m['#h2'], s1 = m['#s1'];
+      return [
+        [!!h1 && !!sc && Math.abs(h1.y - sc.y) <= 12, '目标标题吸在滚动区顶端', `${h1?.y} / ${sc?.y}`],
+        [!!cur1 && !!h1 && Math.abs(cur1.y - (h1.y + h1.h)) <= 3, '当前目标卡片贴在标题下面', `${cur1?.y} = ${h1?.y}+${h1?.h}`],
+        [!!h2 && !!cur1 && h2.y >= cur1.y + cur1.h - 1, '下一节标题排在吸顶卡片之后（不遮挡）', `${h2?.y} ≥ ${cur1?.y + cur1?.h}`],
+        [!!s1 && !!cur1 && cur1.y + cur1.h <= s1.y + s1.h + 2, '吸顶卡片不出本节（滚出本节即让位）', `${cur1?.y + cur1?.h} ≤ ${s1?.y + s1?.h}`],
+      ];
+    },
+  },
+  {
     name: 'pm-card-actions',
     fixture: 'scripts/fixtures/pm-card-actions.html',
     window: '340,200',
@@ -167,9 +182,9 @@ const CASES = [
     name: 'pm-sticky-h',
     fixture: 'scripts/fixtures/pm-sticky.html',
     window: '360,420',
-    sels: ['.cx-pm-scroll', '.cx-pm-scroll .cx-pm-h:nth-child(1)', '.cx-pm-scroll .cx-pm-h:nth-child(4)'],
+    sels: ['.cx-pm-scroll', '#h1', '#h2'],
     assert: (m) => {
-      const sc = m['.cx-pm-scroll'], h1 = m['.cx-pm-scroll .cx-pm-h:nth-child(1)'], h2 = m['.cx-pm-scroll .cx-pm-h:nth-child(4)'];
+      const sc = m['.cx-pm-scroll'], h1 = m['#h1'], h2 = m['#h2'];
       return [
         [!!h1 && !!sc && Math.abs(h1.y - sc.y) <= 12, '滚动后当前分节标题吸在顶端', `标题 ${h1?.y} / 滚动区 ${sc?.y}`],
         [!!h1 && h1.h >= 24, '标题栏保持整行高度（不塌缩）', `${h1?.h}px`],
