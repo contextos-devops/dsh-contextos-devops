@@ -19,7 +19,8 @@ const USER_BY_HOST = { 'github.com': 'contextos-devops' };
 // 任何一步都不许停下来要口令：拿不到凭据就失败，卡住会让整轮任务挂死
 const ENV = { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_ASKPASS: '/usr/bin/true', SSH_ASKPASS: '/usr/bin/true' };
 // 本机存在会拖死 github.com 的代理配置；显式清空后 TLS 直连只需 ~1s
-const NO_PROXY = ['-c', 'http.proxy=', '-c', 'https.proxy='];
+// GitHub 偶发 HTTP/2 framing 错误 → ls-remote 也强制 HTTP/1.1
+const NO_PROXY = ['-c', 'http.proxy=', '-c', 'https.proxy=', '-c', 'http.version=HTTP/1.1'];
 // GitHub push over this network stalls on HTTP/2 and small fixed buffers:
 //   "Failed to connect to github.com port 443 after 75003 ms"
 // ls-remote works, so force HTTP/1.1 and a large post buffer for pushes.
