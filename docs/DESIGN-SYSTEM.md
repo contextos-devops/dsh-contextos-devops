@@ -349,3 +349,6 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 | failed | `.is-failed` | 亮红（失败） | rejected |
 
 类型标签一律 `.cx-entity-type` 安静灰；新增状态先归到七档之一；门禁 `ui-probe --case status-tones`。
+
+卡片按钮区一律 `justify-content:flex-start`，`⋯`（PmActionMenu）在没有二级动作时置灰但不消失——同一列卡的按钮区永远对齐。门禁 `ui-probe --case pm-card-actions`。
+

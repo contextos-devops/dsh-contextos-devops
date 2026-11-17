@@ -106,6 +106,20 @@ const CASES = [
     },
   },
   {
+    name: 'pm-card-actions',
+    fixture: 'scripts/fixtures/pm-card-actions.html',
+    window: '340,200',
+    sels: ['#card', '#acts', '#acts .cx-pm-act', '#more'],
+    assert: (m) => {
+      const card = m['#card'], acts = m['#acts'], btn = m['#acts .cx-pm-act'], more = m['#more'];
+      return [
+        [!!btn && !!card && btn.x - card.x <= 16, '卡片按钮靠左（不贴右）', `按钮左 ${btn?.x} / 卡片左 ${card?.x}`],
+        [!!more && !!acts && more.x >= acts.x - 1, '⋯ 图标始终存在且在按钮区', `${more?.x}`],
+        [!!more && !!btn && more.x >= btn.x, '⋯ 排在按钮之后', `${more?.x} ≥ ${btn?.x}`],
+      ];
+    },
+  },
+  {
     name: 'pm-sticky',
     fixture: 'scripts/fixtures/pm-sticky.html',
     window: '360,420',

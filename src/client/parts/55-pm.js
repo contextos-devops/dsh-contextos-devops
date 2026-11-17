@@ -122,9 +122,14 @@
         return String(b.created_at || b.updated_at || '').localeCompare(String(a.created_at || a.updated_at || ''));
       });
     }
+    // 卡片上的「⋯」永远存在：没有二级动作时置灰（而不是整块消失），
+    // 这样同一列卡片的按钮区始终对齐，也不会让人以为漏渲染。
     function PmActionMenu({ actions, onAction }) {
-      if (!(actions || []).length) return null;
-      return h(MenuButton, { items: actions.map((action) => ({ label: PM_ACTION_LABEL[action] || action, danger: ['remove', 'cancel', 'reject'].includes(action), action: () => onAction(action) })) });
+      const list = actions || [];
+      return h(MenuButton, {
+        disabled: !list.length,
+        items: list.map((action) => ({ label: PM_ACTION_LABEL[action] || action, danger: ['remove', 'cancel', 'reject'].includes(action), action: () => onAction(action) })),
+      });
     }
     // 卡片出场特效：新卡/变更卡每次刷新按 1..5 轮换一种动画
     let CX_ANIM_SEQ = 0;
