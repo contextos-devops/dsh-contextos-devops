@@ -124,13 +124,17 @@ const CASES = [
     name: 'right-panel-stack',
     fixture: 'scripts/fixtures/right-panel-stack.html',
     window: '340,340',
-    sels: ['#side', '#hTime', '#hTask', '#curTask'],
+    sels: ['#side', '#hTime', '#hTask', '#curTask', '#hRep', '#curRep', '#hFb', '#curFb'],
     assert: (m) => {
       const side = m['#side'], t = m['#hTime'], task = m['#hTask'], cur = m['#curTask'];
       return [
         [!!t && !!side && t.y + t.h <= side.y + 1, '时间标题栏随内容滚走（不吸顶）', `标题底 ${t ? t.y + t.h : '?'} ≤ 滚动区顶 ${side?.y}`],
         [!!task && !!side && Math.abs(task.y - side.y) <= 12, '任务标题吸在滚动区顶端', `${task?.y} / ${side?.y}`],
         [!!cur && !!task && Math.abs(cur.y - (task.y + task.h)) <= 3, '当前任务卡片贴在任务标题下面', `${cur?.y} = ${task?.y}+${task?.h}`],
+        [!!m['#hRep'] && !!cur && m['#hRep'].y >= cur.y + cur.h - 1, '报告标题接在任务卡片之后（不遮挡）', `${m['#hRep']?.y} ≥ ${cur?.y + cur?.h}`],
+        [!!m['#curRep'] && !!m['#hRep'] && Math.abs(m['#curRep'].y - (m['#hRep'].y + m['#hRep'].h)) <= 3, '当前报告卡片贴在报告标题下面', `${m['#curRep']?.y}`],
+        [!!m['#hFb'] && !!m['#curRep'] && m['#hFb'].y >= m['#curRep'].y + m['#curRep'].h - 1, '反馈标题接在报告卡片之后（不遮挡）', `${m['#hFb']?.y} ≥ ${m['#curRep']?.y + m['#curRep']?.h}`],
+        [!!m['#curFb'] && !!m['#hFb'] && Math.abs(m['#curFb'].y - (m['#hFb'].y + m['#hFb'].h)) <= 3, '当前反馈卡片贴在反馈标题下面', `${m['#curFb']?.y}`],
       ];
     },
   },
@@ -144,8 +148,8 @@ const CASES = [
       return [
         [!!h1 && !!sc && Math.abs(h1.y - sc.y) <= 12, '目标标题吸在滚动区顶端', `${h1?.y} / ${sc?.y}`],
         [!!cur1 && !!h1 && Math.abs(cur1.y - (h1.y + h1.h)) <= 3, '当前目标卡片贴在标题下面', `${cur1?.y} = ${h1?.y}+${h1?.h}`],
-        [!!h2 && !!cur1 && h2.y >= cur1.y + cur1.h - 1, '下一节标题排在吸顶卡片之后（不遮挡）', `${h2?.y} ≥ ${cur1?.y + cur1?.h}`],
-        [!!s1 && !!cur1 && cur1.y + cur1.h <= s1.y + s1.h + 2, '吸顶卡片不出本节（滚出本节即让位）', `${cur1?.y + cur1?.h} ≤ ${s1?.y + s1?.h}`],
+        [!!cur1 && !!sc && cur1.y + cur1.h <= sc.y + sc.h + 1, '当前卡片完整落在面板内（没被切掉）', `${cur1?.y + cur1?.h} ≤ ${sc?.y + sc?.h}`],
+        [!!s1 && !!cur1 && !!m['#h2'] && m['#h2'].y >= cur1.y + cur1.h - 1, '下一节标题不压住吸顶卡片', `${m['#h2']?.y} ≥ ${cur1?.y + cur1?.h}`],
       ];
     },
   },

@@ -189,18 +189,24 @@ ok('Chat cards and inline forms reuse the kit', (() => {
     && msg.includes('function CxWriteForm') && msg.includes('h(CxField,') && msg.includes('h(CxBtn,')
     && css.includes('.cx-kv-row{') && css.includes('.cx-field-lite{');
 })());
+ok('Pinned stack offsets are measured at runtime', (() => {
+  const chat = read('src/client/parts/50-chat.js');
+  return chat.includes('const pinStack = () =>') && chat.includes("setProperty('--pm-top'") && chat.includes("setProperty('--pm-card-top'")
+    && chat.includes("querySelectorAll('.cx-pm-sec')");
+})());
 ok('Right panel stacks PM sections but not the TIME header', (() => {
   const css = read('src/client/styles/kit.css'), main = read('src/client/styles/main.css'), chat = read('src/client/parts/50-chat.js');
-  return css.includes('.cx-pm-sec>.cx-pm-h{position:sticky;top:0')
+  return css.includes('.cx-pm-sec>.cx-pm-h{position:sticky;top:var(--pm-top')
     && !main.includes('.cx-pm-side.right .cx-pm-h{position:sticky')
     && !chat.includes("'--cx-hi'")
     && chat.includes('cx-calsec');
 })());
 ok('Each section stacks its header and current card', (() => {
   const css = read('src/client/styles/kit.css'), chat = read('src/client/parts/50-chat.js');
-  return css.includes('.cx-pm-sec{position:relative}')
-    && css.includes('.cx-pm-sec>.cx-pm-h{position:sticky;top:0')
-    && css.includes('.cx-pm-sec .cx-pm-card.on{position:sticky;top:34px')
+  return css.includes('.cx-pm-sec,.cx-pm-sec>.cx-card-list{display:contents}')
+    && css.includes('.cx-pm-sec>.cx-pm-h{position:sticky;top:var(--pm-top')
+    && css.includes('.cx-pm-sec .cx-pm-card.on{position:sticky;top:var(--pm-card-top')
+    && css.includes('.cx-shell .cx-pm-sec .cx-pm-card.on{background-color:var(--cx-surface-2)')
     && (chat.match(/className: 'cx-pm-sec'/g) || []).length >= 5
     && !css.includes('.cx-pm-pin');
 })());

@@ -81,12 +81,12 @@
 | `ARCHITECTURE.md` | 135 | 五层/请求流程/模块归属 | 判断代码放哪 | 生成细节 → `CODE-GEN.md` |
 | `AI-CONVERSATION.md` | 140 | 对话参数/动作表/缺口 | 改 Copilot 链路 | 提示词 → `../lib/core/copilot.js` |
 | `MONITOR.md` | 83 | 监控面板与数据源 | 改监控视图 | — |
-| `ECOM-DEMO.md` | 137 | 电商流水线演示（mock） | 改电商视图 | 真实方案 → dsh-reports |
+| `ECOM-DEMO.md` | 149 | 电商流水线演示（mock） | 改电商视图 | 真实方案 → dsh-reports |
 | `IAM.md` | 151 | 权限与身份模型 | 涉及 user.uid/角色 | 接口 → `INTERFACE.md` |
 | `DSH-COS.md` | 114 | DSH 宿主能力与边界 | 判断能不能做到 | 版本差异 → `RSI-LEDGER.md` |
 | `ACCEPTANCE.md` | 247 | 唯一验收口径 | 说「完成」之前 | 流程 → `../AGENTS.md` §七 |
 | `PRODUCT-DESIGN.md` | 843 | 产品与技术设计稿 | 做方案/查设计取舍 | 现状 → `../README.md` 能力矩阵 |
-| `RSI-LEDGER.md` | 128 | 踩坑与决策台账 | 复盘/避免重复 | 症状路由 → `DIAGNOSTICS.md` |
+| `RSI-LEDGER.md` | 132 | 踩坑与决策台账 | 复盘/避免重复 | 症状路由 → `DIAGNOSTICS.md` |
 | `INSTALL.md` | 108 | 节点安装矩阵与平台选择 | 部署/跨平台 | 节点生命周期 → `ARCHITECTURE.md` |
 | `CODE-INDEX.md` | 171 | 文件-行数-导出-契约索引 | 找东西 | 生成物，勿手改 |
 | `STATE.md` | 66 | 存储键表 | 加/查状态 | 生成物，勿手改 |

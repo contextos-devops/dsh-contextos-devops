@@ -1375,6 +1375,29 @@
         h('div', { className: `cx-gantt-sec${fold('gantt') ? ' folded' : ''}` },
           h(PmSectionHead, { icon: 'clock', title: sectionTitle('进度', 'PROGRESS'), count: plans.filter((p) => p.status_name === 'process').length, folded: fold('gantt'), onToggle: () => setFolds((f) => ({ ...f, gantt: !f.gantt })) }),
           fold('gantt') ? null : h(Gantt, { plans, activeUid: activePlan?.uid })));
+      // 让「分节标题 + 当前卡片」按顺序堆叠：量出每组的高度，写回 --pm-top / --pm-card-top。
+      // 分节本身是 display:contents，粘性容器是整条滚动区，所以滚到哪都能留住。
+      const pinStack = () => {
+        const pin = (root) => {
+          if (!root) return;
+          let off = 0;
+          root.querySelectorAll('.cx-pm-sec').forEach((sec) => {
+            const head = sec.querySelector('.cx-pm-h');
+            const card = sec.querySelector('.cx-pm-card.on');
+            if (head) { head.style.setProperty('--pm-top', `${off}px`); off += head.getBoundingClientRect().height; }
+            if (card) { card.style.setProperty('--pm-card-top', `${off}px`); off += card.getBoundingClientRect().height + 5; }
+          });
+        };
+        pin(document.querySelector('.cx-pm-side:not(.right)'));
+        pin(document.querySelector('.cx-pm-side.right'));
+      };
+      useEffect(() => {
+        const id = requestAnimationFrame(pinStack);
+        const onResize = () => pinStack();
+        window.addEventListener('resize', onResize);
+        return () => { cancelAnimationFrame(id); window.removeEventListener('resize', onResize); };
+      }, [pm, targetId, planId, taskId, reportId, feedbackId, folds, showLeft, showRight]);
+
       const rightPanel = h('aside', { className: `cx-pm-side right${pmRefreshing ? ' refreshing' : ''}` },
         h('div', { className: `cx-calsec${calFull ? ' max' : ''}`, ref: calRef },
           h(PmSectionHead, { icon: 'clock', title: sectionTitle('时间', 'TIME'), folded: fold('cal'), style: null, onToggle: () => setFolds((f) => ({ ...f, cal: !f.cal })), tools: h(IconButton, { name: calFull ? 'restore' : 'fullscreen', className: 'cx-pm-max', onClick: () => { setCalFull((v) => !v); if (fold('cal')) setFolds((f) => ({ ...f, cal: false })); }, title: calFull ? T('还原') : T('最大化') }) }),

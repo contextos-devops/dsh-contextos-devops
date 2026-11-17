@@ -71,11 +71,11 @@
 | `src/client/parts/46-pm.js` | 165 | `PMModal` `RichText` |
 | `src/client/parts/47-three.js` | 325 | `ThreeAvatar` `ThreeCity` `TechBackdrop` |
 | `src/client/parts/49-msg.js` | 161 | `Elapsed` `FN_LABEL` `ACT_LABEL` `FN_LABEL_EN` `ACT_LABEL_EN` `FIELD_ZH` `FIELD_EN` `KIND_META` `CxEntityCard` `L` |
-| `src/client/parts/50-chat.js` | 1512 | `ChatPanel` `userUpRef` `ToolRow` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` `PM_OP_ALIAS` |
+| `src/client/parts/50-chat.js` | 1535 | `ChatPanel` `userUpRef` `ToolRow` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` `PM_OP_ALIAS` |
 | `src/client/parts/51-pmselection.js` | 32 | `usePmSelection` |
 | `src/client/parts/52-pmdata.js` | 30 | `usePmData` |
 | `src/client/parts/55-pm.js` | 181 | `PM_REPORT_TONE` `PM_STATUS_TONE` `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` |
-| `src/client/parts/57-ecom.js` | 492 | `ECOM_STAGES` `ECOM_AGENT_POOL` `ECOM_PLATFORMS` `ECOM_REGIONS` `ECOM_AUDIENCES` `ECOM_COMPANY` `ECOM_DEFAULT_AGENTS` `ECOM_ROOMS_SEED` `ECOM_HUE` `ECOM_TOKEN_PRICE` |
+| `src/client/parts/57-ecom.js` | 634 | `ECOM_STAGES` `ECOM_AGENT_POOL` `ECOM_PLATFORMS` `ECOM_REGIONS` `ECOM_AUDIENCES` `ECOM_COMPANY` `ECOM_DEFAULT_AGENTS` `ECOM_ROOMS_SEED` `ECOM_HUE` `ECOM_TOKEN_PRICE` |
 | `src/client/parts/58-config.js` | 498 | `CTX_CFG_KEYS` `CTX_CFG_DEFAULT` `CTX_CFG_NS` `CTX_CALLS_NS` `CTX_UI` `CTX_DATA` `MODE_INTRO_SEEN` `ModeIntro` `WelcomeBurst` `CursorComet` |
 | `src/client/parts/59-monitor.js` | 263 | `MonitorDonut` `R` `MonitorSpark` `MonitorTwin` `MON_PANELS` `MON_DEFAULT` `MonitorPanel` `MonitorBoard` `MonitorView` |
 | `src/client/parts/60-page.js` | 1669 | `PipeSelect` `Page` `Boundary` |
@@ -154,7 +154,7 @@
 | `docs/DIAGNOSTICS.md` | 105 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |
 | `docs/DSH-COS.md` | 114 | 人写 |
-| `docs/ECOM-DEMO.md` | 137 | 人写 |
+| `docs/ECOM-DEMO.md` | 149 | 人写 |
 | `docs/EXTENDING.md` | 135 | 人写 |
 | `docs/GLOSSARY.md` | 207 | 人写 |
 | `docs/IAM.md` | 151 | 人写 |
@@ -165,6 +165,6 @@
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
 | `docs/PUBLISH.md` | 172 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
-| `docs/RSI-LEDGER.md` | 128 | 人写 |
+| `docs/RSI-LEDGER.md` | 132 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 243 | 人写 |

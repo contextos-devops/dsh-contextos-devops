@@ -57,6 +57,10 @@ Each entry records: lesson → reusable abstraction → verification.
 ## 2026-11-17 · 原生控件与自绘样式两套语言
 - 现象：确认/候选/时间用的是浏览器原生控件，与应用风格割裂；根因：控件层（级联层第 3 次）。固化：`cxAsk`+`CxConfirmHost`、`CxCombo`、`CxDateTime` + `ui-probe datetime-pop`。数字：4→0、1→0、2→0。
 
+## 2026-11-17 · 吸顶单位错了一层：节 vs 滚动区
+- 现象：TIME 标题被钉住；当前卡片被下一节标题压住或被节底切掉。根因：级联层第 4 次（sticky 的包含块是父元素，不是视口）。
+- 固化：`.cx-pm-sec/.cx-card-list{display:contents}` + `pinStack()` 量高写 `--pm-top/--pm-card-top`；`ui-probe right-panel-stack`（7 条）+ `ui-check` 两条。数字：TIME 标题底 43→-157；三层堆叠 0 重叠。
+
 ## 归档（只读）
 
 2026-11-15 的 3 条早期条目，连同之前的 45 条，均已移入 [docs/archive/LEDGER-2026H1.md](archive/LEDGER-2026H1.md)（10-08 起，按日原样保存）。

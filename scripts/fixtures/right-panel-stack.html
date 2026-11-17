@@ -9,15 +9,25 @@
     <div class="cx-cal" style="height:120px;border:1px solid var(--cx-line)">calendar</div>
   </div>
   <div class="cx-pm-sec" id="sTask">
-    <div class="cx-pm-h" id="hTask"><div class="cx-pm-titleline"><span class="cx-pm-kind">☰</span><span>TASKS</span><span class="cx-pm-count">1</span></div></div>
+    <div class="cx-pm-h" id="hTask" style="--pm-top:0px"><div class="cx-pm-titleline"><span class="cx-pm-kind">☰</span><span>TASKS</span><span class="cx-pm-count">1</span></div></div>
     <div class="cx-pm-card" style="height:70px">t1</div>
-    <div class="cx-pm-card on" id="curTask" style="height:70px">current task</div>
+    <div class="cx-pm-card on" id="curTask" style="height:70px;--pm-card-top:34px">current task</div>
     <div class="cx-pm-card" style="height:70px">t3</div>
   </div>
   <div class="cx-pm-sec" id="sRep">
-    <div class="cx-pm-h" id="hRep"><div class="cx-pm-titleline"><span class="cx-pm-kind">▤</span><span>REPORTS</span><span class="cx-pm-count">5</span></div></div>
-    <div class="cx-pm-card" style="height:70px">r1</div>
-    <div class="cx-pm-card" style="height:70px">r2</div>
+    <div class="cx-pm-h" id="hRep" style="--pm-top:109px"><div class="cx-pm-titleline"><span class="cx-pm-kind">▤</span><span>REPORTS</span><span class="cx-pm-count">5</span></div></div>
+    <div class="cx-card-list">
+      <div class="cx-pm-card" style="height:70px">r1</div>
+      <div class="cx-pm-card on" id="curRep" style="height:70px;--pm-card-top:143px">current report</div>
+      <div class="cx-pm-card" style="height:70px">r3</div>
+    </div>
+  </div>
+  <div class="cx-pm-sec" id="sFb">
+    <div class="cx-pm-h" id="hFb" style="--pm-top:218px"><div class="cx-pm-titleline"><span class="cx-pm-kind">◇</span><span>FEEDBACK</span></div></div>
+    <div class="cx-card-list">
+      <div class="cx-pm-card on" id="curFb" style="height:70px;--pm-card-top:252px">current feedback</div>
+      <div class="cx-pm-card" style="height:70px">f2</div>
+    </div>
   </div>
 </aside></div>
 <script>window.addEventListener('load', function () { document.getElementById('side').scrollTop = 200; });</script>

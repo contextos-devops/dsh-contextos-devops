@@ -330,11 +330,11 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 
 确认 `cxAsk`+`CxConfirmHost`；候选输入 `CxCombo`；日期时间 `CxDateTime`（值 `YYYY-MM-DD HH:mm:ss`）。禁 `window.confirm`/`datalist`/`type=date`；门禁 `ui-check` 三条、`ui-probe datetime-pop`。
 
-### 20.7 滚动时的分节标题
+### 20.7 分节堆叠（标题 + 当前卡片）
 
-分节标题（`.cx-pm-h`）在左右两栏的滚动区里 `position:sticky;top:0`，卡片从它下面穿过；
-滚到下一个分节时，新标题自然把上一个顶走——不做额外的悬浮条、不叠「当前项」摘要。
-门禁 `ui-probe --case pm-sticky-h`（吸顶、不塌缩、下个标题排在它下面）。
+`.cx-pm-sec` 与其中的 `.cx-card-list` 都是 `display:contents`，粘性容器是整条滚动区；`50-chat.js` 的 `pinStack()` 量出每组高度后写 `--pm-top`（标题）与 `--pm-card-top`（当前卡片）：
+`.cx-pm-sec>.cx-pm-h{position:sticky;top:var(--pm-top,0px)}`、`.cx-pm-sec .cx-pm-card.on{position:sticky;top:var(--pm-card-top,34px)}`、`.cx-shell .cx-pm-sec .cx-pm-card.on{background-color:var(--cx-surface-2)}`。
+右栏 TIME 不在 `.cx-pm-sec` 内，所以不吸顶。门禁：`ui-probe --case right-panel-stack|pm-stack`。
 
 ### 20.6 状态与类型的颜色语言
 
@@ -352,7 +352,7 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 
 类型标签一律 `.cx-entity-type` 安静灰；新增状态先归到七档之一；门禁 `ui-probe --case status-tones`。
 
-标题栏的主题与语言用**单按钮循环**（`CtxCycle`）：主题 = 自动 ◐ → 浅色 ☀ → 深色 ☾，语言 = 自动 → 中 → EN；按钮显示当前档，点击进下一档（三枚并排太宽，已合并）。
+标题栏主题与语言用**单按钮循环**（`CtxCycle`）：显示当前档、点击进下一档，不再并排三枚。
 
 报告周期按长短配色：日报青 → 周报绿 → 月报蓝 → 季报紫 → 年报琥珀（`.is-rt-*` / `PM_REPORT_TONE`）。
 
