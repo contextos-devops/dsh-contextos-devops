@@ -133,18 +133,20 @@
       const v = Math.max(0, Math.min(5, Number(n) || 0));
       return '★'.repeat(v) + '☆'.repeat(5 - v);
     }
-    // 三态分段控件：所有状态平铺可见（自动/浅色/深色、自动/中文/英文），
-    // 而不是隐藏在文本下拉里，避免「System / System」这种看不出区别的显示。
-    function CtxSeg({ value, items, onChange, label }) {
-      return h('span', { className: 'cx-seg', role: 'group', 'aria-label': label || '' },
-        (items || []).map((it) => h('button', {
-          key: it.value,
-          type: 'button',
-          className: `cx-seg-btn${it.value === value ? ' on' : ''}`,
-          title: it.title || it.label,
-          'aria-pressed': it.value === value ? 'true' : 'false',
-          onClick: (e) => { e.stopPropagation(); onChange && onChange(it.value); },
-        }, it.icon ? h(UiIcon, { name: it.icon, size: 14 }) : h('span', { className: 'cx-seg-txt' }, it.label))));
+    // 三态切换按钮：一个图标/文字按钮显示当前档，点击循环到下一档。
+    // （三枚并排的分段太占标题栏宽度，改成单按钮「状态切换的图标」。）
+    function CtxCycle({ value, items, onChange, label }) {
+      const list = items || [];
+      const i = Math.max(0, list.findIndex((it) => it.value === value));
+      const cur = list[i] || list[0] || {};
+      const next = list[(i + 1) % Math.max(1, list.length)] || {};
+      return h('button', {
+        type: 'button',
+        className: 'cx-cycle',
+        title: `${label || ''}${label ? '：' : ''}${cur.label} → ${next.label}`,
+        'aria-label': `${label || ''} ${cur.label}`.trim(),
+        onClick: (e) => { e.stopPropagation(); next.value && onChange && onChange(next.value); },
+      }, cur.icon ? h(UiIcon, { name: cur.icon, size: 14 }) : h('span', { className: 'cx-seg-txt' }, cur.label));
     }
     function EntityTitle({ image, icon = 'app', type, title, status, statusTone = '', meta, after, onClick, active = false, className = '', children }) {
       const cls = `cx-entity${active ? ' on' : ''}${className ? ' ' + className : ''}`;

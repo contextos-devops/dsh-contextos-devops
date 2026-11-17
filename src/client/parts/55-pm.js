@@ -1,4 +1,6 @@
     // 状态色语言（与 kit.css 的 .is-* 一一对应）：先判断「要不要用户注意」，再判断「警醒还是鼓励」。
+    // 报告周期：周期越长颜色越暖（日报青 → 周报绿 → 月报蓝 → 季报紫 → 年报琥珀）
+    const PM_REPORT_TONE = { daily: 'is-rt-daily', weekly: 'is-rt-weekly', monthly: 'is-rt-monthly', quarterly: 'is-rt-quarterly', annual: 'is-rt-annual' };
     const PM_STATUS_TONE = { created: 'is-idle', submited: 'is-review', approved: 'is-ready', process: 'is-active', finished: 'is-done', canceled: 'is-halted', rejected: 'is-failed', canFinish: 'is-active', shouldImprove: 'is-review' };
     const pmTone = (key) => PM_STATUS_TONE[key] || 'is-idle';
     const PM_KIND_LABEL = { target: '目标', plan: '计划', task: '任务', report: '报告', feedback: '反馈' };
@@ -73,7 +75,9 @@
     }
     // 滚动时的上下文栈：每一层「标题栏 + 当前项」按层级从上往下堆叠，
     // 数据再多也能一眼看清自己在 目标/计划/任务/报告/反馈 的哪一层。
-    function PmStickyStack({ rows }) {
+    // 上下文栈只在「滚动到看不见标题栏」之后才出现；停在顶部时不占高度。
+    function PmStickyStack({ rows, show }) {
+      if (!show) return null;
       const list = (rows || []).filter((r) => r && r.title);
       if (!list.length) return null;
       return h('div', { className: 'cx-pm-sticky' }, list.map((r) => h('div', { key: r.kind, className: 'cx-pm-pin' },
@@ -154,6 +158,8 @@
 
     function PmCard({ item, kind, active, sub, traceIds, traceLog, onSelect, onAction }) {
       const statusKey = item.status_name || item.type_name || (kind === 'report' ? 'report' : '');
+      const reportType = kind === 'report' ? String(item.type_name || item.inputs?.report_type || '').toLowerCase() : '';
+      const statusTone = PM_REPORT_TONE[reportType] || pmTone(statusKey);
       const statusLabel = item.status_label ? T(item.status_label) : (item.status_name ? pmStatusText(item.status_name) : '');
       const score = Number(item.score);
       const stars = kind === 'feedback' && Number.isFinite(score) && item.score !== '' && item.score != null ? cxStars(score) : '';
@@ -169,7 +175,7 @@
           icon: h(Ico, { name: kind, size: 24 }),
           title: item.title || item.uid,
           status: statusLabel,
-          statusTone: pmTone(statusKey),
+          statusTone,
           meta: (() => {
             const line = [kind === 'plan' && item.begin_time ? `${shortDate(item.begin_time)} → ${shortDate(item.end_time)}` : (item.created_at ? String(item.created_at).slice(0, 16) : ''), sub, (traceIds || []).includes(item.uid) ? `#${String(traceLog || '').slice(0, 8)}` : '', stars].filter(Boolean).join(' · ');
             return stars ? h(React.Fragment, null, line.replace(` · ${stars}`, ''), h('span', { className: 'cx-stars', title: `${score} / 5` }, ` · ${stars}`)) : line;

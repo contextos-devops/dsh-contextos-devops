@@ -8,6 +8,8 @@
       const [folds, setFolds] = useState({ map: true, targets: false, plans: false, tasks: false, reports: false, feedbacks: false });
       useEffect(() => cxWrite('folds', folds), [folds]);
       const fold = (k) => folds[k] === true;
+      const pmScrollRef = useRef({});
+      const [, setPmScrollTick] = useState(0);
       const [calFull, setCalFull] = useState(false);
       const calRef = useRef(null);
       const [mapFull, setMapFull] = useState(false);
@@ -1357,9 +1359,11 @@
         key: `${item.uid}:${cxCardSig(item)}`, item, kind, active, sub, traceIds, traceLog,
         onSelect: onClick, onAction: (action) => runPmAction(kind, item, action),
       });
+      const pmScroll = pmScrollRef.current || {};
+      const scrollSide = (side) => (e) => { const top = e.currentTarget.scrollTop || 0; pmScrollRef.current = { ...pmScrollRef.current, [side]: top }; setPmScrollTick((n) => n + 1); };
       const leftPanel = h('aside', { className: `cx-pm-side${pmRefreshing ? ' refreshing' : ''}` },
-        h('div', { className: 'cx-pm-scroll' },
-        h(PmStickyStack, { rows: [
+        h('div', { className: 'cx-pm-scroll', onScroll: scrollSide('left') },
+        h(PmStickyStack, { show: (pmScroll.left || 0) > 16, rows: [
           { kind: 'target', label: sectionTitle(tt('target'), 'TARGETS'), title: activeTarget?.title || '', status: pmStatusText(activeTarget?.status_name), statusKey: activeTarget?.status_name },
           { kind: 'plan', label: sectionTitle(tt('plan'), 'PLANS'), title: activePlan?.title || '', status: pmStatusText(activePlan?.status_name), statusKey: activePlan?.status_name },
         ] }),
@@ -1374,8 +1378,8 @@
         h('div', { className: `cx-gantt-sec${fold('gantt') ? ' folded' : ''}` },
           h(PmSectionHead, { icon: 'clock', title: sectionTitle('进度', 'PROGRESS'), count: plans.filter((p) => p.status_name === 'process').length, folded: fold('gantt'), onToggle: () => setFolds((f) => ({ ...f, gantt: !f.gantt })) }),
           fold('gantt') ? null : h(Gantt, { plans, activeUid: activePlan?.uid })));
-      const rightPanel = h('aside', { className: `cx-pm-side right${pmRefreshing ? ' refreshing' : ''}` },
-        h(PmStickyStack, { rows: [
+      const rightPanel = h('aside', { className: `cx-pm-side right${pmRefreshing ? ' refreshing' : ''}`, onScroll: scrollSide('right') },
+        h(PmStickyStack, { show: (pmScroll.right || 0) > 16, rows: [
           { kind: 'task', label: sectionTitle(tt('task'), 'TASKS'), title: activeTask?.title || '', status: pmStatusText(activeTask?.status_name), statusKey: activeTask?.status_name },
           { kind: 'report', label: sectionTitle(tt('report'), 'REPORTS'), title: activeReport?.title || '', status: pmStatusText(activeReport?.status_name), statusKey: activeReport?.status_name },
           { kind: 'feedback', label: sectionTitle(tt('feedback'), 'FEEDBACK'), title: activeFeedback?.title || '', status: activeFeedback?.status_label || activeFeedback?.status_name, statusKey: activeFeedback?.status_name },
@@ -1412,12 +1416,12 @@
                   h('div', { className: 'cx-chat-copy' }, h('div', { className: 'cx-chat-title' }, 'CONTEXTOS · COPILOT'), h('div', { className: 'cx-chat-sub' }, `${tt('avatar')} · ${tt('factory')} · ${tt('iot')} · ${cxClientTag()}`))),
                 h('div', { className: 'cx-chat-actions' },
                   ...(!docked ? [
-                    h(CtxSeg, { value: themeMode, label: T('主题'), onChange: setThemeMode, items: [
-                      { value: 'system', icon: 'auto', title: `${tt('system')} · ${tt('light')} / ${tt('dark')}` },
-                      { value: 'light', icon: 'sun', title: tt('light') },
-                      { value: 'dark', icon: 'moon', title: tt('dark') },
+                    h(CtxCycle, { value: themeMode, label: T('主题'), onChange: setThemeMode, items: [
+                      { value: 'system', icon: 'auto', label: T('自动') },
+                      { value: 'light', icon: 'sun', label: tt('light') },
+                      { value: 'dark', icon: 'moon', label: tt('dark') },
                     ] }),
-                    h(CtxSeg, { value: langMode, label: T('语言'), onChange: setLangMode, items: [
+                    h(CtxCycle, { value: langMode, label: T('语言'), onChange: setLangMode, items: [
                       { value: 'system', label: T('自动'), title: T('自动') },
                       { value: 'zh', label: '中', title: '中文' },
                       { value: 'en', label: 'EN', title: 'English' },

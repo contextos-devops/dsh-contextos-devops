@@ -106,17 +106,17 @@ const CASES = [
     },
   },
   {
-    name: 'seg',
-    fixture: 'scripts/fixtures/seg.html',
-    window: '420,120',
-    sels: ['#segTheme', '#segTheme .cx-seg-btn', '#segLang', '#segLang .cx-seg-txt'],
+    name: 'cycle',
+    fixture: 'scripts/fixtures/cycle.html',
+    window: '360,120',
+    sels: ['#t', '#l', '#lt'],
     assert: (m) => {
-      const seg = m['#segTheme'], btn = m['#segTheme .cx-seg-btn'], lang = m['#segLang'], txt = m['#segLang .cx-seg-txt'];
+      const t = m['#t'], l = m['#l'], lt = m['#lt'];
       return [
-        [!!btn && btn.h >= 24, '分段按钮有可点高度', `${btn?.h}px`],
-        [!!seg && !!btn && btn.h <= seg.h + 1, '按钮不越出分段容器（不被裁切）', `${btn?.h} ≤ ${seg?.h}`],
-        [!!txt && txt.h >= 9 && txt.h <= 14, '文字档位不裁切', `${txt?.h}px`],
-        [!!lang && lang.h <= 30, '语言分段高度与控件一致', `${lang?.h}px`],
+        [!!t && t.h >= 26 && t.h <= 32, '切档按钮高度与控件一致', `${t?.h}px`],
+        [!!t && t.w >= 28 && t.w <= 40, '主题按钮窄（图标按钮，不占宽）', `${t?.w}px`],
+        [!!l && l.w >= 34 && l.w <= 60, '语言按钮窄（单档文字）', `${l?.w}px`],
+        [!!lt && lt.h >= 9 && lt.h <= 14, '文字档位不裁切', `${lt?.h}px`],
       ];
     },
   },

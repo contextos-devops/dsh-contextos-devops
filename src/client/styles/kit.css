@@ -146,9 +146,16 @@
 .cx-shell[data-theme="light"] .cx-pm-sticky{background:#f2f9fc;box-shadow:0 3px 8px rgba(10,60,80,.10)}
 
 /* 三态分段控件（主题：自动/浅色/深色，语言：自动/中/EN） */
-.cx-seg{display:inline-flex;align-items:center;height:var(--cx-h-control);border:1px solid var(--cx-line2);border-radius:var(--cx-r-sm);background:var(--cx-surface-0);overflow:hidden}
-.cx-seg-btn{height:100%;min-width:26px;padding:0 6px;border:0;background:transparent;color:var(--cx-text-dim);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:color var(--cx-dur-fast) var(--cx-ease),background var(--cx-dur-fast) var(--cx-ease)}
-.cx-seg-btn+.cx-seg-btn{border-left:1px solid var(--cx-line)}
-.cx-seg-btn:hover{color:var(--cx-text)}
-.cx-seg-btn.on{background:var(--cx-accent-soft);color:var(--cx-accent)}
 .cx-seg-txt{font:600 var(--cx-fs-10)/1 var(--cx-font);letter-spacing:.02em}
+
+/* 三态切换按钮（标题栏的主题/语言：单按钮循环，不再并排三枚） */
+.cx-cycle{display:inline-flex;align-items:center;justify-content:center;height:var(--cx-h-control);min-width:30px;padding:0 8px;border:1px solid var(--cx-line2);border-radius:var(--cx-r-sm);background:var(--cx-surface-0);color:var(--cx-text-dim);cursor:pointer;transition:color var(--cx-dur-fast) var(--cx-ease),border-color var(--cx-dur-fast) var(--cx-ease)}
+.cx-cycle:hover{color:var(--cx-text);border-color:var(--cx-line2)}
+.cx-cycle:focus-visible{outline:2px solid var(--cx-accent);outline-offset:1px}
+
+/* 报告周期：周期越长颜色越暖（青 → 绿 → 蓝 → 紫 → 琥珀） */
+.cx-entity-status.is-rt-daily{--tone:#22d3ee}
+.cx-entity-status.is-rt-weekly{--tone:#34d399}
+.cx-entity-status.is-rt-monthly{--tone:#60a5fa}
+.cx-entity-status.is-rt-quarterly{--tone:#a78bfa}
+.cx-entity-status.is-rt-annual{--tone:#f59e0b}

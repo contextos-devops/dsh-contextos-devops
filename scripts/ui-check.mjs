@@ -166,17 +166,30 @@ ok('Avatar user is created through community API', read('lib/core/avatar.js').in
 ok('ContextOS lives in the conversation tab strip', /name: 'conversation\.view'/.test(page) && /id: 'contextos'/.test(page) && !/openRightbar/.test(page));
 ok('the tab renders the session config panel', page.includes('h(CtxCenter, { sessionId:') && page.includes('inline: true'));
 ok('config entries switch to the tab first', read('src/client/parts/58-config.js').includes("selectView('contextos')"));
-ok('Header theme and language are tri-state segments', (() => {
+ok('Header theme and language are single cycling buttons', (() => {
   const chat = read('src/client/parts/50-chat.js'), ui = read('src/client/parts/10-ui.js');
-  const segs = (chat.match(/h\(CtxSeg, \{/g) || []).length;
-  return ui.includes('function CtxSeg(') && segs >= 2 && chat.includes("{ value: 'light', icon: 'sun'") && chat.includes("{ value: 'dark', icon: 'moon'") && chat.includes("label: '中'") && chat.includes("label: 'EN'") && !/h\(DropSelect, \{ value: (themeMode|langMode)/.test(chat);
+  const cycles = (chat.match(/h\(CtxCycle, \{/g) || []).length;
+  return ui.includes('function CtxCycle(') && !ui.includes('function CtxSeg(') && cycles >= 2
+    && chat.includes("{ value: 'light', icon: 'sun'") && chat.includes("{ value: 'dark', icon: 'moon'")
+    && !/h\(DropSelect, \{ value: (themeMode|langMode)/.test(chat);
+})());
+ok('Context stack only shows after scrolling', (() => {
+  const pm = read('src/client/parts/55-pm.js'), chat = read('src/client/parts/50-chat.js');
+  return pm.includes('function PmStickyStack({ rows, show })') && pm.includes('if (!show) return null;')
+    && (chat.match(/show: \(pmScroll\.(left|right) \|\| 0\) > 16/g) || []).length === 2
+    && chat.includes("onScroll: scrollSide('left')") && chat.includes("onScroll: scrollSide('right')");
+})());
+ok('Report period types use their own colours', (() => {
+  const pm = read('src/client/parts/55-pm.js'), css = read('src/client/styles/kit.css');
+  return pm.includes('const PM_REPORT_TONE = {') && pm.includes('PM_REPORT_TONE[reportType] || pmTone(statusKey)')
+    && ['daily', 'weekly', 'monthly', 'quarterly', 'annual'].every((t) => css.includes(`.cx-entity-status.is-rt-${t}{`));
 })());
 ok('Feedback score renders as stars inline', (() => {
   const ui = read('src/client/parts/10-ui.js'), pm = read('src/client/parts/55-pm.js'), form = read('src/client/parts/46-pm.js');
   return ui.includes('function cxStars(') && pm.includes('cxStars(score)') && !pm.includes('cx-pm-stars') && pm.includes("className: 'cx-stars'") && form.includes('cxStars(o.value ?? o.label)');
 })());
 ok('PM card actions align left and keep the more button', (() => { const css = read('src/client/styles/main.css'); const pm = read('src/client/parts/55-pm.js'); return css.includes('.cx-pm-card-actions{display:flex;align-items:center;justify-content:flex-start') && css.includes('.cx-pm-card-actions .cx-menu-wrap{margin-left:0') && pm.includes('function PmActionMenu') && pm.includes('disabled: !list.length') && !/function PmActionMenu[^}]*return null/.test(pm); })());
-ok('PM panels pin a sticky context stack', (() => { const c = read('src/client/parts/55-pm.js') + read('src/client/parts/50-chat.js'); return c.includes('function PmStickyStack') && (c.match(/h\(PmStickyStack, \{ rows:/g) || []).length === 2; })());
+ok('PM panels pin a sticky context stack', (() => { const c = read('src/client/parts/55-pm.js') + read('src/client/parts/50-chat.js'); return c.includes('function PmStickyStack') && (c.match(/h\(PmStickyStack, \{ show:/g) || []).length === 2; })());
 ok('PM ops alias to pmCreate/pmAct', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('PM_OP_ALIAS') && c.includes("pmStart: ['pmAct', { action: 'process' }]") && c.includes("pmPlanCreate: ['pmCreate', { kind: 'plan' }]"); })());
 ok('PM create chains the parent uid it just created', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('const pmChain = useRef({})') && c.includes('chain[parentKind]'); })());
 ok('PM result card reuses the sidebar card', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('m.card.pm') && c.includes('h(PmCard, { item: m.card.pm.item'); })());

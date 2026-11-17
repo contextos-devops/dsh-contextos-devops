@@ -73,7 +73,7 @@
 | `DOCTRINE.md` | 108 | 三纲五常 / 四件套 / 抽象递减 | 判断方向 | 具体做法 → `../AGENTS.md` |
 | `RSI-CONSTITUTION.md` | 111 | 十二条运行期法则 | 任何 AI 对话 | 落地流程 → `../AGENTS.md` §二 |
 | `DIAGNOSTICS.md` | 105 | 出问题先查哪、先跑哪 | 有故障 | 历史坑 → `RSI-LEDGER.md` |
-| `DESIGN-SYSTEM.md` | 359 | 视觉/组件/表单/UI 不变量 | 任何界面改动 | 产品取舍 → `PRODUCT-DESIGN.md` |
+| `DESIGN-SYSTEM.md` | 361 | 视觉/组件/表单/UI 不变量 | 任何界面改动 | 产品取舍 → `PRODUCT-DESIGN.md` |
 | `INTERFACE.md` | 419 | 五种形态/认证/PM 排序 | 接口设计与排障 | URL 形状 → `URL-SPEC.md` |
 | `URL-SPEC.md` | 243 | 两类 URL 与禁止清单 | 构造 URL 前 | 接口语义 → `INTERFACE.md` |
 | `CODE-GEN.md` | 424 | 代码生成规范与工厂要点 | factory 模式 | 架构 → `ARCHITECTURE.md` |
