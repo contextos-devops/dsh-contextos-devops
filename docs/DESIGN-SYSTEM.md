@@ -317,16 +317,18 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 - 渲染只走 `T('…')`；带变量用 `TT('已更新 {kind}', { kind })`，模板两边都要词条。
 - 缺词条或把中文写进 `title/label/placeholder/desc`，`npm run check:i18n` 会红（`i18n-lint`，直写中文按基线只减不增）。
 
-### 20.4 门禁（`scripts/css-check.mjs`，构建链第 8 道）
+### 20.4 门禁
 
-`tokens.css` 只准 `:root`/`.cx-shell` 选择器；每个 `var(--cx-*)` 必须已声明或属运行时令牌；`main.css` 走棘轮
-（字面量色 ≤562、`rgba(` ≤302、`!important` ≤689、重复率 ≤72.8%、行数 ≤3400，只降不升）；死类只 WARN。
-调高基线必须在报告里写「旧上限为什么不够」，否则视为放宽断言（AGENTS §六 红线 13）。
+`scripts/css-check.mjs`：tokens 只准 `:root/.cx-shell`；main.css 的字面量颜色/`!important`/重复声明按基线只减不增；`var(--cx-*)` 必须已定义或有 fallback；死类只 WARN。
 
 ### 20.5 六类扩展的固定入口
 
 加页面/组件/状态/接口/样式/动效，先 `npm run new -- <kind> <Name>`，再按 `docs/EXTENDING.md` 补接线；
 动效验收 `node scripts/ui-probe.mjs --case anim`（量 `animationName`/`animationDuration`）。
+
+### 20.8 交互控件
+
+确认 `cxAsk`+`CxConfirmHost`；候选输入 `CxCombo`；日期时间 `CxDateTime`（值 `YYYY-MM-DD HH:mm:ss`）。禁 `window.confirm`/`datalist`/`type=date`；门禁 `ui-check` 三条、`ui-probe datetime-pop`。
 
 ### 20.7 滚动时的分节标题
 

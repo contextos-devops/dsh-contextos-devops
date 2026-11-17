@@ -512,3 +512,14 @@ gate added so the same bug cannot return silently
 - 固化: `00-prelude` 的 href 版本跟随（自动生效）+ `clientCheck` 的 `build`/`css`/`layout` 字段（可判定）。
   缺口：静态门禁仍无法断言「页面上已挂载的旧 link」，列为 §8.2 第 ③ 步的待升级项。
 - Lesson: 版本化资源不仅要换 URL，还要**改写已经挂在 DOM 上的旧 URL**；热重载场景下，DOM 生命周期比模块长。
+
+## 2026-11-17 — 英文模式下弹窗里冒出中文：i18n 只有单向词典
+
+- 根因：i18n 层（`00-prelude.js`）只有 `EN_TEXT`（中文 key → 英文），文案源全部是中文；
+  英文模式遇到未登记中文就直接漏出，中文模式遇到英文 key 也没有反查表 → 弹窗标题/字段/提示与「更多」菜单两侧同时错。
+- 类别：文案/国际化（同类第 1 次）
+- 固化：`T` 改双向（新增 `ZH_TEXT` + `TT` 模板）；新增 `scripts/i18n-lint.mjs` 进 `build:client`
+  （A 硬校验每个 `T/TT` key 有词条、B 直写中文按 `scripts/i18n-baseline.json` 棘轮只减不增）；
+  `AGENTS.md` §六 增第 14 条铁律「界面文案英文优先」；`DESIGN-SYSTEM.md` §20.3 记写法。
+- 数字：缺词条 0 条（原英文模式可见中文 3 处：弹窗标题/字段/必填提示 + 菜单 1 处）；
+  直写中文 109 处纳入基线，只降不升。

@@ -149,7 +149,7 @@
 | `docs/AI-CONVERSATION.md` | 140 | 人写 |
 | `docs/ARCHITECTURE.md` | 135 | 人写 |
 | `docs/CODE-GEN.md` | 424 | 人写 |
-| `docs/DESIGN-SYSTEM.md` | 361 | 人写 |
+| `docs/DESIGN-SYSTEM.md` | 363 | 人写 |
 | `docs/DESIGN.md` | 123 | 人写 |
 | `docs/DIAGNOSTICS.md` | 105 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |
@@ -165,6 +165,6 @@
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
 | `docs/PUBLISH.md` | 172 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
-| `docs/RSI-LEDGER.md` | 136 | 人写 |
+| `docs/RSI-LEDGER.md` | 128 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 243 | 人写 |

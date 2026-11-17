@@ -12,17 +12,6 @@ Workflow: 目标 → 计划（时间/金钱预期）→ 分析决策 → 任务�
 
 Each entry records: lesson → reusable abstraction → verification.
 
-## 2026-11-17 — 英文模式下弹窗里冒出中文：i18n 只有单向词典
-
-- 根因：i18n 层（`00-prelude.js`）只有 `EN_TEXT`（中文 key → 英文），文案源全部是中文；
-  英文模式遇到未登记中文就直接漏出，中文模式遇到英文 key 也没有反查表 → 弹窗标题/字段/提示与「更多」菜单两侧同时错。
-- 类别：文案/国际化（同类第 1 次）
-- 固化：`T` 改双向（新增 `ZH_TEXT` + `TT` 模板）；新增 `scripts/i18n-lint.mjs` 进 `build:client`
-  （A 硬校验每个 `T/TT` key 有词条、B 直写中文按 `scripts/i18n-baseline.json` 棘轮只减不增）；
-  `AGENTS.md` §六 增第 14 条铁律「界面文案英文优先」；`DESIGN-SYSTEM.md` §20.3 记写法。
-- 数字：缺词条 0 条（原英文模式可见中文 3 处：弹窗标题/字段/必填提示 + 菜单 1 处）；
-  直写中文 109 处纳入基线，只降不升。
-
 ## 2026-11-17 — 逐行优化：重复代码只减不增
 
 - 根因：逻辑层——同一能力在多处各写一遍（模板、HTTP 断言、vimer 写入、图像缩放、PM 筛选状态、状态序数组），改一处忘一处。
@@ -64,6 +53,9 @@ Each entry records: lesson → reusable abstraction → verification.
 - **数字**：`font-size:<px>` 74 → **0**；未定义令牌 7 个（`--cx-panel-2/--cx-text-2/--cx-text-3/--cx-fg/--cx-dim/--cx-mut/--cx-rose`）→ 0（补别名）；
   同选择器重复声明 −103 条；CSS 文件 2 → 5 个（tokens 298 / base 75 / layout 50 / kit 119 / main 3395）；
   门禁 14 → 15 道，`build:client` exit 0。
+
+## 2026-11-17 · 原生控件与自绘样式两套语言
+- 现象：确认/候选/时间用的是浏览器原生控件，与应用风格割裂；根因：控件层（级联层第 3 次）。固化：`cxAsk`+`CxConfirmHost`、`CxCombo`、`CxDateTime` + `ui-probe datetime-pop`。数字：4→0、1→0、2→0。
 
 ## 归档（只读）
 
