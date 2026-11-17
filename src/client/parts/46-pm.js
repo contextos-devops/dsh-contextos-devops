@@ -24,7 +24,7 @@
         ...(kind === 'report' ? ['report_type'] : []),
         ...(kind === 'feedback' ? ['score', 'feedback_status'] : []),
       ]);
-      const fieldLabels = { title: '标题', content: '内容', begin: '开始时间', end: '结束时间', report_type: '报告类型', score: '评分', feedback_status: '反馈状态' };
+      const fieldLabels = { title: 'Title', content: 'Content', begin: 'Start', end: 'End', report_type: 'Report type', score: 'Score', feedback_status: 'Feedback status' };
       const fieldInflight = useRef(new Set());
       const loadField = useCallback(async (field) => {
         if (!node || !project?.space || fieldOpts[field] || fieldInflight.current.has(field)) return;
@@ -47,7 +47,7 @@
       const control = (field, value, setValue, { full = false, type = 'text', multiline = false } = {}) => {
         const opts = fieldOpts[field]?.options || [];
         const metaLabel = fieldOpts[field]?.field_label;
-        const label = (metaLabel && metaLabel !== field && /[^\x00-\x7F]/.test(metaLabel)) ? metaLabel : (fieldLabels[field] || metaLabel || field);
+        const label = T((metaLabel && metaLabel !== field && /[^\x00-\x7F]/.test(metaLabel)) ? metaLabel : (fieldLabels[field] || metaLabel || field));
         const required = requiredFields.has(field);
         const common = { className: 'cx-input', value, onFocus: () => loadField(field), 'aria-required': required || undefined };
         const input = selectFields.has(field)
@@ -83,8 +83,8 @@
           onDone();
         } catch (e) { setErr(String(e?.message || e)); } finally { setBusy(false); }
       };
-      return h(Modal, { title: `${mode === 'edit' ? T('编辑') : T('新建')} ${PM_KIND_LABEL[kind] || kind}`, desc: parent ? '继承当前选择作为上级 UID' : '', onClose },
-        h('div', { className: 'cx-form-hint' }, h('b', null, '*'), ' 为必填；输入时自动从接口 inputs 获取候选值，select 字段只能从下拉列表选择。'),
+      return h(Modal, { title: `${T(mode === 'edit' ? 'Edit' : 'New')} ${T(PM_KIND_LABEL[kind] || kind)}`, desc: parent ? T('Inherits the current selection as the parent UID') : '', onClose },
+        h('div', { className: 'cx-form-hint' }, h('b', null, '*'), ' ', T('Required; candidates come from the inputs API, select fields accept list values only.')),
         h('div', { className: 'cx-form' },
           control('title', title, setTitle, { full: true }),
           control('content', content, setContent, { full: true, multiline: true }),
@@ -93,7 +93,7 @@
           kind === 'report' ? control('report_type', reportType, setReportType, { full: true }) : null,
           kind === 'feedback' ? control('score', score, setScore) : null,
           kind === 'feedback' ? control('feedback_status', feedbackStatus, setFeedbackStatus) : null),
-        missing.length ? h('div', { className: 'cx-form-warn' }, `还有 ${missing.length} 个必填项未填写`) : null,
+        missing.length ? h('div', { className: 'cx-form-warn' }, TT('还有 {n} 个必填项未填写', { n: missing.length })) : null,
         err ? h(ErrorBox, { text: err }) : null,
         h('div', { className: 'cx-foot' }, h('button', { className: 'cx-btn', onClick: onClose }, T('取消')), h('button', { className: 'cx-btn pri', disabled: busy || missing.length > 0, onClick: submit }, busy ? T('保存中…') : mode === 'edit' ? T('保存') : T('创建'))));
     }

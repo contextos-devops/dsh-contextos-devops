@@ -1,4 +1,4 @@
-    const PM_KIND_LABEL = { target: '目标 TARGET', plan: '计划 PLAN', task: '任务 TASK', report: '报告 REPORT', feedback: '反馈 FEEDBACK' };
+    const PM_KIND_LABEL = { target: '目标', plan: '计划', task: '任务', report: '报告', feedback: '反馈' };
     const PM_SHORT = { target: '目标', plan: '计划', task: '任务', report: '报告', feedback: '反馈' };
     const PM_ACTION_LABEL = { planCreate: '+ 计划', taskCreate: '+ 任务', reportCreate: '+ 报告', feedbackCreate: '+ 反馈', submit: '提交', approve: '通过', reject: '驳回', process: '开始', finish: '完成', cancel: '取消', modify: '编辑', remove: '删除', handover: '交接', open: '打开链接' };
     // Shared PM card. Keep status/action presentation in one place so every

@@ -281,63 +281,48 @@ UiAddressBar {
 
 ## 20. 样式分层与结构原语（新增组件先读这一节）
 
-### 20.1 五层，只允许单向依赖
+### 20.1 六层，只允许单向依赖
 
 | 层 | 文件 | 只放什么 | 不许放什么 |
 | --- | --- | --- | --- |
 | 1 令牌 | `styles/tokens.css` | `--cx-*` 字面量（颜色/间距/字号/尺寸/圆角/阴影/层级/动效）+ 主题覆盖 | 任何组件类 |
 | 2 基座 | `styles/base.css` | 元素默认值（字体继承、标题、`table`、`code`、滚动条、焦点环） | 具体组件 |
-| 3 布局 | `styles/layout.css` | 结构类：`.cx-stack/.cx-row/.cx-col/.cx-grid`、`.cx-sec/.cx-hd/.cx-bd/.cx-ft`、`.cx-fill/.cx-scroll/.cx-center`、间距 utilities | 颜色/字号 |
-| 4 控件 | `styles/kit.css` | 控件默认值 + 变体：`.cx-btn(.pri/.danger/.ghost/.xs/.lg/.icon/.on)`、`.cx-input/.cx-select`、`.cx-field`、`.cx-chip`、`.cx-tag`、`.cx-tabs`、`.cx-list`、`.cx-panel`、`.cx-table`、`.cx-modal/.cx-mask/.cx-menu` | 业务布局 |
-| 5 业务 | `styles/main.css` | 只写「这个功能独有」的定位/网格/尺寸例外 | 重复的字体、颜色、圆角、间距 |
+| 3 布局 | `styles/layout.css` | `.cx-stack/.cx-row/.cx-col/.cx-grid`、`.cx-sec/.cx-hd/.cx-bd/.cx-ft`、`.cx-fill/.cx-scroll/.cx-center`、间距工具类 | 颜色/字号 |
+| 4 控件 | `styles/kit.css` | `.cx-btn(.pri/.danger/.ghost/.xs/.lg/.icon/.on)`、`.cx-input/.cx-select`、`.cx-field`、`.cx-chip`、`.cx-tag`、`.cx-tabs`、`.cx-list`、`.cx-panel`、`.cx-table`、`.cx-modal/.cx-mask/.cx-menu` | 业务布局 |
+| 5 动效 | `styles/motion.css` | `--cx-dur-*` 驱动的 `.cx-anim-*`；`prefers-reduced-motion` 一次关掉 | 业务动画 |
+| 6 业务 | `styles/main.css` | 只写「这个功能独有」的定位/网格/尺寸例外 | 重复的字体、颜色、圆角、间距 |
 
-依赖方向：`main → kit → layout → base → tokens`。反方向（令牌引用组件、kit 里写业务类）一律不接受。
+依赖方向：`main → motion → kit → layout → base → tokens`；反方向一律不接受。
 
 ### 20.2 新组件的默认写法
 
-先在 `07-kit.js` 里找现成原语，用它们拼结构，不要再写 `className`：
+先在 `07-kit.js` 找原语拼结构，不写 `className`：
 
 ```js
-// 段落 + 字段 + 按钮：类名全部由原语给出
-h(CxSection, { title: T('部署节点'), actions: h(CxBtn, { size: 'sm', onClick: reload }, T('刷新')) },
+h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick: reload }, T('Refresh')) },
   h(CxRow, { gap: 3 },
-    h(CxField, { label: T('端口') }, h(CxInput, { value: port, onChange: onPort })),
-    h(CxField, { label: T('名称') }, h(CxInput, { value: name, onChange: onName }))),
+    h(CxField, { label: T('Port') }, h(CxInput, { value: port, onChange: onPort })),
+    h(CxField, { label: T('Name') }, h(CxInput, { value: name, onChange: onName }))),
   h(CxToggle, { tabs: MODES, value: mode, onChange: setMode }));
 ```
 
-| 原语 | 位置 | 作用 |
-| --- | --- | --- |
-| `CxStack/CxRow/CxCol` | `07-kit.js` | 纵向/横向/列布局，`gap` 走 `--cx-g1..g5` |
-| `CxSection` | 同上 | 段落：标题 / 副标题 / 右侧动作 / 内容区 |
-| `CxField` | 同上 | 表单字段：标签 + 控件 + 提示，`full` 占满一行 |
-| `CxBtn` | 同上 | 按钮：`variant`（primary/danger/ghost）+ `size`（sm/md/lg）+ `icon/active/loading` |
-| `CxInput/CxSelect` | 同上 | 输入/下拉默认值 |
-| `CxChip/CxTabs` | 同上 | 胶囊与页签 |
-| `CxToggle/CxSegmented`（待抽） | 同上 | 平铺分组控件 |
+原语：`CxStack/CxRow/CxCol`（布局，`gap` 走 `--cx-g1..g5`）、`CxSection`（标题/副标题/动作/内容）、`CxField`（标签+控件+提示，`full` 独占一行）、`CxBtn`（`variant`+`size`+`icon/active/loading`）、`CxInput/CxSelect`、`CxChip/CxTabs`、`CxToggle`（平铺分组，待抽 `CxSegmented`）。
 
-需要新样式时的顺序：① 能不能用已有类拼出来 → ② 能否给 `kit.css` 加一个**变体** → ③ 才在 `main.css` 写业务规则（且只写定位/网格）。
+要写新样式时：① 已有类能否拼出来 → ② 能否给 `kit.css` 加**变体** → ③ 才在 `main.css` 写业务规则（且只写定位/网格）。
 
-### 20.3 门禁（`scripts/css-check.mjs`，构建链第 8 道）
+### 20.3 文案（铁律：英文优先）
 
-| 规则 | 判据 |
-| --- | --- |
-| 令牌层纯净 | `tokens.css` 只准 `:root` / `.cx-shell` 选择器 |
-| 不新增重复 | `main.css` 字面量色 ≤562、`rgba(` ≤302、`!important` ≤689、重复声明率 ≤72.8%、行数 ≤3400（棘轮，只降不升） |
-| 令牌有效 | 每个 `var(--cx-*)` 必须已声明、带 fallback、或属于 JS 运行时令牌（`--cx-shell-*`、`--cx-a/--cx-b`…） |
-| 死类 | 只报 WARN，供清理参考 |
+- 新功能一律**英文 key**，中文进 `00-prelude.js` 的 `ZH_TEXT`；旧中文 key 靠 `EN_TEXT` 翻译并逐步迁移。
+- 渲染只走 `T('…')`；带变量用 `TT('已更新 {kind}', { kind })`，模板两边都要词条。
+- 缺词条或把中文写进 `title/label/placeholder/desc`，`npm run check:i18n` 会红（`i18n-lint`，直写中文按基线只减不增）。
 
-调高基线必须在报告里写清「为什么旧上限不够」，否则视为放宽断言（AGENTS §六 红线 13）。
+### 20.4 门禁（`scripts/css-check.mjs`，构建链第 8 道）
 
-### 20.4 动效层（第 6 个文件，`styles/motion.css`）
-
-动效不是"业务 CSS 的一部分"，它有自己的层，理由是：**时长/缓动要统一，且必须一次关掉**。
-
-令牌 `--cx-dur-fast(.12s)/--cx-dur(.18s)/--cx-dur-slow(.28s)` + `--cx-ease(-out/-spring)`；
-工具类 `.cx-anim-{fade,rise,pop,slide-left,slide-right,shake,spin}`、交错用 `.cx-anim-stagger` + `--cx-i`。
-`@media (prefers-reduced-motion: reduce)` 统一关闭，业务代码不要再写一份。
-验收：`node scripts/ui-probe.mjs --case anim`（量 `animationName`/`animationDuration`）。
+`tokens.css` 只准 `:root`/`.cx-shell` 选择器；每个 `var(--cx-*)` 必须已声明或属运行时令牌；`main.css` 走棘轮
+（字面量色 ≤562、`rgba(` ≤302、`!important` ≤689、重复率 ≤72.8%、行数 ≤3400，只降不升）；死类只 WARN。
+调高基线必须在报告里写「旧上限为什么不够」，否则视为放宽断言（AGENTS §六 红线 13）。
 
 ### 20.5 六类扩展的固定入口
 
-加页面 / 组件 / 状态 / 接口 / 样式 / 动效，先跑 `npm run new -- <kind> <Name>`，再按 `docs/EXTENDING.md` 的清单补接线。骨架负责位置与命名，门禁负责不漂移。
+加页面/组件/状态/接口/样式/动效，先 `npm run new -- <kind> <Name>`，再按 `docs/EXTENDING.md` 补接线；
+动效验收 `node scripts/ui-probe.mjs --case anim`（量 `animationName`/`animationDuration`）。

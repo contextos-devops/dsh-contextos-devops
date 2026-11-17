@@ -174,6 +174,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 | 11 | 不留测试垃圾 | 测试节点/空间/临时文件收尾清理 |
 | 12 | 不新增无归属文档 | 孤儿文档 `docs-check` 会红 |
 | 13 | 不放宽断言蒙混 | 断言放宽必须在报告里写清「为什么旧阈值是错的」 |
+| 14 | **界面文案英文优先** | 新文案写英文 key + `ZH_TEXT` 中文；中文 key 补 `EN_TEXT`；中文不许直写进 `title/label/placeholder/desc`。判据：`npm run check:i18n`（`i18n-lint`） |
 
 ---
 

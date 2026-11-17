@@ -53,7 +53,7 @@
 
 | 片段 | 行数 | 主要定义 |
 | --- | ---: | --- |
-| `src/client/parts/00-prelude.js` | 322 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
+| `src/client/parts/00-prelude.js` | 433 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
 | `src/client/parts/05-bootstrap.js` | 66 | `apiTrace` `QUERY_OPS` |
 | `src/client/parts/07-kit.js` | 66 | `cxCx` `CxStack` `CxRow` `CxCol` `CxSection` `CxField` `CX_BTN_VARIANT` `CX_BTN_SIZE` `CxBtn` `CxInput` |
 | `src/client/parts/08-store.js` | 86 | — |
@@ -108,6 +108,7 @@
 | `scripts/gate.mjs` | 构建门禁：产物哈希/语法/CSS 版本/规范断言 |
 | `scripts/hook-order-check.mjs` | hook 依赖数组的 TDZ |
 | `scripts/i18n-check.mjs` | 中英文案键与大小写 |
+| `scripts/i18n-lint.mjs` | — |
 | `scripts/install-check.mjs` | — |
 | `scripts/ledger-stats.mjs` | — |
 | `scripts/load-check.mjs` | — |
@@ -136,7 +137,7 @@
 | `npm run catalog:pr` | node scripts/catalog-pr.mjs |
 | `npm run publish:npm` | node scripts/publish-npm.mjs |
 | `npm run new` | node scripts/scaffold.mjs |
-| `npm run check:<名>` | 单跑某道门禁：ui / css / probe / context / i18n / hooks / ops / install / store / docs / load / budget / publish / prompt / extend / dup |
+| `npm run check:<名>` | 单跑某道门禁：ui / css / probe / context / i18n / hooks / ops / install / store / docs / load / budget / publish / prompt / extend / dup / i18n-lint |
 
 ## 6. 文档
 
@@ -147,7 +148,7 @@
 | `docs/AI-CONVERSATION.md` | 140 | 人写 |
 | `docs/ARCHITECTURE.md` | 135 | 人写 |
 | `docs/CODE-GEN.md` | 424 | 人写 |
-| `docs/DESIGN-SYSTEM.md` | 344 | 人写 |
+| `docs/DESIGN-SYSTEM.md` | 329 | 人写 |
 | `docs/DESIGN.md` | 123 | 人写 |
 | `docs/DIAGNOSTICS.md` | 105 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |
@@ -162,6 +163,6 @@
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
 | `docs/PUBLISH.md` | 172 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
-| `docs/RSI-LEDGER.md` | 114 | 人写 |
+| `docs/RSI-LEDGER.md` | 125 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 243 | 人写 |

@@ -30,7 +30,7 @@
             x: Math.round(r.left),
             right: Math.round((window.innerWidth || 1200) - r.right),
             y: Math.round(Math.min(r.bottom + 4, (window.innerHeight || 800) - 300)),
-            title: '更多',
+            title: T('More'),
             icon: 'more',
             items: (items || []).map((it) => (it.sep ? { sep: true } : { label: T(it.label), icon: it.icon || 'chevronRight', url: it.url || '', danger: !!it.danger, open: !!it.open, openable: !!it.openable, go: () => it.action() })),
           } }));
