@@ -87,8 +87,7 @@
 .cx-error-actions{display:flex;gap:var(--cx-sp-4)}
 
 /* ── 弹层 / 菜单 ──────────────────────────────────────────────────────────── */
-.cx-mask{position:fixed;inset:0;z-index:var(--cx-z-modal);display:flex;align-items:center;justify-content:center;background:rgba(2,8,14,.66);backdrop-filter:blur(2px)}
-.cx-modal{display:flex;flex-direction:column;max-width:min(720px,92vw);max-height:84vh;border:1px solid var(--cx-border-strong);border-radius:var(--cx-r-md);background:var(--cx-surface-1);box-shadow:var(--cx-shadow-2);overflow:hidden}
+.cx-mask{position:absolute;inset:0;z-index:var(--cx-z-modal);display:flex;align-items:center;justify-content:center;background:rgba(2,8,14,.66);backdrop-filter:blur(2px)}
 .cx-menu{position:absolute;z-index:var(--cx-z-menu);display:flex;flex-direction:column;padding:var(--cx-sp-1);border:1px solid var(--cx-border-strong);border-radius:var(--cx-r-sm);background:var(--cx-surface-1);box-shadow:var(--cx-shadow-2)}
 
 /* ── 表格 ─────────────────────────────────────────────────────────────────── */

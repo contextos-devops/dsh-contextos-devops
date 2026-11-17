@@ -149,7 +149,7 @@
 | `docs/CODE-GEN.md` | 424 | 人写 |
 | `docs/DESIGN-SYSTEM.md` | 344 | 人写 |
 | `docs/DESIGN.md` | 123 | 人写 |
-| `docs/DIAGNOSTICS.md` | 98 | 人写 |
+| `docs/DIAGNOSTICS.md` | 105 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |
 | `docs/DSH-COS.md` | 114 | 人写 |
 | `docs/EXTENDING.md` | 135 | 人写 |

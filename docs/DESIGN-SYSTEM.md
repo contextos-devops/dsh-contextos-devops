@@ -270,14 +270,14 @@ UiAddressBar {
 
 ## 19. UI 不变量（回归清单）
 
-- 消息布局固定为 `avatar | main(meta 在上、body 在下)`；`.cx-msg-main` 必须是列 flex，body 满宽。
+- 消息布局 `avatar | main(meta 上、body 下)`；`.cx-msg-main` 列 flex、body 满宽。
 - 消息工具条在 meta 行右端，`margin-left:auto`，默认 `opacity:0`、悬停显示（不占额外行、不跳行）。
-- 请求上下文只有 `scene` 一个来源；`background`/`bg` 在发送边界剥离。
-- 调试四个页签同一行，页签条 sticky。
-- 表头固定布局、KEY 列稳定、长值换行；详情面板高度随内容，不强制整屏。
-- 同一区块不出现重复标题（如 REQUEST 之上再一个「请求信息」）。
+- 请求上下文只有 `scene`；`background`/`bg` 发送前剥离。
+- 调试四页签同一行，页签条 sticky；同一区块不出现重复标题。
+- 表头固定、KEY 列稳定、长值换行；详情高度随内容。
 - 加载/空/错误/长文本四态必须显式。
-- 输入框最左的 ContextOS 芯片是**多级列表**入口（服务节点 → 项目空间 → 最近应用，三列并排、向上展开），选中即写入会话配置；标题栏右侧不再放第二入口。
+- 输入框最左芯片是**多级列表**入口（节点 → 空间 → 最近应用，三列、向上展开），选中写会话配置；标题栏不放第二入口。
+- **遮罩不越界**：`.cx-mask/.cx-modal/.cx-init/.cx-toast/.cx-busy-overlay` 用 `position:absolute`，定位上下文是 `.cx-shell`；宿主与插件共用 document，`fixed` 会盖住侧栏。门禁 `ui-probe --case modal-scope`。
 
 ## 20. 样式分层与结构原语（新增组件先读这一节）
 

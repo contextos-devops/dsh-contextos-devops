@@ -88,6 +88,24 @@ const CASES = [
     },
   },
   {
+    name: 'modal-scope',
+    fixture: 'scripts/fixtures/modal-scope.html',
+    window: '1200,600',
+    sels: ['#shell', '#host-side', '.cx-modal', '.cx-modal .cx-card'],
+    assert: (m) => {
+      const shell = m['#shell'], side = m['#host-side'], modal = m['.cx-modal'], card = m['.cx-modal .cx-card'];
+      const dx = Math.abs((modal?.x || 0) - (shell?.x || 0));
+      const dw = Math.abs((modal?.w || 0) - (shell?.w || 0));
+      return [
+        [!!modal && modal.position === 'absolute', '遮罩绝对定位（不再 fixed 盖住宿主）', modal?.position],
+        [dx <= 1, '遮罩左边界与插件区域对齐（不压住宿主侧边栏）', `差 ${dx.toFixed(1)}px`],
+        [dw <= 1, '遮罩宽度等于插件区域宽度', `${(modal?.w || 0).toFixed(0)}px vs ${(shell?.w || 0).toFixed(0)}px`],
+        [!!side && !!modal && (modal.x || 0) >= (side.right || 0) - 1, '宿主侧边栏未被遮罩覆盖', `遮罩左 ${(modal?.x || 0).toFixed(0)}px ≥ 侧栏右 ${side?.right || 0}px`],
+        [!!card && card.w <= (shell?.w || 0), '弹窗卡片不超出插件区域', `${(card?.w || 0).toFixed(0)}px`],
+      ];
+    },
+  },
+  {
     name: 'anim',
     fixture: 'scripts/fixtures/anim.html',
     window: '520,320',
@@ -115,10 +133,12 @@ window.__PROBE_SELS__ = __SELS__;
       if (!n) { out[sel] = null; return; }
       var r = n.getBoundingClientRect();
       var c = getComputedStyle(n);
+      var off = n.offsetParent ? n.offsetParent.getBoundingClientRect() : null;
       out[sel] = {
         x: +r.x.toFixed(1), y: +r.y.toFixed(1), w: +r.width.toFixed(1), h: +r.height.toFixed(1), right: +r.right.toFixed(1),
         display: c.display, flexDirection: c.flexDirection, marginLeft: c.marginLeft, opacity: c.opacity,
-        fontSize: c.fontSize, lineHeight: c.lineHeight,
+        fontSize: c.fontSize, lineHeight: c.lineHeight, position: c.position,
+        left: +(off ? r.left - off.left : r.left).toFixed(1),
         animationName: c.animationName, animationDuration: c.animationDuration
       };
     });

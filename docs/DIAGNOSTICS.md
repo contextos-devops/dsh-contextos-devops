@@ -24,6 +24,7 @@ npm run verify:ui                    # 真浏览器验收（需 Edge CDP 9223）
 | 折叠后卡片还是很长 | A 布局 | 本文件 §二.3 | `npm run check:probe -- --case pm-folded` | `ui-probe`：折叠 ≤60px、展开仍 ≥200px |
 | 悬停/交互状态无法离线验证 | A 布局 | 本文件 §二.4 | 用 `!important` 注入类名把两态拆开 | 无需断言：把判定交给 `clientCheck.layout` 的 `opacity` |
 | 插件整体不加载 / 白屏 | B 加载 | `RSI-LEDGER.md` 2026-11-15 加载失败条目 | `node scripts/load-check.mjs` | `load-check`：清单 vs 目录哈希 + factory 试执行 |
+| 弹窗/遮罩盖住宿主侧边栏 | A 布局 | 本文件 §二.5 | `npm run check:probe -- --case modal-scope` | `ui-probe`：遮罩 `absolute`、左边界=插件区、不覆盖侧栏 |
 | 宿主界面被插件带歪 | A 布局（污染） | `main.css` 顶部令牌区 | `grep -n ":root" src/client/styles/*.css` | gate 第 12 项：`:root` 只准 `--cx-*` |
 | 接口 404 / 405 / 静默失败 | C 接口 | `INTERFACE.md`、`URL-SPEC.md` | `npm run check:ops`；`curl` 回执 | `op-check`：客户端每个 `api('x')` 都有 op；方法门一致 |
 | 刷新后状态丢了 | D 持久化 | `STATE.md` | `grep -n "localStorage" src/client/parts/*.js` | `store-check`：棘轮 + schema 登记 |
@@ -63,6 +64,12 @@ CSS 只负责外观。理由：客户端样式表可能被旧缓存命中（见 
 
 并且 `ui-probe` 的 `pm-folded` 用例**同时**断言折叠 ≤60px 与展开 ≥200px，
 防止「为了折叠把展开也压扁」。
+
+### 二.5 遮罩不能越出插件区域
+
+插件与宿主共用 document：`position:fixed;inset:0` 会盖住宿主导航。定位上下文放 `.cx-shell`（`relative`），
+遮罩用 `absolute;inset:0`；卡片宽高用 `calc(100% - 36px)`，不用 `100vw/100vh`。
+判据：`check:probe -- --case modal-scope`。
 
 ### 二.4 离线渲染的已知偏差
 
