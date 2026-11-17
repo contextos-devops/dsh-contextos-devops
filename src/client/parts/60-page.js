@@ -119,7 +119,7 @@
         if (!m) return id;
         return locale === 'zh' ? m.name : ({ avatar: 'Digital Avatar', factory: 'Software Factory', iot: 'Cyber World' }[m.id] || m.id);
       };
-      const pipeViewLabel = (id) => (locale === 'zh' ? ({ chat: '对话', manage: '管理', dev: '开发' }[id] || id) : String(id || '').toUpperCase());
+      const pipeViewLabel = (id) => (locale === 'zh' ? ({ chat: '对话', manage: '管理', dev: '开发', monitor: '监控', ecom: '电商' }[id] || id) : String(id || '').toUpperCase());
       const openPipe = (e, title, items, icon) => {
         try { e.stopPropagation(); e.preventDefault(); } catch {}
         const r = e.currentTarget.getBoundingClientRect();
@@ -1335,14 +1335,14 @@
       const buildSpace = (sp) => act(`BUILD ${sp}`, async () => { await api('buildSpace', { node, space: sp }); await loadApps(node, sp, actorUid); });
       const startNode = (port) => act(`START :${port}`, async () => { await api('start', { port }); await loadNodes(); });
       const stopNode = (port) => act(`STOP :${port}`, async () => { await api('stop', { port }); await loadNodes(); });
-      const deleteNode = (port) => {
-        if (!window.confirm(`删除节点 :${port}？目录和台账都会删除。`)) return;
+      const deleteNode = async (port) => {
+        if (!(await cxAsk(`删除节点 :${port}？目录和台账都会删除。`))) return;
         act(`DELETE :${port}`, async () => { await api('deleteNode', { port }); await loadNodes(); });
       };
       const startSpace = (sp) => act(`START ${sp}`, async () => { await api('spaceStart', { node, space: sp }); await loadSpaces(node); });
       const stopSpace = (sp) => act(`STOP ${sp}`, async () => { await api('spaceStop', { node, space: sp }); await loadSpaces(node); });
-      const deleteSpace = (sp) => {
-        if (!window.confirm(`删除项目空间 ${sp}？目录和记录都会删除。`)) return;
+      const deleteSpace = async (sp) => {
+        if (!(await cxAsk(`删除项目空间 ${sp}？目录和记录都会删除。`))) return;
         act(`DELETE ${sp}`, async () => { await api('deleteSpace', { node, space: sp }); await loadSpaces(node); await loadApps(node, '', actorUid); });
       };
       const deployOfficial = (keys) => act(`DEPLOY OFFICIAL ${keys.join(',')}`, async () => {
@@ -1457,6 +1457,7 @@
         h('style', null, CRITICAL_CSS),
         h('div', { className: 'cx-water', 'aria-hidden': 'true' }, Array.from({ length: 3 }, (_, i) => h('i', { key: i, style: { left: ['18%', '62%', '84%'][i], top: ['72%', '26%', '58%'][i], animationDelay: `${i * 2.2}s` } }))),
         h(CursorComet),
+        h(CxConfirmHost),
         pipeMenu ? h('div', { className: 'cx-pipe-menu-fixed', style: pipeMenu.right != null ? { right: pipeMenu.right, top: pipeMenu.y } : { left: pipeMenu.x, top: pipeMenu.y }, onClick: (e) => e.stopPropagation() },
           pipeMenu.title ? h('div', { className: 'cx-pipe-menu-title' }, pipeMenu.title) : null,
           // 菜单开着的时候网页标签也可能变化（如「关闭所有网页」），这里实时计算打开状态
@@ -1472,7 +1473,7 @@
                 `v__CLIENT_CSS_VERSION__`),
               upd && upd.hasUpdate ? h('span', { className: 'cx-ver-tag', title: upd.checkedAt || '' }, `→ v${upd.latest}`) : null))),
           h('div', { className: 'cx-views' },
-            [['chat', '对话', 'CHAT'], ['manage', '管理', 'MANAGE'], ['dev', '开发', 'DEV'], ['monitor', '监控', 'MONITOR']].map(([k, zh, en]) =>
+            [['chat', '对话', 'CHAT'], ['manage', '管理', 'MANAGE'], ['dev', '开发', 'DEV'], ['monitor', '监控', 'MONITOR'], ['ecom', '电商', 'ECOM']].map(([k, zh, en]) =>
               h(UiAffordance, { key: k, as: 'button', icon: k, zh: locale === 'zh' ? zh : en, en: locale === 'zh' ? en : '', mode: 'short', className: `cx-view${viewMode === k ? ' on' : ''}`, onClick: () => setViewMode(k), title: zh + ' / ' + en }))),
           h('div', { className: 'cx-actions' },
             h(DropSelect, { value: fx.sound, title: '声效', onChange: (v) => fxSet('sound', v), options: [{ value: 'soft', label: T('柔和') }, { value: 'cs', label: T('CS 风') }, { value: 'ra', label: T('红警风') }, { value: 'wow', label: T('魔兽风') }, { value: 'sc2', label: T('星际风') }, { value: 'chip', label: T('8-bit') }, { value: 'off', label: T('静音') }] }),
@@ -1507,10 +1508,11 @@
             h(UiAffordance, { as: 'button', icon: 'avatar', zh: t('avatar'), mode: 'short', onClick: (e) => openPipe(e, t('avatar'), (avatarData.items || []).map((a) => ({ label: a.name || a.uid, on: a.uid === avatar?.uid, go: () => chooseAvatar(a) })), 'avatar'), className: 'cx-chip', title: t('avatar') }, h('b', null, avatar?.name || '—')),
             h(UiAffordance, { as: 'button', icon: 'image', zh: t('scene'), mode: 'short', onClick: (e) => openPipe(e, t('scene'), (bgData.items || []).map((b) => ({ label: b.name, on: b.id === bg?.id, go: () => chooseBg(b) })), 'image'), className: 'cx-chip', title: `${t('scene')}: ${bg?.name || T('默认')}` }, h('b', null, bg?.name || T('默认'))),
             h(UiAffordance, { as: 'button', icon: 'factory', zh: t('mode'), mode: 'short', onClick: (e) => openPipe(e, t('mode'), CHAT_MODES.map((m) => ({ label: pipeModeLabel(m.id), on: m.id === workMode, go: () => setWorkMode(m.id) })), 'factory'), className: 'cx-chip', title: t('mode') }, h('b', null, pipeModeLabel(workMode))),
-            h(UiAffordance, { as: 'button', icon: 'layers', zh: t('view'), mode: 'short', onClick: (e) => openPipe(e, t('view'), [['chat', '对话'], ['manage', '管理'], ['dev', '开发']].map(([k, zh]) => ({ label: pipeViewLabel(k), on: k === viewMode, go: () => setViewMode(k) })), 'layers'), className: 'cx-chip', title: t('view') }, h('b', null, pipeViewLabel(viewMode))))),
+            h(UiAffordance, { as: 'button', icon: 'layers', zh: t('view'), mode: 'short', onClick: (e) => openPipe(e, t('view'), [['chat', '对话'], ['manage', '管理'], ['dev', '开发'], ['monitor', '监控'], ['ecom', '电商']].map(([k, zh]) => ({ label: pipeViewLabel(k), on: k === viewMode, go: () => setViewMode(k) })), 'layers'), className: 'cx-chip', title: t('view') }, h('b', null, pipeViewLabel(viewMode))))),
         error ? h('div', { className: 'cx-err' }, error) : null,
         h('div', { className: `cx-chat-host${chatFull ? ' full' : ''}`, style: viewMode === 'chat' ? null : { display: 'none' } }, h(ChatPanel, { ...chatProps, docked: !chatFull, onWebFocus: setWebFocus })),
         devMounted ? h('div', { className: 'cx-dev-host', style: viewMode === 'dev' ? null : { display: 'none' } }, h(DevWorkspace, { locale, node, space, bg, theme, active: viewMode === 'dev', nodes, spaces, projects: ideProjects, activeKey: ideActive, onSelectProject: selectIdeProject, onCloseProject: closeIdeProject, onSelectNode: (p) => setNode(p), onSelectSpace: (sp) => setSpace(sp), onActiveFile: setIdeFile, requests: reqLog, onPick: openIde })) : null,
+        viewMode === 'ecom' ? h('div', { className: 'cx-ecom-host' }, h(EcomView, { locale })) : null,
         viewMode === 'monitor' ? h('div', { className: 'cx-monitor-host' },
           h(MonitorView, { nodes, spaces, apps, events, logs, reqLog, locale, onRefresh: () => loadNodes() })) : null,
         h('div', { className: `cx-body${busy ? ' busy' : ''}`, style: viewMode === 'manage' ? null : { display: 'none' } },

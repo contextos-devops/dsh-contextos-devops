@@ -1,8 +1,8 @@
     function PMModal({ kind, mode, item, parent, node, avatar, onClose, onDone }) {
       const [title, setTitle] = useState(item?.title || '');
       const [content, setContent] = useState(item?.content || '');
-      const [begin, setBegin] = useState(String(item?.begin_time || new Date().toISOString().slice(0, 10)).slice(0, 10));
-      const [end, setEnd] = useState(String(item?.end_time || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)).slice(0, 10));
+      const [begin, setBegin] = useState(String(item?.begin_time || `${new Date().toISOString().slice(0, 10)} 00:00:00`).slice(0, 19));
+      const [end, setEnd] = useState(String(item?.end_time || `${new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)} 00:00:00`).slice(0, 19));
       const [reportType, setReportType] = useState(item?.type_name || item?.report_type || 'daily');
       const [score, setScore] = useState(String(item?.score || 5));
       const [feedbackStatus, setFeedbackStatus] = useState(String(item?.feedback_status ?? item?.status_name ?? item?.status ?? ''));
@@ -57,11 +57,13 @@
         const input = selectFields.has(field)
           ? h('select', { ...common, onChange: (e) => setValue(e.target.value) },
               opts.length ? opts.map((o) => h('option', { key: String(o.value), value: String(o.value) }, optLabel(o))) : scoreFallback)
-          : h(React.Fragment, null,
-              multiline
-                ? h('textarea', { ...common, rows: 3, onChange: (e) => setValue(e.target.value) })
-                : h('input', { ...common, type, list: opts.length ? `cx-dl-${field}` : undefined, onChange: (e) => setValue(e.target.value) }),
-              opts.length ? h('datalist', { id: `cx-dl-${field}` }, opts.map((o) => h('option', { key: o.value, value: o.name || o.value }, o.label))) : null);
+          : type === 'datetime'
+            ? h(CxDateTime, { value, onChange: setValue })
+            : multiline
+              ? h('textarea', { ...common, rows: 3, onChange: (e) => setValue(e.target.value) })
+              : opts.length
+                ? h(CxCombo, { value, onChange: setValue, options: opts, placeholder: common.placeholder, required, onFocus: () => loadField(field) })
+                : h('input', { ...common, type, onChange: (e) => setValue(e.target.value) });
         return h('label', { className: `cx-field${full ? ' full' : ''}${required ? ' req' : ''}` },
           h('span', { className: 'cx-field-lb' }, label, required ? h('b', { className: 'cx-req' }, ' *') : null),
           input);
@@ -92,8 +94,8 @@
         h('div', { className: 'cx-form' },
           control('title', title, setTitle, { full: true }),
           control('content', content, setContent, { full: true, multiline: true }),
-          kind === 'plan' ? control('begin', begin, setBegin, { type: 'date' }) : null,
-          kind === 'plan' ? control('end', end, setEnd, { type: 'date' }) : null,
+          kind === 'plan' ? control('begin', begin, setBegin, { type: 'datetime' }) : null,
+          kind === 'plan' ? control('end', end, setEnd, { type: 'datetime' }) : null,
           kind === 'report' ? control('report_type', reportType, setReportType, { full: true }) : null,
           kind === 'feedback' ? control('score', score, setScore) : null,
           kind === 'feedback' ? control('feedback_status', feedbackStatus, setFeedbackStatus) : null),

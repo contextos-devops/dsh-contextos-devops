@@ -73,6 +73,7 @@
 
     const UI_ICONS = {
       monitor: ['M2.2 3.2h11.6v7.2H2.2z', 'M5.4 13.2h5.2', 'M8 10.4v2.8'],
+      ecom: ['M2 2.6h2.1l1.5 8.2h7.6l1.4-6H5.2', 'M6.4 13.4a.9.9 0 1 0 0-.1', 'M11.6 13.4a.9.9 0 1 0 0-.1'],
       sun: ['M8 5.4a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2z', 'M8 1.6v1.6', 'M8 12.8v1.6', 'M1.6 8h1.6', 'M12.8 8h1.6', 'M3.5 3.5l1.1 1.1', 'M11.4 11.4l1.1 1.1', 'M12.5 3.5l-1.1 1.1', 'M4.6 11.4l-1.1 1.1'],
       moon: ['M12.6 9.6A5.2 5.2 0 0 1 6.4 3.4a5.6 5.6 0 1 0 6.2 6.2z'],
       auto: ['M8 2.2a5.8 5.8 0 1 0 0 11.6A5.8 5.8 0 0 0 8 2.2z', 'M8 2.2v11.6'],
@@ -135,6 +136,122 @@
     }
     // 三态切换按钮：一个图标/文字按钮显示当前档，点击循环到下一档。
     // （三枚并排的分段太占标题栏宽度，改成单按钮「状态切换的图标」。）
+    // ── 确认对话框（抽象组件，替代 window.confirm）────────────────────────────
+    // 用法：if (!(await cxAsk('删除「x」？'))) return;
+    let askPending = null;
+    const askSubs = new Set();
+    function cxAsk(message, { ok = '', cancel = '', danger = true } = {}) {
+      return new Promise((resolve) => {
+        askPending = { message, ok, cancel, danger, resolve };
+        askSubs.forEach((fn) => fn());
+      });
+    }
+    function CxConfirmHost() {
+      const [, bump] = useState(0);
+      useEffect(() => { const fn = () => bump((n) => n + 1); askSubs.add(fn); return () => askSubs.delete(fn); }, []);
+      if (!askPending) return null;
+      const cur = askPending;
+      const settle = (v) => { askPending = null; askSubs.forEach((fn) => fn()); cur.resolve(v); };
+      return h('div', { className: 'cx-mask', onClick: () => settle(false) },
+        h('div', { className: 'cx-card cx-confirm', role: 'dialog', 'aria-modal': 'true', onClick: (e) => e.stopPropagation() },
+          h('div', { className: 'cx-confirm-msg' }, cur.message),
+          h('div', { className: 'cx-foot' },
+            h('button', { className: 'cx-btn', onClick: () => settle(false) }, T(cur.cancel || '取消')),
+            h('button', { className: `cx-btn pri${cur.danger ? ' danger' : ''}`, onClick: () => settle(true) }, T(cur.ok || '确定')))));
+    }
+
+    // ── 组合输入框（可输入 + 统一风格下拉，替代原生 datalist）──────────────
+    function CxCombo({ value, onChange, options, onFocus, placeholder, required }) {
+      const [open, setOpen] = useState(false);
+      const wrapRef = useRef(null);
+      const opts = options || [];
+      useEffect(() => {
+        if (!open) return;
+        const away = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+        const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+        document.addEventListener('mousedown', away);
+        document.addEventListener('keydown', esc);
+        return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
+      }, [open]);
+      const q = String(value ?? '').toLowerCase();
+      const shown = q ? opts.filter((o) => String(o.label ?? o.name ?? o.value).toLowerCase().includes(q)) : opts;
+      return h('div', { className: `cx-combo${open ? ' on' : ''}`, ref: wrapRef },
+        h('input', {
+          className: 'cx-input', value: value ?? '', placeholder, 'aria-required': required || undefined,
+          onFocus: () => { onFocus && onFocus(); setOpen(true); },
+          onChange: (e) => { onChange(e.target.value); setOpen(true); },
+        }),
+        h('button', { type: 'button', className: 'cx-combo-btn', 'aria-label': T('更多'), onClick: () => { onFocus && onFocus(); setOpen((v) => !v); } }, h(UiIcon, { name: 'chevronDown', size: 12 })),
+        open && shown.length ? h('div', { className: 'cx-drop-pop cx-combo-pop' },
+          shown.slice(0, 50).map((o) => h('button', {
+            key: String(o.value), type: 'button', className: `cx-combo-item${String(o.value) === String(value) ? ' on' : ''}`,
+            onClick: () => { onChange(String(o.label ?? o.name ?? o.value)); setOpen(false); },
+          }, T(String(o.label ?? o.name ?? o.value))))) : null);
+    }
+
+    // ── 日期时间选择（统一风格，返回 YYYY-MM-DD HH:mm:ss）─────────────────
+    const cxPad = (n) => String(n).padStart(2, '0');
+    function cxParseWhen(v) {
+      const m = String(v || '').match(/(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+      const now = new Date();
+      return m
+        ? { y: +m[1], mo: +m[2], d: +m[3], hh: +(m[4] ?? 0), mm: +(m[5] ?? 0), ss: +(m[6] ?? 0) }
+        : { y: now.getFullYear(), mo: now.getMonth() + 1, d: now.getDate(), hh: 0, mm: 0, ss: 0 };
+    }
+    function cxWhenText(p) { return `${p.y}-${cxPad(p.mo)}-${cxPad(p.d)} ${cxPad(p.hh)}:${cxPad(p.mm)}:${cxPad(p.ss)}`; }
+    function CxDateTime({ value, onChange }) {
+      const [open, setOpen] = useState(false);
+      const [p, setP] = useState(() => cxParseWhen(value));
+      useEffect(() => { setP(cxParseWhen(value)); }, [value]);
+      const ref = useRef(null);
+      useEffect(() => {
+        if (!open) return;
+        const away = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+        const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+        document.addEventListener('mousedown', away);
+        document.addEventListener('keydown', esc);
+        return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
+      }, [open]);
+      const first = new Date(p.y, p.mo - 1, 1).getDay();
+      const days = new Date(p.y, p.mo, 0).getDate();
+      const shift = (dy, dm) => {
+        const d = new Date(p.y + dy, p.mo - 1 + dm, 1);
+        setP({ ...p, y: d.getFullYear(), mo: d.getMonth() + 1, d: Math.min(p.d, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()) });
+      };
+      const pick = (d) => setP({ ...p, d });
+      const commit = () => { onChange(cxWhenText(p)); setOpen(false); };
+      const num = (k, max) => h('input', {
+        className: 'cx-input cx-dt-num', type: 'number', min: 0, max, value: p[k],
+        onChange: (e) => setP({ ...p, [k]: Math.max(0, Math.min(max, Number(e.target.value) || 0)) }),
+      });
+      return h('div', { className: `cx-dt${open ? ' on' : ''}`, ref },
+        h('button', { type: 'button', className: 'cx-input cx-dt-btn', onClick: () => setOpen((v) => !v) },
+          h('span', { className: 'cx-dt-text' }, cxWhenText(p)),
+          h(UiIcon, { name: 'calendar', size: 12 })),
+        open ? h('div', { className: 'cx-drop-pop cx-dt-pop' },
+          h('div', { className: 'cx-dt-head' },
+            h('button', { type: 'button', className: 'cx-dt-nav', onClick: () => shift(-1, 0) }, '«'),
+            h('button', { type: 'button', className: 'cx-dt-nav', onClick: () => shift(0, -1) }, '‹'),
+            h('span', { className: 'cx-dt-ym' }, `${p.y}.${cxPad(p.mo)}`),
+            h('button', { type: 'button', className: 'cx-dt-nav', onClick: () => shift(0, 1) }, '›'),
+            h('button', { type: 'button', className: 'cx-dt-nav', onClick: () => shift(1, 0) }, '»')),
+          h('div', { className: 'cx-dt-week' }, ['日', '一', '二', '三', '四', '五', '六'].map((w, i) => h('span', { key: i }, T(w)))),
+          h('div', { className: 'cx-dt-grid' },
+            Array.from({ length: first }, (_, i) => h('span', { key: `b${i}` })),
+            Array.from({ length: days }, (_, i) => {
+              const d = i + 1;
+              const on = d === p.d;
+              return h('button', { key: d, type: 'button', className: `cx-dt-day${on ? ' on' : ''}`, onClick: () => pick(d) }, String(d));
+            })),
+          h('div', { className: 'cx-dt-time' },
+            h('span', { className: 'cx-dt-time-lb' }, T('时间')),
+            num('hh', 23), h('b', null, ':'), num('mm', 59), h('b', null, ':'), num('ss', 59)),
+          h('div', { className: 'cx-dt-foot' },
+            h('button', { type: 'button', className: 'cx-btn xs', onClick: () => { const n = cxParseWhen(cxWhenText({ ...p, hh: 0, mm: 0, ss: 0 })); const now = new Date(); const t = { y: now.getFullYear(), mo: now.getMonth() + 1, d: now.getDate(), hh: p.hh, mm: p.mm, ss: p.ss }; setP(t); } }, T('今天')),
+            h('button', { type: 'button', className: 'cx-btn xs', onClick: () => { onChange(''); setOpen(false); } }, T('清除')),
+            h('button', { type: 'button', className: 'cx-btn xs pri', onClick: commit }, T('确定')))) : null);
+    }
+
     function CtxCycle({ value, items, onChange, label }) {
       const list = items || [];
       const i = Math.max(0, list.findIndex((it) => it.value === value));

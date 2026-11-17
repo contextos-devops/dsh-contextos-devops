@@ -1332,7 +1332,7 @@
         setPmForm({ kind, mode: 'create', item: null, parent });
       };
       const removePm = async (kind, item) => {
-        if (!item || !window.confirm(`删除「${item.title}」？`)) return;
+        if (!item || !(await cxAsk(`删除「${item.title}」？`))) return;
         try { await api('pmRemove', { node, uid: avatar?.uid || '', kind, item_uid: item.uid, uid_options: uidFieldMap(item) }); await loadPm(); ai(`已删除${kind}：${item.title}`); }
         catch (e) { ai(`删除失败：${String(e?.message || e)}`); }
       };

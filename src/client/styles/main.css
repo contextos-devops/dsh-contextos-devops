@@ -565,7 +565,7 @@
 .cx-pm-title{font-size:var(--cx-fs);line-height:1.4;font-weight:700;color:#eaffff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cx-pm-meta{font-size:var(--cx-fs-body);line-height:1.45;color:#6f97a9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cx-pm-card-actions{display:flex;align-items:center;justify-content:flex-start;gap:4px;flex-wrap:wrap;margin-top:2px}
-.cx-pm-card-actions .cx-menu-wrap{margin-left:0;flex:none}
+.cx-pm-card-actions .cx-menu-wrap{margin-left:auto;flex:none}
 .cx-pm-act{border:1px solid rgba(30,70,92,.75);background:rgba(5,16,26,.75);color:#8fb3c4;font:var(--cx-fs-body)/1.2 var(--cx-font);padding:3px 5px;border-radius:3px;cursor:pointer}
 .cx-pm-act:hover{border-color:var(--cx-cyan);color:var(--cx-cyan)}
 .cx-pm-act.danger:hover{border-color:var(--cx-red);color:var(--cx-red)}

@@ -534,7 +534,7 @@
         } catch (e) { setStatus(String(e?.message || e)); }
       };
       const removeEntry = async (entry) => {
-        if (!window.confirm(zh ? `删除「${entry.name}」？` : `Delete "${entry.name}"?`)) return;
+        if (!(await cxAsk(zh ? `删除「${entry.name}」？` : `Delete "${entry.name}"?`))) return;
         const dir = dirOf(entry);
         try { await api('removePath', { node, space: sp, path: entry.path }); closeTab(entry.path); await reloadDir(dir); refreshGit(); }
         catch (e) { setStatus(String(e?.message || e)); }

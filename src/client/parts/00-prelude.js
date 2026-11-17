@@ -232,6 +232,8 @@ window.__ModuleLoader__.load({
       } catch { return 'zh'; }
     })();
     const EN_TEXT = {
+      '确定': 'OK', '今天': 'Today', '清除': 'Clear', '时间': 'Time',
+
   '创建流程': 'Create flow', '创建流程申请': 'Create request', '修改流程': 'Modify flow',
   '个字段': 'fields', '已提交': 'Submitted', '提交': 'Submit', '查看详情': 'View details',
 

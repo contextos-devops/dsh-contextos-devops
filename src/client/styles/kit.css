@@ -153,3 +153,41 @@
 /* 分节标题自然吸顶：滚动时当前分节的标题栏留在大卡片上，下一个标题栏把它顶走 */
 .cx-pm-scroll,.cx-pm-side.right{scroll-padding-top:44px}
 .cx-pm-scroll>.cx-pm-h,.cx-pm-side.right>.cx-pm-h{position:sticky;top:0;z-index:6;background-color:var(--cx-surface-1);background-image:linear-gradient(90deg,color-mix(in srgb,var(--cx-cyan) 14%,var(--cx-surface-1)),var(--cx-surface-1) 72%);box-shadow:0 6px 12px rgba(0,0,0,.18)}
+
+/* 确认对话框：与卡片同一套风格（替代 window.confirm） */
+.cx-confirm{width:min(420px,calc(100% - 36px));display:flex;flex-direction:column;gap:var(--cx-sp-3)}
+.cx-confirm-msg{font:var(--cx-fs)/1.6 var(--cx-font);color:var(--cx-text);word-break:break-word}
+.cx-confirm .cx-foot{display:flex;justify-content:flex-end;gap:var(--cx-sp-2)}
+.cx-btn.danger{border-color:color-mix(in srgb,var(--cx-red) 60%,var(--cx-line2));background:color-mix(in srgb,var(--cx-red) 16%,var(--cx-surface-2));color:var(--cx-red)}
+.cx-btn.danger:hover{background:color-mix(in srgb,var(--cx-red) 26%,var(--cx-surface-2));color:var(--cx-red)}
+
+/* 组合输入框（可输入 + 统一风格下拉，替代原生 datalist） */
+.cx-combo{position:relative;width:100%}
+.cx-combo .cx-input{width:100%;padding-right:26px}
+.cx-combo-btn{position:absolute;right:2px;top:2px;bottom:2px;width:22px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--cx-text-dim);cursor:pointer;border-radius:var(--cx-r-xs)}
+.cx-combo-btn:hover{color:var(--cx-cyan)}
+.cx-combo-pop{left:0;right:0;top:calc(100% + 4px);max-height:220px;overflow:auto}
+.cx-combo-item{display:block;width:100%;text-align:left;padding:5px 8px;border:0;border-radius:var(--cx-r-xs);background:transparent;color:var(--cx-text);font:var(--cx-fs-body)/1.4 var(--cx-font);cursor:pointer}
+.cx-combo-item:hover,.cx-combo-item.on{background:var(--cx-accent-soft);color:var(--cx-accent)}
+
+/* 日期时间选择（YYYY-MM-DD HH:mm:ss） */
+.cx-dt{position:relative;width:100%}
+.cx-dt-btn{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;cursor:pointer;color:var(--cx-text);text-align:left}
+.cx-dt-text{font:var(--cx-fs-body)/1.4 var(--cx-mono);letter-spacing:.01em}
+.cx-dt-pop{left:0;top:calc(100% + 4px);width:264px;max-width:calc(100vw - 24px);padding:var(--cx-sp-2)}
+.cx-dt-head{display:flex;align-items:center;gap:2px;padding:2px 2px 6px}
+.cx-dt-ym{flex:1;text-align:center;font:600 var(--cx-fs-10)/1.2 var(--cx-mono);letter-spacing:.08em;color:var(--cx-text)}
+.cx-dt-nav{width:20px;height:20px;border:0;border-radius:var(--cx-r-xs);background:transparent;color:var(--cx-text-dim);cursor:pointer;font-size:11px}
+.cx-dt-nav:hover{background:var(--cx-surface-3);color:var(--cx-cyan)}
+.cx-dt-week{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;padding:0 0 2px}
+.cx-dt-week span{text-align:center;font:var(--cx-fs-10)/1.6 var(--cx-font);color:var(--cx-text-faint)}
+.cx-dt-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px}
+.cx-dt-day{min-width:0;height:26px;border:0;border-radius:var(--cx-r-xs);background:transparent;color:var(--cx-text);font:var(--cx-fs-body)/1 var(--cx-mono);cursor:pointer}
+.cx-dt-day:hover{background:var(--cx-surface-3)}
+.cx-dt-day.on{background:var(--cx-accent-soft);color:var(--cx-accent);box-shadow:inset 0 0 0 1px var(--cx-accent)}
+.cx-dt-time{display:flex;align-items:center;gap:3px;padding:8px 2px 4px;border-top:1px solid var(--cx-border);margin-top:6px}
+.cx-dt-time-lb{flex:none;white-space:nowrap;font:var(--cx-fs-10)/1 var(--cx-font);color:var(--cx-text-faint);margin-right:4px;letter-spacing:.08em}
+.cx-dt-time b{color:var(--cx-text-faint);font-weight:400}
+.cx-dt-num{flex:0 0 40px;width:40px;height:22px;text-align:center;font:var(--cx-fs-body)/1 var(--cx-mono);padding:0 2px;-moz-appearance:textfield}
+.cx-dt-num::-webkit-outer-spin-button,.cx-dt-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.cx-dt-foot{display:flex;justify-content:flex-end;gap:4px;padding-top:6px}

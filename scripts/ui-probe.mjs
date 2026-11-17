@@ -130,7 +130,23 @@ const CASES = [
       return [
         [!!btn && !!card && btn.x - card.x <= 16, '卡片按钮靠左（不贴右）', `按钮左 ${btn?.x} / 卡片左 ${card?.x}`],
         [!!more && !!acts && more.x >= acts.x - 1, '⋯ 图标始终存在且在按钮区', `${more?.x}`],
-        [!!more && !!btn && more.x >= btn.x, '⋯ 排在按钮之后', `${more?.x} ≥ ${btn?.x}`],
+        [!!more && !!acts && Math.abs(acts.right - more.right) <= 16, '⋯ 贴着按钮区右端（主按钮仍在左）', `⋯ 右 ${more?.right} / 区右 ${acts?.right}`],
+      ];
+    },
+  },
+  {
+    name: 'datetime-pop',
+    fixture: 'scripts/fixtures/datetime-pop.html',
+    window: '600,400',
+    sels: ['#dt', '#pop', '#grid', '#time', '#ok'],
+    assert: (m) => {
+      const pop = m['#pop'], grid = m['#grid'], time = m['#time'], ok = m['#ok'];
+      return [
+        [!!pop && pop.w >= 240 && pop.w <= 300, '面板宽度固定（264px 级别）', `${pop?.w}px`],
+        [!!pop && pop.sw <= pop.cw + 1, '面板内容不横向溢出', `${pop?.sw} ≤ ${pop?.cw}`],
+        [!!ok && !!pop && ok.right <= pop.right + 1, '确定按钮落在面板内（没被切掉）', `${ok?.right} ≤ ${pop?.right}`],
+        [!!time && time.h >= 30, '时间行占一行高度（不塌缩）', `${time?.h}px`],
+        [!!grid && grid.w >= 180 && grid.w <= 280, '日历七列不被挤压', `${grid?.w}px`],
       ];
     },
   },
@@ -260,7 +276,7 @@ window.__PROBE_SELS__ = __SELS__;
         fontSize: c.fontSize, lineHeight: c.lineHeight, position: c.position,
         left: +(off ? r.left - off.left : r.left).toFixed(1),
         animationName: c.animationName, animationDuration: c.animationDuration,
-        sh: n.scrollHeight, ch: n.clientHeight, paddingTop: c.paddingTop,
+        sh: n.scrollHeight, ch: n.clientHeight, sw: n.scrollWidth, cw: n.clientWidth, paddingTop: c.paddingTop,
         color: c.color, bg: c.backgroundColor
       };
     });

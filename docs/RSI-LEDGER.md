@@ -122,3 +122,14 @@ Each entry records: lesson → reusable abstraction → verification.
   88 ui-check, i18n, context, docs). `node --check client.js` passes.
 - Lesson: an index that a human must remember to update is not an index; make
   the generator + the check the same script, and let the gate fail on drift.
+
+## 2026-11-17 — 新增「电商流水线」演示视图（mock）
+
+- 现象：客户要看「模板 → 入驻 → 授权 → 多智能体」的链路，但没有可看的东西。
+- 根因层次：流程层（缺一个把模式讲清楚的界面）。
+- 类别：产品演示（首次）。
+- 固化：新增 `57-ecom.js`（视图 id `ecom`，纯 mock、零请求）+ `docs/ECOM-DEMO.md` 并登记
+  `docs/INDEX.md`；`docs-index --write` 把新片段写进 `CODE-INDEX.md`，`docs-check` 不再报生成物过期。
+  两条棘轮：`css-check` 锁死 main.css → 样式落 `layout.css`；`i18n-lint` 中文棘轮 → 徽标改英文。
+- 数字：`build:client` exit 0（ui-check 151）；新增 1 视图 / 75 行样式 / 263 行组件。
+- 教训：视图级样式不要往 `main.css` 堆——它被预算棘轮锁死，新视图应落在 `layout.css` 或独立层。
