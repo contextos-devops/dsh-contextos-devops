@@ -9,7 +9,7 @@ clickable, and reads back from the server so you can check it landed.
 <p>
   <img alt="version" src="https://img.shields.io/badge/version-1.48.34-0a8fb0">
   <img alt="ops" src="https://img.shields.io/badge/ops-102-0a8fb0">
-  <img alt="build gates" src="https://img.shields.io/badge/build%20gates-12-0a8fb0">
+  <img alt="build gates" src="https://img.shields.io/badge/build%20gates-16-0a8fb0">
   <img alt="client" src="https://img.shields.io/badge/client-24%20parts-0a8fb0">
   <img alt="license" src="https://img.shields.io/badge/license-MIT-0a8fb0">
 </p>
@@ -63,7 +63,7 @@ From source — useful when you want to change it:
 ```sh
 git clone https://github.com/contextos-devops/dsh-contextos-devops
 cd dsh-contextos-devops
-npm run build:client            # build + 15 gates, must be all green
+npm run build:client            # build + 16 gates, must be all green
 dsh plugin --profile desktop add link:$PWD
 ```
 
@@ -224,7 +224,7 @@ prompt cannot talk its way into an action the mode does not allow.
 │   ├── parts/             # 24 parts → build/client.mjs → client.js
 │   └── styles/            # tokens / main / kit → assets/client.css
 ├── docs/                  # entry point: docs/INDEX.md
-├── scripts/               # build + 15 gates
+├── scripts/               # build + 16 gates
 └── build/client.mjs       # the only bundler entry
 ```
 
@@ -241,7 +241,7 @@ npm run check:docs      # docs index / links / generated files in sync
 npm run publish:npm     # dry-run npm packaging; --publish to actually ship
 ```
 
-Build chain (15 gates):
+Build chain (16 gates):
 
 ```
 gate → load-check → hook-order-check → op-check → install-check → store-check
@@ -288,7 +288,7 @@ gate → load-check → hook-order-check → op-check → install-check → stor
 - **Stable**: nodes, spaces, apps, data CRUD, code generation, monitoring panels, the three modes.
 - **Known limits**: see the open items in [`docs/RSI-LEDGER.md`](docs/RSI-LEDGER.md) (web-tab session isolation, remote node credential renewal, monitoring has no history).
 - **Version**: `package.json` is the source of truth, and every change bumps it because the client cache key follows the version.
-- **Scale**: 102 ops, 25 client parts, ~7.6k lines of client code, 15 gates.
+- **Scale**: 102 ops, 25 client parts, ~7.6k lines of client code, 16 gates.
 
 ---
 

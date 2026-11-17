@@ -91,23 +91,7 @@
       const dlPcts = [...String(state.console || '').matchAll(/\[download\]\s+(\d+)%/g)].map((m) => Number(m[1]));
       const downloadPct = dlPcts.length ? dlPcts[dlPcts.length - 1] : 0;
       const titles = { setup: T('初始化'), running: T('正在初始化'), done: T('初始化完成'), error: T('初始化失败') };
-      const readPic = (file, cb) => {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          const img = new Image();
-          img.onload = () => {
-            const max = 720;
-            const scale = Math.min(1, max / Math.max(img.width, img.height));
-            const cv = document.createElement('canvas');
-            cv.width = Math.round(img.width * scale); cv.height = Math.round(img.height * scale);
-            cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-            cb(cv.toDataURL('image/jpeg', 0.82));
-          };
-          img.src = String(reader.result);
-        };
-        reader.readAsDataURL(file);
-      };
+      const readPic = (file, cb) => cxImageDataUrl(file, { max: 720, quality: 0.82 }).then((url) => url && cb(url)).catch(() => {});
       const binaryMode = method === 'binary' || method === 'copy' || (!!deployOpt && !deployOpt.git);
       const start = () => onStart({ mode, dir, port: Number(port) || 9188, repo, codeSource, mirror, method, goPolicy, image, host, sshUser, sshPort: Number(sshPort) || 22, remoteUrl, remoteUser, remotePass, binaryMode, avatar, scene, project, spaces: spaceKeys });
       const doLogin = async () => {

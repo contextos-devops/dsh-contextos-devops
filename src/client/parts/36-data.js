@@ -21,22 +21,7 @@
         try { const a = await api('updateAvatar', { node, uid: active.uid, patch }); onUpdated?.(a); }
         catch (e) { setErr(String(e?.message || e)); } finally { setBusy(false); }
       };
-      const upload = (file) => {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          const img = new Image();
-          img.onload = () => {
-            const max = 512, scale = Math.min(1, max / Math.max(img.width, img.height));
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            update({ image: canvas.toDataURL('image/jpeg', 0.86) });
-          };
-          img.src = String(reader.result);
-        };
-        reader.readAsDataURL(file);
-      };
+      const upload = (file) => cxImageDataUrl(file, { max: 512, quality: 0.86 }).then((image) => image && update({ image })).catch((e) => setErr(String(e?.message || e)));
       const begin = () => {
         setStep(0); setAnswers({}); setMsgs([{ role: 'ai', text: QUESTIONS[0].q }]); setInput('');
       };

@@ -189,3 +189,27 @@
 
 
     // 开发模式：VSCode 风格 IDE 的骨架（编辑器、终端、预览后续接入）
+
+/* 选图 → 等比缩放到 max 边 → JPEG dataURL。
+   头像（512/0.86）与项目图片（720/0.82）以前各写一份，改阈值时容易漏改。 */
+function cxImageDataUrl(file, { max = 512, quality = 0.86 } = {}) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve('');
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error || new Error('read failed'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('image decode failed'));
+      img.onload = () => {
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}

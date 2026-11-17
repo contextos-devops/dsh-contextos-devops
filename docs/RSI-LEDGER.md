@@ -12,6 +12,13 @@ Workflow: 目标 → 计划（时间/金钱预期）→ 分析决策 → 任务�
 
 Each entry records: lesson → reusable abstraction → verification.
 
+## 2026-11-17 — 逐行优化：重复代码只减不增
+
+- 根因：逻辑层——同一能力在多处各写一遍（模板、HTTP 断言、vimer 写入、图像缩放、PM 筛选状态、状态序数组），改一处忘一处。
+- 类别：重复/抽象（同类第 2 次：上次是 CSS 重复声明，这次是 JS 重复逻辑）。
+- 固化：新增 `scripts/dup-check.mjs`（6 行跨文件窗口，基线 0，接入 build:client 成第 16 道门禁）；`assertOk`/`saveSpaceFile`/`moduleSource`/`cxImageDataUrl`/`usePmPanelState`/`STATUS_ORDER` 六个唯一入口；`docs/DESIGN.md` 记录分层与对偶。
+- 数字：跨文件重复窗口 3 → 0；`action/save` 3 → 1；状态序数组 2 → 1；手写 HTTP 断言 11 → 0；服务端 7795 → 7658 行。
+
 ## 2026-11-17 — 加一类东西要问一遍「放哪、怎么接」，因为流程只写在脑子里
 
 - **现象**：用户要把「加页面/组件/状态/接口/样式/动效」变成可复用流程（m07175）；此前每次都要现场翻

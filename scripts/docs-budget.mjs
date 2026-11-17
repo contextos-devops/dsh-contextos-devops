@@ -16,6 +16,7 @@ const asJson = process.argv.includes('--json');
 // 预算单位：tokens≈（中文 1 字≈1，ASCII 3.6 字符≈1）。
 // 调整规则：先删冗余，再改这里；改这里必须在报告里写明「为什么旧预算不合理」。
 const BUDGET = {
+  'DESIGN.md': 5200, // 设计与理念：偶读，按章读表在开头（读完 5200，路由只取 1–2 章）
   'PRODUCT-DESIGN.md': 8200, // 产品设计全稿：偶读，按章读表在开头
   'INTERFACE.md': 4900, // 接口五形态 + 认证 + PM 排序
   'CODE-GEN.md': 4700, // 代码生成规范 + 工厂要点

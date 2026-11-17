@@ -77,6 +77,17 @@
           count != null ? h('span', { className: 'cx-pm-count' }, count) : null),
         h('span', { className: 'cx-pm-ops' }, onRefresh ? h(IconButton, { name: 'refresh', className: 'cx-pm-refresh', onClick: onRefresh }) : null, tools || null));
     }
+    /* PM 面板的 5 个共享状态：聊天右栏与管理页以前各写一份 useState（6 行 × 2）。
+       统一成 hook 后，加一个筛选维度只改这里。 */
+    function usePmPanelState() {
+      const [planStatusFilter, setPlanStatusFilter] = useState([]);
+      const [taskStatusFilter, setTaskStatusFilter] = useState([]);
+      const [reportTypeFilter, setReportTypeFilter] = useState([]);
+      const [feedbackStatusFilter, setFeedbackStatusFilter] = useState([]);
+      const [pmForm, setPmForm] = useState(null);
+      return { planStatusFilter, setPlanStatusFilter, taskStatusFilter, setTaskStatusFilter, reportTypeFilter, setReportTypeFilter, feedbackStatusFilter, setFeedbackStatusFilter, pmForm, setPmForm };
+    }
+
     function pmFilterOptions(list, key) {
       const labelKey = key === 'type_name' ? 'type_label' : `${key}_label`;
       return [...new Set((list || []).map((x) => x[key]).filter(Boolean))].map((value) => ({ value, label: (list || []).find((x) => x[key] === value)?.[labelKey] || (key === 'status_name' ? pmStatusText(value) : value) }));

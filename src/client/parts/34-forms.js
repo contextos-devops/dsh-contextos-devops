@@ -175,11 +175,7 @@
       const [calStart, setCalStart] = useState(bootCal.start || '');
       const [calEnd, setCalEnd] = useState(bootCal.end || '');
       useEffect(() => cxWrite('cal', { ...cxRead('cal', {}), start: calStart, end: calEnd }), [calStart, calEnd]);
-      const [planStatusFilter, setPlanStatusFilter] = useState([]);
-      const [taskStatusFilter, setTaskStatusFilter] = useState([]);
-      const [reportTypeFilter, setReportTypeFilter] = useState([]);
-      const [feedbackStatusFilter, setFeedbackStatusFilter] = useState([]);
-      const [pmForm, setPmForm] = useState(null);
+      const { planStatusFilter, setPlanStatusFilter, taskStatusFilter, setTaskStatusFilter, reportTypeFilter, setReportTypeFilter, feedbackStatusFilter, setFeedbackStatusFilter, pmForm, setPmForm } = usePmPanelState();
       const sessionStateRef = useRef({ key: '', ready: false, msgs: [] });
       const seedingRef = useRef(false);
       const [file, setFile] = useState('portal.go');

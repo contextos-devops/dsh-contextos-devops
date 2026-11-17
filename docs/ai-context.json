@@ -38,6 +38,7 @@
   ],
   "plugin": [
     "docs/INDEX.md",
+    "docs/DESIGN.md",
     "docs/PRODUCT-DESIGN.md",
     "docs/DOCTRINE.md",
     "docs/DIAGNOSTICS.md",

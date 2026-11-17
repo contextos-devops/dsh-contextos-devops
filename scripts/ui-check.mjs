@@ -86,7 +86,7 @@ const doCreateBlock = doStart > 0 ? chat.slice(doStart, doEnd) : '';
 ok('doCreateSpace never reads an outer vals', doCreateBlock.length > 200 && !/\bvals\b/.test(doCreateBlock) && /api\('initSpace', \{ node, space: created\.name, repos \}\)/.test(doCreateBlock));
 ok('createSpace is imported by the backend route', /import \{[^}]*createSpace[^}]*\} from '.\/lib\/core\/spaces.js'/.test(read('index.js')));
 ok('autogen builds all src packages', read('lib/core/gobuild.js').includes("'-o', 'bin/ice.bin', './src'") && !read('lib/core/gobuild.js').includes("'src/version.go'"));
-ok('autogen preflights go.mod and value files', read('lib/core/apps.js').includes('ensureAutogenValues(dir, name, place, values)') && read('lib/core/apps.js').includes('await ensureGoMod({ node, space, dir: n.dir, module })'));
+ok('autogen preflights go.mod and value files', read('lib/core/apps.js').includes('ensureAutogenValues(dir, name, place, values)') && read('lib/core/apps.js').includes('await ensureAppGoMod({ node, space, dir: n.dir, module })') && read('lib/core/apps.js').includes('async function saveSpaceFile'));
 ok('autogen surfaces build failures', !/let built = false;[\s\S]*?warning = String/.test(read('lib/core/apps.js')));
 ok('autogen value names are ASCII identifiers', read('lib/core/apps.js').includes('put Chinese labels in trans'));
 ok('client sanitizes autogen value', chat.includes('preset.value = base.value') && chat.includes('preset.trans = base.trans'));
