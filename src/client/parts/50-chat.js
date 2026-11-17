@@ -812,10 +812,48 @@
         if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(preset.name || '')) { ai('应用名需要字母开头，只用字母/数字/下划线。'); return; }
         return askAppPlan(sp, preset.name, preset.help, preset.place, lastUserRef.current);
       };
+      // 一条龙里的父子关系：建完目标马上建计划，模型不会回传上一步的 uid。
+      const pmChain = useRef({});
+      // 结果卡片要跟侧边栏一致：动作与状态都由服务端 pmList 补齐，所以建完再取一次干净条目。
+      const pmFetchItem = useCallback(async (kind, uid, chain = {}) => {
+        if (!uid) return null;
+        const key = { target: 'targets', plan: 'plans', task: 'tasks', report: 'reports', feedback: 'feedbacks' }[kind];
+        if (!key) return null;
+        try {
+          const d = await api('pmList', {
+            node, uid: avatar?.uid || '', lang: locale,
+            target_uid: chain.target_uid || '', plan_uid: chain.plan_uid || '',
+            task_uid: chain.task_uid || '', report_uid: chain.report_uid || '',
+          });
+          return (d?.[key] || []).find((x) => x.uid === uid) || null;
+        } catch { return null; }
+      }, [node, avatar?.uid, locale]);
+
+      // 模型给的动作名不固定（pmStart/pmProcess/pmComplete…），这里统一收敛成 op + 参数，
+      // 避免落到末尾「未识别的动作」。
+      const PM_OP_ALIAS = {
+        pmTargetCreate: ['pmCreate', { kind: 'target' }],
+        pmPlanCreate: ['pmCreate', { kind: 'plan' }],
+        pmTaskCreate: ['pmCreate', { kind: 'task' }],
+        pmReportCreate: ['pmCreate', { kind: 'report' }],
+        pmFeedbackCreate: ['pmCreate', { kind: 'feedback' }],
+        pmSubmit: ['pmAct', { action: 'submit' }],
+        pmApprove: ['pmAct', { action: 'approve' }],
+        pmReject: ['pmAct', { action: 'reject' }],
+        pmStart: ['pmAct', { action: 'process' }],
+        pmProcess: ['pmAct', { action: 'process' }],
+        pmComplete: ['pmAct', { action: 'finish' }],
+        pmDone: ['pmAct', { action: 'finish' }],
+        pmFinish: ['pmAct', { action: 'finish' }],
+        pmCancel: ['pmAct', { action: 'cancel' }],
+        pmHandover: ['pmAct', { action: 'handover' }],
+      };
       const executeAction = async (action) => {
         if (!action || typeof action !== 'object') return;
-        const op = String(action.op || '');
-        const args = action.args && typeof action.args === 'object' ? action.args : {};
+        let op = String(action.op || '');
+        let args = action.args && typeof action.args === 'object' ? action.args : {};
+        const alias = PM_OP_ALIAS[op];
+        if (alias) { op = alias[0]; args = { ...alias[1], ...args }; }
         const ctxApp = app || null;
         const ctxSpace = spaceRef.current || space || ctxApp?.space || '';
         if (op === 'sshHosts') {
@@ -914,14 +952,47 @@
           return;
         }
         if (op === 'pmCreate') {
-          return run(`PM CREATE ${args.kind || ''}`, async () => {
-            const d = await api('pmCreate', { node, uid: avatar?.uid || '', kind: args.kind || '', title: args.title || '', content: args.content || '', target_uid: args.target_uid || activeTarget?.uid || '', plan_uid: args.plan_uid || activePlan?.uid || '', task_uid: args.task_uid || activeTask?.uid || '', report_uid: args.report_uid || activeReport?.uid || '', begin_time: args.begin_time || '', end_time: args.end_time || '', report_type: args.report_type || 'daily', score: args.score || '5', feedback_status: args.feedback_status || 'canFinish' });
+          const kind = String(args.kind || 'target');
+          return run(`PM CREATE ${kind}`, async () => {
+            // 一条龙里「建目标→建计划→建任务」是同一个动作序列，模型不会回传上一步的 uid：
+            // 用 pmChain 记住刚创建的 uid，按父子关系补齐外键，避免「计划创建失败(缺 target_uid)」。
+            const chain = pmChain.current;
+            const parentOf = { plan: 'target', task: 'plan', report: 'task', feedback: 'report' };
+            const fk = { target: 'target_uid', plan: 'plan_uid', task: 'task_uid', report: 'report_uid' };
+            const body = { node, uid: avatar?.uid || '', kind, title: args.title || '', content: args.content || '', target_uid: '', plan_uid: '', task_uid: '', report_uid: '', begin_time: args.begin_time || '', end_time: args.end_time || '', report_type: args.report_type || 'daily', score: args.score || '5', feedback_status: args.feedback_status || 'canFinish' };
+            const parentKind = parentOf[kind];
+            if (parentKind) {
+              const picked = parentKind === 'target' ? activeTarget?.uid : parentKind === 'plan' ? activePlan?.uid : parentKind === 'task' ? activeTask?.uid : activeReport?.uid;
+              body[fk[parentKind]] = String(args[fk[parentKind]] || chain[parentKind] || picked || '');
+            }
+            const d = await api('pmCreate', body);
+            if (d?.uid) {
+              chain[kind] = d.uid;
+              // 建了父级，子级缓存失效（新目标下的计划不能沿用旧 plan）
+              for (const k of Object.keys(parentOf)) if (k !== kind && parentOf[k] === kind) chain[k] = '';
+            }
             await loadPm();
-            const kindLabel = PM_KIND_LABEL[args.kind] || PM_SHORT[args.kind] || args.kind || '项目数据';
-            const rows = [['类型', kindLabel], ['标题', args.title || '—'], ['UID', d.uid ? String(d.uid).slice(0, 12) + '…' : '—']];
-            if (args.begin_time) rows.push(['开始', args.begin_time]);
-            if (args.end_time) rows.push(['结束', args.end_time]);
-            aiCard(`已添加${kindLabel}`, { title: `${kindLabel}创建成功`, rows, link: pmPortalUrl(args.kind, d.uid) ? { label: '打开项目管理', url: pmPortalUrl(args.kind, d.uid) } : null });
+            const item = await pmFetchItem(kind, d?.uid, body);
+            const kindLabel = PM_KIND_LABEL[kind] || PM_SHORT[kind] || kind;
+            aiCard(T('已创建') + ' ' + kindLabel, { pm: { kind, item: item || { uid: d?.uid || '', title: args.title || '', status_name: kind === 'plan' ? 'created' : '', actions: [] } },
+              link: pmPortalUrl(kind, d?.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(kind, d?.uid) } : null });
+            return d;
+          });
+        }
+        if (op === 'pmAct') {
+          const kind = String(args.kind || (pmChain.current.task ? 'task' : pmChain.current.plan ? 'plan' : 'target'));
+          const action = String(args.action || '').toLowerCase();
+          return run(`PM ACT ${kind} ${action}`, async () => {
+            const uidMap = { target: activeTarget?.uid, plan: activePlan?.uid, task: activeTask?.uid, report: activeReport?.uid, feedback: activeFeedback?.uid };
+            const itemUid = String(args.item_uid || pmChain.current[kind] || uidMap[kind] || '');
+            if (!itemUid) { ai(`${T('请先选择一个')} ${PM_KIND_LABEL[kind] || kind}`); return; }
+            if (!action) { ai(T('缺少动作名') + '：submit/approve/reject/process/finish/cancel'); return; }
+            const d = await api('pmAct', { node, uid: avatar?.uid || '', kind, item_uid: itemUid, action, uid_options: args.uid_options || {} });
+            await loadPm();
+            const item = await pmFetchItem(kind, itemUid, { target_uid: pmChain.current.target || activeTarget?.uid || '', plan_uid: pmChain.current.plan || activePlan?.uid || '', task_uid: pmChain.current.task || activeTask?.uid || '', report_uid: pmChain.current.report || activeReport?.uid || '' });
+            const kindLabel = PM_KIND_LABEL[kind] || PM_SHORT[kind] || kind;
+            aiCard(`${kindLabel} ${T(PM_ACTION_LABEL[action] || action)}`, { pm: { kind, item: item || { uid: itemUid, title: itemUid, status_name: '', actions: [] } } });
+            return d;
           });
         }
         if (op === 'pmList' || op === 'pmTree') {
@@ -1230,6 +1301,10 @@
                     onCreate: (svc) => createAppFromStore(svc || '') })
                 : m.card && m.card.entity && m.card.entity.kind === 'node' && m.card.entity.data
                   ? h(NodeCard, { n: m.card.entity.data, locale, active: false, busy: false, onSelect: cards?.selectNode, onStart: cards?.startNode, onStop: cards?.stopNode, onDelete: cards?.deleteNode, onOpen: cards?.openNode, onIde: cards?.openIde, onTool: cards?.openCardTool, onHome: () => cards?.openHome?.(''), isOpen: cards?.isOpenUrl, tone: cards?.tone })
+                : m.card && m.card.pm ? h('div', { className: 'cx-msg-pm' },
+                  h(PmCard, { item: m.card.pm.item, kind: m.card.pm.kind, onAction: (action) => runPmAction(m.card.pm.kind, m.card.pm.item, action) }))
+                : m.card && m.card.pm ? h('div', { className: 'cx-msg-pm' },
+                  h(PmCard, { item: m.card.pm.item, kind: m.card.pm.kind, onAction: (a) => runPmAction(m.card.pm.kind, m.card.pm.item, a) }))
                 : m.card && m.card.entity ? h(CxEntityCard, { e: m.card.entity, lang: locale, onOpen: (u, t) => { if (typeof OPEN_LINK === 'function') OPEN_LINK(u, t); } })
                 : m.card && m.card.app ? h('div', { className: 'cx-app-card' },
                   h('div', { className: 'cx-app-card-ico' }, m.card.app.icon ? h('img', { src: m.card.app.icon, alt: '' }) : h('span', { className: 'ph' }, String(m.card.app.title || 'A').slice(0, 1))),

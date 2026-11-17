@@ -166,6 +166,10 @@ ok('Avatar user is created through community API', read('lib/core/avatar.js').in
 ok('ContextOS lives in the conversation tab strip', /name: 'conversation\.view'/.test(page) && /id: 'contextos'/.test(page) && !/openRightbar/.test(page));
 ok('the tab renders the session config panel', page.includes('h(CtxCenter, { sessionId:') && page.includes('inline: true'));
 ok('config entries switch to the tab first', read('src/client/parts/58-config.js').includes("selectView('contextos')"));
+ok('PM ops alias to pmCreate/pmAct', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('PM_OP_ALIAS') && c.includes("pmStart: ['pmAct', { action: 'process' }]") && c.includes("pmPlanCreate: ['pmCreate', { kind: 'plan' }]"); })());
+ok('PM create chains the parent uid it just created', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('const pmChain = useRef({})') && c.includes('chain[parentKind]'); })());
+ok('PM result card reuses the sidebar card', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('m.card.pm') && c.includes('h(PmCard, { item: m.card.pm.item'); })());
+ok('PM item is refetched after writes for fresh actions', read('src/client/parts/50-chat.js').includes('const pmFetchItem = useCallback'));
 ok('the composer chip opens a three-level cascade', (() => { const c = read('src/client/parts/58-config.js'); return c.includes('function CtxCascade') && c.includes("col('服务节点 / NODE'") && c.includes("col('项目空间 / SPACE'") && c.includes("col('最近应用 / APP'"); })());
 ok('the header utilities button is gone', !page.includes("'conversation.session.header.utilities'"));
 ok('conversation view host fills its tab', mainCss.includes('.cx-view-host{height:100%'));

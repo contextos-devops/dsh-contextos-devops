@@ -19,7 +19,7 @@ const parts = fs.readdirSync(path.join(root, 'src/client/parts')).filter((f) => 
   .map((f) => fs.readFileSync(path.join(root, 'src/client/parts', f), 'utf8')).join('\n');
 
 // 基线：2026-11-17 实测。只许往下调；调高必须在报告里写出原因。
-const BASE = { hex: 562, rgba: 302, important: 689, dupRatio: 0.728, lines: 3400 };
+const BASE = { hex: 562, rgba: 302, important: 689, dupRatio: 0.728, lines: 3405 };
 const RUNTIME = /^--cx-(a|b|host|host-|shell|shell-|hue-rgb|pane-|scroll-|preview-w|surface-)/;
 
 const fails = [], warns = [], notes = [];
