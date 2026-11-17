@@ -106,6 +106,21 @@ const CASES = [
     },
   },
   {
+    name: 'seg',
+    fixture: 'scripts/fixtures/seg.html',
+    window: '420,120',
+    sels: ['#segTheme', '#segTheme .cx-seg-btn', '#segLang', '#segLang .cx-seg-txt'],
+    assert: (m) => {
+      const seg = m['#segTheme'], btn = m['#segTheme .cx-seg-btn'], lang = m['#segLang'], txt = m['#segLang .cx-seg-txt'];
+      return [
+        [!!btn && btn.h >= 24, '分段按钮有可点高度', `${btn?.h}px`],
+        [!!seg && !!btn && btn.h <= seg.h + 1, '按钮不越出分段容器（不被裁切）', `${btn?.h} ≤ ${seg?.h}`],
+        [!!txt && txt.h >= 9 && txt.h <= 14, '文字档位不裁切', `${txt?.h}px`],
+        [!!lang && lang.h <= 30, '语言分段高度与控件一致', `${lang?.h}px`],
+      ];
+    },
+  },
+  {
     name: 'pm-card-actions',
     fixture: 'scripts/fixtures/pm-card-actions.html',
     window: '340,200',

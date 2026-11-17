@@ -73,6 +73,9 @@
 
     const UI_ICONS = {
       monitor: ['M2.2 3.2h11.6v7.2H2.2z', 'M5.4 13.2h5.2', 'M8 10.4v2.8'],
+      sun: ['M8 5.4a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2z', 'M8 1.6v1.6', 'M8 12.8v1.6', 'M1.6 8h1.6', 'M12.8 8h1.6', 'M3.5 3.5l1.1 1.1', 'M11.4 11.4l1.1 1.1', 'M12.5 3.5l-1.1 1.1', 'M4.6 11.4l-1.1 1.1'],
+      moon: ['M12.6 9.6A5.2 5.2 0 0 1 6.4 3.4a5.6 5.6 0 1 0 6.2 6.2z'],
+      auto: ['M8 2.2a5.8 5.8 0 1 0 0 11.6A5.8 5.8 0 0 0 8 2.2z', 'M8 2.2v11.6'],
       chevronRight: ['M6 4l4 4-4 4'],
       chevronDown: ['M4 6l4 4 4-4'],
       refresh: ['M13.5 8a5.5 5.5 0 1 1-1.7-3.9', 'M13.5 2.8v3.4h-3.4'],
@@ -129,6 +132,19 @@
     function cxStars(n) {
       const v = Math.max(0, Math.min(5, Number(n) || 0));
       return '★'.repeat(v) + '☆'.repeat(5 - v);
+    }
+    // 三态分段控件：所有状态平铺可见（自动/浅色/深色、自动/中文/英文），
+    // 而不是隐藏在文本下拉里，避免「System / System」这种看不出区别的显示。
+    function CtxSeg({ value, items, onChange, label }) {
+      return h('span', { className: 'cx-seg', role: 'group', 'aria-label': label || '' },
+        (items || []).map((it) => h('button', {
+          key: it.value,
+          type: 'button',
+          className: `cx-seg-btn${it.value === value ? ' on' : ''}`,
+          title: it.title || it.label,
+          'aria-pressed': it.value === value ? 'true' : 'false',
+          onClick: (e) => { e.stopPropagation(); onChange && onChange(it.value); },
+        }, it.icon ? h(UiIcon, { name: it.icon, size: 14 }) : h('span', { className: 'cx-seg-txt' }, it.label))));
     }
     function EntityTitle({ image, icon = 'app', type, title, status, statusTone = '', meta, after, onClick, active = false, className = '', children }) {
       const cls = `cx-entity${active ? ' on' : ''}${className ? ' ' + className : ''}`;

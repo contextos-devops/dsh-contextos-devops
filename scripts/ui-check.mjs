@@ -166,6 +166,11 @@ ok('Avatar user is created through community API', read('lib/core/avatar.js').in
 ok('ContextOS lives in the conversation tab strip', /name: 'conversation\.view'/.test(page) && /id: 'contextos'/.test(page) && !/openRightbar/.test(page));
 ok('the tab renders the session config panel', page.includes('h(CtxCenter, { sessionId:') && page.includes('inline: true'));
 ok('config entries switch to the tab first', read('src/client/parts/58-config.js').includes("selectView('contextos')"));
+ok('Header theme and language are tri-state segments', (() => {
+  const chat = read('src/client/parts/50-chat.js'), ui = read('src/client/parts/10-ui.js');
+  const segs = (chat.match(/h\(CtxSeg, \{/g) || []).length;
+  return ui.includes('function CtxSeg(') && segs >= 2 && chat.includes("{ value: 'light', icon: 'sun'") && chat.includes("{ value: 'dark', icon: 'moon'") && chat.includes("label: '中'") && chat.includes("label: 'EN'") && !/h\(DropSelect, \{ value: (themeMode|langMode)/.test(chat);
+})());
 ok('Feedback score renders as stars inline', (() => {
   const ui = read('src/client/parts/10-ui.js'), pm = read('src/client/parts/55-pm.js'), form = read('src/client/parts/46-pm.js');
   return ui.includes('function cxStars(') && pm.includes('cxStars(score)') && !pm.includes('cx-pm-stars') && pm.includes("className: 'cx-stars'") && form.includes('cxStars(o.value ?? o.label)');

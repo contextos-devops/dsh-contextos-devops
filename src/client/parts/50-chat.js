@@ -1412,8 +1412,16 @@
                   h('div', { className: 'cx-chat-copy' }, h('div', { className: 'cx-chat-title' }, 'CONTEXTOS · COPILOT'), h('div', { className: 'cx-chat-sub' }, `${tt('avatar')} · ${tt('factory')} · ${tt('iot')} · ${cxClientTag()}`))),
                 h('div', { className: 'cx-chat-actions' },
                   ...(!docked ? [
-                    h(DropSelect, { value: themeMode, title: tt('light') + ' / ' + tt('dark'), onChange: setThemeMode, options: [{ value: 'system', label: tt('system') }, { value: 'light', label: tt('light') }, { value: 'dark', label: tt('dark') }] }),
-                    h(DropSelect, { value: langMode, title: tt('chinese') + ' / English', onChange: setLangMode, options: [{ value: 'system', label: tt('system') }, { value: 'zh', label: '中文' }, { value: 'en', label: 'English' }] }),
+                    h(CtxSeg, { value: themeMode, label: T('主题'), onChange: setThemeMode, items: [
+                      { value: 'system', icon: 'auto', title: `${tt('system')} · ${tt('light')} / ${tt('dark')}` },
+                      { value: 'light', icon: 'sun', title: tt('light') },
+                      { value: 'dark', icon: 'moon', title: tt('dark') },
+                    ] }),
+                    h(CtxSeg, { value: langMode, label: T('语言'), onChange: setLangMode, items: [
+                      { value: 'system', label: T('自动'), title: T('自动') },
+                      { value: 'zh', label: '中', title: '中文' },
+                      { value: 'en', label: 'EN', title: 'English' },
+                    ] }),
                     h(IconButton, { name: 'bolt', className: 'cx-btn xs cx-icon-btn', onClick: onInit, title: 'Initialize' }),
                   ] : []),
                   h(IconButton, { name: (full && !docked) ? 'restore' : 'fullscreen', className: 'cx-btn xs cx-icon-btn', onClick: onToggleFull, title: (full && !docked) ? tt('restore') : tt('maximize') }),

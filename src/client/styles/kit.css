@@ -144,3 +144,11 @@
 .cx-pm-pin-k{flex:none;font:700 var(--cx-fs-10)/1 var(--cx-font);letter-spacing:.08em;color:var(--cx-text-faint);text-transform:uppercase}
 .cx-pm-pin-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--cx-text);font-size:var(--cx-fs-10)}
 .cx-shell[data-theme="light"] .cx-pm-sticky{background:#f2f9fc;box-shadow:0 3px 8px rgba(10,60,80,.10)}
+
+/* 三态分段控件（主题：自动/浅色/深色，语言：自动/中/EN） */
+.cx-seg{display:inline-flex;align-items:center;height:var(--cx-h-control);border:1px solid var(--cx-line2);border-radius:var(--cx-r-sm);background:var(--cx-surface-0);overflow:hidden}
+.cx-seg-btn{height:100%;min-width:26px;padding:0 6px;border:0;background:transparent;color:var(--cx-text-dim);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:color var(--cx-dur-fast) var(--cx-ease),background var(--cx-dur-fast) var(--cx-ease)}
+.cx-seg-btn+.cx-seg-btn{border-left:1px solid var(--cx-line)}
+.cx-seg-btn:hover{color:var(--cx-text)}
+.cx-seg-btn.on{background:var(--cx-accent-soft);color:var(--cx-accent)}
+.cx-seg-txt{font:600 var(--cx-fs-10)/1 var(--cx-font);letter-spacing:.02em}

@@ -387,6 +387,7 @@ window.__ModuleLoader__.load({
       '报告': 'Report',
       '反馈': 'Feedback',
       '没有更多操作': 'No more actions',
+    '自动': 'Auto',
     '打开项目管理': 'Open project',
     '请先选择一个': 'Select a',
     '缺少动作名': 'Missing action name',
