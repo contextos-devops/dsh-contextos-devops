@@ -71,10 +71,10 @@
 | `src/client/parts/46-pm.js` | 159 | `PMModal` `RichText` |
 | `src/client/parts/47-three.js` | 325 | `ThreeAvatar` `ThreeCity` `TechBackdrop` |
 | `src/client/parts/49-msg.js` | 168 | `Elapsed` `FN_LABEL` `ACT_LABEL` `FN_LABEL_EN` `ACT_LABEL_EN` `FIELD_ZH` `FIELD_EN` `KIND_META` `CxEntityCard` `L` |
-| `src/client/parts/50-chat.js` | 1495 | `ChatPanel` `userUpRef` `ToolRow` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` `PM_OP_ALIAS` |
+| `src/client/parts/50-chat.js` | 1502 | `ChatPanel` `userUpRef` `ToolRow` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` `PM_OP_ALIAS` |
 | `src/client/parts/51-pmselection.js` | 32 | `usePmSelection` |
 | `src/client/parts/52-pmdata.js` | 30 | `usePmData` |
-| `src/client/parts/55-pm.js` | 168 | `PM_STATUS_TONE` `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` `PmSectionHead` |
+| `src/client/parts/55-pm.js` | 178 | `PM_STATUS_TONE` `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` `PmStickyStack` |
 | `src/client/parts/58-config.js` | 498 | `CTX_CFG_KEYS` `CTX_CFG_DEFAULT` `CTX_CFG_NS` `CTX_CALLS_NS` `CTX_UI` `CTX_DATA` `MODE_INTRO_SEEN` `ModeIntro` `WelcomeBurst` `CursorComet` |
 | `src/client/parts/59-monitor.js` | 263 | `MonitorDonut` `R` `MonitorSpark` `MonitorTwin` `MON_PANELS` `MON_DEFAULT` `MonitorPanel` `MonitorBoard` `MonitorView` |
 | `src/client/parts/60-page.js` | 1667 | `PipeSelect` `Page` `Boundary` |
@@ -148,7 +148,7 @@
 | `docs/AI-CONVERSATION.md` | 140 | 人写 |
 | `docs/ARCHITECTURE.md` | 135 | 人写 |
 | `docs/CODE-GEN.md` | 424 | 人写 |
-| `docs/DESIGN-SYSTEM.md` | 346 | 人写 |
+| `docs/DESIGN-SYSTEM.md` | 352 | 人写 |
 | `docs/DESIGN.md` | 123 | 人写 |
 | `docs/DIAGNOSTICS.md` | 105 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |

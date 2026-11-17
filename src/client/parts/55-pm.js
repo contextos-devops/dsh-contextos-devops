@@ -71,6 +71,16 @@
     function PmCreateButton({ kind, allowed, onCreate }) {
       return allowed ? h(IconButton, { name: 'plus', className: 'cx-pm-op', onClick: onCreate, title: `Create ${kind}` }) : null;
     }
+    // 滚动时的上下文栈：每一层「标题栏 + 当前项」按层级从上往下堆叠，
+    // 数据再多也能一眼看清自己在 目标/计划/任务/报告/反馈 的哪一层。
+    function PmStickyStack({ rows }) {
+      const list = (rows || []).filter((r) => r && r.title);
+      if (!list.length) return null;
+      return h('div', { className: 'cx-pm-sticky' }, list.map((r) => h('div', { key: r.kind, className: 'cx-pm-pin' },
+        h('span', { className: 'cx-pm-pin-k' }, r.label),
+        h('span', { className: 'cx-pm-pin-t', title: r.title }, r.title),
+        r.status ? h('span', { className: `cx-entity-status ${pmTone(r.statusKey)}` }, r.status) : null)));
+    }
     function PmSectionHead({ icon, title, count, folded, onToggle, onRefresh, tools, style }) {
       return h('div', { className: 'cx-pm-h', style: style || null, onClick: (e) => { if (e.target.closest('button, select, input, .cx-menu, .cx-sel')) return; onToggle && onToggle(); } },
         h('div', { className: 'cx-pm-titleline' },

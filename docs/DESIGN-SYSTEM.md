@@ -328,6 +328,12 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 加页面/组件/状态/接口/样式/动效，先 `npm run new -- <kind> <Name>`，再按 `docs/EXTENDING.md` 补接线；
 动效验收 `node scripts/ui-probe.mjs --case anim`（量 `animationName`/`animationDuration`）。
 
+### 20.7 滚动时的上下文栈
+
+左侧「目标 / 计划」、右侧「任务 / 报告 / 反馈」各有一块 `PmStickyStack`：每层一行
+`标题栏标签 + 当前项标题 + 状态 chip`，`position:sticky; top:0`，数据再多也贴着顶端堆叠；
+没有当前项时不渲染、不占高度。门禁 `node scripts/ui-probe.mjs --case pm-sticky`（4 条）。
+
 ### 20.6 状态与类型的颜色语言
 
 判断顺序：先问「要不要用户现在看一眼」，再问「警醒还是鼓励」。七档一色，禁止就地发明颜色。

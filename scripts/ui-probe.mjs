@@ -106,6 +106,21 @@ const CASES = [
     },
   },
   {
+    name: 'pm-sticky',
+    fixture: 'scripts/fixtures/pm-sticky.html',
+    window: '360,420',
+    sels: ['.cx-pm-sticky', '.cx-pm-pin', '.cx-pm-pin .cx-pm-pin-t', '.cx-pm-scroll'],
+    assert: (m) => {
+      const stack = m['.cx-pm-sticky'], side = m['.cx-pm-scroll'], pin = m['.cx-pm-pin'];
+      return [
+        [!!stack && Math.abs(stack.y - side.y) <= 12, '滚动后上下文栈仍贴在滚动区顶端', `stack ${stack?.y} / scroll ${side?.y}`],
+        [!!pin && !!stack && pin.y >= stack.y - 1 && pin.y <= stack.y + stack.h, '第一行在栈内（不越界）', `${pin?.y}`],
+        [!!stack && stack.h >= 36, '两层各一行、不塌缩', `${stack?.h}px`],
+        [!!m['.cx-pm-pin .cx-pm-pin-t'], '当前项标题可读（有省略号容器）', m['.cx-pm-pin .cx-pm-pin-t']?.w + 'px'],
+      ];
+    },
+  },
+  {
     name: 'status-tones',
     fixture: 'scripts/fixtures/status-tones.html',
     window: '560,200',

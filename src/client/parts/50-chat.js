@@ -1303,8 +1303,6 @@
                   ? h(NodeCard, { n: m.card.entity.data, locale, active: false, busy: false, onSelect: cards?.selectNode, onStart: cards?.startNode, onStop: cards?.stopNode, onDelete: cards?.deleteNode, onOpen: cards?.openNode, onIde: cards?.openIde, onTool: cards?.openCardTool, onHome: () => cards?.openHome?.(''), isOpen: cards?.isOpenUrl, tone: cards?.tone })
                 : m.card && m.card.pm ? h('div', { className: 'cx-msg-pm' },
                   h(PmCard, { item: m.card.pm.item, kind: m.card.pm.kind, onAction: (action) => runPmAction(m.card.pm.kind, m.card.pm.item, action) }))
-                : m.card && m.card.pm ? h('div', { className: 'cx-msg-pm' },
-                  h(PmCard, { item: m.card.pm.item, kind: m.card.pm.kind, onAction: (a) => runPmAction(m.card.pm.kind, m.card.pm.item, a) }))
                 : m.card && m.card.entity ? h(CxEntityCard, { e: m.card.entity, lang: locale, onOpen: (u, t) => { if (typeof OPEN_LINK === 'function') OPEN_LINK(u, t); } })
                 : m.card && m.card.app ? h('div', { className: 'cx-app-card' },
                   h('div', { className: 'cx-app-card-ico' }, m.card.app.icon ? h('img', { src: m.card.app.icon, alt: '' }) : h('span', { className: 'ph' }, String(m.card.app.title || 'A').slice(0, 1))),
@@ -1361,6 +1359,10 @@
       });
       const leftPanel = h('aside', { className: `cx-pm-side${pmRefreshing ? ' refreshing' : ''}` },
         h('div', { className: 'cx-pm-scroll' },
+        h(PmStickyStack, { rows: [
+          { kind: 'target', label: sectionTitle(tt('target'), 'TARGETS'), title: activeTarget?.title || '', status: pmStatusText(activeTarget?.status_name), statusKey: activeTarget?.status_name },
+          { kind: 'plan', label: sectionTitle(tt('plan'), 'PLANS'), title: activePlan?.title || '', status: pmStatusText(activePlan?.status_name), statusKey: activePlan?.status_name },
+        ] }),
         h(PmSectionHead, { icon: 'target', title: sectionTitle(tt('target'), 'TARGETS'), count: targets.length, folded: fold('targets'), onToggle: () => setFolds((f) => ({ ...f, targets: !f.targets })), onRefresh: () => loadPm('target'), tools: pmOps('target') }),
         pmError ? h('div', { className: 'cx-pm-empty err' }, pmError) : null,
         !pm && !pmError ? h('div', { className: 'cx-pm-empty' }, T('加载中…')) : null,
@@ -1373,6 +1375,11 @@
           h(PmSectionHead, { icon: 'clock', title: sectionTitle('进度', 'PROGRESS'), count: plans.filter((p) => p.status_name === 'process').length, folded: fold('gantt'), onToggle: () => setFolds((f) => ({ ...f, gantt: !f.gantt })) }),
           fold('gantt') ? null : h(Gantt, { plans, activeUid: activePlan?.uid })));
       const rightPanel = h('aside', { className: `cx-pm-side right${pmRefreshing ? ' refreshing' : ''}` },
+        h(PmStickyStack, { rows: [
+          { kind: 'task', label: sectionTitle(tt('task'), 'TASKS'), title: activeTask?.title || '', status: pmStatusText(activeTask?.status_name), statusKey: activeTask?.status_name },
+          { kind: 'report', label: sectionTitle(tt('report'), 'REPORTS'), title: activeReport?.title || '', status: pmStatusText(activeReport?.status_name), statusKey: activeReport?.status_name },
+          { kind: 'feedback', label: sectionTitle(tt('feedback'), 'FEEDBACK'), title: activeFeedback?.title || '', status: activeFeedback?.status_label || activeFeedback?.status_name, statusKey: activeFeedback?.status_name },
+        ] }),
         h('div', { className: `cx-calsec${calFull ? ' max' : ''}`, ref: calRef },
           h(PmSectionHead, { icon: 'clock', title: sectionTitle('时间', 'TIME'), folded: fold('cal'), style: { '--cx-hi': '0' }, onToggle: () => setFolds((f) => ({ ...f, cal: !f.cal })), tools: h(IconButton, { name: calFull ? 'restore' : 'fullscreen', className: 'cx-pm-max', onClick: () => { setCalFull((v) => !v); if (fold('cal')) setFolds((f) => ({ ...f, cal: false })); }, title: calFull ? T('还原') : T('最大化') }) }),
           fold('cal') ? null : h(PmCalendar, { tasks: allTasks, start: calStart, end: calEnd, onChange: calOnChange, locale })),
