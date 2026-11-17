@@ -166,6 +166,10 @@ ok('Avatar user is created through community API', read('lib/core/avatar.js').in
 ok('ContextOS lives in the conversation tab strip', /name: 'conversation\.view'/.test(page) && /id: 'contextos'/.test(page) && !/openRightbar/.test(page));
 ok('the tab renders the session config panel', page.includes('h(CtxCenter, { sessionId:') && page.includes('inline: true'));
 ok('config entries switch to the tab first', read('src/client/parts/58-config.js').includes("selectView('contextos')"));
+ok('Feedback score renders as stars inline', (() => {
+  const ui = read('src/client/parts/10-ui.js'), pm = read('src/client/parts/55-pm.js'), form = read('src/client/parts/46-pm.js');
+  return ui.includes('function cxStars(') && pm.includes('cxStars(score)') && !pm.includes('cx-pm-stars') && pm.includes("className: 'cx-stars'") && form.includes('cxStars(o.value ?? o.label)');
+})());
 ok('PM card actions align left and keep the more button', (() => { const css = read('src/client/styles/main.css'); const pm = read('src/client/parts/55-pm.js'); return css.includes('.cx-pm-card-actions{display:flex;align-items:center;justify-content:flex-start') && css.includes('.cx-pm-card-actions .cx-menu-wrap{margin-left:0') && pm.includes('function PmActionMenu') && pm.includes('disabled: !list.length') && !/function PmActionMenu[^}]*return null/.test(pm); })());
 ok('PM panels pin a sticky context stack', (() => { const c = read('src/client/parts/55-pm.js') + read('src/client/parts/50-chat.js'); return c.includes('function PmStickyStack') && (c.match(/h\(PmStickyStack, \{ rows:/g) || []).length === 2; })());
 ok('PM ops alias to pmCreate/pmAct', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('PM_OP_ALIAS') && c.includes("pmStart: ['pmAct', { action: 'process' }]") && c.includes("pmPlanCreate: ['pmCreate', { kind: 'plan' }]"); })());

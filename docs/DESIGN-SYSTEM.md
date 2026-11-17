@@ -350,5 +350,7 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 
 类型标签一律 `.cx-entity-type` 安静灰；新增状态先归到七档之一；门禁 `ui-probe --case status-tones`。
 
+反馈评分一律用星星（`cxStars(n)`：`★`×n + `☆`×(5-n)）——卡片上并进副标题同一行（`.cx-stars`），表单里评分下拉的每个选项也显示星星；不再单独占一行。
+
 卡片按钮区一律 `justify-content:flex-start`，`⋯`（PmActionMenu）在没有二级动作时置灰但不消失——同一列卡的按钮区永远对齐。门禁 `ui-probe --case pm-card-actions`。
 

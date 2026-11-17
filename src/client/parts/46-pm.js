@@ -50,9 +50,13 @@
         const label = T((metaLabel && metaLabel !== field && /[^\x00-\x7F]/.test(metaLabel)) ? metaLabel : (fieldLabels[field] || metaLabel || field));
         const required = requiredFields.has(field);
         const common = { className: 'cx-input', value, onFocus: () => loadField(field), 'aria-required': required || undefined };
+        const optLabel = (o) => (field === 'score' ? cxStars(o.value ?? o.label) : T(o.label || o.name || String(o.value)));
+        const scoreFallback = field === 'score'
+          ? [5, 4, 3, 2, 1].map((n) => h('option', { key: String(n), value: String(n) }, cxStars(n)))
+          : h('option', { value: '' }, T('加载中…'));
         const input = selectFields.has(field)
           ? h('select', { ...common, onChange: (e) => setValue(e.target.value) },
-              opts.length ? opts.map((o) => h('option', { key: String(o.value), value: String(o.value) }, T(o.label || o.name || String(o.value)))) : h('option', { value: '' }, '加载中…'))
+              opts.length ? opts.map((o) => h('option', { key: String(o.value), value: String(o.value) }, optLabel(o))) : scoreFallback)
           : h(React.Fragment, null,
               multiline
                 ? h('textarea', { ...common, rows: 3, onChange: (e) => setValue(e.target.value) })

@@ -156,9 +156,7 @@
       const statusKey = item.status_name || item.type_name || (kind === 'report' ? 'report' : '');
       const statusLabel = item.status_label ? T(item.status_label) : (item.status_name ? pmStatusText(item.status_name) : '');
       const score = Number(item.score);
-      const stars = kind === 'feedback' && Number.isFinite(score) && item.score !== '' && item.score != null
-        ? `${'★'.repeat(Math.max(0, Math.min(5, score)))}${'☆'.repeat(Math.max(0, 5 - Math.max(0, Math.min(5, score))))}`
-        : '';
+      const stars = kind === 'feedback' && Number.isFinite(score) && item.score !== '' && item.score != null ? cxStars(score) : '';
       const animRef = useRef(0);
       if (!animRef.current) animRef.current = cxCardAnimRef();
       const anim = animRef.current;
@@ -172,10 +170,12 @@
           title: item.title || item.uid,
           status: statusLabel,
           statusTone: pmTone(statusKey),
-          meta: [kind === 'plan' && item.begin_time ? `${shortDate(item.begin_time)} → ${shortDate(item.end_time)}` : (item.created_at ? String(item.created_at).slice(0, 16) : ''), sub, (traceIds || []).includes(item.uid) ? `#${String(traceLog || '').slice(0, 8)}` : ''].filter(Boolean).join(' · '),
+          meta: (() => {
+            const line = [kind === 'plan' && item.begin_time ? `${shortDate(item.begin_time)} → ${shortDate(item.end_time)}` : (item.created_at ? String(item.created_at).slice(0, 16) : ''), sub, (traceIds || []).includes(item.uid) ? `#${String(traceLog || '').slice(0, 8)}` : '', stars].filter(Boolean).join(' · ');
+            return stars ? h(React.Fragment, null, line.replace(` · ${stars}`, ''), h('span', { className: 'cx-stars', title: `${score} / 5` }, ` · ${stars}`)) : line;
+          })(),
         }),
         item.content ? h('div', { className: 'cx-pm-content', title: item.content }, item.content) : null,
-        stars ? h('div', { className: 'cx-pm-stars', title: `${score} / 5` }, stars) : null,
         h('div', { className: 'cx-pm-card-actions' },
           primary.map((action) => h('button', { key: action, className: `cx-pm-act${action === 'remove' ? ' danger' : ''}`, onClick: (e) => { e.stopPropagation(); onAction(action); } }, T(PM_ACTION_LABEL[action] || action))),
           h(PmActionMenu, { actions: secondary, onAction })));

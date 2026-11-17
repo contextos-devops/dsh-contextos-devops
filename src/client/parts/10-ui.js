@@ -125,6 +125,11 @@
     function IconButton({ name, title, onClick, className = '', size = 16, disabled = false, ...rest }) {
       return h(UiAffordance, { as: 'button', icon: name, iconSize: size, mode: 'icon', className: `cx-icon ${className}`.trim(), title, disabled, onClick, ...rest });
     }
+    // 五档评分统一用星星表示（卡片副标题、表单下拉共用）
+    function cxStars(n) {
+      const v = Math.max(0, Math.min(5, Number(n) || 0));
+      return '★'.repeat(v) + '☆'.repeat(5 - v);
+    }
     function EntityTitle({ image, icon = 'app', type, title, status, statusTone = '', meta, after, onClick, active = false, className = '', children }) {
       const cls = `cx-entity${active ? ' on' : ''}${className ? ' ' + className : ''}`;
       return h('div', { className: cls, onClick, role: onClick ? 'button' : null },
