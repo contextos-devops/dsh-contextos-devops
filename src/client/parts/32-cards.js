@@ -43,7 +43,7 @@
           icon: 'server',
           title: n.name || `node-${n.port}`,
           status: on ? (locale === 'zh' ? '运行中' : 'RUNNING') : (locale === 'zh' ? '离线' : 'OFFLINE'),
-          statusTone: on ? 'ok' : 'off',
+          statusTone: on ? 'is-active' : 'is-done',
           // 端口 · 代码版本 · 编译时间 · 程序大小
           // 端口 · 版本 · 编译时间 · 大小 · 进程 · 部署方式
           meta: [`:${n.port}`, cardVer(n.version) || '—',
@@ -87,7 +87,7 @@
           icon: 'space',
           title: [s.help, s.name].filter(Boolean).join(' '),
           status: on ? (locale === 'zh' ? '运行中' : 'start') : (locale === 'zh' ? '已停止' : 'stop'),
-          statusTone: on ? 'ok' : 'off',
+          statusTone: on ? 'is-active' : 'is-done',
           // 代码版本 · 编译时间 · 程序大小
           meta: [cardVer(s.version) || '—', cardTime(s.builtAt) || '—', s.size || '—'].join(' · '),
         }),

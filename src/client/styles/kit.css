@@ -120,3 +120,18 @@
 .cx-hint{font-size:var(--cx-fs-10);color:var(--cx-text-dim);line-height:var(--cx-lh-body)}
 .cx-field>input,.cx-field>select,.cx-field>textarea{width:100%}
 .cx-field.full{grid-column:1/-1}
+
+/* 状态色语言：一个状态一个语义档，档位决定「要不要你看一眼」。
+   idle 待提交=安静；review 待审批=琥珀（等你处理）；
+   ready 待开始=蓝（已就绪）；active 进行中=绿（活着）；
+   done 已完成=灰（已落定）；halted 已取消=暗红（终止）；failed 已驳回=亮红（失败）。
+   类型标签（目标/计划/任务…）一律 quiet：不给色，避免和状态抢注意力。 */
+.cx-entity-status{--tone:var(--cx-muted);--tone-soft:color-mix(in srgb,var(--tone) 14%,transparent);color:var(--tone);border-color:color-mix(in srgb,var(--tone) 42%,transparent);background:var(--tone-soft)}
+.cx-entity-status.is-idle{--tone:#8fa8b8}
+.cx-entity-status.is-review{--tone:var(--cx-orange)}
+.cx-entity-status.is-ready{--tone:var(--cx-cyan2)}
+.cx-entity-status.is-active{--tone:var(--cx-green)}
+.cx-entity-status.is-done{--tone:#93a7b4;--tone-soft:color-mix(in srgb,#93a7b4 10%,transparent)}
+.cx-entity-status.is-halted{--tone:color-mix(in srgb,var(--cx-red) 62%,var(--cx-text-dim))}
+.cx-entity-status.is-failed{--tone:var(--cx-red)}
+.cx-entity-status.is-active{font-weight:700}

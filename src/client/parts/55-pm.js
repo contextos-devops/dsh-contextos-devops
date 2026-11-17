@@ -1,3 +1,6 @@
+    // 状态色语言（与 kit.css 的 .is-* 一一对应）：先判断「要不要用户注意」，再判断「警醒还是鼓励」。
+    const PM_STATUS_TONE = { created: 'is-idle', submited: 'is-review', approved: 'is-ready', process: 'is-active', finished: 'is-done', canceled: 'is-halted', rejected: 'is-failed', canFinish: 'is-active', shouldImprove: 'is-review' };
+    const pmTone = (key) => PM_STATUS_TONE[key] || 'is-idle';
     const PM_KIND_LABEL = { target: '目标', plan: '计划', task: '任务', report: '报告', feedback: '反馈' };
     const PM_SHORT = { target: '目标', plan: '计划', task: '任务', report: '报告', feedback: '反馈' };
     const PM_ACTION_LABEL = { planCreate: '+ 计划', taskCreate: '+ 任务', reportCreate: '+ 报告', feedbackCreate: '+ 反馈', submit: '提交', approve: '通过', reject: '驳回', process: '开始', finish: '完成', cancel: '取消', modify: '编辑', remove: '删除', handover: '交接', open: '打开链接' };
@@ -153,7 +156,7 @@
           icon: h(Ico, { name: kind, size: 24 }),
           title: item.title || item.uid,
           status: statusLabel,
-          statusTone: statusKey === 'finished' || statusKey === 'approved' ? 'ok' : statusKey === 'process' ? 'warn' : 'off',
+          statusTone: pmTone(statusKey),
           meta: [kind === 'plan' && item.begin_time ? `${shortDate(item.begin_time)} → ${shortDate(item.end_time)}` : (item.created_at ? String(item.created_at).slice(0, 16) : ''), sub, (traceIds || []).includes(item.uid) ? `#${String(traceLog || '').slice(0, 8)}` : ''].filter(Boolean).join(' · '),
         }),
         item.content ? h('div', { className: 'cx-pm-content', title: item.content }, item.content) : null,

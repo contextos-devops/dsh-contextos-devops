@@ -106,6 +106,39 @@ const CASES = [
     },
   },
   {
+    name: 'status-tones',
+    fixture: 'scripts/fixtures/status-tones.html',
+    window: '560,200',
+    sels: ['#t-idle', '#t-review', '#t-ready', '#t-active', '#t-done', '#t-halted', '#t-failed', '#t-type'],
+    assert: (m) => {
+      // 浏览器可能回 rgb() 也可能回 color(srgb r g b)（color-mix 的结果），两种都解析成 0-255。
+      const parse = (sel) => {
+        const raw = String(m[sel]?.color || '');
+        const nums = (raw.match(/-?[\d.]+/g) || []).map(Number);
+        if (raw.startsWith('color(')) return nums.slice(0, 3).map((x) => Math.round(x * 255));
+        return nums.slice(0, 3);
+      };
+      const sat = ([a, b, c]) => Math.max(a, b, c) - Math.min(a, b, c);
+      const lum = ([a, b, c]) => 0.2126 * a + 0.7152 * b + 0.0722 * c;
+      const C = {};
+      for (const id of ['idle', 'review', 'ready', 'active', 'done', 'halted', 'failed']) C[id] = parse('#t-' + id);
+      const uniq = new Set(Object.values(C).map((x) => x.join(',')));
+      const [ir, ig, ib] = C.idle, [er, eg, eb] = C.review, [rr, rg, rb] = C.ready;
+      const [ar, ag, ab] = C.active, [hr, hg, hb] = C.halted, [fr, fg, fb] = C.failed;
+      return [
+        [uniq.size === 7, '七个状态档颜色互不相同', `${uniq.size} 种`],
+        [ag > ar && ag > ab, '进行中是绿色（活着）', m['#t-active'].color],
+        [sat(C.done) <= 40 && lum(C.done) > 100, '已完成是安静的灰（已落定）', m['#t-done'].color],
+        [fr > fg && fr > fb, '已驳回是亮红（失败）', m['#t-failed'].color],
+        [hr > hg && hr > hb && sat(C.halted) < sat(C.failed), '已取消是暗红（终止，弱于驳回）', m['#t-halted'].color],
+        [er > eb && eg > eb, '待审批是琥珀（等你处理）', m['#t-review'].color],
+        [rb >= rr, '待开始偏蓝（已就绪）', m['#t-ready'].color],
+        [sat(C.idle) <= 56, '待提交是中性（不需要注意）', m['#t-idle'].color],
+        [sat(parse('#t-type')) <= 64, '类型标签安静，不与状态抢注意力', m['#t-type'].color],
+      ];
+    },
+  },
+  {
     name: 'filter-count',
     fixture: 'scripts/fixtures/filter-count.html',
     window: '420,300',
@@ -171,7 +204,8 @@ window.__PROBE_SELS__ = __SELS__;
         fontSize: c.fontSize, lineHeight: c.lineHeight, position: c.position,
         left: +(off ? r.left - off.left : r.left).toFixed(1),
         animationName: c.animationName, animationDuration: c.animationDuration,
-        sh: n.scrollHeight, ch: n.clientHeight, paddingTop: c.paddingTop
+        sh: n.scrollHeight, ch: n.clientHeight, paddingTop: c.paddingTop,
+        color: c.color, bg: c.backgroundColor
       };
     });
     document.title = 'PROBE:' + JSON.stringify(out);

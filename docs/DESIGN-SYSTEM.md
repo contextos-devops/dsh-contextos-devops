@@ -327,3 +327,19 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 
 加页面/组件/状态/接口/样式/动效，先 `npm run new -- <kind> <Name>`，再按 `docs/EXTENDING.md` 补接线；
 动效验收 `node scripts/ui-probe.mjs --case anim`（量 `animationName`/`animationDuration`）。
+
+### 20.6 状态与类型的颜色语言
+
+判断顺序：先问「要不要用户现在看一眼」，再问「警醒还是鼓励」。七档一色，禁止就地发明颜色。
+
+| 档 | class | 色 | 对应值 |
+|---|---|---|---|
+| idle | `.is-idle` | 中性灰蓝 | created |
+| review | `.is-review` | 琥珀（等你处理） | submited / shouldImprove |
+| ready | `.is-ready` | 蓝（已就绪） | approved |
+| active | `.is-active` | 绿加粗（活着） | process / canFinish / running |
+| done | `.is-done` | 灰（退到背景） | finished / stopped |
+| halted | `.is-halted` | 暗红（终止） | canceled |
+| failed | `.is-failed` | 亮红（失败） | rejected |
+
+类型标签一律 `.cx-entity-type` 安静灰；新增状态先归到七档之一；门禁 `ui-probe --case status-tones`。

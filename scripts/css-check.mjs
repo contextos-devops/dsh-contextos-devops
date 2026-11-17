@@ -19,7 +19,9 @@ const parts = fs.readdirSync(path.join(root, 'src/client/parts')).filter((f) => 
   .map((f) => fs.readFileSync(path.join(root, 'src/client/parts', f), 'utf8')).join('\n');
 
 // 基线：2026-11-17 实测。只许往下调；调高必须在报告里写出原因。
-const BASE = { hex: 562, rgba: 302, important: 689, dupRatio: 0.728, lines: 3405 };
+// dupDecls 是「重复声明的绝对条数」：删掉不再使用的规则不会把它推高，
+// 比 dupRatio（1 - 唯一/总数）更适合做棘轮——分母变小不该算退步。
+const BASE = { hex: 562, rgba: 302, important: 689, dupDecls: 6364, dupRatio: 0.728, lines: 3372 };
 const RUNTIME = /^--cx-(a|b|host|host-|shell|shell-|hue-rgb|pane-|scroll-|preview-w|surface-)/;
 
 const fails = [], warns = [], notes = [];
@@ -36,14 +38,16 @@ const hex = (main.match(/#[0-9a-fA-F]{3,8}\b/g) || []).length;
 const rgba = (main.match(/rgba?\((?!var)/g) || []).length;
 const important = (main.match(/!important/g) || []).length;
 const decls = [...main.matchAll(/\{([^{}]*)\}/g)].flatMap((m) => m[1].split(';').map((s) => s.trim()).filter(Boolean));
-const uniq = new Set(decls).size;
+const uniqSet = new Set(decls);
+const uniq = uniqSet.size;
 const dupRatio = +(1 - uniq / decls.length).toFixed(3);
+const dupDecls = decls.length - uniq;
 const lines = main.split('\n').length;
-for (const key of ['hex', 'rgba', 'important', 'dupRatio', 'lines']) {
-  const val = { hex, rgba, important, dupRatio, lines }[key];
+for (const key of ['hex', 'rgba', 'important', 'dupDecls', 'lines']) {
+  const val = { hex, rgba, important, dupDecls, lines }[key];
   ok(val <= BASE[key], `main.css ${key} 超基线：${val} > ${BASE[key]}（可降低，不可升高）`);
 }
-notes.push(`main.css ${lines} 行 · 字面量色 ${hex} · rgba ${rgba} · !important ${important} · 重复率 ${(dupRatio * 100).toFixed(1)}%`);
+notes.push(`main.css ${lines} 行 · 字面量色 ${hex} · rgba ${rgba} · !important ${important} · 重复声明 ${dupDecls} 条 · 重复率 ${(dupRatio * 100).toFixed(1)}%`);
 
 // 3) 令牌已定义 / 有 fallback / 运行时
 const defined = new Set([...tokens.matchAll(/(--cx-[\w-]+)\s*:/g)].map((m) => m[1]));
@@ -62,7 +66,7 @@ const dead = [...new Set(classes)].filter((c) => !parts.includes(c) && !kit.incl
 if (dead.length) warns.push(`疑似死类 ${dead.length} 个：${dead.slice(0, 8).join(', ')}`);
 
 if (process.argv.includes('--json')) {
-  console.log(JSON.stringify({ fails, warns, notes, metrics: { hex, rgba, important, dupRatio, lines } }, null, 2));
+  console.log(JSON.stringify({ fails, warns, notes, metrics: { hex, rgba, important, dupDecls, dupRatio, lines } }, null, 2));
 } else {
   notes.forEach((n) => console.log(`CSS ${n}`));
   warns.forEach((w) => console.log(`WARN ${w}`));
