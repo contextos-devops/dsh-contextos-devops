@@ -121,6 +121,20 @@ const CASES = [
     },
   },
   {
+    name: 'right-panel-stack',
+    fixture: 'scripts/fixtures/right-panel-stack.html',
+    window: '340,340',
+    sels: ['#side', '#hTime', '#hTask', '#curTask'],
+    assert: (m) => {
+      const side = m['#side'], t = m['#hTime'], task = m['#hTask'], cur = m['#curTask'];
+      return [
+        [!!t && !!side && t.y + t.h <= side.y + 1, '时间标题栏随内容滚走（不吸顶）', `标题底 ${t ? t.y + t.h : '?'} ≤ 滚动区顶 ${side?.y}`],
+        [!!task && !!side && Math.abs(task.y - side.y) <= 12, '任务标题吸在滚动区顶端', `${task?.y} / ${side?.y}`],
+        [!!cur && !!task && Math.abs(cur.y - (task.y + task.h)) <= 3, '当前任务卡片贴在任务标题下面', `${cur?.y} = ${task?.y}+${task?.h}`],
+      ];
+    },
+  },
+  {
     name: 'pm-stack',
     fixture: 'scripts/fixtures/pm-stack.html',
     window: '360,340',

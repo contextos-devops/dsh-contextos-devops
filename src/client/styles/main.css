@@ -1878,11 +1878,9 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-ctx-form select.cx-input{height:28px;padding:0 8px;line-height:28px;font-size:var(--cx-fs);appearance:auto;-webkit-appearance:auto;background-color:var(--cx-surface-0)}
 .cx-ctx-form .cx-input{height:28px}
 
-/* 右栏五个标题栏：常驻堆叠（滚动时依次吸顶，全部可见） */
-.cx-pm-side.right .cx-pm-h{position:sticky;top:calc(var(--cx-hi, 0) * 34px);z-index:calc(60 - var(--cx-hi, 0));backdrop-filter:blur(8px);box-shadow:0 1px 0 var(--cx-border)}
+/* 右栏标题栏的吸顶由 .cx-pm-sec 逐节负责（见 kit.css），这里不再整栏压层 */
 /* 让日历/地图的标题也直接参与右栏布局，才能对整栏吸顶吸底 */
 .cx-pm-side.right .cx-calsec:not(.max),.cx-pm-side.right .cx-mapsec:not(.max){display:contents}
-.cx-pm-side.right .cx-pm-h:hover{z-index:calc(60 - var(--cx-hi, 0))}
 
 /* 卡片图标容器 */
 .cx-entity-ico{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;color:var(--cx-cyan)}
