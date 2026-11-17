@@ -92,14 +92,22 @@ for (const [name, url] of list) {
 // 推完核对：各远端 HEAD 必须与本地一致
 let local = '';
 try { local = git(['rev-parse', 'HEAD']); } catch { /* ignore */ }
+// ls-remote 偶发超时（GitHub 443 抖动）；重试 3 次，仍读不到才算失败
+function remoteHead(name) {
+  let last;
+  for (let i = 0; i < 3; i += 1) {
+    try { return git([...NO_PROXY, 'ls-remote', name, BRANCH]); } catch (err) { last = err; }
+  }
+  throw last;
+}
 for (const [name, url] of list) {
   try {
-    const head = git([...NO_PROXY, 'ls-remote', name, BRANCH]).split(/\s+/)[0];
+    const head = remoteHead(name).split(/\s+/)[0];
     const ok = head && local && head.startsWith(local.slice(0, 8));
     console.log(`${ok ? 'PASS' : 'FAIL'}  ${name} HEAD ${head.slice(0, 8)} ${ok ? '= 本地' : '≠ 本地' + local.slice(0, 8)}`);
     if (!ok) failed += 1;
   } catch {
-    console.log(`FAIL  ${name} 无法读取 HEAD`);
+    console.log(`FAIL  ${name} 无法读取 HEAD（重试 3 次仍失败，push 本身已成功时可能是网络抖动）`);
     failed += 1;
   }
 }
