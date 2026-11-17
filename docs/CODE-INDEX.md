@@ -57,7 +57,7 @@
 | `src/client/parts/05-bootstrap.js` | 66 | `apiTrace` `QUERY_OPS` |
 | `src/client/parts/07-kit.js` | 66 | `cxCx` `CxStack` `CxRow` `CxCol` `CxSection` `CxField` `CX_BTN_VARIANT` `CX_BTN_SIZE` `CxBtn` `CxInput` |
 | `src/client/parts/08-store.js` | 86 | — |
-| `src/client/parts/10-ui.js` | 239 | `CtxMark` `Ico` `Icon` `Panel` `TOKENS` `Btn` `Toolbar` `Section` `Field` `EmptyState` |
+| `src/client/parts/10-ui.js` | 245 | `CtxMark` `Ico` `Icon` `Panel` `TOKENS` `Btn` `Toolbar` `Section` `Field` `EmptyState` |
 | `src/client/parts/12-debug.js` | 362 | `ANSI_COLORS` `ANSI_NAMES` `AnsiText` `terminalTheme` `TerminalLog` `CONSOLE_TERMS` `ConsoleTerminal` `DebugDetail` |
 | `src/client/parts/15-layout.js` | 87 | `SingleLineTitle` `DoubleLineTitle` `UiBar` `UiWorkspace` `UiAddressBar` `MenuList` `UiCardList` `UiTableList` `UiTreeList` |
 | `src/client/parts/20-devworkspace.js` | 790 | `DevWorkspace` `termActiveRef` `termPendingRef` `termIdsRef` `termKeyRef` `termHostsRef` `termMapRef` `termAct` |
@@ -74,7 +74,7 @@
 | `src/client/parts/50-chat.js` | 1501 | `ChatPanel` `userUpRef` `ToolRow` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` `PM_OP_ALIAS` |
 | `src/client/parts/51-pmselection.js` | 32 | `usePmSelection` |
 | `src/client/parts/52-pmdata.js` | 30 | `usePmData` |
-| `src/client/parts/55-pm.js` | 179 | `PM_REPORT_TONE` `PM_STATUS_TONE` `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` |
+| `src/client/parts/55-pm.js` | 181 | `PM_REPORT_TONE` `PM_STATUS_TONE` `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` |
 | `src/client/parts/58-config.js` | 498 | `CTX_CFG_KEYS` `CTX_CFG_DEFAULT` `CTX_CFG_NS` `CTX_CALLS_NS` `CTX_UI` `CTX_DATA` `MODE_INTRO_SEEN` `ModeIntro` `WelcomeBurst` `CursorComet` |
 | `src/client/parts/59-monitor.js` | 263 | `MonitorDonut` `R` `MonitorSpark` `MonitorTwin` `MON_PANELS` `MON_DEFAULT` `MonitorPanel` `MonitorBoard` `MonitorView` |
 | `src/client/parts/60-page.js` | 1667 | `PipeSelect` `Page` `Boundary` |

@@ -135,6 +135,19 @@ const CASES = [
     },
   },
   {
+    name: 'pm-reveal',
+    fixture: 'scripts/fixtures/pm-reveal.html',
+    window: '360,340',
+    sels: ['#sc', '#h', '#target'],
+    assert: (m) => {
+      const sc = m['#sc'], h = m['#h'], t = m['#target'];
+      return [
+        [!!t && !!sc && t.y >= sc.y + 30, '滚进可视区的卡片停在吸顶标题下方（不被遮住）', `卡片 ${t?.y} ≥ 滚动区顶 ${sc?.y} + 30（标题高 ${h?.h}）`],
+        [!!t && !!sc && t.y + t.h <= sc.y + sc.h + 1, '卡片完整落在滚动区内（没被切掉底部）', `${t?.y + t?.h} ≤ ${sc?.y + sc?.h}`],
+      ];
+    },
+  },
+  {
     name: 'pm-sticky-h',
     fixture: 'scripts/fixtures/pm-sticky.html',
     window: '360,420',

@@ -147,6 +147,8 @@
     }
 
     function PmCard({ item, kind, active, sub, traceIds, traceLog, onSelect, onAction }) {
+      const cardRef = useRef(null);
+      useEffect(() => { if (active) cxReveal(cardRef.current); }, [active, item.uid]);
       const statusKey = item.status_name || item.type_name || (kind === 'report' ? 'report' : '');
       const reportType = kind === 'report' ? String(item.type_name || item.inputs?.report_type || '').toLowerCase() : '';
       const statusTone = PM_REPORT_TONE[reportType] || pmTone(statusKey);
@@ -159,7 +161,7 @@
       const actions = item.actions || [];
       const primary = actions.filter((a) => !PM_MENU_ACTIONS.has(a));
       const secondary = actions.filter((a) => PM_MENU_ACTIONS.has(a));
-      return h('div', { key: `${item.uid}:${cxCardSig(item)}`, className: `cx-pm-card${active ? ' on' : ''}${(traceIds || []).includes(item.uid) ? ' trace' : ''}${anim ? ` cx-in cx-in-${anim}` : ''}`, onClick: onSelect, role: 'button' },
+      return h('div', { ref: cardRef, key: `${item.uid}:${cxCardSig(item)}`, className: `cx-pm-card${active ? ' on' : ''}${(traceIds || []).includes(item.uid) ? ' trace' : ''}${anim ? ` cx-in cx-in-${anim}` : ''}`, onClick: onSelect, role: 'button' },
         h(DoubleLineTitle, {
           image: item.image || item.avatar || item.icon,
           icon: h(Ico, { name: kind, size: 24 }),

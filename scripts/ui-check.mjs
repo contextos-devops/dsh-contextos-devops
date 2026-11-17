@@ -173,6 +173,12 @@ ok('Header theme and language are single cycling buttons', (() => {
     && chat.includes("{ value: 'light', icon: 'sun'") && chat.includes("{ value: 'dark', icon: 'moon'")
     && !/h\(DropSelect, \{ value: (themeMode|langMode)/.test(chat);
 })());
+ok('Selected cards scroll into view below the sticky header', (() => {
+  const ui = read('src/client/parts/10-ui.js'), pm = read('src/client/parts/55-pm.js'), kit = read('src/client/styles/kit.css');
+  return ui.includes('function cxReveal(') && ui.includes("scrollIntoView({ block: 'nearest'") &&
+    pm.includes('if (active) cxReveal(cardRef.current)') && pm.includes('ref: cardRef') &&
+    kit.includes('scroll-padding-top:44px');
+})());
 ok('Section headers stick to the top while scrolling', (() => {
   const css = read('src/client/styles/kit.css'), pm = read('src/client/parts/55-pm.js'), chat = read('src/client/parts/50-chat.js');
   return css.includes('.cx-pm-scroll>.cx-pm-h,.cx-pm-side.right>.cx-pm-h{position:sticky;top:0')
