@@ -90,7 +90,14 @@
 
     function pmFilterOptions(list, key) {
       const labelKey = key === 'type_name' ? 'type_label' : `${key}_label`;
-      return [...new Set((list || []).map((x) => x[key]).filter(Boolean))].map((value) => ({ value, label: (list || []).find((x) => x[key] === value)?.[labelKey] || (key === 'status_name' ? pmStatusText(value) : value) }));
+      // count 是该取值在这批数据里的条数：下拉里直接显示「Approved 5」，不用先筛一遍才知道有多少
+      const counts = new Map();
+      (list || []).forEach((x) => { const v = x[key]; if (v) counts.set(v, (counts.get(v) || 0) + 1); });
+      return [...counts.keys()].map((value) => ({
+        value,
+        count: counts.get(value),
+        label: (list || []).find((x) => x[key] === value)?.[labelKey] || (key === 'status_name' ? pmStatusText(value) : value),
+      }));
     }
     const PM_STATUS_ORDER = ['created', 'submited', 'approved', 'process', 'finished', 'canceled', 'rejected'];
     function sortPmItems(items) {

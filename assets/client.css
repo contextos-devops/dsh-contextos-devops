@@ -472,6 +472,10 @@
   padding:0 var(--cx-sp-3);border:1px solid var(--cx-border);border-radius:var(--cx-r-pill);
   background:var(--cx-surface-2);color:var(--cx-text-dim);white-space:nowrap;cursor:pointer;
 }
+/* 计数徽标：筛选下拉/胶囊里显示该选项的条数（右对齐、不抢文字） */
+.cx-filter-n{flex:0 0 auto;min-width:18px;text-align:center;padding:0 4px;border-radius:var(--cx-r-pill);
+  background:var(--cx-surface-3);color:var(--cx-text-dim);font-size:var(--cx-fs-10);line-height:14px}
+.cx-filter-item.on .cx-filter-n,.cx-filter-chip.on .cx-filter-n{background:var(--cx-accent-soft);color:var(--cx-accent)}
 .cx-chip.on{border-color:var(--cx-accent);color:var(--cx-accent);background:var(--cx-accent-soft)}
 .cx-tag{
   display:inline-flex;align-items:center;height:var(--cx-fs-16);padding:0 var(--cx-sp-2);

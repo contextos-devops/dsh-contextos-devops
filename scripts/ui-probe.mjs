@@ -106,6 +106,20 @@ const CASES = [
     },
   },
   {
+    name: 'filter-count',
+    fixture: 'scripts/fixtures/filter-count.html',
+    window: '420,300',
+    sels: ['.cx-filter-item', '.cx-filter-item .cx-filter-text', '.cx-filter-item .cx-filter-n'],
+    assert: (m) => {
+      const item = m['.cx-filter-item'], text = m['.cx-filter-item .cx-filter-text'], n = m['.cx-filter-item .cx-filter-n'];
+      return [
+        [!!n && n.w >= 16, '筛选项里有计数徽标', `宽 ${n?.w}px`],
+        [!!n && !!text && n.x >= text.right - 1, '计数在文字右侧（不挤在文字里）', `文字右 ${text?.right} / 计数左 ${n?.x}`],
+        [!!n && !!item && n.right <= item.right - 2, '计数不越出下拉项', `${n?.right} ≤ ${item?.right}`],
+      ];
+    },
+  },
+  {
     name: 'form-controls',
     fixture: 'scripts/fixtures/form-controls.html',
     window: '760,420',
