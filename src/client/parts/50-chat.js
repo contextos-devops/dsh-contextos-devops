@@ -248,7 +248,14 @@
                   const r = b.getBoundingClientRect();
                   const wraps = Array.from(b.querySelectorAll('.cx-msg-wrap')).slice(-4).map((w) => {
                     const wr = w.getBoundingClientRect();
-                    return { h: Math.round(wr.height), w: Math.round(wr.width), x: Math.round(wr.x) };
+                    const sec = w.querySelector('.cx-sec, .cx-wform, .cx-md-codebox');
+                    const sr = sec ? sec.getBoundingClientRect() : null;
+                    const bd = sec ? sec.querySelector('.cx-bd') : null;
+                    return { h: Math.round(wr.height), w: Math.round(wr.width), x: Math.round(wr.x),
+                      cls: String(w.className || '').replace('cx-msg-wrap', '').trim(),
+                      txt: String(w.textContent || '').trim().length,
+                      sec: sec ? `${Math.round(sr.height)}/${bd ? Math.round(bd.getBoundingClientRect().height) : '-'}` : '',
+                      html: sec ? String(sec.outerHTML || '').replace(/\s+/g, ' ').slice(0, 220) : String(w.outerHTML || '').replace(/\s+/g, ' ').slice(0, 160) };
                   });
                   return { box: [Math.round(r.x), Math.round(r.width)], sw: b.scrollWidth, cw: b.clientWidth, sl: b.scrollLeft, wraps };
                 } catch { return null; }
