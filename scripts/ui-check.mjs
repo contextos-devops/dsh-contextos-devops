@@ -272,24 +272,22 @@ ok('Date picker keeps its time row and actions inside the panel', (() => {
     && /\.cx-dt-foot\{position:sticky;bottom:0/.test(kit)
     && /\.cx-dt-acts\{display:flex/.test(kit);
 })());
-ok('Popovers self-correct when a transformed ancestor traps position:fixed', (() => {
-  const ui = read('src/client/parts/10-ui.js');
-  return ui.includes('function cxPopSettle(')
-    && ui.includes('function cxPopTrack(')
-    && /requestAnimationFrame\(tick\)/.test(ui)
-    && /cxPopTrack\(wrapRef, popRef, 280, 160, setPos\)/.test(ui)
-    && /cxPopTrack\(ref, popRef, 320, 264, setPos\)/.test(ui)
-    && /const dx = want\.left - got\.left;/.test(ui);
+ok('Popover self-correction lives in the kit primitive', (() => {
+  const kit = read('src/client/parts/07-kit.js');
+  return kit.includes('function cxPopSettle(')
+    && /requestAnimationFrame\(tick\)/.test(kit)
+    && /const dx = want\.left - got\.left;/.test(kit)
+    && /if \(Math\.abs\(dx\) < 0\.5 && Math\.abs\(dy\) < 0\.5\) return null;/.test(kit);
 })());
-ok('Popovers are viewport-anchored, not clipped by the dialog scroll box', (() => {
-  const ui = read('src/client/parts/10-ui.js'), kit = read('src/client/styles/kit.css');
-  return ui.includes('function cxPopStyle(')
-    && ui.includes('cxPopTrack(wrapRef, popRef, 280, 160, setPos)')
-    && ui.includes('cxPopTrack(ref, popRef, 320, 264, setPos)')
-    && /const up = below < panelH && r.top > below;/.test(ui)
-    && /const width = Math.max\(minW \|\| 0, Math.round\(r.width\)\);/.test(ui)
-    && /\.cx-combo-pop\{position:fixed!important/.test(kit)
-    && /\.cx-dt-pop\{position:fixed!important/.test(kit);
+ok('Popovers are a kit primitive, not per-component positioning', (() => {
+  const ui = read('src/client/parts/10-ui.js'), kit = read('src/client/parts/07-kit.js'), css = read('src/client/styles/kit.css');
+  return kit.includes('function CxPopover(')
+    && kit.includes('function cxPopSettle(')
+    && /const up = below < panelH && r.top > below;/.test(kit)
+    && /\.cx-pop\{position:fixed/.test(css)
+    && ui.includes('h(CxPopover, { anchorRef: wrapRef')
+    && ui.includes('h(CxPopover, { anchorRef: ref')
+    && !/function cxPopStyle\(/.test(ui);
 })());
 ok('date and time pickers are shared controls', (() => { const ui = read('src/client/parts/10-ui.js'); const pm = read('src/client/parts/46-pm.js'); return ui.includes('function CxDateTime(') && ui.includes('function CxCombo(') && pm.includes('type: \'datetime\'') && !pm.includes('datalist') && ui.includes('cxPad') && ui.includes('return `${p.y}-${cxPad(p.mo)}-${cxPad(p.d)} ${cxPad(p.hh)}:${cxPad(p.mm)}:${cxPad(p.ss)}`'); })());
 ok('PM ops alias to pmCreate/pmAct', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('PM_OP_ALIAS') && c.includes("pmStart: ['pmAct', { action: 'process' }]") && c.includes("pmPlanCreate: ['pmCreate', { kind: 'plan' }]"); })());

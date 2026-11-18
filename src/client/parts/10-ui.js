@@ -161,72 +161,11 @@
     }
 
     // ── 组合输入框（可输入 + 统一风格下拉，替代原生 datalist）──────────────
-    // 浮层定位：position:fixed 才不会被弹窗的 overflow:auto 裁掉；
-    // 宽度跟随触发元素（下拉与输入框同宽），下方空间不足时向上翻。
-    // position:fixed 在带 transform / backdrop-filter 的祖先内会退化成「相对该祖先」，
-    // 于是首次算出的 left/top 会整体偏移。量一次面板真实位置，把差值补回去即可收敛。
-    function cxPopSettle(anchor, panel, panelH, minW) {
-      const want = cxPopStyle(anchor, panelH, minW);
-      if (!panel || typeof panel.getBoundingClientRect !== 'function') return want;
-      const got = panel.getBoundingClientRect();
-      const dx = want.left - got.left;
-      const dy = want.top - got.top;
-      // 已经对齐就返回 null：重复写入同一坐标会让「被祖先带偏」的浮层来回跳一格
-      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return null;
-      return { ...want, left: Math.round(want.left + dx), top: Math.round(want.top + dy) };
-    }
-
-    // 打开期间连续校正：弹窗有入场动画（transform/backdrop-filter），单次测量会偏。
-    function cxPopTrack(anchorRef, popRef, panelH, minW, setPos) {
-      const place = () => {
-        const next = cxPopSettle(anchorRef.current, popRef.current, panelH, minW);
-        if (next) setPos(next);
-      };
-      let raf = 0;
-      let n = 0;
-      const tick = () => { place(); if (++n < 48) raf = requestAnimationFrame(tick); };
-      tick();
-      const onScroll = () => place();
-      window.addEventListener('scroll', onScroll, true);
-      window.addEventListener('resize', onScroll);
-      return () => {
-        cancelAnimationFrame(raf);
-        window.removeEventListener('scroll', onScroll, true);
-        window.removeEventListener('resize', onScroll);
-      };
-    }
-
-    function cxPopStyle(el, panelH, minW) {
-      if (!el || typeof el.getBoundingClientRect !== 'function') return { left: 0, top: 0, width: minW || 240 };
-      const r = el.getBoundingClientRect();
-      const vh = (typeof window !== 'undefined' ? window.innerHeight : 800) || 800;
-      const vw = (typeof window !== 'undefined' ? window.innerWidth : 1200) || 1200;
-      const width = Math.max(minW || 0, Math.round(r.width));
-      const below = vh - r.bottom - 8;
-      const up = below < panelH && r.top > below;
-      const top = up ? Math.max(8, r.top - panelH - 4) : Math.round(r.bottom + 4);
-      const left = Math.max(8, Math.min(Math.round(r.left), vw - width - 8));
-      return { left, top, width, maxHeight: Math.max(160, Math.min(panelH, up ? r.top - 16 : below)) };
-    }
-
+    // 浮层的定位/裁剪/宽度/关闭全部交给 kit 的 CxPopover，这里只写结构。
     function CxCombo({ value, onChange, options, onFocus, placeholder, required }) {
       const [open, setOpen] = useState(false);
-      const [pos, setPos] = useState(null);
       const wrapRef = useRef(null);
       const opts = options || [];
-      useEffect(() => {
-        if (!open) return;
-        const away = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
-        const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
-        const stop = cxPopTrack(wrapRef, popRef, 280, 160, setPos);
-        document.addEventListener('mousedown', away);
-        document.addEventListener('keydown', esc);
-        return () => {
-          stop();
-          document.removeEventListener('mousedown', away);
-          document.removeEventListener('keydown', esc);
-        };
-      }, [open]);
       const q = String(value ?? '').toLowerCase();
       const shown = q ? opts.filter((o) => String(o.label ?? o.name ?? o.value).toLowerCase().includes(q)) : opts;
       return h('div', { className: `cx-combo${open ? ' on' : ''}`, ref: wrapRef },
@@ -236,11 +175,11 @@
           onChange: (e) => { onChange(e.target.value); setOpen(true); },
         }),
         h('button', { type: 'button', className: 'cx-combo-btn', 'aria-label': T('更多'), onClick: () => { onFocus && onFocus(); setOpen((v) => !v); } }, h(UiIcon, { name: 'chevronDown', size: 12 })),
-        open && shown.length ? h('div', { className: 'cx-drop-pop cx-combo-pop', ref: popRef, style: pos || undefined },
+        h(CxPopover, { anchorRef: wrapRef, open: open && shown.length > 0, panelH: 280, minW: 160, className: 'cx-combo-pop', onClose: () => setOpen(false) },
           shown.slice(0, 50).map((o) => h('button', {
             key: String(o.value), type: 'button', className: `cx-combo-item${String(o.value) === String(value) ? ' on' : ''}`,
             onClick: () => { onChange(String(o.label ?? o.name ?? o.value)); setOpen(false); },
-          }, T(String(o.label ?? o.name ?? o.value))))) : null);
+          }, T(String(o.label ?? o.name ?? o.value))))));
     }
 
     // ── 日期时间选择（统一风格，返回 YYYY-MM-DD HH:mm:ss）─────────────────
@@ -255,24 +194,9 @@
     function cxWhenText(p) { return `${p.y}-${cxPad(p.mo)}-${cxPad(p.d)} ${cxPad(p.hh)}:${cxPad(p.mm)}:${cxPad(p.ss)}`; }
     function CxDateTime({ value, onChange }) {
       const [open, setOpen] = useState(false);
-      const [pos, setPos] = useState(null);
       const [p, setP] = useState(() => cxParseWhen(value));
       useEffect(() => { setP(cxParseWhen(value)); }, [value]);
       const ref = useRef(null);
-      const popRef = useRef(null);
-      useEffect(() => {
-        if (!open) return;
-        const away = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-        const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
-        const stop = cxPopTrack(ref, popRef, 320, 264, setPos);
-        document.addEventListener('mousedown', away);
-        document.addEventListener('keydown', esc);
-        return () => {
-          stop();
-          document.removeEventListener('mousedown', away);
-          document.removeEventListener('keydown', esc);
-        };
-      }, [open]);
       const first = new Date(p.y, p.mo - 1, 1).getDay();
       const days = new Date(p.y, p.mo, 0).getDate();
       const shift = (dy, dm) => {
@@ -289,7 +213,7 @@
         h('button', { type: 'button', className: 'cx-input cx-dt-btn', onClick: () => setOpen((v) => !v) },
           h('span', { className: 'cx-dt-text' }, cxWhenText(p)),
           h(UiIcon, { name: 'calendar', size: 12 })),
-        open ? h('div', { className: 'cx-drop-pop cx-dt-pop', style: pos || undefined },
+        h(CxPopover, { anchorRef: ref, open, panelH: 320, minW: 264, className: 'cx-dt-pop', onClose: () => setOpen(false) },
           h('div', { className: 'cx-dt-head' },
             h('button', { type: 'button', className: 'cx-dt-nav', onClick: () => shift(-1, 0) }, '«'),
             h('button', { type: 'button', className: 'cx-dt-nav', onClick: () => shift(0, -1) }, '‹'),
@@ -310,7 +234,7 @@
             h('div', { className: 'cx-dt-acts' },
               h('button', { type: 'button', className: 'cx-btn xs', onClick: () => { const now = new Date(); setP({ y: now.getFullYear(), mo: now.getMonth() + 1, d: now.getDate(), hh: p.hh, mm: p.mm, ss: p.ss }); } }, T('今天')),
               h('button', { type: 'button', className: 'cx-btn xs', onClick: () => { onChange(''); setOpen(false); } }, T('清除')),
-              h('button', { type: 'button', className: 'cx-btn xs pri', onClick: commit }, T('确定'))))) : null);
+              h('button', { type: 'button', className: 'cx-btn xs pri', onClick: commit }, T('确定'))))));
     }
 
     function CtxCycle({ value, items, onChange, label }) {

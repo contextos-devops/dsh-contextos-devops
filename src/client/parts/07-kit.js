@@ -63,3 +63,72 @@
         onClick: () => onChange && onChange(t.key),
       }, t.label)));
   }
+
+  // ── 浮层（下拉 / 日期面板共用）────────────────────────────────────────────
+  // 定位唯一入口：浮层一律 position:fixed + 自校正。
+  // 为什么自校正：祖先带 transform / backdrop-filter 时，fixed 的包含块会被换成该祖先，
+  // 视口坐标直接写进去会整体偏移；量一次真实落点、把差值补回来即可收敛（最多两帧）。
+  function cxPopStyle(el, panelH, minW) {
+    if (!el || typeof el.getBoundingClientRect !== 'function') return { left: 0, top: 0, width: minW || 240 };
+    const r = el.getBoundingClientRect();
+    const vh = (typeof window !== 'undefined' ? window.innerHeight : 800) || 800;
+    const vw = (typeof window !== 'undefined' ? window.innerWidth : 1200) || 1200;
+    const width = Math.min(Math.max(minW || 0, Math.round(r.width)), vw - 16);
+    const below = vh - r.bottom - 8;
+    const up = below < panelH && r.top > below;
+    const top = up ? Math.max(8, r.top - panelH - 4) : Math.round(r.bottom + 4);
+    const left = Math.max(8, Math.min(Math.round(r.left), vw - width - 8));
+    return { left, top, width, maxHeight: Math.max(160, Math.min(panelH, up ? r.top - 16 : below)) };
+  }
+
+  function cxPopSettle(anchor, panel, panelH, minW) {
+    const want = cxPopStyle(anchor, panelH, minW);
+    if (!panel || typeof panel.getBoundingClientRect !== 'function') return want;
+    const got = panel.getBoundingClientRect();
+    const dx = want.left - got.left;
+    const dy = want.top - got.top;
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return null; // 已对齐：不要再写，否则会来回跳
+    return { ...want, left: Math.round(want.left + dx), top: Math.round(want.top + dy) };
+  }
+
+  function CxPopover({ anchorRef, open, panelH = 280, minW = 160, className, onClose, children }) {
+    const popRef = useRef(null);
+    const [pos, setPos] = useState(null);
+    useEffect(() => {
+      if (!open) { setPos(null); return undefined; }
+      const place = () => {
+        const next = cxPopSettle(anchorRef.current, popRef.current, panelH, minW);
+        if (next) setPos(next);
+      };
+      let raf = 0;
+      let n = 0;
+      const tick = () => { place(); if (++n < 48) raf = requestAnimationFrame(tick); };
+      tick();
+      const onScroll = () => place();
+      window.addEventListener('scroll', onScroll, true);
+      window.addEventListener('resize', onScroll);
+      const away = (e) => {
+        const a = anchorRef.current;
+        const p = popRef.current;
+        if (a && a.contains(e.target)) return;
+        if (p && p.contains(e.target)) return;
+        onClose && onClose();
+      };
+      const esc = (e) => { if (e.key === 'Escape') onClose && onClose(); };
+      document.addEventListener('mousedown', away);
+      document.addEventListener('keydown', esc);
+      return () => {
+        cancelAnimationFrame(raf);
+        window.removeEventListener('scroll', onScroll, true);
+        window.removeEventListener('resize', onScroll);
+        document.removeEventListener('mousedown', away);
+        document.removeEventListener('keydown', esc);
+      };
+    }, [open, panelH, minW]);
+    if (!open) return null;
+    return h('div', {
+      className: cxCx('cx-pop', className),
+      ref: popRef,
+      style: pos || { left: 0, top: 0, visibility: 'hidden' },
+    }, children);
+  }
