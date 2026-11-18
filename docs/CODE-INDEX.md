@@ -57,7 +57,7 @@
 | `src/client/parts/05-bootstrap.js` | 66 | `apiTrace` `QUERY_OPS` |
 | `src/client/parts/07-kit.js` | 66 | `cxCx` `CxStack` `CxRow` `CxCol` `CxSection` `CxField` `CX_BTN_VARIANT` `CX_BTN_SIZE` `CxBtn` `CxInput` |
 | `src/client/parts/08-store.js` | 86 | — |
-| `src/client/parts/10-ui.js` | 372 | `CtxMark` `Ico` `Icon` `Panel` `TOKENS` `Btn` `Toolbar` `Section` `Field` `EmptyState` |
+| `src/client/parts/10-ui.js` | 407 | `CtxMark` `Ico` `Icon` `Panel` `TOKENS` `Btn` `Toolbar` `Section` `Field` `EmptyState` |
 | `src/client/parts/12-debug.js` | 362 | `ANSI_COLORS` `ANSI_NAMES` `AnsiText` `terminalTheme` `TerminalLog` `CONSOLE_TERMS` `ConsoleTerminal` `DebugDetail` |
 | `src/client/parts/15-layout.js` | 87 | `SingleLineTitle` `DoubleLineTitle` `UiBar` `UiWorkspace` `UiAddressBar` `MenuList` `UiCardList` `UiTableList` `UiTreeList` |
 | `src/client/parts/20-devworkspace.js` | 790 | `DevWorkspace` `termActiveRef` `termPendingRef` `termIdsRef` `termKeyRef` `termHostsRef` `termMapRef` `termAct` |

@@ -173,7 +173,7 @@
 .cx-combo .cx-input{width:100%;padding-right:26px}
 .cx-combo-btn{position:absolute;right:2px;top:2px;bottom:2px;width:22px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--cx-text-dim);cursor:pointer;border-radius:var(--cx-r-xs)}
 .cx-combo-btn:hover{color:var(--cx-cyan)}
-.cx-combo-pop{left:0;right:0;top:calc(100% + 4px);max-height:220px;overflow:auto}
+.cx-combo-pop{position:fixed!important;right:auto!important;margin-top:0!important;min-width:0!important;max-width:none!important;overflow:auto;z-index:var(--cx-z-pop)}
 .cx-combo-item{display:block;width:100%;text-align:left;padding:5px 8px;border:0;border-radius:var(--cx-r-xs);background:transparent;color:var(--cx-text);font:var(--cx-fs-body)/1.4 var(--cx-font);cursor:pointer}
 .cx-combo-item:hover,.cx-combo-item.on{background:var(--cx-accent-soft);color:var(--cx-accent)}
 
@@ -181,7 +181,7 @@
 .cx-dt{position:relative;width:100%}
 .cx-dt-btn{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;cursor:pointer;color:var(--cx-text);text-align:left}
 .cx-dt-text{font:var(--cx-fs-body)/1.4 var(--cx-mono);letter-spacing:.01em}
-.cx-dt-pop{left:0;top:calc(100% + 4px);width:264px;max-width:calc(100vw - 24px);padding:var(--cx-sp-2)}
+.cx-dt-pop{position:fixed!important;right:auto!important;margin-top:0!important;min-width:0!important;width:264px;max-width:calc(100vw - 24px);padding:var(--cx-sp-2);overflow:auto;z-index:var(--cx-z-pop)}
 .cx-dt-head{display:flex;align-items:center;gap:2px;padding:2px 2px 6px}
 .cx-dt-ym{flex:1;text-align:center;font:600 var(--cx-fs-10)/1.2 var(--cx-mono);letter-spacing:.08em;color:var(--cx-text)}
 .cx-dt-nav{width:20px;height:20px;border:0;border-radius:var(--cx-r-xs);background:transparent;color:var(--cx-text-dim);cursor:pointer;font-size:11px}
@@ -189,7 +189,7 @@
 .cx-dt-week{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;padding:0 0 2px}
 .cx-dt-week span{text-align:center;font:var(--cx-fs-10)/1.6 var(--cx-font);color:var(--cx-text-faint)}
 .cx-dt-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px}
-.cx-dt-day{min-width:0;height:26px;border:0;border-radius:var(--cx-r-xs);background:transparent;color:var(--cx-text);font:var(--cx-fs-body)/1 var(--cx-mono);cursor:pointer}
+.cx-dt-day{min-width:0;height:24px;border:0;border-radius:var(--cx-r-xs);background:transparent;color:var(--cx-text);font:var(--cx-fs-body)/1 var(--cx-mono);cursor:pointer}
 .cx-dt-day:hover{background:var(--cx-surface-3)}
 .cx-dt-day.on{background:var(--cx-accent-soft);color:var(--cx-accent);box-shadow:inset 0 0 0 1px var(--cx-accent)}
 .cx-dt-time{display:flex;align-items:center;gap:3px;padding:8px 2px 4px;border-top:1px solid var(--cx-border);margin-top:6px}
@@ -197,7 +197,8 @@
 .cx-dt-time b{color:var(--cx-text-faint);font-weight:400}
 .cx-dt-num{flex:0 0 40px;width:40px;height:22px;text-align:center;font:var(--cx-fs-body)/1 var(--cx-mono);padding:0 2px;-moz-appearance:textfield}
 .cx-dt-num::-webkit-outer-spin-button,.cx-dt-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.cx-dt-foot{display:flex;justify-content:flex-end;gap:4px;padding-top:6px}
+.cx-dt-foot{position:sticky;bottom:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 0 2px;background:var(--cx-surface-1);border-top:1px solid var(--cx-border)}
+.cx-dt-acts{display:flex;align-items:center;gap:4px}
 
 /* 消息里的结果卡与内联表单：复用 kit 的节/字段/按钮，只补三种结构 */
 .cx-msg-card{width:100%;max-width:560px;margin-top:8px;border:1px solid var(--cx-line);border-radius:var(--cx-r-sm);background:var(--cx-surface-2);padding:10px 12px}

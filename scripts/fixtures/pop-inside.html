@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="{{CSS}}">
+<style>
+html,body{margin:0;height:100%;background:#eef4f8}
+/* 模拟弹窗卡片：固定高度 + overflow:auto —— 绝对定位的浮层会被裁掉 */
+#card{position:absolute;left:40px;top:40px;width:320px;height:150px;overflow:auto;border:1px solid #b9d8e5;background:#fff;padding:10px;box-sizing:border-box}
+#input{margin-top:80px;width:100%;height:28px;border:1px solid #b9d8e5;background:#f4fbfe;box-sizing:border-box}
+/* A：绝对定位（旧）——超出卡片区域的部分被裁 */
+#popA{position:absolute;left:0;top:34px;width:300px;height:260px;background:#fff;border:1px solid #b9d8e5}
+/* B：fixed（新）——不受裁剪 */
+#popB{position:fixed;left:70px;top:250px;width:300px;height:120px;background:#fff;border:1px solid #b9d8e5}
+</style></head>
+<body><div class="cx-shell" data-theme="light">
+  <div id="card">
+    <div style="position:relative"><input id="input"><div id="popA"></div></div>
+  </div>
+  <div id="popB"></div>
+</div></body></html>

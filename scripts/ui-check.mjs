@@ -265,6 +265,23 @@ ok('Feedback score renders as stars inline', (() => {
 })());
 ok('PM card actions align left while the more button sits right', (() => { const css = read('src/client/styles/main.css'); const pm = read('src/client/parts/55-pm.js'); return css.includes('.cx-pm-card-actions{display:flex;align-items:center;justify-content:flex-start') && css.includes('.cx-pm-card-actions .cx-menu-wrap{margin-left:auto') && pm.includes('function PmActionMenu') && pm.includes('disabled: !list.length') && !/function PmActionMenu[^}]*return null/.test(pm); })());
 ok('confirm dialogs use the shared component', (() => { const ui = read('src/client/parts/10-ui.js'); const texts = ['src/client/parts/20-devworkspace.js', 'src/client/parts/50-chat.js', 'src/client/parts/60-page.js'].map(read).join('\n'); return ui.includes('function cxAsk(') && ui.includes('function CxConfirmHost()') && page.includes('h(CxConfirmHost)') && !texts.includes('window.confirm'); })());
+ok('Date picker keeps its time row and actions inside the panel', (() => {
+  const ui = read('src/client/parts/10-ui.js'), kit = read('src/client/styles/kit.css');
+  return /className: 'cx-dt-foot'/.test(ui)
+    && /className: 'cx-dt-acts'/.test(ui)
+    && /\.cx-dt-foot\{position:sticky;bottom:0/.test(kit)
+    && /\.cx-dt-acts\{display:flex/.test(kit);
+})());
+ok('Popovers are viewport-anchored, not clipped by the dialog scroll box', (() => {
+  const ui = read('src/client/parts/10-ui.js'), kit = read('src/client/styles/kit.css');
+  return ui.includes('function cxPopStyle(')
+    && ui.includes("setPos(cxPopStyle(wrapRef.current, 280, 160))")
+    && ui.includes("setPos(cxPopStyle(ref.current, 320, 264))")
+    && /const up = below < panelH && r.top > below;/.test(ui)
+    && /const width = Math.max\(minW \|\| 0, Math.round\(r.width\)\);/.test(ui)
+    && /\.cx-combo-pop\{position:fixed!important/.test(kit)
+    && /\.cx-dt-pop\{position:fixed!important/.test(kit);
+})());
 ok('date and time pickers are shared controls', (() => { const ui = read('src/client/parts/10-ui.js'); const pm = read('src/client/parts/46-pm.js'); return ui.includes('function CxDateTime(') && ui.includes('function CxCombo(') && pm.includes('type: \'datetime\'') && !pm.includes('datalist') && ui.includes('cxPad') && ui.includes('return `${p.y}-${cxPad(p.mo)}-${cxPad(p.d)} ${cxPad(p.hh)}:${cxPad(p.mm)}:${cxPad(p.ss)}`'); })());
 ok('PM ops alias to pmCreate/pmAct', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('PM_OP_ALIAS') && c.includes("pmStart: ['pmAct', { action: 'process' }]") && c.includes("pmPlanCreate: ['pmCreate', { kind: 'plan' }]"); })());
 ok('PM create chains the parent uid it just created', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('const pmChain = useRef({})') && c.includes('pmChain.current[kind] = d.uid'); })());

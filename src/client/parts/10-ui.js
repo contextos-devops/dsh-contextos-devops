@@ -161,17 +161,42 @@
     }
 
     // ── 组合输入框（可输入 + 统一风格下拉，替代原生 datalist）──────────────
+    // 浮层定位：position:fixed 才不会被弹窗的 overflow:auto 裁掉；
+    // 宽度跟随触发元素（下拉与输入框同宽），下方空间不足时向上翻。
+    function cxPopStyle(el, panelH, minW) {
+      if (!el || typeof el.getBoundingClientRect !== 'function') return { left: 0, top: 0, width: minW || 240 };
+      const r = el.getBoundingClientRect();
+      const vh = (typeof window !== 'undefined' ? window.innerHeight : 800) || 800;
+      const vw = (typeof window !== 'undefined' ? window.innerWidth : 1200) || 1200;
+      const width = Math.max(minW || 0, Math.round(r.width));
+      const below = vh - r.bottom - 8;
+      const up = below < panelH && r.top > below;
+      const top = up ? Math.max(8, r.top - panelH - 4) : Math.round(r.bottom + 4);
+      const left = Math.max(8, Math.min(Math.round(r.left), vw - width - 8));
+      return { left, top, width, maxHeight: Math.max(160, Math.min(panelH, up ? r.top - 16 : below)) };
+    }
+
     function CxCombo({ value, onChange, options, onFocus, placeholder, required }) {
       const [open, setOpen] = useState(false);
+      const [pos, setPos] = useState(null);
       const wrapRef = useRef(null);
       const opts = options || [];
       useEffect(() => {
         if (!open) return;
         const away = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
         const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+        const place = () => setPos(cxPopStyle(wrapRef.current, 280, 160));
+        place();
+        window.addEventListener('scroll', place, true);
+        window.addEventListener('resize', place);
         document.addEventListener('mousedown', away);
         document.addEventListener('keydown', esc);
-        return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
+        return () => {
+          window.removeEventListener('scroll', place, true);
+          window.removeEventListener('resize', place);
+          document.removeEventListener('mousedown', away);
+          document.removeEventListener('keydown', esc);
+        };
       }, [open]);
       const q = String(value ?? '').toLowerCase();
       const shown = q ? opts.filter((o) => String(o.label ?? o.name ?? o.value).toLowerCase().includes(q)) : opts;
@@ -182,7 +207,7 @@
           onChange: (e) => { onChange(e.target.value); setOpen(true); },
         }),
         h('button', { type: 'button', className: 'cx-combo-btn', 'aria-label': T('更多'), onClick: () => { onFocus && onFocus(); setOpen((v) => !v); } }, h(UiIcon, { name: 'chevronDown', size: 12 })),
-        open && shown.length ? h('div', { className: 'cx-drop-pop cx-combo-pop' },
+        open && shown.length ? h('div', { className: 'cx-drop-pop cx-combo-pop', style: pos || undefined },
           shown.slice(0, 50).map((o) => h('button', {
             key: String(o.value), type: 'button', className: `cx-combo-item${String(o.value) === String(value) ? ' on' : ''}`,
             onClick: () => { onChange(String(o.label ?? o.name ?? o.value)); setOpen(false); },
@@ -201,6 +226,7 @@
     function cxWhenText(p) { return `${p.y}-${cxPad(p.mo)}-${cxPad(p.d)} ${cxPad(p.hh)}:${cxPad(p.mm)}:${cxPad(p.ss)}`; }
     function CxDateTime({ value, onChange }) {
       const [open, setOpen] = useState(false);
+      const [pos, setPos] = useState(null);
       const [p, setP] = useState(() => cxParseWhen(value));
       useEffect(() => { setP(cxParseWhen(value)); }, [value]);
       const ref = useRef(null);
@@ -208,9 +234,18 @@
         if (!open) return;
         const away = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
         const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+        const place = () => setPos(cxPopStyle(ref.current, 320, 264));
+        place();
+        window.addEventListener('scroll', place, true);
+        window.addEventListener('resize', place);
         document.addEventListener('mousedown', away);
         document.addEventListener('keydown', esc);
-        return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
+        return () => {
+          window.removeEventListener('scroll', place, true);
+          window.removeEventListener('resize', place);
+          document.removeEventListener('mousedown', away);
+          document.removeEventListener('keydown', esc);
+        };
       }, [open]);
       const first = new Date(p.y, p.mo - 1, 1).getDay();
       const days = new Date(p.y, p.mo, 0).getDate();
@@ -228,7 +263,7 @@
         h('button', { type: 'button', className: 'cx-input cx-dt-btn', onClick: () => setOpen((v) => !v) },
           h('span', { className: 'cx-dt-text' }, cxWhenText(p)),
           h(UiIcon, { name: 'calendar', size: 12 })),
-        open ? h('div', { className: 'cx-drop-pop cx-dt-pop' },
+        open ? h('div', { className: 'cx-drop-pop cx-dt-pop', style: pos || undefined },
           h('div', { className: 'cx-dt-head' },
             h('button', { type: 'button', className: 'cx-dt-nav', onClick: () => shift(-1, 0) }, '«'),
             h('button', { type: 'button', className: 'cx-dt-nav', onClick: () => shift(0, -1) }, '‹'),
@@ -243,13 +278,13 @@
               const on = d === p.d;
               return h('button', { key: d, type: 'button', className: `cx-dt-day${on ? ' on' : ''}`, onClick: () => pick(d) }, String(d));
             })),
-          h('div', { className: 'cx-dt-time' },
-            h('span', { className: 'cx-dt-time-lb' }, T('时间')),
-            num('hh', 23), h('b', null, ':'), num('mm', 59), h('b', null, ':'), num('ss', 59)),
           h('div', { className: 'cx-dt-foot' },
-            h('button', { type: 'button', className: 'cx-btn xs', onClick: () => { const n = cxParseWhen(cxWhenText({ ...p, hh: 0, mm: 0, ss: 0 })); const now = new Date(); const t = { y: now.getFullYear(), mo: now.getMonth() + 1, d: now.getDate(), hh: p.hh, mm: p.mm, ss: p.ss }; setP(t); } }, T('今天')),
-            h('button', { type: 'button', className: 'cx-btn xs', onClick: () => { onChange(''); setOpen(false); } }, T('清除')),
-            h('button', { type: 'button', className: 'cx-btn xs pri', onClick: commit }, T('确定')))) : null);
+            h('div', { className: 'cx-dt-time' },
+              num('hh', 23), h('b', null, ':'), num('mm', 59), h('b', null, ':'), num('ss', 59)),
+            h('div', { className: 'cx-dt-acts' },
+              h('button', { type: 'button', className: 'cx-btn xs', onClick: () => { const now = new Date(); setP({ y: now.getFullYear(), mo: now.getMonth() + 1, d: now.getDate(), hh: p.hh, mm: p.mm, ss: p.ss }); } }, T('今天')),
+              h('button', { type: 'button', className: 'cx-btn xs', onClick: () => { onChange(''); setOpen(false); } }, T('清除')),
+              h('button', { type: 'button', className: 'cx-btn xs pri', onClick: commit }, T('确定'))))) : null);
     }
 
     function CtxCycle({ value, items, onChange, label }) {

@@ -211,6 +211,21 @@ const CASES = [
     },
   },
   {
+    name: 'pop-inside',
+    fixture: 'scripts/fixtures/pop-inside.html',
+    window: '420,420',
+    sels: ['#card', '#popA', '#popB', '#input'],
+    assert: (m) => {
+      const a = m['#popA'], b = m['#popB'], card = m['#card'];
+      return [
+        [!!a && a.y + a.h > card.y + card.h, '绝对定位浮层会越出滚动容器', `${Math.round(a?.y + a?.h)} > ${Math.round(card?.y + card?.h)}`],
+        [!!a && a.hit === false, '绝对定位浮层被裁剪（中心点不在自己身上）', `hit=${a?.hit}`],
+        [!!b && b.hit === true, 'fixed 浮层不会被滚动容器裁剪', `hit=${b?.hit}`],
+        [!!b && b.h >= 100, '浮层完整高度', `${b?.h}px`],
+      ];
+    },
+  },
+  {
     name: 'datetime-pop',
     fixture: 'scripts/fixtures/datetime-pop.html',
     window: '600,400',
@@ -353,7 +368,11 @@ window.__PROBE_SELS__ = __SELS__;
         left: +(off ? r.left - off.left : r.left).toFixed(1),
         animationName: c.animationName, animationDuration: c.animationDuration,
         sh: n.scrollHeight, ch: n.clientHeight, sw: n.scrollWidth, cw: n.clientWidth, paddingTop: c.paddingTop,
-        color: c.color, bg: c.backgroundColor
+        color: c.color, bg: c.backgroundColor,
+        hit: (function () {
+          var el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+          return !!(el && (el === n || n.contains(el)));
+        })()
       };
     });
     document.title = 'PROBE:' + JSON.stringify(out);

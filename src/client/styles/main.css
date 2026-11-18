@@ -2769,10 +2769,10 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-menu-item.cx-menu-3col .cx-menu-chk{
   display:flex;justify-content:flex-end;color:var(--cx-cyan);
 }
-.cx-shell .cx-drop-pop{left:0!important;right:auto!important;min-width:100%!important}
+.cx-shell .cx-drop-pop:not(.cx-combo-pop):not(.cx-dt-pop){left:0!important;right:auto!important;min-width:100%!important}
 
 /* 下拉浮层：左对齐 chip，宽度随内容，保证中间文字列有空间 */
-.cx-shell .cx-drop-pop{
+.cx-shell .cx-drop-pop:not(.cx-combo-pop):not(.cx-dt-pop){
   left:0!important;right:auto!important;
   width:max-content!important;
   min-width:200px!important;
@@ -2792,7 +2792,7 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 }
 .cx-shell .cx-menu-hint.top{background:linear-gradient(180deg,var(--cx-surface-1),transparent)}
 .cx-shell .cx-menu-hint.bottom{background:linear-gradient(0deg,var(--cx-surface-1),transparent)}
-.cx-shell .cx-drop-pop{overflow:visible!important}
+.cx-shell .cx-drop-pop:not(.cx-combo-pop):not(.cx-dt-pop){overflow:visible!important}
 .cx-shell .cx-pipe-menu-fixed{overflow:visible!important}
 
 /* 侧边栏切换键与品牌之间 10px */
@@ -3018,7 +3018,7 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 }
 
 /* 顶部下拉：中间列保底宽度，避免 1fr 塌成 0 */
-.cx-shell .cx-drop-pop{min-width:240px!important}
+.cx-shell .cx-drop-pop:not(.cx-combo-pop):not(.cx-dt-pop){min-width:240px!important}
 .cx-shell .cx-drop-pop .cx-menu-3col{grid-template-columns:18px minmax(120px,1fr) 18px!important}
 
 /* 2026-11-13: today ring + full-screen year/long views fill the panel */
