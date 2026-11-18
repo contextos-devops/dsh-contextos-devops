@@ -258,6 +258,25 @@
                     card: box(null), main: box('.cx-msg-main'), meta: box('.cx-msg-meta'), tools: box('.cx-msg-tools'), body: box('.cx-msg-body') };
                 } catch { return null; }
               })(),
+              /* 吸顶自检：每节的标题/当前卡片的实际高度与写进 CSS 变量的偏移，逐对核对 */
+              pins: (() => {
+                try {
+                  const out = [];
+                  document.querySelectorAll('.cx-pm-side .cx-pm-sec').forEach((sec) => {
+                    const h = sec.querySelector('.cx-pm-h');
+                    const c = sec.querySelector('.cx-pm-card.on');
+                    if (!h) return;
+                    out.push({
+                      k: String(h.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 14),
+                      top: h.style.getPropertyValue('--pm-top'),
+                      headH: h.offsetHeight,
+                      cardTop: c ? c.style.getPropertyValue('--pm-card-top') : '',
+                      cardH: c ? c.offsetHeight : null,
+                    });
+                  });
+                  return out.slice(0, 8);
+                } catch { return null; }
+              })(),
             } }).catch(() => {});
           } catch {}
         }, 400);

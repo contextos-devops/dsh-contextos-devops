@@ -81,7 +81,7 @@
 | `ARCHITECTURE.md` | 135 | 五层/请求流程/模块归属 | 判断代码放哪 | 生成细节 → `CODE-GEN.md` |
 | `AI-CONVERSATION.md` | 140 | 对话参数/动作表/缺口 | 改 Copilot 链路 | 提示词 → `../lib/core/copilot.js` |
 | `MONITOR.md` | 83 | 监控面板与数据源 | 改监控视图 | — |
-| `ECOM-DEMO.md` | 149 | 电商流水线演示（mock） | 改电商视图 | 真实方案 → dsh-reports |
+| `ECOM-DEMO.md` | 184 | 电商流水线演示（mock） | 改电商视图 | 真实方案 → dsh-reports |
 | `IAM.md` | 151 | 权限与身份模型 | 涉及 user.uid/角色 | 接口 → `INTERFACE.md` |
 | `DSH-COS.md` | 114 | DSH 宿主能力与边界 | 判断能不能做到 | 版本差异 → `RSI-LEDGER.md` |
 | `ACCEPTANCE.md` | 247 | 唯一验收口径 | 说「完成」之前 | 流程 → `../AGENTS.md` §七 |

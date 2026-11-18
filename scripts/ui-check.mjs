@@ -189,6 +189,14 @@ ok('Chat cards and inline forms reuse the kit', (() => {
     && msg.includes('function CxWriteForm') && msg.includes('h(CxField,') && msg.includes('h(CxBtn,')
     && css.includes('.cx-kv-row{') && css.includes('.cx-field-lite{');
 })());
+ok('Pinned offsets use layout height, not animated rects', (() => {
+  const chat = read('src/client/parts/50-chat.js');
+  return chat.includes('off += head.offsetHeight')
+    && chat.includes('off += card.offsetHeight + 5')
+    && !chat.includes('head.getBoundingClientRect().height')
+    && chat.includes('new ResizeObserver(')
+    && /setTimeout\(pinStack, ms\)/.test(chat);
+})());
 ok('Pinned stack offsets are measured at runtime', (() => {
   const chat = read('src/client/parts/50-chat.js');
   return chat.includes('const pinStack = () =>') && chat.includes("setProperty('--pm-top'") && chat.includes("setProperty('--pm-card-top'")

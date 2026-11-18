@@ -1377,6 +1377,7 @@
           fold('gantt') ? null : h(Gantt, { plans, activeUid: activePlan?.uid })));
       // 让「分节标题 + 当前卡片」按顺序堆叠：量出每组的高度，写回 --pm-top / --pm-card-top。
       // 分节本身是 display:contents，粘性容器是整条滚动区，所以滚到哪都能留住。
+      // 量高用 offsetHeight：入场动画期间 getBoundingClientRect 会被 scale 缩小，量出的偏移偏小 → 标题压住卡片
       const pinStack = () => {
         const pin = (root) => {
           if (!root) return;
@@ -1384,8 +1385,14 @@
           root.querySelectorAll('.cx-pm-sec').forEach((sec) => {
             const head = sec.querySelector('.cx-pm-h');
             const card = sec.querySelector('.cx-pm-card.on');
-            if (head) { head.style.setProperty('--pm-top', `${off}px`); off += head.getBoundingClientRect().height; }
-            if (card) { card.style.setProperty('--pm-card-top', `${off}px`); off += card.getBoundingClientRect().height + 5; }
+            if (head) {
+              head.style.setProperty('--pm-top', `${off}px`);
+              off += head.offsetHeight;
+            }
+            if (card) {
+              card.style.setProperty('--pm-card-top', `${off}px`);
+              off += card.offsetHeight + 5;
+            }
           });
         };
         pin(document.querySelector('.cx-pm-side:not(.right)'));
@@ -1393,9 +1400,24 @@
       };
       useEffect(() => {
         const id = requestAnimationFrame(pinStack);
+        // 卡片入场动画（.cx-in，最长 ~1s）结束后重量一次；尺寸变化（图片/字体/展开）随时重算
+        const timers = [260, 700, 1200].map((ms) => setTimeout(pinStack, ms));
         const onResize = () => pinStack();
         window.addEventListener('resize', onResize);
-        return () => { cancelAnimationFrame(id); window.removeEventListener('resize', onResize); };
+        const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => pinStack()) : null;
+        if (ro) {
+          ['.cx-pm-side:not(.right)', '.cx-pm-side.right'].forEach((sel) => {
+            const root = document.querySelector(sel);
+            if (!root) return;
+            root.querySelectorAll('.cx-pm-h, .cx-pm-card.on').forEach((el) => ro.observe(el));
+          });
+        }
+        return () => {
+          cancelAnimationFrame(id);
+          timers.forEach(clearTimeout);
+          window.removeEventListener('resize', onResize);
+          if (ro) ro.disconnect();
+        };
       }, [pm, targetId, planId, taskId, reportId, feedbackId, folds, showLeft, showRight]);
 
       const rightPanel = h('aside', { className: `cx-pm-side right${pmRefreshing ? ' refreshing' : ''}` },

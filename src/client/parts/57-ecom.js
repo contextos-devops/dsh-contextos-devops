@@ -363,7 +363,7 @@
         h('u', null, h('i', null)))));
     }
 
-    function EcomEvents({ room, t, L }) {
+    function EcomEvents({ room, t, L, world }) {
       const kinds = [
         { k: L('出片', 'VIDEO'), tone: 'video', v: (s) => `${2 + (s % 3)} ${L('条视频', 'videos')}` },
         { k: L('出单', 'SALE'), tone: 'sale', v: (s) => `+¥${(80 + (s % 7) * 43).toFixed(2)}` },
@@ -371,12 +371,17 @@
         { k: L('淘汰', 'DROP'), tone: 'drop', v: () => L('不上架', 'skipped') },
         { k: L('开投', 'ADS'), tone: 'ads', v: (s) => `¥${(20 + (s % 5) * 10)}/d` },
       ];
-      const rows = Array.from({ length: 7 }, (_, i) => {
+      const evo = (world && world.events ? world.events.slice(-4).reverse() : []).map((e) => ({
+        k: e.k === 'cut' ? L('淘汰', 'CUT') : e.k === 'born' ? L('补位', 'BORN') : L('上架', 'UP'),
+        tone: e.k === 'cut' ? 'drop' : e.k === 'born' ? 'ads' : 'video',
+        who: e.text, text: e.why, v: '',
+      }));
+      const rows = evo.concat(Array.from({ length: 7 }, (_, i) => {
         const seed = Math.round(t) + i * 13;
         const kd = kinds[seed % kinds.length];
         const s = ecomShop(room.pipelines[i % room.pipelines.length], t);
         return { at: `10:${String(40 + i).padStart(2, '0')}`, kind: kd.k, tone: kd.tone, val: kd.v(seed), name: s.name, why: L('先跑小预算，看 ROAS 再加', 'Small budget first, scale on ROAS') };
-      });
+      }));
       return h('div', { className: 'cx-ecom-events' },
         h('div', { className: 'cx-ecom-events-h' }, h('b', null, 'EVENT LOG'), h('span', null, L('每个动作都有原因', 'Every action has a reason'))),
         rows.map((r, i) => h('div', { key: i, className: 'cx-ecom-ev' },
@@ -499,18 +504,204 @@
         }));
     }
 
-    function EcomEvolve({ room, t, L }) {
-      const gen = 1 + Math.floor(t / 40);
-      const rows = [
-        [L('产品活力', 'Product'), `${(0.6 + (t % 7) / 20).toFixed(2)}`, L('低于 0.95 下架', 'drop under 0.95')],
-        [L('素材流量', 'Creative'), `CTR ${(2.8 + (t % 5) / 2).toFixed(1)}%`, L('播放 180 起评', 'min 180 views')],
-        [L('智能体赛马', 'Agents'), `${gen} ${L('代', 'gen')}`, L('营收 < 组均 50% 换一代', 'replace under 50%')],
+    /* ===== 演化闭环：产品 → 素材 → 订单 → 营收归因 → 优胜劣汰 ===== */
+    const ECOM_PRODUCT_SEED = [
+      { id: 'p1', zh: '磁吸无线充电宝 10000mAh', price: 39.9, cost: 19.5, supplier: '宏芯电子', q: 0.86 },
+      { id: 'p2', zh: '电动升降桌 1.4m', price: 299, cost: 168, supplier: '佳品家居', q: 0.58 },
+      { id: 'p3', zh: '挂脖小风扇 · 潮流版', price: 29.9, cost: 11.2, supplier: '义乌直供', q: 0.79 },
+      { id: 'p4', zh: '车载磁吸支架 Pro', price: 24.9, cost: 8.6, supplier: '慈溪小电', q: 0.71 },
+      { id: 'p5', zh: '潮牌同款 T 恤 · oversize', price: 19.9, cost: 6.8, supplier: '潮服工坊', q: 0.41 },
+      { id: 'p6', zh: '抽屉式收纳盒三件套', price: 22.5, cost: 9.4, supplier: '白云皮具', q: 0.66 },
+    ];
+    const ECOM_CREATIVE_TPL = [
+      ['开箱 15s · 痛点开场', 0.062],
+      ['对比测评 · 三个卖点', 0.048],
+      ['场景短剧 · 30s', 0.039],
+      ['达人种草 · 口播', 0.052],
+      ['直播切片 · 高光 20s', 0.067],
+    ];
+    const ECOM_ROLE_SEED = [
+      { role: 'select', zh: '选品官', en: 'SCOUT', icon: '◎', tone: '#ffc24d' },
+      { role: 'list', zh: '上架官', en: 'LISTER', icon: '◈', tone: '#8b5cf6' },
+      { role: 'plan', zh: '策划官', en: 'PLANNER', icon: '◇', tone: '#25f4ee' },
+      { role: 'media', zh: '内容官', en: 'CREATOR', icon: '▣', tone: '#fe2c55' },
+      { role: 'ads', zh: '投流官', en: 'ADS', icon: '≋', tone: '#38bdf8' },
+      { role: 'service', zh: '客服官', en: 'SERVICE', icon: '✉', tone: '#3dffa8' },
+    ];
+    const ECOM_SHARE = { select: 0.18, list: 0.08, plan: 0.14, media: 0.22, ads: 0.26, service: 0.12 };
+    const ecomRand = (a, b) => a + Math.random() * (b - a);
+    const ecomPickOne = (list) => list[Math.floor(Math.random() * list.length)];
+
+    function ecomWorldInit() {
+      const products = ECOM_PRODUCT_SEED.map((p, i) => ({
+        ...p, listed: i < 4, cut: false, age: i < 4 ? 20 : 0, gmv: 0, orders: 0, views: 0,
+      }));
+      const agents = [];
+      ECOM_ROLE_SEED.forEach((r) => {
+        for (let k = 0; k < 2; k += 1) {
+          agents.push({
+            id: `${r.role}-${k + 1}`, role: r.role, zh: r.zh, en: r.en, icon: r.icon, tone: r.tone,
+            no: k + 1, gen: 1, tasks: 0, revenue: 0, alive: true, age: 0, skill: ecomRand(0.7, 1.3),
+          });
+        }
+      });
+      const creatives = [
+        { id: 'c1', pid: 'p1', title: ECOM_CREATIVE_TPL[0][0], ctr: ECOM_CREATIVE_TPL[0][1], views: 1200, gmv: 0, live: true, by: 'media-1' },
+        { id: 'c2', pid: 'p3', title: ECOM_CREATIVE_TPL[4][0], ctr: ECOM_CREATIVE_TPL[4][1], views: 900, gmv: 0, live: true, by: 'media-2' },
       ];
-      return h('div', { className: 'cx-ecom-evolve' },
-        h('div', { className: 'cx-ecom-evolve-h' }, h('b', null, L('演化引擎 · 优胜劣汰', 'Evolution engine')),
-          h('span', null, `${L('第', 'gen')} ${gen} ${L('代 · 已迭代', 'generations · ')}${Math.floor(t / 20)}`)),
-        rows.map(([a, b, c]) => h('div', { key: a, className: 'cx-ecom-ev2' },
-          h('span', null, a), h('b', null, b), h('em', null, c))));
+      return { gen: 1, tick: 0, seq: 3, products, creatives, agents, orders: [], events: [], cut: { product: 0, creative: 0, agent: 0 }, born: 0 };
+    }
+
+    const ECOM_NEW_POOL = [
+      ['折叠露营椅', 89, 41, '义乌直供'], ['宠物自动喂食器', 149, 72, '慈溪小电'],
+      ['香薰加湿器', 69, 28, '宏芯电子'], ['户外保温杯 1L', 59, 22, '白云皮具'],
+      ['桌面显示器支架', 129, 61, '佳品家居'], ['速干运动 T 恤', 39, 14, '潮服工坊'],
+    ];
+
+    function ecomWorldStep(w) {
+      const nw = {
+        ...w,
+        products: w.products.map((p) => ({ ...p })),
+        creatives: w.creatives.map((c) => ({ ...c })),
+        agents: w.agents.map((a) => ({ ...a })),
+        orders: w.orders.slice(-60),
+        events: w.events.slice(-40),
+        cut: { ...w.cut },
+      };
+      nw.tick += 1;
+      const listedOf = () => nw.products.filter((p) => p.listed && !p.cut);
+      const workAgents = (role) => nw.agents.filter((a) => a.alive && a.role === role);
+      const best = (list, key) => list.slice().sort((a, b) => b[key] - a[key])[0];
+
+      // 1) 选品官：扫描 + 上架（保底 3 个在架，每 8 tick 补一个新品）
+      const scout = best(workAgents('select'), 'skill');
+      if (scout && nw.tick % 8 === 0) {
+        if (listedOf().length < 3) {
+          const dormant = nw.products.filter((p) => !p.listed && !p.cut);
+          if (dormant.length) {
+            const p = dormant[0]; p.listed = true; p.age = 0; scout.tasks += 1;
+            nw.events.push({ k: 'up', t: nw.tick, text: `上架 ${p.zh}`, why: `${scout.zh} 选中 · 毛利 ${Math.round((1 - p.cost / p.price) * 100)}%` });
+          }
+        } else if (nw.products.filter((p) => !p.cut).length < 12 && nw.products.length < 16) {
+          const tpl = ECOM_NEW_POOL[Math.floor(Math.random() * ECOM_NEW_POOL.length)];
+          const id = `p${nw.seq}`; nw.seq += 1;
+          nw.products.push({ id, zh: tpl[0], price: tpl[1], cost: tpl[2], supplier: tpl[3], q: ecomRand(0.35, 0.9), listed: true, cut: false, age: 0, gmv: 0, orders: 0, views: 0 });
+          scout.tasks += 1;
+          nw.events.push({ k: 'up', t: nw.tick, text: `新品 ${tpl[0]} #${nw.seq}` , why: `${scout.zh} 扫描热榜 · 预估毛利 ${Math.round((1 - tpl[2] / tpl[1]) * 100)}%` });
+        }
+      }
+
+      // 2) 内容官：给最好卖的产品持续出素材（每个产品最多 3 条在投）
+      const creator = best(workAgents('media'), 'skill');
+      const cands = listedOf().filter((p) => nw.creatives.filter((c) => c.live && c.pid === p.id).length < 3);
+      const hot = best(cands, 'q');
+      if (creator && hot && nw.tick % 4 === 0) {
+        const tpl = ECOM_CREATIVE_TPL[Math.floor(Math.random() * ECOM_CREATIVE_TPL.length)];
+        nw.creatives.push({ id: `c${nw.seq}`, pid: hot.id, title: tpl[0], ctr: tpl[1] * ecomRand(0.55, 1.45) * (0.8 + hot.q * 0.4), views: 0, gmv: 0, live: true, by: creator.id });
+        nw.seq += 1; creator.tasks += 1;
+      }
+
+      // 3) 曝光（每 tick 轮播 1 条素材）+ 成交 + 营收归因
+      const ads = best(workAgents('ads'), 'skill');
+      const live = nw.creatives.filter((c) => c.live);
+      if (live.length) {
+        const c = live[nw.tick % live.length];
+        const p = nw.products.find((x) => x.id === c.pid);
+        if (p && p.listed && !p.cut) {
+          const boost = ads ? 1 + ads.skill * 0.18 : 1;
+          const views = Math.round(ecomRand(400, 1200) * boost);
+          c.views += views; p.views += views;
+          const clicks = Math.round(views * Math.min(0.12, c.ctr) * 0.35);
+          const orders = Math.floor(clicks * ecomRand(0.03, 0.08));
+          if (orders > 0) {
+            const gmv = orders * p.price;
+            p.gmv += gmv; p.orders += orders; c.gmv += gmv;
+            const by = { select: best(workAgents('select'), 'skill'), list: best(workAgents('list'), 'skill'), plan: best(workAgents('plan'), 'skill'), media: nw.agents.find((a) => a.id === c.by), ads, service: best(workAgents('service'), 'skill') };
+            Object.keys(by).forEach((role) => {
+              const ag = by[role];
+              if (ag && ag.alive) { ag.revenue += gmv * (ECOM_SHARE[role] || 0); ag.tasks += 1; }
+            });
+            nw.orders.push({ id: nw.seq, pid: p.id, cid: c.id, gmv, at: nw.tick });
+            nw.seq += 1;
+          }
+        }
+      }
+
+      // 4) 优胜劣汰（每 8 tick 一代）
+      nw.products.forEach((p) => { if (p.listed && !p.cut) p.age += 1; });
+      nw.agents.forEach((a) => { if (a.alive) a.age += 1; });
+      if (nw.tick % 8 === 0) {
+        const pool = listedOf();
+        if (pool.length > 3) {
+          const avgRate = pool.reduce((s, p) => s + (p.views ? p.gmv / p.views : 0), 0) / pool.length;
+          const worst = pool.slice().sort((a, b) => (a.views ? a.gmv / a.views : 9) - (b.views ? b.gmv / b.views : 9))[0];
+          const rate = worst && worst.views ? worst.gmv / worst.views : 9;
+          if (worst && worst.age >= 16 && worst.views >= 800 && rate < avgRate * 0.45) {
+            worst.listed = false; worst.cut = true; nw.cut.product += 1;
+            nw.creatives.forEach((c) => { if (c.pid === worst.id) c.live = false; });
+            nw.events.push({ k: 'cut', t: nw.tick, text: `下架 ${worst.zh}`, why: `转化 ¥${rate.toFixed(3)}/曝光，低于均值 45%（${Math.round(worst.gmv)} / ${worst.views}）` });
+          }
+        }
+        nw.creatives.forEach((c) => {
+          const siblings = nw.creatives.filter((x) => x.live && x.pid === c.pid);
+          if (c.live && siblings.length > 1 && c.views > 2000 && c.ctr < 0.045) {
+            c.live = false; nw.cut.creative += 1;
+            const p = nw.products.find((x) => x.id === c.pid);
+            nw.events.push({ k: 'cut', t: nw.tick, text: `下架素材 ${c.title}`, why: `${(p || {}).zh || ''} · CTR ${(c.ctr * 100).toFixed(1)}% 连续偏低` });
+          }
+        });
+        ECOM_ROLE_SEED.forEach((r) => {
+          const grp = nw.agents.filter((a) => a.alive && a.role === r.role);
+          if (grp.length <= 1) return;
+          const avgRev = grp.reduce((s, a) => s + a.revenue, 0) / grp.length;
+          const worst = grp.slice().sort((a, b) => a.revenue - b.revenue)[0];
+          if (worst && worst.age >= 16 && worst.revenue < avgRev * 0.4 && nw.born < 8) {
+            worst.alive = false; nw.cut.agent += 1;
+            const gen = worst.gen + 1;
+            nw.agents.push({ id: `${r.role}-g${gen}-${nw.born + 1}`, role: r.role, zh: r.zh, en: r.en, icon: r.icon, tone: r.tone, no: nw.born + 1, gen, tasks: 0, revenue: 0, alive: true, age: 0, skill: Math.max(0.6, Math.min(2, worst.skill * ecomRand(0.95, 1.4))) });
+            nw.born += 1;
+            nw.events.push({ k: 'born', t: nw.tick, text: `补位 ${r.zh} G${gen}`, why: `上一代营收 ¥${Math.round(worst.revenue)} 低于均值 40% · 继承并变异选择权重` });
+          }
+        });
+        nw.gen += 1;
+      }
+      return nw;
+    }
+
+    function ecomTop(world, kind) {
+      if (!world) return [];
+      if (kind === 'product') return world.products.slice().sort((a, b) => b.gmv - a.gmv).slice(0, 5);
+      if (kind === 'creative') return world.creatives.slice().sort((a, b) => b.gmv - a.gmv).slice(0, 5);
+      return world.agents.filter((a) => a.alive).slice().sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+    }
+
+    function EcomEvolution({ world, L }) {
+      if (!world) return null;
+      const gmv = world.products.reduce((s, p) => s + p.gmv, 0);
+      const orders = world.products.reduce((s, p) => s + p.orders, 0);
+      const max = (list, k) => Math.max(1, ...list.map((x) => x[k]));
+      const prod = ecomTop(world, 'product');
+      const crea = ecomTop(world, 'creative');
+      const ags = ecomTop(world, 'agent');
+      const row = (key, item, value, sub, cls, maxV) => h('div', { key, className: `cx-ecom-rk${cls ? ' ' + cls : ''}`, title: `${item} · ${sub}` },
+        h('div', { className: 'cx-ecom-rk-t' }, h('b', null, item), h('i', null, sub)),
+        h('div', { className: 'cx-ecom-rk-v' }, h('b', null, value), h('u', null, h('i', { style: { width: `${Math.round((parseFloat(value.replace(/[^0-9.]/g, '')) / maxV) * 100)}%` } }))));
+      return h('div', { className: 'cx-ecom-evo' },
+        h('div', { className: 'cx-ecom-evo-h' },
+          h('b', null, L('演化引擎 · 优胜劣汰', 'Evolution · survival')),
+          h('span', null, `${L('第', 'Gen')} ${world.gen} ${L('代', '')} · ${L('订单', 'Orders')} ${orders} · GMV ¥${Math.round(gmv).toLocaleString()}`),
+          h('em', null, `${L('淘汰', 'Cut')} 产品 ${world.cut.product} / 素材 ${world.cut.creative} / 智能体 ${world.cut.agent} · ${L('补位', 'Born')} ${world.born}`)),
+        h('div', { className: 'cx-ecom-rk-cols' },
+          h('div', { className: 'cx-ecom-rk-col' },
+            h('div', { className: 'cx-ecom-rk-h' }, L('供应链榜', 'Supply chain')),
+            prod.map((p) => row(`sp-${p.id}`, p.zh, `¥${Math.round(p.gmv)}`, `${p.supplier} · ${p.orders} ${L('单', 'ord')}${p.cut ? ' · 已下架' : ''}`, p.cut ? 'cut' : '', max(prod, 'gmv')))),
+          h('div', { className: 'cx-ecom-rk-col' },
+            h('div', { className: 'cx-ecom-rk-h' }, L('素材榜', 'Creatives')),
+            crea.map((c) => row(`sc-${c.id}`, c.title, `¥${Math.round(c.gmv)}`, `CTR ${(c.ctr * 100).toFixed(1)}% · ${Math.round(c.views).toLocaleString()} ${L('曝光', 'views')}${c.live ? '' : ' · 已下架'}`, c.live ? '' : 'cut', max(crea, 'gmv')))),
+          h('div', { className: 'cx-ecom-rk-col' },
+            h('div', { className: 'cx-ecom-rk-h' }, L('智能体榜', 'Agents')),
+            ags.map((a) => row(`sa-${a.id}`, `${a.zh} G${a.gen}${a.no > 1 ? ' · ' + a.no : ''}`, `¥${Math.round(a.revenue)}`, `${a.tasks} ${L('单', 'jobs')} · skill ${a.skill.toFixed(2)}`, '', max(ags, 'revenue')))),
+        ));
     }
 
     function EcomAgentModal({ open, onClose, onAdd, L }) {
@@ -551,10 +742,10 @@
           h('div', { className: 'cx-ecom-col-c' },
             h(EcomKpis, { room, t, k, agg, shops, L }),
             h(EcomPipeCards, { room, t, scale, L, onAddAgent: (pid, sid) => onAgentOpen && onAgentOpen({ pipe: pid, stage: sid }) }),
-            h(EcomEvolve, { room, t, L })),
+            h(EcomEvolution, { world: room.world, L })),
           h('div', { className: 'cx-ecom-col-r' },
             h(EcomModules, { room, t, L }),
-            h(EcomEvents, { room, t, L }),
+            h(EcomEvents, { room, t, L, world: room.world }),
             h(EcomScore, { k, L }))),
         h(EcomAgentModal, { open: !!agentAt, stage: agentAt && agentAt.stage, onClose: () => onAgentClose && onAgentClose(), onAdd: (n) => onAgentAdd && onAgentAdd(n), L }));
     }
@@ -562,7 +753,7 @@
     function EcomView({ locale }) {
       const zh = locale === 'zh';
       const L = (a, b) => (zh ? a : b);
-      const [rooms, setRooms] = useState(() => ECOM_ROOMS_SEED.map((r) => ({ ...r })));
+      const [rooms, setRooms] = useState(() => ECOM_ROOMS_SEED.map((r) => ({ ...r, world: ecomWorldInit() })));
       const [activeId, setActiveId] = useState('r1');
       const [mode, setMode] = useState('room');
       const [step, setStep] = useState(0);
@@ -576,9 +767,13 @@
 
       useEffect(() => {
         if (mode !== 'room' || !running) return undefined;
-        const iv = setInterval(() => { if (!document.hidden) setT((v) => v + 1.4); }, 900);
+        const iv = setInterval(() => {
+          if (document.hidden) return;
+          setT((v) => v + 1.4);
+          setRooms((rs) => rs.map((r) => (r.id !== activeId ? r : { ...r, world: ecomWorldStep(r.world) })));
+        }, 900);
         return () => clearInterval(iv);
-      }, [mode, running]);
+      }, [mode, running, activeId]);
 
       useEffect(() => {
         if (mode !== 'room' || !running) return undefined;
@@ -598,7 +793,7 @@
           pipelines: draft.pipes.map((p, i) => ({
             id: `${id}-${i}`, zh: `${(ECOM_PLATFORMS.find((x) => x.id === p.platform) || {}).zh || p.platform} · ${(ECOM_REGIONS.find((x) => x.id === p.region) || {}).zh || p.region}`,
             platform: p.platform, region: p.region, audience: p.audience, cost: p.cost, margin: p.margin, live: true,
-          })),
+          })), world: ecomWorldInit(),
         };
         setRooms((rs) => rs.concat(next));
         setActiveId(id);
