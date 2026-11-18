@@ -1,6 +1,6 @@
 {
   "name": "dsh-contextos-devops",
-  "version": "1.48.125",
+  "version": "1.48.126",
   "type": "module",
   "description": "ContextOS DevOps for DeepSeek Harness: one dashboard for cluster nodes, project spaces, apps, avatars, PM boards and IoT devices, with an in-app Copilot that can deploy and scaffold.",
   "exports": {

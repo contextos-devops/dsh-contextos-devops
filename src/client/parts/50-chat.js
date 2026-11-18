@@ -1283,7 +1283,7 @@
                     h('tbody', null, m.table.rows.map((row, ri) => h('tr', { key: ri }, m.table.columns.map((c) => h('td', { key: c.key }, String(row[c.key] ?? '').slice(0, 40)))))))))
         : m.role === 'sys'
         ? h('div', { key: i, className: 'cx-sysline' }, h('span', { className: 'cx-sysdot' }), m.text)
-        : (!m.text && !m.ask && !m.card) ? null
+        : (!String(m.text || '').trim() && !m.ask && !pmCardOf(m.card)) ? null
         : h('div', { key: i, className: `cx-msg-wrap ${m.role}` },
 
             h('div', { className: `cx-msg ${m.role}`, style: { display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-start', gap: 8 } },
@@ -1325,12 +1325,13 @@
                     h('div', { className: 'cx-app-card-title' }, m.card.app.title || '应用'),
                     h('div', { className: 'cx-app-card-sub' }, m.card.app.meta || '')),
                   m.card.app.link ? h('button', { className: 'cx-app-card-open', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.app.link.url, m.card.app.title || '打开'); } }, 'OPEN') : null)
-                  : m.card ? h(CxSection, { className: 'cx-msg-card', title: m.card.title || T('结果') },
+                  : (m.card && (m.card.title || (m.card.rows || []).length || m.card.link)) ? h(CxSection, { className: 'cx-msg-card', title: m.card.title || T('结果') },
                   h('div', { className: 'cx-kv' }, (m.card.rows || []).map(([k, v], j) => h('div', { key: j, className: 'cx-kv-row' },
                     h('span', { className: 'cx-kv-k' }, k),
                     h('b', { className: 'cx-kv-v' }, String(v ?? '—'))))),
                   m.card.link ? h('div', { className: 'cx-foot' }, h(CxBtn, { size: 'sm', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.link.url, m.card.link.label || '管理'); } }, m.card.link.label || T('打开'))) : null) : null))));
 
+      const pmCardOf = (card) => (card && card.pm ? card : null);
       const uidCtx = (it) => uidFieldMap(it);
       const openPm = (kind, mode = 'create', item = null) => {
         const parent = kind === 'target' ? {} : kind === 'plan' ? (activeTarget ? { target_uid: activeTarget.uid, ...uidCtx(activeTarget) } : null) : kind === 'task' ? (activePlan ? { plan_uid: activePlan.uid, ...uidCtx(activePlan) } : null) : kind === 'report' ? (activeTask ? { task_uid: activeTask.uid, ...uidCtx(activeTask) } : null) : kind === 'feedback' ? (activeReport ? { report_uid: activeReport.uid, task_uid: activeReport.task_uid || '', ...uidCtx(activeReport) } : null) : null;
