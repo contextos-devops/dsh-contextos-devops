@@ -157,8 +157,8 @@
 /* 分节只是逻辑分组：display:contents 让标题与卡片的粘性容器是整条滚动区，
    于是「标题 + 当前卡片」会一直留在上面，并按 JS 量出的 --pm-top / --pm-card-top 依次堆叠。 */
 .cx-pm-sec,.cx-pm-sec>.cx-card-list{display:contents}
-.cx-pm-sec>.cx-pm-h{position:sticky;top:var(--pm-top,0px);z-index:7;background-color:var(--cx-surface-1);background-image:linear-gradient(90deg,color-mix(in srgb,var(--cx-cyan) 14%,var(--cx-surface-1)),var(--cx-surface-1) 72%);box-shadow:0 6px 12px rgba(0,0,0,.18)}
-.cx-pm-sec .cx-pm-card.on{position:sticky;top:var(--pm-card-top,34px);z-index:6;box-shadow:0 8px 18px rgba(0,0,0,.28)}
+.cx-pm-sec>.cx-pm-h{position:sticky;top:var(--pm-top,0px);z-index:7;background-color:var(--cx-surface-1);background-image:linear-gradient(90deg,color-mix(in srgb,var(--cx-cyan) 14%,var(--cx-surface-1)),var(--cx-surface-1) 72%);border-bottom:1px solid var(--cx-border)}
+.cx-pm-sec .cx-pm-card.on{position:sticky;top:var(--pm-card-top,34px);z-index:6}
 .cx-shell .cx-pm-sec .cx-pm-card.on{background-color:var(--cx-surface-2);background-image:linear-gradient(90deg,color-mix(in srgb,var(--cx-cyan) 12%,transparent),transparent 72%)}
 
 /* 确认对话框：与卡片同一套风格（替代 window.confirm） */

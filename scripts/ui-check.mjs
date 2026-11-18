@@ -235,6 +235,12 @@ ok('Right panel stacks PM sections but not the TIME header', (() => {
     && !chat.includes("'--cx-hi'")
     && chat.includes('cx-calsec');
 })());
+ok('Section headers and cards carry no drop shadow', (() => {
+  const css = read('src/client/styles/kit.css');
+  const head = (css.match(/\.cx-pm-sec>\.cx-pm-h\{[^}]*\}/) || [''])[0];
+  const card = (css.match(/\.cx-pm-sec \.cx-pm-card\.on\{[^}]*\}/) || [''])[0];
+  return !!head && !!card && !/box-shadow/.test(head) && !/box-shadow/.test(card);
+})());
 ok('Each section stacks its header and current card', (() => {
   const css = read('src/client/styles/kit.css'), chat = read('src/client/parts/50-chat.js');
   return css.includes('.cx-pm-sec,.cx-pm-sec>.cx-card-list{display:contents}')

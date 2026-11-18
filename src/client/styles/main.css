@@ -110,7 +110,7 @@
 .cx-debug .cx-line{padding:1px 0;border-bottom:1px solid rgba(22,56,77,.2)}
 .cx-err{margin:8px 12px 0;padding:7px 9px;border:1px solid rgba(255,92,122,.5);background:rgba(255,92,122,.08);color:#ff9caf;font-size:var(--cx-fs-body);white-space:pre-wrap}
 .cx-modal{animation:cx-fade var(--cx-dur-fast) var(--cx-ease) both;position:absolute;inset:0;background:rgba(1,5,10,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200}
-.cx-card{width:min(620px,calc(100% - 36px));max-height:calc(100% - 60px);overflow:auto;border:1px solid var(--cx-cyan);background:linear-gradient(180deg,#081826,#050d16);box-shadow:0 0 50px rgba(var(--cx-hue-rgb),.15);padding:16px}
+.cx-card{width:min(620px,calc(100% - 36px));max-height:calc(100% - 60px);overflow:auto;border:1px solid var(--cx-cyan);background:linear-gradient(180deg,#081826,#050d16);padding:16px}
 .cx-card h2{margin:0;font-size:var(--cx-fs);letter-spacing:.14em;color:var(--cx-cyan);font-weight:800}
 .cx-card .desc{font-size:var(--cx-fs-body);color:var(--cx-muted);line-height:1.7;margin:6px 0 12px}
 .cx-form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
