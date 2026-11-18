@@ -241,8 +241,9 @@ ok('Section headers, cards and messages carry no drop shadow', (() => {
   const card = (kit.match(/\.cx-pm-sec \.cx-pm-card\.on\{[^}]*\}/) || [''])[0];
   const msg = (css.match(/\.cx-msg\{[^}]*\}/) || [''])[0];
   const panel = (css.match(/\.cx-shell \.cx-panel\{[^}]*\}/) || [''])[0];
+  const dialog = (css.match(/\.cx-shell \.cx-card\{[^}]*\}/) || [''])[0];
   const solid = (x) => !!x && !/box-shadow/.test(x);
-  return solid(head) && solid(card) && solid(msg) && solid(panel);
+  return solid(head) && solid(card) && solid(msg) && solid(panel) && solid(dialog);
 })());
 ok('Each section stacks its header and current card', (() => {
   const css = read('src/client/styles/kit.css'), chat = read('src/client/parts/50-chat.js');
