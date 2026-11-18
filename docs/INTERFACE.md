@@ -416,3 +416,7 @@ POST /c/dream/action/build?name=<space>
 - 同一状态内按 `created_at` 倒序。
 - 客户端不排序、不推断状态：服务端返回什么顺序就渲染什么顺序，按钮由 `item.actions` 决定。
 - 实现位置：`lib/core/project.js`（唯一状态机），查询参数见 `docs/URL-SPEC.md`。
+
+## 12. 项目闭环：动作序列、URL 与约束
+
+PM 有两层：**平台 REST（真源）** 与 **插件 op（唯一出口）**。九步动作序列、动作全集、三条互锁、闭环状态机，全部在 `docs/PM-LOOP.md`（改 PM 流程、写任务/报告/反馈、做 AI 电商派单前必读）。

@@ -42,6 +42,7 @@
 | 写代码生成（factory 模式） | `CODE-GEN.md` | 一–五；工厂实现要点看 §六 |
 | 部署节点 / 选源码还是二进制 / 跨平台准备 | `INSTALL.md` | 全册（能力矩阵 + 平台表 + 验收） |
 | 写项目管理（PM）逻辑 | `ARCHITECTURE.md` + `INTERFACE.md` | §5 唯一入口 / §11 状态与排序 |
+| 改项目流程 / 写任务·报告·反馈 | `PM-LOOP.md` | 九步序列 · 动作全集 · 三条互锁 |
 | 接 AI 对话 / 动作协议 | `AI-CONVERSATION.md` | 全册（123 行） |
 | 接监控面板 | `MONITOR.md` | 全册（79 行） |
 | 改电商演示页 | `ECOM-DEMO.md` | 全册 |
@@ -75,7 +76,8 @@
 | `RSI-CONSTITUTION.md` | 111 | 十二条运行期法则 | 任何 AI 对话 | 落地流程 → `../AGENTS.md` §二 |
 | `DIAGNOSTICS.md` | 105 | 出问题先查哪、先跑哪 | 有故障 | 历史坑 → `RSI-LEDGER.md` |
 | `DESIGN-SYSTEM.md` | 363 | 视觉/组件/表单/UI 不变量 | 任何界面改动 | 产品取舍 → `PRODUCT-DESIGN.md` |
-| `INTERFACE.md` | 419 | 五种形态/认证/PM 排序 | 接口设计与排障 | URL 形状 → `URL-SPEC.md` |
+| `PM-LOOP.md` | 75 | PM 闭环九步+互锁 | 改流程 | 字段→`INTERFACE.md` |
+| `INTERFACE.md` | 423 | 五种形态/认证/PM 排序 | 接口设计与排障 | URL 形状 → `URL-SPEC.md` |
 | `URL-SPEC.md` | 243 | 两类 URL 与禁止清单 | 构造 URL 前 | 接口语义 → `INTERFACE.md` |
 | `CODE-GEN.md` | 424 | 代码生成规范与工厂要点 | factory 模式 | 架构 → `ARCHITECTURE.md` |
 | `ARCHITECTURE.md` | 135 | 五层/请求流程/模块归属 | 判断代码放哪 | 生成细节 → `CODE-GEN.md` |
@@ -88,7 +90,7 @@
 | `PRODUCT-DESIGN.md` | 843 | 产品与技术设计稿 | 做方案/查设计取舍 | 现状 → `../README.md` 能力矩阵 |
 | `RSI-LEDGER.md` | 132 | 踩坑与决策台账 | 复盘/避免重复 | 症状路由 → `DIAGNOSTICS.md` |
 | `INSTALL.md` | 108 | 节点安装矩阵与平台选择 | 部署/跨平台 | 节点生命周期 → `ARCHITECTURE.md` |
-| `CODE-INDEX.md` | 171 | 文件-行数-导出-契约索引 | 找东西 | 生成物，勿手改 |
+| `CODE-INDEX.md` | 172 | 文件-行数-导出-契约索引 | 找东西 | 生成物，勿手改 |
 | `STATE.md` | 66 | 存储键表 | 加/查状态 | 生成物，勿手改 |
 | `INDEX.md` | 本文件 | 唯一入口 | 每次开工 | — |
 

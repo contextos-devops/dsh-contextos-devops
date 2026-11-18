@@ -27,7 +27,7 @@ const BUDGET = {
   'DESIGN-SYSTEM.md': 4200, // 新增 §20 样式分层与结构原语（3547），留余量
   'AI-CONVERSATION.md': 2600,
   'ARCHITECTURE.md': 2300,
-  'INDEX.md': 2300,
+  'INDEX.md': 2500, // 唯一入口：一份文档约 +30 tokens，26 份文档后需 2360；余量留到 28 份
   'IAM.md': 2000,
   'DIAGNOSTICS.md': 2000,
   'DSH-COS.md': 1800,

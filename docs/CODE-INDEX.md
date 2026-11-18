@@ -158,10 +158,11 @@
 | `docs/EXTENDING.md` | 135 | 人写 |
 | `docs/GLOSSARY.md` | 207 | 人写 |
 | `docs/IAM.md` | 151 | 人写 |
-| `docs/INDEX.md` | 113 | 索引 |
+| `docs/INDEX.md` | 115 | 索引 |
 | `docs/INSTALL.md` | 108 | 人写 |
-| `docs/INTERFACE.md` | 419 | 人写 |
+| `docs/INTERFACE.md` | 423 | 人写 |
 | `docs/MONITOR.md` | 83 | 人写 |
+| `docs/PM-LOOP.md` | 75 | 人写 |
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
 | `docs/PUBLISH.md` | 172 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
