@@ -247,7 +247,7 @@ const CASES = [
     assert: (m) => {
       const pop = m['#pop'], grid = m['#grid'], time = m['#time'], ok = m['#ok'];
       return [
-        [!!pop && pop.w >= 240 && pop.w <= 300, '面板宽度固定（264px 级别）', `${pop?.w}px`],
+        [!!pop && pop.w >= 240 && pop.w <= 340, '面板宽度固定（约 300px）', `${pop?.w}px`],
         [!!pop && pop.sw <= pop.cw + 1, '面板内容不横向溢出', `${pop?.sw} ≤ ${pop?.cw}`],
         [!!ok && !!pop && ok.right <= pop.right + 1, '确定按钮落在面板内（没被切掉）', `${ok?.right} ≤ ${pop?.right}`],
         [!!time && time.h >= 30, '时间行占一行高度（不塌缩）', `${time?.h}px`],

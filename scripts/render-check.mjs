@@ -28,7 +28,7 @@ function grab(name) {
 }
 
 const NAMES = ['CxPopover', 'CxCombo', 'CxDateTime', 'CxConfirmHost', 'UpdateModal'];
-const HELPER_NAMES = ['cxPopStyle', 'cxPopSettle'];
+const HELPER_NAMES = ['cxPopFlip'];
 const code = [...HELPER_NAMES, ...NAMES].map(grab).join('\n');
 
 const stubs = {
@@ -60,25 +60,15 @@ const cases = [
   ['CxDateTime', () => mod.CxDateTime({ value: '2026-11-18 00:00:00', onChange: () => {} })],
 ];
 
-// 回归用例：祖先带 transform/backdrop-filter 时 fixed 的包含块偏移 380px。
-// 期望：第一帧就把偏移减掉（不是加），第二帧即收敛；旧实现会算出 2×want 导致来回跳。
+// 回归用例：下方空间不足时上翻，且只翻转、不算坐标（坐标法已废弃）
 {
-  const anchor = { getBoundingClientRect: () => ({ left: 200, top: 300, right: 700, bottom: 328, width: 500, height: 28 }) };
-  const OFF_X = 380, OFF_Y = 40;
-  let applied = { left: 0, top: 0 };
-  const panel = {
-    get style() { return { left: `${applied.left}px`, top: `${applied.top}px` }; },
-    getBoundingClientRect: () => ({ left: applied.left + OFF_X, top: applied.top + OFF_Y, width: 500, height: 240 }),
-  };
-  const a = factory(...Object.values(stubs)).cxPopSettle(anchor, panel, 320, 264);
-  applied = { left: a.left, top: a.top };
-  const b = factory(...Object.values(stubs)).cxPopSettle(anchor, panel, 320, 264);
-  const ok = a && Math.abs(a.left - (-180)) <= 1 && Math.abs(a.top - 292) <= 1 && b === null;
-  if (ok) console.log('PASS  CxPopSettle 在偏移包含块里一步收敛（不来回跳）');
-  else {
-    console.log(`FAIL  CxPopSettle 收敛异常: first=${JSON.stringify(a)} second=${JSON.stringify(b)}`);
-    process.exitCode = 1;
-  }
+  const mod = factory(...Object.values(stubs));
+  const low = { getBoundingClientRect: () => ({ left: 200, top: 700, bottom: 728, width: 300 }) };
+  const high = { getBoundingClientRect: () => ({ left: 200, top: 100, bottom: 128, width: 300 }) };
+  const a = mod.cxPopFlip(low, 320);
+  const b = mod.cxPopFlip(high, 320);
+  if (a === true && b === false) console.log('PASS  cxPopFlip 在底部空间不足时上翻，上方空间充足时向下');
+  else { console.log(`FAIL  cxPopFlip: low=${a} high=${b}`); process.exitCode = 1; }
 }
 
 let failed = 0;

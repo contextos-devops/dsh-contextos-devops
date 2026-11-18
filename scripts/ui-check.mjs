@@ -282,19 +282,20 @@ ok('Plan form defaults to 08:00 and 18:00', (() => {
   const form = read('src/client/parts/46-pm.js');
   return form.includes('} 08:00:00`') && form.includes('} 18:00:00`');
 })());
-ok('Popover self-correction lives in the kit primitive', (() => {
-  const kit = read('src/client/parts/07-kit.js');
-  return kit.includes('function cxPopSettle(')
-    && /requestAnimationFrame\(tick\)/.test(kit)
-    && /const dx = want\.left - got\.left;/.test(kit)
-    && /if \(Math\.abs\(dx\) < 0\.5 && Math\.abs\(dy\) < 0\.5\) return null;/.test(kit);
+ok('Popover placement is layout-driven, not coordinate-driven', (() => {
+  const kit = read('src/client/parts/07-kit.js'), css = read('src/client/styles/kit.css');
+  return kit.includes('function cxPopFlip(')
+    && !kit.includes('getBoundingClientRect().left')
+    && !/function cxPopSettle\(/.test(kit)
+    && /\.cx-pop\{position:absolute;left:0;top:calc\(100% \+ 4px\)/.test(css)
+    && /\.cx-pop\.up\{top:auto;bottom:calc\(100% \+ 4px\)\}/.test(css)
+    && /\.cx-card:has\(\.cx-pop\)\{overflow:visible\}/.test(css);
 })());
 ok('Popovers are a kit primitive, not per-component positioning', (() => {
   const ui = read('src/client/parts/10-ui.js'), kit = read('src/client/parts/07-kit.js'), css = read('src/client/styles/kit.css');
   return kit.includes('function CxPopover(')
-    && kit.includes('function cxPopSettle(')
-    && /const up = below < panelH && r.top > below;/.test(kit)
-    && /\.cx-pop\{position:fixed/.test(css)
+    && kit.includes('function cxPopFlip(')
+    && /\.cx-pop\{position:absolute/.test(css)
     && ui.includes('h(CxPopover, { anchorRef: wrapRef')
     && ui.includes('h(CxPopover, { anchorRef: ref')
     && !/function cxPopStyle\(/.test(ui);

@@ -68,67 +68,31 @@
   // 定位唯一入口：浮层一律 position:fixed + 自校正。
   // 为什么自校正：祖先带 transform / backdrop-filter 时，fixed 的包含块会被换成该祖先，
   // 视口坐标直接写进去会整体偏移；量一次真实落点、把差值补回来即可收敛（最多两帧）。
-  // 浮层定位诊断：最近 6 次「锚点/期望/实际/写入」的坐标，clientCheck 会上报
+  // 浮层：位置交给布局（绝对定位在锚点下方），只判断「下边放不下就翻到上边」。
+  // 不再用视口坐标算位置 —— 弹窗的 backdrop-filter / transform 会把 fixed 的包含块换掉，
+  // 坐标法已经在同一类 bug 上翻车三次（偏移两次、位置过期一次）。
   const CX_POP_LOG = [];
 
-  function cxPopStyle(el, panelH, minW) {
-    if (!el || typeof el.getBoundingClientRect !== 'function') return { left: 0, top: 0, width: minW || 240 };
-    const r = el.getBoundingClientRect();
-    const vh = (typeof window !== 'undefined' ? window.innerHeight : 800) || 800;
-    const vw = (typeof window !== 'undefined' ? window.innerWidth : 1200) || 1200;
-    const width = Math.min(Math.max(minW || 0, Math.round(r.width)), vw - 16);
-    const below = vh - r.bottom - 8;
-    const up = below < panelH && r.top > below;
-    const top = up ? Math.max(8, r.top - panelH - 4) : Math.round(r.bottom + 4);
-    const left = Math.max(8, Math.min(Math.round(r.left), vw - width - 8));
-    return { left, top, width, maxHeight: Math.max(160, Math.min(panelH, up ? r.top - 16 : below)) };
-  }
-
-  function cxPopSettle(anchor, panel, panelH, minW) {
-    const want = cxPopStyle(anchor, panelH, minW);
-    if (!panel || typeof panel.getBoundingClientRect !== 'function') return want;
-    // 祖先带 transform/backdrop-filter 时，fixed 的包含块不是视口：浏览器会在我们写的 left/top
-    // 之上再加一个固定偏移。这里先量出「实际比我们写的大多少」，再用 want 减掉它 —— 一步收敛，
-    // 不能拿 want 和 got 直接相减（首帧还没写 want 时会把偏移算重，浮层就会来回跳）。
-    const appliedLeft = parseFloat(panel.style.left) || 0;
-    const appliedTop = parseFloat(panel.style.top) || 0;
-    const got = panel.getBoundingClientRect();
-    const dx = want.left - got.left;
-    const dy = want.top - got.top;
-    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return null; // 已对齐：不要再写，否则会来回跳
-    // 在「已写值」上做增量修正：偏移包含块里写 want 会差一个固定量，一次修正即到位。
-    return { ...want, left: Math.round(appliedLeft + dx), top: Math.round(appliedTop + dy) };
+  function cxPopFlip(anchor, panelH) {
+    try {
+      if (!anchor || typeof anchor.getBoundingClientRect !== 'function') return false;
+      const r = anchor.getBoundingClientRect();
+      const vh = (typeof window !== 'undefined' ? window.innerHeight : 800) || 800;
+      return r.bottom + panelH + 8 > vh && r.top > panelH;
+    } catch { return false; }
   }
 
   function CxPopover({ anchorRef, open, panelH = 280, minW = 160, className, onClose, children }) {
     const popRef = useRef(null);
-    const [pos, setPos] = useState(null);
+    const [up, setUp] = useState(false);
     useEffect(() => {
-      if (!open) { setPos(null); return undefined; }
-      const place = () => {
-        const next = cxPopSettle(anchorRef.current, popRef.current, panelH, minW);
-        try {
-          const an = anchorRef.current, pn = popRef.current;
-          if (an && pn && typeof an.getBoundingClientRect === 'function') {
-            const ar = an.getBoundingClientRect(), pr = pn.getBoundingClientRect();
-            CX_POP_LOG.push({
-              cls: String(className || ''),
-              anchor: [Math.round(ar.left), Math.round(ar.top), Math.round(ar.width)],
-              got: [Math.round(pr.left), Math.round(pr.top)],
-              applied: [parseFloat(pn.style.left) || 0, parseFloat(pn.style.top) || 0],
-              next: next ? [next.left, next.top] : null,
-            });
-            if (CX_POP_LOG.length > 6) CX_POP_LOG.shift();
-          }
-        } catch {}
-        if (next) setPos(next);
-      };
+      if (!open) return undefined;
+      // 只判断翻转方向；水平/垂直位置由 .cx-pop 的绝对定位跟随锚点（布局算，不由我们算）
+      const place = () => setUp(cxPopFlip(anchorRef.current, panelH));
       let raf = 0;
       let n = 0;
-      const tick = () => { place(); if (++n < 48) raf = requestAnimationFrame(tick); };
+      const tick = () => { place(); if (++n < 12) raf = requestAnimationFrame(tick); };
       tick();
-      // 表单是异步的（fieldOptions 回来后会多出字段，锚点整体下移）：
-      // 只靠开窗那几帧会把面板钉在旧位置，必须跟着布局变化重新贴。
       let mo = null;
       try {
         const an = anchorRef.current;
@@ -160,8 +124,8 @@
     }, [open, panelH, minW]);
     if (!open) return null;
     return h('div', {
-      className: cxCx('cx-pop', className),
+      className: cxCx('cx-pop', up ? 'up' : '', className),
       ref: popRef,
-      style: pos || { left: 0, top: 0, visibility: 'hidden' },
     }, children);
   }
+

@@ -173,7 +173,10 @@
 .cx-combo .cx-input{width:100%;padding-right:26px}
 .cx-combo-btn{position:absolute;right:2px;top:2px;bottom:2px;width:22px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--cx-text-dim);cursor:pointer;border-radius:var(--cx-r-xs)}
 .cx-combo-btn:hover{color:var(--cx-cyan)}
-.cx-pop{position:fixed;z-index:var(--cx-z-pop);min-width:0;max-width:none;overflow:auto;padding:var(--cx-sp-1);border:1px solid var(--cx-border-strong);border-radius:var(--cx-r-sm);background:var(--cx-surface-1);box-shadow:var(--cx-shadow-2)}
+.cx-pop{position:absolute;left:0;top:calc(100% + 4px);z-index:var(--cx-z-pop);width:100%;min-width:0;max-width:100%;overflow:auto;padding:var(--cx-sp-1);border:1px solid var(--cx-border-strong);border-radius:var(--cx-r-sm);background:var(--cx-surface-1);box-shadow:var(--cx-shadow-2)}
+.cx-pop.up{top:auto;bottom:calc(100% + 4px)}
+/* 浮层从弹窗里长出来时，弹窗不能再裁剪它 */
+.cx-card:has(.cx-pop){overflow:visible}
 .cx-combo-pop{padding:var(--cx-sp-1);min-width:0;max-width:none}
 .cx-combo-item{display:block;width:100%;text-align:left;padding:5px 8px;border:0;border-radius:var(--cx-r-xs);background:transparent;color:var(--cx-text);font:var(--cx-fs-body)/1.4 var(--cx-font);cursor:pointer}
 .cx-combo-item:hover,.cx-combo-item.on{background:var(--cx-accent-soft);color:var(--cx-accent)}
@@ -182,7 +185,7 @@
 .cx-dt{position:relative;width:100%}
 .cx-dt-btn{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;cursor:pointer;color:var(--cx-text);text-align:left}
 .cx-dt-text{font:var(--cx-fs-body)/1.4 var(--cx-mono);letter-spacing:.01em}
-.cx-dt-pop{padding:var(--cx-sp-2);min-width:0;max-width:none}
+.cx-dt-pop{width:302px;max-width:calc(100vw - 24px);padding:var(--cx-sp-2)}
 .cx-dt-head{display:flex;align-items:center;gap:2px;padding:2px 2px 6px}
 .cx-dt-ym{flex:1;text-align:center;font:600 var(--cx-fs-10)/1.2 var(--cx-mono);letter-spacing:.08em;color:var(--cx-text)}
 .cx-dt-nav{width:20px;height:20px;border:0;border-radius:var(--cx-r-xs);background:transparent;color:var(--cx-text-dim);cursor:pointer;font-size:11px}
@@ -196,9 +199,11 @@
 .cx-dt-time{display:flex;align-items:center;gap:3px;padding:8px 2px 4px;border-top:1px solid var(--cx-border);margin-top:6px}
 .cx-dt-time-lb{flex:none;white-space:nowrap;font:var(--cx-fs-10)/1 var(--cx-font);color:var(--cx-text-faint);margin-right:4px;letter-spacing:.08em}
 .cx-dt-time b{color:var(--cx-text-faint);font-weight:400}
-.cx-dt-num{flex:0 0 40px;width:40px;height:22px;text-align:center;font:var(--cx-fs-body)/1 var(--cx-mono);padding:0 2px;-moz-appearance:textfield}
+.cx-dt-num{flex:0 0 38px;width:38px;height:22px;padding:0;text-align:center;font:var(--cx-fs-body)/1 var(--cx-mono);padding:0 2px;-moz-appearance:textfield}
 .cx-dt-num::-webkit-outer-spin-button,.cx-dt-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.cx-dt-foot{position:sticky;bottom:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 0 2px;background:var(--cx-surface-1);border-top:1px solid var(--cx-border)}
+.cx-dt-foot{position:sticky;bottom:0;z-index:1;display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:6px;padding:6px 0 2px;background:var(--cx-surface-1);border-top:1px solid var(--cx-border)}
+.cx-dt-foot .cx-btn{height:24px;padding:0 7px;flex:none;font-size:var(--cx-fs-12)}
+.cx-dt-acts{display:flex;align-items:center;gap:4px;flex:none}
 .cx-dt-acts{display:flex;align-items:center;gap:4px}
 
 /* 消息里的结果卡与内联表单：复用 kit 的节/字段/按钮，只补三种结构 */
