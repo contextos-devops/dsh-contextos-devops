@@ -235,11 +235,14 @@ ok('Right panel stacks PM sections but not the TIME header', (() => {
     && !chat.includes("'--cx-hi'")
     && chat.includes('cx-calsec');
 })());
-ok('Section headers and cards carry no drop shadow', (() => {
-  const css = read('src/client/styles/kit.css');
-  const head = (css.match(/\.cx-pm-sec>\.cx-pm-h\{[^}]*\}/) || [''])[0];
-  const card = (css.match(/\.cx-pm-sec \.cx-pm-card\.on\{[^}]*\}/) || [''])[0];
-  return !!head && !!card && !/box-shadow/.test(head) && !/box-shadow/.test(card);
+ok('Section headers, cards and messages carry no drop shadow', (() => {
+  const kit = read('src/client/styles/kit.css'); const css = read('src/client/styles/main.css');
+  const head = (kit.match(/\.cx-pm-sec>\.cx-pm-h\{[^}]*\}/) || [''])[0];
+  const card = (kit.match(/\.cx-pm-sec \.cx-pm-card\.on\{[^}]*\}/) || [''])[0];
+  const msg = (css.match(/\.cx-msg\{[^}]*\}/) || [''])[0];
+  const panel = (css.match(/\.cx-shell \.cx-panel\{[^}]*\}/) || [''])[0];
+  const solid = (x) => !!x && !/box-shadow/.test(x);
+  return solid(head) && solid(card) && solid(msg) && solid(panel);
 })());
 ok('Each section stacks its header and current card', (() => {
   const css = read('src/client/styles/kit.css'), chat = read('src/client/parts/50-chat.js');
