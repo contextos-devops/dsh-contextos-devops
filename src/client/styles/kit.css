@@ -209,3 +209,7 @@
 .cx-field-lite{display:flex;flex-direction:column;gap:3px;margin-bottom:6px}
 .cx-field-lite .cx-label{font-size:var(--cx-fs-10);color:var(--cx-text-dim);letter-spacing:.04em}
 .cx-msg-card .cx-foot,.cx-wform .cx-foot{margin-top:8px}
+/* 消息里的卡片/表单：面板级 .cx-sec 是"撑满+内部滚动"，放进消息后会被压成一条边，
+   这里恢复成按内容高度、不裁剪。 */
+.cx-msg .cx-sec{overflow:visible;height:auto;flex:none}
+.cx-msg .cx-sec>.cx-bd{flex:none;min-height:auto;overflow:visible}

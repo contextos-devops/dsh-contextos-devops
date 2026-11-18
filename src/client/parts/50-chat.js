@@ -246,13 +246,13 @@
                   const b = document.querySelector('.cx-chat-b');
                   if (!b) return null;
                   const r = b.getBoundingClientRect();
-                  const wraps = Array.from(b.querySelectorAll('.cx-msg-wrap')).slice(-4).map((w) => {
+                  const wraps = Array.from(b.children).slice(-6).map((w) => {
                     const wr = w.getBoundingClientRect();
                     const sec = w.querySelector('.cx-sec, .cx-wform, .cx-md-codebox');
                     const sr = sec ? sec.getBoundingClientRect() : null;
                     const bd = sec ? sec.querySelector('.cx-bd') : null;
                     return { h: Math.round(wr.height), w: Math.round(wr.width), x: Math.round(wr.x),
-                      cls: String(w.className || '').replace('cx-msg-wrap', '').trim(),
+                      cls: String(w.className || '').trim(),
                       txt: String(w.textContent || '').trim().length,
                       sec: sec ? `${Math.round(sr.height)}/${bd ? Math.round(bd.getBoundingClientRect().height) : '-'}` : '',
                       html: sec ? String(sec.outerHTML || '').replace(/\s+/g, ' ').slice(0, 220) : String(w.outerHTML || '').replace(/\s+/g, ' ').slice(0, 160) };
