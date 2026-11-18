@@ -215,6 +215,8 @@
               inline: el ? (el.style.getPropertyValue('font-size') || '') : '',
               dpr: window.devicePixelRatio || 1,
               build: CLIENT_BUILD,
+              /* 浮层定位诊断：最近 6 次锚点/实际/写入坐标，定位「面板跑偏」不用再靠截图 */
+              pops: (typeof CX_POP_LOG === 'undefined' ? [] : CX_POP_LOG.slice(-6)),
               css: Array.from(document.querySelectorAll('link[data-cx-client-css]')).map((l) => String(l.getAttribute('href') || '')),
               /* 布局自检：新 JS 配旧 CSS 时，下面几项会立刻暴露（如 main=flex/row、tools 无边距） */
               layout: (() => {

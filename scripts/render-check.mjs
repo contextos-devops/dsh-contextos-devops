@@ -28,7 +28,8 @@ function grab(name) {
 }
 
 const NAMES = ['CxPopover', 'CxCombo', 'CxDateTime', 'CxConfirmHost', 'UpdateModal'];
-const code = NAMES.map(grab).join('\n');
+const HELPER_NAMES = ['cxPopStyle', 'cxPopSettle'];
+const code = [...HELPER_NAMES, ...NAMES].map(grab).join('\n');
 
 const stubs = {
   h: (type, props, ...children) => ({ type, props: props || {}, children }),
@@ -49,7 +50,7 @@ const stubs = {
   cxPad: (n) => String(n).padStart(2, '0'),
 };
 
-const factory = new Function(...Object.keys(stubs), `${code}\nreturn { ${NAMES.join(', ')} };`);
+const factory = new Function(...Object.keys(stubs), `${code}\nreturn { ${[...HELPER_NAMES, ...NAMES].join(', ')} };`);
 const mod = factory(...Object.values(stubs));
 
 const cases = [
@@ -58,6 +59,27 @@ const cases = [
   ['CxCombo', () => mod.CxCombo({ value: '', onChange: () => {}, options: [{ value: 'a', label: 'A' }] })],
   ['CxDateTime', () => mod.CxDateTime({ value: '2026-11-18 00:00:00', onChange: () => {} })],
 ];
+
+// 回归用例：祖先带 transform/backdrop-filter 时 fixed 的包含块偏移 380px。
+// 期望：第一帧就把偏移减掉（不是加），第二帧即收敛；旧实现会算出 2×want 导致来回跳。
+{
+  const anchor = { getBoundingClientRect: () => ({ left: 200, top: 300, right: 700, bottom: 328, width: 500, height: 28 }) };
+  const OFF_X = 380, OFF_Y = 40;
+  let applied = { left: 0, top: 0 };
+  const panel = {
+    get style() { return { left: `${applied.left}px`, top: `${applied.top}px` }; },
+    getBoundingClientRect: () => ({ left: applied.left + OFF_X, top: applied.top + OFF_Y, width: 500, height: 240 }),
+  };
+  const a = factory(...Object.values(stubs)).cxPopSettle(anchor, panel, 320, 264);
+  applied = { left: a.left, top: a.top };
+  const b = factory(...Object.values(stubs)).cxPopSettle(anchor, panel, 320, 264);
+  const ok = a && Math.abs(a.left - (-180)) <= 1 && Math.abs(a.top - 292) <= 1 && b === null;
+  if (ok) console.log('PASS  CxPopSettle 在偏移包含块里一步收敛（不来回跳）');
+  else {
+    console.log(`FAIL  CxPopSettle 收敛异常: first=${JSON.stringify(a)} second=${JSON.stringify(b)}`);
+    process.exitCode = 1;
+  }
+}
 
 let failed = 0;
 for (const [name, run] of cases) {

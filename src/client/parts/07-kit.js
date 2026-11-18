@@ -68,6 +68,9 @@
   // 定位唯一入口：浮层一律 position:fixed + 自校正。
   // 为什么自校正：祖先带 transform / backdrop-filter 时，fixed 的包含块会被换成该祖先，
   // 视口坐标直接写进去会整体偏移；量一次真实落点、把差值补回来即可收敛（最多两帧）。
+  // 浮层定位诊断：最近 6 次「锚点/期望/实际/写入」的坐标，clientCheck 会上报
+  const CX_POP_LOG = [];
+
   function cxPopStyle(el, panelH, minW) {
     if (!el || typeof el.getBoundingClientRect !== 'function') return { left: 0, top: 0, width: minW || 240 };
     const r = el.getBoundingClientRect();
@@ -84,11 +87,17 @@
   function cxPopSettle(anchor, panel, panelH, minW) {
     const want = cxPopStyle(anchor, panelH, minW);
     if (!panel || typeof panel.getBoundingClientRect !== 'function') return want;
+    // 祖先带 transform/backdrop-filter 时，fixed 的包含块不是视口：浏览器会在我们写的 left/top
+    // 之上再加一个固定偏移。这里先量出「实际比我们写的大多少」，再用 want 减掉它 —— 一步收敛，
+    // 不能拿 want 和 got 直接相减（首帧还没写 want 时会把偏移算重，浮层就会来回跳）。
+    const appliedLeft = parseFloat(panel.style.left) || 0;
+    const appliedTop = parseFloat(panel.style.top) || 0;
     const got = panel.getBoundingClientRect();
     const dx = want.left - got.left;
     const dy = want.top - got.top;
     if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return null; // 已对齐：不要再写，否则会来回跳
-    return { ...want, left: Math.round(want.left + dx), top: Math.round(want.top + dy) };
+    // 在「已写值」上做增量修正：偏移包含块里写 want 会差一个固定量，一次修正即到位。
+    return { ...want, left: Math.round(appliedLeft + dx), top: Math.round(appliedTop + dy) };
   }
 
   function CxPopover({ anchorRef, open, panelH = 280, minW = 160, className, onClose, children }) {
@@ -98,6 +107,20 @@
       if (!open) { setPos(null); return undefined; }
       const place = () => {
         const next = cxPopSettle(anchorRef.current, popRef.current, panelH, minW);
+        try {
+          const an = anchorRef.current, pn = popRef.current;
+          if (an && pn && typeof an.getBoundingClientRect === 'function') {
+            const ar = an.getBoundingClientRect(), pr = pn.getBoundingClientRect();
+            CX_POP_LOG.push({
+              cls: String(className || ''),
+              anchor: [Math.round(ar.left), Math.round(ar.top), Math.round(ar.width)],
+              got: [Math.round(pr.left), Math.round(pr.top)],
+              applied: [parseFloat(pn.style.left) || 0, parseFloat(pn.style.top) || 0],
+              next: next ? [next.left, next.top] : null,
+            });
+            if (CX_POP_LOG.length > 6) CX_POP_LOG.shift();
+          }
+        } catch {}
         if (next) setPos(next);
       };
       let raf = 0;

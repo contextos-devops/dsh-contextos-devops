@@ -55,7 +55,7 @@
 | --- | ---: | --- |
 | `src/client/parts/00-prelude.js` | 465 | `React` `cxPlaceKey` `cxWebUrl` `CX_HOST` `API` `CLIENT_CSS` `CLIENT_BUILD` `cxClientTag` `CRITICAL_CSS` `ACTIVITY` |
 | `src/client/parts/05-bootstrap.js` | 66 | `apiTrace` `QUERY_OPS` |
-| `src/client/parts/07-kit.js` | 135 | `cxCx` `CxStack` `CxRow` `CxCol` `CxSection` `CxField` `CX_BTN_VARIANT` `CX_BTN_SIZE` `CxBtn` `CxInput` |
+| `src/client/parts/07-kit.js` | 158 | `cxCx` `CxStack` `CxRow` `CxCol` `CxSection` `CxField` `CX_BTN_VARIANT` `CX_BTN_SIZE` `CxBtn` `CxInput` |
 | `src/client/parts/08-store.js` | 86 | — |
 | `src/client/parts/10-ui.js` | 357 | `CtxMark` `Ico` `Icon` `Panel` `TOKENS` `Btn` `Toolbar` `Section` `Field` `EmptyState` |
 | `src/client/parts/12-debug.js` | 362 | `ANSI_COLORS` `ANSI_NAMES` `AnsiText` `terminalTheme` `TerminalLog` `CONSOLE_TERMS` `ConsoleTerminal` `DebugDetail` |
@@ -78,7 +78,7 @@
 | `src/client/parts/57-ecom.js` | 829 | `ECOM_STAGES` `ECOM_AGENT_POOL` `ECOM_PLATFORMS` `ECOM_REGIONS` `ECOM_AUDIENCES` `ECOM_COMPANY` `ECOM_DEFAULT_AGENTS` `ECOM_ROOMS_SEED` `ECOM_HUE` `ECOM_TOKEN_PRICE` |
 | `src/client/parts/58-config.js` | 498 | `CTX_CFG_KEYS` `CTX_CFG_DEFAULT` `CTX_CFG_NS` `CTX_CALLS_NS` `CTX_UI` `CTX_DATA` `MODE_INTRO_SEEN` `ModeIntro` `WelcomeBurst` `CursorComet` |
 | `src/client/parts/59-monitor.js` | 263 | `MonitorDonut` `R` `MonitorSpark` `MonitorTwin` `MON_PANELS` `MON_DEFAULT` `MonitorPanel` `MonitorBoard` `MonitorView` |
-| `src/client/parts/60-page.js` | 1688 | `PipeSelect` `Page` `Boundary` |
+| `src/client/parts/60-page.js` | 1690 | `PipeSelect` `Page` `Boundary` |
 
 ## 3. 接口契约
 
