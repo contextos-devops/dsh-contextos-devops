@@ -211,6 +211,20 @@ const CASES = [
     },
   },
   {
+    name: 'pop-transform',
+    fixture: 'scripts/fixtures/pop-transform.html',
+    window: '900,420',
+    sels: ['#comboInput', '#comboPop'],
+    assert: (m) => {
+      const inp = m['#comboInput'], pop = m['#comboPop'];
+      return [
+        [!!inp && !!pop && Math.abs(pop.x - inp.x) <= 2, '浮层左缘贴住输入框（transform 祖先下也不跑偏）', `${pop?.x} vs ${inp?.x}`],
+        [!!inp && !!pop && Math.abs(pop.w - inp.w) <= 2, '浮层与输入框同宽', `${pop?.w} vs ${inp?.w}`],
+        [!!inp && !!pop && pop.hit === true, '浮层完整可见（未被裁剪）', `hit=${pop?.hit}`],
+      ];
+    },
+  },
+  {
     name: 'pop-inside',
     fixture: 'scripts/fixtures/pop-inside.html',
     window: '420,420',
@@ -377,7 +391,16 @@ window.__PROBE_SELS__ = __SELS__;
     });
     document.title = 'PROBE:' + JSON.stringify(out);
   }
-  window.addEventListener('load', function () { setTimeout(measure, 200); });
+  // 有的用例要等页面自己收敛（例如浮层定位自校正），用 __PROBE_WAIT__ 标记
+  window.addEventListener('load', function () {
+    let tries = 0;
+    (function run() {
+      ++tries;
+      const waiting = window.__PROBE_WAIT__ && !document.documentElement.dataset.popReady;
+      if (waiting && tries < 40) { setTimeout(run, 16); return; }
+      measure();
+    })();
+  });
 })();
 </script>`;
 
@@ -400,7 +423,7 @@ for (const c of CASES) {
 
   const profile = path.join(tmp, `profile-${c.name}`);
   const common = ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
-    `--user-data-dir=${profile}`, '--virtual-time-budget=1500', `--window-size=${c.window}`];
+    `--user-data-dir=${profile}`, '--virtual-time-budget=3000', `--window-size=${c.window}`];
   let dom = '';
   try {
     dom = execFileSync(browser, [...common, '--dump-dom', `file://${file}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });

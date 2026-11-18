@@ -163,6 +163,39 @@
     // ── 组合输入框（可输入 + 统一风格下拉，替代原生 datalist）──────────────
     // 浮层定位：position:fixed 才不会被弹窗的 overflow:auto 裁掉；
     // 宽度跟随触发元素（下拉与输入框同宽），下方空间不足时向上翻。
+    // position:fixed 在带 transform / backdrop-filter 的祖先内会退化成「相对该祖先」，
+    // 于是首次算出的 left/top 会整体偏移。量一次面板真实位置，把差值补回去即可收敛。
+    function cxPopSettle(anchor, panel, panelH, minW) {
+      const want = cxPopStyle(anchor, panelH, minW);
+      if (!panel || typeof panel.getBoundingClientRect !== 'function') return want;
+      const got = panel.getBoundingClientRect();
+      const dx = want.left - got.left;
+      const dy = want.top - got.top;
+      // 已经对齐就返回 null：重复写入同一坐标会让「被祖先带偏」的浮层来回跳一格
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return null;
+      return { ...want, left: Math.round(want.left + dx), top: Math.round(want.top + dy) };
+    }
+
+    // 打开期间连续校正：弹窗有入场动画（transform/backdrop-filter），单次测量会偏。
+    function cxPopTrack(anchorRef, popRef, panelH, minW, setPos) {
+      const place = () => {
+        const next = cxPopSettle(anchorRef.current, popRef.current, panelH, minW);
+        if (next) setPos(next);
+      };
+      let raf = 0;
+      let n = 0;
+      const tick = () => { place(); if (++n < 48) raf = requestAnimationFrame(tick); };
+      tick();
+      const onScroll = () => place();
+      window.addEventListener('scroll', onScroll, true);
+      window.addEventListener('resize', onScroll);
+      return () => {
+        cancelAnimationFrame(raf);
+        window.removeEventListener('scroll', onScroll, true);
+        window.removeEventListener('resize', onScroll);
+      };
+    }
+
     function cxPopStyle(el, panelH, minW) {
       if (!el || typeof el.getBoundingClientRect !== 'function') return { left: 0, top: 0, width: minW || 240 };
       const r = el.getBoundingClientRect();
@@ -185,15 +218,11 @@
         if (!open) return;
         const away = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
         const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
-        const place = () => setPos(cxPopStyle(wrapRef.current, 280, 160));
-        place();
-        window.addEventListener('scroll', place, true);
-        window.addEventListener('resize', place);
+        const stop = cxPopTrack(wrapRef, popRef, 280, 160, setPos);
         document.addEventListener('mousedown', away);
         document.addEventListener('keydown', esc);
         return () => {
-          window.removeEventListener('scroll', place, true);
-          window.removeEventListener('resize', place);
+          stop();
           document.removeEventListener('mousedown', away);
           document.removeEventListener('keydown', esc);
         };
@@ -207,7 +236,7 @@
           onChange: (e) => { onChange(e.target.value); setOpen(true); },
         }),
         h('button', { type: 'button', className: 'cx-combo-btn', 'aria-label': T('更多'), onClick: () => { onFocus && onFocus(); setOpen((v) => !v); } }, h(UiIcon, { name: 'chevronDown', size: 12 })),
-        open && shown.length ? h('div', { className: 'cx-drop-pop cx-combo-pop', style: pos || undefined },
+        open && shown.length ? h('div', { className: 'cx-drop-pop cx-combo-pop', ref: popRef, style: pos || undefined },
           shown.slice(0, 50).map((o) => h('button', {
             key: String(o.value), type: 'button', className: `cx-combo-item${String(o.value) === String(value) ? ' on' : ''}`,
             onClick: () => { onChange(String(o.label ?? o.name ?? o.value)); setOpen(false); },
@@ -230,19 +259,16 @@
       const [p, setP] = useState(() => cxParseWhen(value));
       useEffect(() => { setP(cxParseWhen(value)); }, [value]);
       const ref = useRef(null);
+      const popRef = useRef(null);
       useEffect(() => {
         if (!open) return;
         const away = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
         const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
-        const place = () => setPos(cxPopStyle(ref.current, 320, 264));
-        place();
-        window.addEventListener('scroll', place, true);
-        window.addEventListener('resize', place);
+        const stop = cxPopTrack(ref, popRef, 320, 264, setPos);
         document.addEventListener('mousedown', away);
         document.addEventListener('keydown', esc);
         return () => {
-          window.removeEventListener('scroll', place, true);
-          window.removeEventListener('resize', place);
+          stop();
           document.removeEventListener('mousedown', away);
           document.removeEventListener('keydown', esc);
         };

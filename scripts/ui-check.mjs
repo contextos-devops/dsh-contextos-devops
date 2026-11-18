@@ -272,11 +272,20 @@ ok('Date picker keeps its time row and actions inside the panel', (() => {
     && /\.cx-dt-foot\{position:sticky;bottom:0/.test(kit)
     && /\.cx-dt-acts\{display:flex/.test(kit);
 })());
+ok('Popovers self-correct when a transformed ancestor traps position:fixed', (() => {
+  const ui = read('src/client/parts/10-ui.js');
+  return ui.includes('function cxPopSettle(')
+    && ui.includes('function cxPopTrack(')
+    && /requestAnimationFrame\(tick\)/.test(ui)
+    && /cxPopTrack\(wrapRef, popRef, 280, 160, setPos\)/.test(ui)
+    && /cxPopTrack\(ref, popRef, 320, 264, setPos\)/.test(ui)
+    && /const dx = want\.left - got\.left;/.test(ui);
+})());
 ok('Popovers are viewport-anchored, not clipped by the dialog scroll box', (() => {
   const ui = read('src/client/parts/10-ui.js'), kit = read('src/client/styles/kit.css');
   return ui.includes('function cxPopStyle(')
-    && ui.includes("setPos(cxPopStyle(wrapRef.current, 280, 160))")
-    && ui.includes("setPos(cxPopStyle(ref.current, 320, 264))")
+    && ui.includes('cxPopTrack(wrapRef, popRef, 280, 160, setPos)')
+    && ui.includes('cxPopTrack(ref, popRef, 320, 264, setPos)')
     && /const up = below < panelH && r.top > below;/.test(ui)
     && /const width = Math.max\(minW \|\| 0, Math.round\(r.width\)\);/.test(ui)
     && /\.cx-combo-pop\{position:fixed!important/.test(kit)

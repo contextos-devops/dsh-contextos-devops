@@ -1,0 +1,52 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="file:///Users/shy/ContextOS/usr/dsh-contextos-devops/assets/client.css">
+<style>html,body{margin:0;height:100%;background:#eef4f8}
+/* 复现真实弹窗：transform + backdrop-filter 会让内部 position:fixed 相对本元素定位 */
+#modal{position:absolute;left:60px;top:40px;width:520px;padding:16px;box-sizing:border-box;background:#fff;border:1px solid #b9d8e5;
+  transform:translate(120px,30px);backdrop-filter:blur(1px);-webkit-backdrop-filter:blur(1px)}
+#combo{position:relative}
+#comboInput{width:100%;height:28px;border:1px solid #b9d8e5;background:#f4fbfe;box-sizing:border-box}
+</style></head>
+<body><div class="cx-shell" data-theme="light">
+ <div id="modal"><div class="cx-field"><div class="cx-label">标题 *</div>
+   <div id="combo"><input id="comboInput" value="我的计划"></div>
+   <div class="cx-drop-pop cx-combo-pop" id="comboPop"><button class="cx-combo-item on">我的计划</button><button class="cx-combo-item">阶段一计划</button></div>
+ </div></div>
+</div>
+<script>
+function cxPopStyle(el, panelH, minW) {
+      if (!el || typeof el.getBoundingClientRect !== 'function') return { left: 0, top: 0, width: minW || 240 };
+      const r = el.getBoundingClientRect();
+      const vh = (typeof window !== 'undefined' ? window.innerHeight : 800) || 800;
+      const vw = (typeof window !== 'undefined' ? window.innerWidth : 1200) || 1200;
+      const width = Math.max(minW || 0, Math.round(r.width));
+      const below = vh - r.bottom - 8;
+      const up = below < panelH && r.top > below;
+      const top = up ? Math.max(8, r.top - panelH - 4) : Math.round(r.bottom + 4);
+      const left = Math.max(8, Math.min(Math.round(r.left), vw - width - 8));
+      return { left, top, width, maxHeight: Math.max(160, Math.min(panelH, up ? r.top - 16 : below)) };
+    }
+function cxPopSettle(anchor, panel, panelH, minW) {
+      const want = cxPopStyle(anchor, panelH, minW);
+      if (!panel || typeof panel.getBoundingClientRect !== 'function') return want;
+      const got = panel.getBoundingClientRect();
+      const dx = want.left - got.left;
+      const dy = want.top - got.top;
+      // 已经对齐就返回 null：重复写入同一坐标会让「被祖先带偏」的浮层来回跳一格
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return null;
+      return { ...want, left: Math.round(want.left + dx), top: Math.round(want.top + dy) };
+    }
+(function(){
+  var ip=document.getElementById('comboInput'), cp=document.getElementById('comboPop');
+  function apply(s){ cp.style.left=s.left+'px'; cp.style.top=s.top+'px'; cp.style.width=s.width+'px'; cp.style.maxHeight=s.maxHeight+'px'; }
+  apply(cxPopStyle(ip,280,160));   // 首次：被祖先带偏
+  window.__PROBE_WAIT__ = 'pop-ready';
+  var n = 0;
+  (function tick(){
+    var nx = cxPopSettle(ip, cp, 280, 160);
+    if (nx) apply(nx);             // 只在本帧确实偏了才写，避免来回跳
+    if (++n < 12) requestAnimationFrame(tick);
+    else document.documentElement.dataset.popReady = '1';
+  })();
+})();
+</script></body></html>
