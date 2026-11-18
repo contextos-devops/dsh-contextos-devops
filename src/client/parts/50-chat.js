@@ -240,6 +240,20 @@
               lineHeight: cs.lineHeight,
               placeholder: (() => { try { return window.getComputedStyle(el, '::placeholder').fontSize; } catch { return ''; } })(),
               rev: String(CLIENT_CSS),
+              /* 消息区自检：横向是否溢出、最后几条消息的真实高度与文本长度 */
+              box: (() => {
+                try {
+                  const b = document.querySelector('.cx-chat-b');
+                  if (!b) return null;
+                  const r = b.getBoundingClientRect();
+                  const wraps = Array.from(b.querySelectorAll('.cx-msg-wrap')).slice(-4).map((w) => {
+                    const wr = w.getBoundingClientRect();
+                    return { h: Math.round(wr.height), w: Math.round(wr.width), x: Math.round(wr.x) };
+                  });
+                  return { box: [Math.round(r.x), Math.round(r.width)], sw: b.scrollWidth, cw: b.clientWidth, sl: b.scrollLeft, wraps };
+                } catch { return null; }
+              })(),
+              last: msgs.slice(-4).map((m) => ({ r: m.role, len: String(m.text || '').length, card: m.card ? Object.keys(m.card).join('+').slice(0, 24) : '', ask: !!m.ask })),
             } }).catch(() => {});
           } catch {}
         }, 300);
@@ -1269,6 +1283,7 @@
                     h('tbody', null, m.table.rows.map((row, ri) => h('tr', { key: ri }, m.table.columns.map((c) => h('td', { key: c.key }, String(row[c.key] ?? '').slice(0, 40)))))))))
         : m.role === 'sys'
         ? h('div', { key: i, className: 'cx-sysline' }, h('span', { className: 'cx-sysdot' }), m.text)
+        : (!m.text && !m.ask && !m.card) ? null
         : h('div', { key: i, className: `cx-msg-wrap ${m.role}` },
 
             h('div', { className: `cx-msg ${m.role}`, style: { display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-start', gap: 8 } },
