@@ -325,7 +325,7 @@ window.__ModuleLoader__.load({
       '先选节点': 'Select a node first',
       '全部': 'All',
       '全部配置': 'All settings',
-      '创建': 'Create',
+      '创建': 'Create', '未命名': 'Untitled',
       '创建分身': 'Create avatar',
       '动效': 'Motion',
       '复制全部': 'Copy all',

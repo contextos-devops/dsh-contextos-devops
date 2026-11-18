@@ -257,7 +257,15 @@ ok('PM card actions align left while the more button sits right', (() => { const
 ok('confirm dialogs use the shared component', (() => { const ui = read('src/client/parts/10-ui.js'); const texts = ['src/client/parts/20-devworkspace.js', 'src/client/parts/50-chat.js', 'src/client/parts/60-page.js'].map(read).join('\n'); return ui.includes('function cxAsk(') && ui.includes('function CxConfirmHost()') && page.includes('h(CxConfirmHost)') && !texts.includes('window.confirm'); })());
 ok('date and time pickers are shared controls', (() => { const ui = read('src/client/parts/10-ui.js'); const pm = read('src/client/parts/46-pm.js'); return ui.includes('function CxDateTime(') && ui.includes('function CxCombo(') && pm.includes('type: \'datetime\'') && !pm.includes('datalist') && ui.includes('cxPad') && ui.includes('return `${p.y}-${cxPad(p.mo)}-${cxPad(p.d)} ${cxPad(p.hh)}:${cxPad(p.mm)}:${cxPad(p.ss)}`'); })());
 ok('PM ops alias to pmCreate/pmAct', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('PM_OP_ALIAS') && c.includes("pmStart: ['pmAct', { action: 'process' }]") && c.includes("pmPlanCreate: ['pmCreate', { kind: 'plan' }]"); })());
-ok('PM create chains the parent uid it just created', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('const pmChain = useRef({})') && c.includes('chain[parentKind]'); })());
+ok('PM create chains the parent uid it just created', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('const pmChain = useRef({})') && c.includes('pmChain.current[kind] = d.uid'); })());
+ok('Project commands never fall into the generic write form', (() => {
+  const c = read('src/client/parts/50-chat.js');
+  return c.includes('const PM_CMD_RE =') && c.includes('const pmKindOf =') && c.includes('const pmCreateFrom = async (kind, args = {}, text =');
+})());
+ok('Project create fills the parent from the current selection', (() => {
+  const c = read('src/client/parts/50-chat.js');
+  return c.includes('const pmParentUid = (kind) =>') && c.includes('请先选择一个');
+})());
 ok('PM result card reuses the sidebar card', (() => { const c = read('src/client/parts/50-chat.js'); return c.includes('m.card.pm') && c.includes('h(PmCard, { item: m.card.pm.item'); })());
 ok('PM item is refetched after writes for fresh actions', read('src/client/parts/50-chat.js').includes('const pmFetchItem = useCallback'));
 ok('the composer chip opens a three-level cascade', (() => { const c = read('src/client/parts/58-config.js'); return c.includes('function CtxCascade') && c.includes("col('服务节点 / NODE'") && c.includes("col('项目空间 / SPACE'") && c.includes("col('最近应用 / APP'"); })());

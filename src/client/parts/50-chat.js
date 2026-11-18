@@ -512,6 +512,42 @@
         return bestScore >= 2 ? best : list[0];
       };
 
+      // 项目管理是平台一等公民（有专用接口与状态机）：对话里提到目标/计划/任务/报告/反馈时
+      // 必须走 pmCreate，不能掉进通用"写数据表单"——那条路会要求用户手选父级，
+      // 而父级本来就在上下文里（当前选中的计划/任务/报告）。
+      const PM_CMD_RE = /^web\.team\.xiangmuguanli\.(target|plan|task|report|feedback)$/;
+      const pmKindOf = (command) => (String(command || '').match(PM_CMD_RE) || [])[1] || '';
+      const pmParentOf = { plan: 'target', task: 'plan', report: 'task', feedback: 'report' };
+      const pmParentUid = (kind) => {
+        const parent = pmParentOf[kind];
+        const picked = parent === 'target' ? activeTarget?.uid : parent === 'plan' ? activePlan?.uid : parent === 'task' ? activeTask?.uid : activeReport?.uid;
+        return String(pmChain.current[parent] || picked || '');
+      };
+      const pmCreateFrom = async (kind, args = {}, text = '') => {
+        const body = { node, uid: avatar?.uid || '', kind, title: args.title || '', content: args.content || '', target_uid: '', plan_uid: '', task_uid: '', report_uid: '', begin_time: args.begin_time || '', end_time: args.end_time || '', report_type: args.report_type || 'daily', score: args.score || '5', feedback_status: args.feedback_status || 'canFinish' };
+        const parent = pmParentOf[kind];
+        if (parent) {
+          const fk = { target: 'target_uid', plan: 'plan_uid', task: 'task_uid', report: 'report_uid' };
+          const uid = pmParentUid(kind);
+          const names = { target: '目标', plan: '计划', task: '任务', report: '报告' };
+          if (!uid) {
+            ai(T('请先选择一个') + T(names[parent] || parent));
+            return { ok: false, reason: 'no-parent' };
+          }
+          body[fk[parent]] = uid;
+        }
+        if (!String(body.title || '').trim()) body.title = String(text || '').slice(0, 40) || T('未命名');
+        const d = await api('pmCreate', body);
+        if (d?.uid) {
+          pmChain.current[kind] = d.uid;
+          for (const k of Object.keys(pmParentOf)) if (k !== kind && pmParentOf[k] === kind) pmChain.current[k] = '';
+        }
+        await loadPm();
+        const item = await pmFetchItem(kind, d?.uid, body);
+        aiCard(T('已创建') + ' ' + (PM_KIND_LABEL[kind] || kind), { pm: { kind, item: item || { uid: d?.uid || '', title: body.title, status_name: '', actions: [] } }, link: pmPortalUrl(kind, d?.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(kind, d?.uid) } : null });
+        return d;
+      };
+
       // 应用=目录、功能=文件；读写都走同一条定位链：① 应用 ② 功能 ③ 读/写
       const appOp = async ({ text: rawText, mode = 'write', function: fnArg = '' } = {}) => {
         const text = String(rawText || lastUserRef.current || '');
@@ -543,6 +579,12 @@
         push('step', `② 定位功能（文件）：${app0.title || app0.name} / ${fn}`);
 
         const command = String(app0.command || '').replace(/\.portal$/, '') + '.' + fn;
+
+        const pmKind = pmKindOf(command);
+        if (mode !== 'read' && pmKind) {
+          push('step', `③ 项目管理接口：${command}（父级取自当前选中）`);
+          return Boolean(await pmCreateFrom(pmKind, plan && plan.values ? plan.values : {}, text));
+        }
 
         if (mode === 'read') {
           push('step', `③ 读取数据：${command}`);
@@ -973,48 +1015,8 @@
           return;
         }
         if (op === 'pmCreate') {
-          const kind = String(args.kind || 'target');
-          return run(`PM CREATE ${kind}`, async () => {
-            // 一条龙里「建目标→建计划→建任务」是同一个动作序列，模型不会回传上一步的 uid：
-            // 用 pmChain 记住刚创建的 uid，按父子关系补齐外键，避免「计划创建失败(缺 target_uid)」。
-            const chain = pmChain.current;
-            const parentOf = { plan: 'target', task: 'plan', report: 'task', feedback: 'report' };
-            const fk = { target: 'target_uid', plan: 'plan_uid', task: 'task_uid', report: 'report_uid' };
-            const body = { node, uid: avatar?.uid || '', kind, title: args.title || '', content: args.content || '', target_uid: '', plan_uid: '', task_uid: '', report_uid: '', begin_time: args.begin_time || '', end_time: args.end_time || '', report_type: args.report_type || 'daily', score: args.score || '5', feedback_status: args.feedback_status || 'canFinish' };
-            const parentKind = parentOf[kind];
-            if (parentKind) {
-              const picked = parentKind === 'target' ? activeTarget?.uid : parentKind === 'plan' ? activePlan?.uid : parentKind === 'task' ? activeTask?.uid : activeReport?.uid;
-              body[fk[parentKind]] = String(args[fk[parentKind]] || chain[parentKind] || picked || '');
-            }
-            const d = await api('pmCreate', body);
-            if (d?.uid) {
-              chain[kind] = d.uid;
-              // 建了父级，子级缓存失效（新目标下的计划不能沿用旧 plan）
-              for (const k of Object.keys(parentOf)) if (k !== kind && parentOf[k] === kind) chain[k] = '';
-            }
-            await loadPm();
-            const item = await pmFetchItem(kind, d?.uid, body);
-            const kindLabel = PM_KIND_LABEL[kind] || PM_SHORT[kind] || kind;
-            aiCard(T('已创建') + ' ' + kindLabel, { pm: { kind, item: item || { uid: d?.uid || '', title: args.title || '', status_name: kind === 'plan' ? 'created' : '', actions: [] } },
-              link: pmPortalUrl(kind, d?.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(kind, d?.uid) } : null });
-            return d;
-          });
-        }
-        if (op === 'pmAct') {
           const kind = String(args.kind || (pmChain.current.task ? 'task' : pmChain.current.plan ? 'plan' : 'target'));
-          const action = String(args.action || '').toLowerCase();
-          return run(`PM ACT ${kind} ${action}`, async () => {
-            const uidMap = { target: activeTarget?.uid, plan: activePlan?.uid, task: activeTask?.uid, report: activeReport?.uid, feedback: activeFeedback?.uid };
-            const itemUid = String(args.item_uid || pmChain.current[kind] || uidMap[kind] || '');
-            if (!itemUid) { ai(`${T('请先选择一个')} ${PM_KIND_LABEL[kind] || kind}`); return; }
-            if (!action) { ai(T('缺少动作名') + '：submit/approve/reject/process/finish/cancel'); return; }
-            const d = await api('pmAct', { node, uid: avatar?.uid || '', kind, item_uid: itemUid, action, uid_options: args.uid_options || {} });
-            await loadPm();
-            const item = await pmFetchItem(kind, itemUid, { target_uid: pmChain.current.target || activeTarget?.uid || '', plan_uid: pmChain.current.plan || activePlan?.uid || '', task_uid: pmChain.current.task || activeTask?.uid || '', report_uid: pmChain.current.report || activeReport?.uid || '' });
-            const kindLabel = PM_KIND_LABEL[kind] || PM_SHORT[kind] || kind;
-            aiCard(`${kindLabel} ${T(PM_ACTION_LABEL[action] || action)}`, { pm: { kind, item: item || { uid: itemUid, title: itemUid, status_name: '', actions: [] } } });
-            return d;
-          });
+          return run(`PM CREATE ${kind}`, async () => pmCreateFrom(kind, args, args.title || lastUserRef.current || ''));
         }
         if (op === 'pmList' || op === 'pmTree') {
           return run('PM TREE', async () => { await loadPm(); const rows = [['目标', String((pm?.targets || []).length)], ['计划', String((pm?.plans || []).length)], ['任务', String((pm?.tasks || []).length)], ['报告', String((pm?.reports || []).length)], ['反馈', String((pm?.feedbacks || []).length)]]; aiCard('项目数据已刷新', { title: '项目管理概览', rows, link: pmPortalUrl(args.kind, d.uid) ? { label: '打开项目管理', url: pmPortalUrl(args.kind, d.uid) } : null }); });
