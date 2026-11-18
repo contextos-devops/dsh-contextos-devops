@@ -268,8 +268,18 @@
     // 选中项滚进可视区：滚动容器设了 scroll-padding-top（见 kit.css），
     // scrollIntoView('nearest') 会自动避开吸顶的分节标题，不会把卡片藏在标题下面。
     function cxReveal(el) {
-      if (!el || typeof el.scrollIntoView !== 'function') return;
-      try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch {}
+      if (!el || typeof el.getBoundingClientRect !== 'function') return;
+      try {
+        // 只滚动自己所在的纵向容器：scrollIntoView 会连带滚动祖先（含 .cx-body 的横向滚动），
+        // 结果整片界面被推偏，标题栏首个页签与消息就会被切掉。
+        const sc = el.closest('.cx-pm-scroll, .cx-pm-side, .cx-chat-b');
+        if (!sc) return;
+        const r = el.getBoundingClientRect();
+        const sr = sc.getBoundingClientRect();
+        const padTop = 44;
+        if (r.top < sr.top + padTop) sc.scrollTop -= (sr.top + padTop - r.top);
+        else if (r.bottom > sr.bottom - 4) sc.scrollTop += (r.bottom - sr.bottom + 4);
+      } catch {}
     }
     function EntityTitle({ image, icon = 'app', type, title, status, statusTone = '', meta, after, onClick, active = false, className = '', children }) {
       const cls = `cx-entity${active ? ' on' : ''}${className ? ' ' + className : ''}`;

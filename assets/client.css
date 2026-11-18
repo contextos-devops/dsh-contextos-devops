@@ -3531,6 +3531,8 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-shell .cx-header .cx-brand{flex:0 0 auto;min-width:0;overflow:visible!important}
 .cx-shell .cx-header .cx-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cx-shell .cx-header .cx-views{flex:1 1 auto;min-width:0;position:static!important;transform:none!important;display:flex;justify-content:center;align-items:center;gap:2px!important;border:0!important;background:transparent!important;box-shadow:none!important;z-index:auto!important}
+/* 居中 + 横向滚动时，普通 center 会把首尾项挤到可视区外（CHAT 被切掉）；safe center 让溢出时退化为从左侧开始 */
+.cx-shell .cx-header .cx-views{justify-content:safe center}
 .cx-shell .cx-header .cx-actions{flex:0 0 auto;margin-left:0!important;gap:2px!important;justify-content:flex-end;display:flex;align-items:center}
 
 /* —— 控件：28px / 10px / 12px —— */

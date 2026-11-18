@@ -179,7 +179,8 @@ ok('Header theme and language are single cycling buttons', (() => {
 })());
 ok('Selected cards scroll into view below the sticky header', (() => {
   const ui = read('src/client/parts/10-ui.js'), pm = read('src/client/parts/55-pm.js'), kit = read('src/client/styles/kit.css');
-  return ui.includes('function cxReveal(') && ui.includes("scrollIntoView({ block: 'nearest'") &&
+  const body = ui.slice(ui.indexOf('function cxReveal('), ui.indexOf('function cxReveal(') + 700);
+  return body.includes('sc.scrollTop') && body.includes('const padTop = 44') &&
     pm.includes('if (active) cxReveal(cardRef.current)') && pm.includes('ref: cardRef') &&
     kit.includes('scroll-padding-top:44px');
 })());
@@ -188,6 +189,17 @@ ok('Chat cards and inline forms reuse the kit', (() => {
   return chat.includes("h(CxSection, { className: 'cx-msg-card'") && chat.includes("className: 'cx-kv'")
     && msg.includes('function CxWriteForm') && msg.includes('h(CxField,') && msg.includes('h(CxBtn,')
     && css.includes('.cx-kv-row{') && css.includes('.cx-field-lite{');
+})());
+ok('Header views do not clip the first tab when narrow', (() => {
+  const css = read('src/client/styles/main.css');
+  return css.includes('.cx-shell .cx-header .cx-views{justify-content:safe center}');
+})());
+ok('Reveal scrolls only its own vertical container', (() => {
+  const ui = read('src/client/parts/10-ui.js');
+  const body = ui.slice(ui.indexOf('function cxReveal('), ui.indexOf('function cxReveal(') + 700);
+  return body.includes("closest('.cx-pm-scroll, .cx-pm-side, .cx-chat-b')")
+    && body.includes('sc.scrollTop')
+    && !body.includes('scrollIntoView(');
 })());
 ok('PM cards never shrink inside the column panel', (() => {
   const css = read('src/client/styles/main.css');

@@ -154,6 +154,20 @@ const CASES = [
     },
   },
   {
+    name: 'header-views',
+    fixture: 'scripts/fixtures/header-views.html',
+    window: '560,160',
+    sels: ['#views', '#vChat'],
+    assert: (m) => {
+      const v = m['#views'], c = m['#vChat'];
+      return [
+        [!!c && !!v && c.x >= v.x - 1, '窄宽度下首个页签（CHAT）不被切掉', `页签左 ${c?.x} ≥ 容器左 ${v?.x}`],
+        [!!c && c.w >= 60, '首个页签保持可点宽度', `宽 ${c?.w}px`],
+        [!!v && v.sw >= v.w, '页签条溢出时可横向滚动（不是硬挤）', `${v?.sw} ≥ ${v?.w}`],
+      ];
+    },
+  },
+  {
     name: 'pm-no-shrink',
     fixture: 'scripts/fixtures/pm-shrink.html',
     window: '340,220',
