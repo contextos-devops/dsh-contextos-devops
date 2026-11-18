@@ -272,6 +272,16 @@ ok('Date picker keeps its time row and actions inside the panel', (() => {
     && /\.cx-dt-foot\{position:sticky;bottom:0/.test(kit)
     && /\.cx-dt-acts\{display:flex/.test(kit);
 })());
+ok('Popovers re-anchor when the dialog grows after async fields load', (() => {
+  const kit = read('src/client/parts/07-kit.js');
+  return kit.includes("new MutationObserver(() => place())")
+    && kit.includes("closest('.cx-card')")
+    && kit.includes('if (mo) mo.disconnect();');
+})());
+ok('Plan form defaults to 08:00 and 18:00', (() => {
+  const form = read('src/client/parts/46-pm.js');
+  return form.includes('} 08:00:00`') && form.includes('} 18:00:00`');
+})());
 ok('Popover self-correction lives in the kit primitive', (() => {
   const kit = read('src/client/parts/07-kit.js');
   return kit.includes('function cxPopSettle(')

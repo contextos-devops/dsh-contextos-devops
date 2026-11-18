@@ -1,8 +1,8 @@
     function PMModal({ kind, mode, item, parent, node, avatar, onClose, onDone }) {
       const [title, setTitle] = useState(item?.title || '');
       const [content, setContent] = useState(item?.content || '');
-      const [begin, setBegin] = useState(String(item?.begin_time || `${new Date().toISOString().slice(0, 10)} 00:00:00`).slice(0, 19));
-      const [end, setEnd] = useState(String(item?.end_time || `${new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)} 00:00:00`).slice(0, 19));
+      const [begin, setBegin] = useState(String(item?.begin_time || `${new Date().toISOString().slice(0, 10)} 08:00:00`).slice(0, 19));
+      const [end, setEnd] = useState(String(item?.end_time || `${new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)} 18:00:00`).slice(0, 19));
       const [reportType, setReportType] = useState(item?.type_name || item?.report_type || 'daily');
       const [score, setScore] = useState(String(item?.score || 5));
       const [feedbackStatus, setFeedbackStatus] = useState(String(item?.feedback_status ?? item?.status_name ?? item?.status ?? ''));

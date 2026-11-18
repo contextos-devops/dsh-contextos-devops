@@ -127,6 +127,15 @@
       let n = 0;
       const tick = () => { place(); if (++n < 48) raf = requestAnimationFrame(tick); };
       tick();
+      // 表单是异步的（fieldOptions 回来后会多出字段，锚点整体下移）：
+      // 只靠开窗那几帧会把面板钉在旧位置，必须跟着布局变化重新贴。
+      let mo = null;
+      try {
+        const an = anchorRef.current;
+        const scope = (an && an.closest && an.closest('.cx-card')) || document.body;
+        mo = new MutationObserver(() => place());
+        mo.observe(scope, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+      } catch { mo = null; }
       const onScroll = () => place();
       window.addEventListener('scroll', onScroll, true);
       window.addEventListener('resize', onScroll);
@@ -142,6 +151,7 @@
       document.addEventListener('keydown', esc);
       return () => {
         cancelAnimationFrame(raf);
+        if (mo) mo.disconnect();
         window.removeEventListener('scroll', onScroll, true);
         window.removeEventListener('resize', onScroll);
         document.removeEventListener('mousedown', away);
