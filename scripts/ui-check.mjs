@@ -189,6 +189,11 @@ ok('Chat cards and inline forms reuse the kit', (() => {
     && msg.includes('function CxWriteForm') && msg.includes('h(CxField,') && msg.includes('h(CxBtn,')
     && css.includes('.cx-kv-row{') && css.includes('.cx-field-lite{');
 })());
+ok('PM cards never shrink inside the column panel', (() => {
+  const css = read('src/client/styles/main.css');
+  const rule = (css.match(/^\.cx-pm-card\{[^}]*\}/m) || [''])[0];
+  return rule.includes('flex:none') && !css.includes('.cx-pm-card{flex:1');
+})());
 ok('Pinned offsets use layout height, not animated rects', (() => {
   const chat = read('src/client/parts/50-chat.js');
   return chat.includes('off += head.offsetHeight')

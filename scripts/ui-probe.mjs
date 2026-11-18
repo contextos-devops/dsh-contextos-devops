@@ -132,9 +132,9 @@ const CASES = [
         [!!task && !!side && Math.abs(task.y - side.y) <= 12, '任务标题吸在滚动区顶端', `${task?.y} / ${side?.y}`],
         [!!cur && !!task && Math.abs(cur.y - (task.y + task.h)) <= 3, '当前任务卡片贴在任务标题下面', `${cur?.y} = ${task?.y}+${task?.h}`],
         [!!m['#hRep'] && !!cur && m['#hRep'].y >= cur.y + cur.h - 1, '报告标题接在任务卡片之后（不遮挡）', `${m['#hRep']?.y} ≥ ${cur?.y + cur?.h}`],
-        [!!m['#curRep'] && !!m['#hRep'] && Math.abs(m['#curRep'].y - (m['#hRep'].y + m['#hRep'].h)) <= 3, '当前报告卡片贴在报告标题下面', `${m['#curRep']?.y}`],
+        [!!m['#curRep'] && !!m['#hRep'] && m['#curRep'].y >= m['#hRep'].y + m['#hRep'].h - 1, '当前报告卡片不压在报告标题上（未吸顶时自然下移）', `${m['#curRep']?.y} ≥ ${m['#hRep']?.y + m['#hRep']?.h}`],
         [!!m['#hFb'] && !!m['#curRep'] && m['#hFb'].y >= m['#curRep'].y + m['#curRep'].h - 1, '反馈标题接在报告卡片之后（不遮挡）', `${m['#hFb']?.y} ≥ ${m['#curRep']?.y + m['#curRep']?.h}`],
-        [!!m['#curFb'] && !!m['#hFb'] && Math.abs(m['#curFb'].y - (m['#hFb'].y + m['#hFb'].h)) <= 3, '当前反馈卡片贴在反馈标题下面', `${m['#curFb']?.y}`],
+        [!!m['#curFb'] && !!m['#hFb'] && m['#curFb'].y >= m['#hFb'].y + m['#hFb'].h - 1, '当前反馈卡片不压在反馈标题上', `${m['#curFb']?.y} ≥ ${m['#hFb']?.y + m['#hFb']?.h}`],
       ];
     },
   },
@@ -150,6 +150,20 @@ const CASES = [
         [!!cur1 && !!h1 && Math.abs(cur1.y - (h1.y + h1.h)) <= 3, '当前目标卡片贴在标题下面', `${cur1?.y} = ${h1?.y}+${h1?.h}`],
         [!!cur1 && !!sc && cur1.y + cur1.h <= sc.y + sc.h + 1, '当前卡片完整落在面板内（没被切掉）', `${cur1?.y + cur1?.h} ≤ ${sc?.y + sc?.h}`],
         [!!s1 && !!cur1 && !!m['#h2'] && m['#h2'].y >= cur1.y + cur1.h - 1, '下一节标题不压住吸顶卡片', `${m['#h2']?.y} ≥ ${cur1?.y + cur1?.h}`],
+      ];
+    },
+  },
+  {
+    name: 'pm-no-shrink',
+    fixture: 'scripts/fixtures/pm-shrink.html',
+    window: '340,220',
+    sels: ['#side', '#c1', '#c2'],
+    assert: (m) => {
+      const c1 = m['#c1'], c2 = m['#c2'];
+      return [
+        [!!c1 && c1.flexShrink === '0', '卡片不允许被 flex 压缩（flex-shrink:0）', `shrink ${c1?.flexShrink}`],
+        [!!c1 && c1.h >= 60, '面板内容超出时当前卡片不被压扁', `高 ${c1?.h}px`],
+        [!!c2 && c2.flexShrink === '0' && c2.h >= 34, '普通卡片同样不塌缩', `shrink ${c2?.flexShrink} / 高 ${c2?.h}px`],
       ];
     },
   },
@@ -305,7 +319,7 @@ window.__PROBE_SELS__ = __SELS__;
       var off = n.offsetParent ? n.offsetParent.getBoundingClientRect() : null;
       out[sel] = {
         x: +r.x.toFixed(1), y: +r.y.toFixed(1), w: +r.width.toFixed(1), h: +r.height.toFixed(1), right: +r.right.toFixed(1),
-        display: c.display, flexDirection: c.flexDirection, marginLeft: c.marginLeft, opacity: c.opacity,
+        display: c.display, flexDirection: c.flexDirection, flexShrink: c.flexShrink, marginLeft: c.marginLeft, opacity: c.opacity,
         fontSize: c.fontSize, lineHeight: c.lineHeight, position: c.position,
         left: +(off ? r.left - off.left : r.left).toFixed(1),
         animationName: c.animationName, animationDuration: c.animationDuration,

@@ -1695,7 +1695,7 @@
 .cx-filter-chip:hover{border-color:var(--cx-accent);color:var(--cx-accent)}
 .cx-filter-chip.on{background:color-mix(in srgb,var(--cx-accent) 14%,transparent);border-color:var(--cx-accent);color:var(--cx-accent)}
 
-.cx-pm-h{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:6px 8px;min-height:28px;font-size:var(--cx-fs);flex-wrap:wrap;letter-spacing:.12em;color:var(--cx-cyan);text-transform:uppercase;background:linear-gradient(90deg,color-mix(in srgb,var(--cx-cyan) 13%,transparent),color-mix(in srgb,var(--cx-cyan) 4%,transparent) 72%,transparent);border-left:2px solid color-mix(in srgb,var(--cx-cyan) 55%,transparent);border-radius:5px}
+.cx-pm-h{flex:none;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:6px 8px;min-height:28px;font-size:var(--cx-fs);flex-wrap:wrap;letter-spacing:.12em;color:var(--cx-cyan);text-transform:uppercase;background:linear-gradient(90deg,color-mix(in srgb,var(--cx-cyan) 13%,transparent),color-mix(in srgb,var(--cx-cyan) 4%,transparent) 72%,transparent);border-left:2px solid color-mix(in srgb,var(--cx-cyan) 55%,transparent);border-radius:5px}
 .cx-pm-h{border-radius:4px;cursor:pointer;transition:background .12s ease}
 .cx-pm-h:hover{background:color-mix(in srgb,var(--cx-accent) 20%,transparent)}
 .cx-shell[data-theme="light"] .cx-pm-h{background:linear-gradient(90deg,#e2f3fa,#f2fafd 70%,transparent);border-left-color:#7cc7de}
@@ -1735,7 +1735,7 @@
 .cx-msg-pm{margin-top:8px;max-width:100%}
 .cx-msg-pm .cx-pm-card{margin-bottom:0}
 .cx-msg-pm .cx-pm-card:hover{background:rgba(var(--cx-hue-rgb),.05)}
-.cx-pm-card{position:relative;display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;border:1px solid rgba(30,70,92,.55);border-left:2px solid transparent;background:rgba(7,20,32,.55);color:#b9dbe8;padding:8px 9px;margin-bottom:5px;cursor:pointer;border-radius:6px}
+.cx-pm-card{position:relative;display:flex;flex-direction:column;gap:4px;width:100%;flex:none;text-align:left;border:1px solid rgba(30,70,92,.55);border-left:2px solid transparent;background:rgba(7,20,32,.55);color:#b9dbe8;padding:8px 9px;margin-bottom:5px;cursor:pointer;border-radius:6px}
 .cx-pm-card:hover{background:rgba(var(--cx-hue-rgb),.06);border-color:rgba(var(--cx-hue-rgb),.35)}
 .cx-pm-card.on{background:rgba(var(--cx-hue-rgb),.1);border-left-color:var(--cx-cyan);border-color:rgba(var(--cx-hue-rgb),.45)}
 .cx-pm-card-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
