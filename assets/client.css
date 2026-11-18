@@ -1364,6 +1364,7 @@
 .cx-sel-item .s{font-size:var(--cx-fs-body);color:var(--cx-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cx-chat-ctx{padding:5px 10px;border-bottom:1px solid rgba(22,56,77,.6);font-size:var(--cx-fs-body);color:var(--cx-muted);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(4,14,24,.7)}
 .cx-chat-b{flex:1;min-height:0;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:7px}
+.cx-chat-b>*{flex:none}/* 滚动区里子项默认会被压扁 */
 .cx-msg{max-width:92%;padding:7px 9px;font-size:var(--cx-fs);line-height:1.65;border:1px solid var(--cx-line);background:rgba(9,27,42,.8);color:#c7edf8;white-space:pre-wrap}
 .cx-msg.ai{align-self:flex-start}
 .cx-msg.user{border-color:rgba(var(--cx-green-rgb),.4);background:rgba(8,35,31,.75);color:#c9ffe9}
@@ -1874,8 +1875,6 @@
 .cx-shell[data-theme="light"] .cx-input,.cx-shell[data-theme="light"] .cx-form .cx-input{background:#f7fbfd;border-color:#c7dde8;color:#173846}
 .cx-shell[data-theme="light"] .cx-empty{color:#688795;border-color:#c7dde8}
 .cx-shell[data-theme="light"] .cx-menu-item.danger{color:#c73550}
-
-
 
 /* unified design tokens: typography + surfaces */
 /* 宿主槽位里的零件（输入框芯片、多级列表）在 .cx-shell 之外，这里给一份最小调色板 */

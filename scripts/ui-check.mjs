@@ -190,6 +190,10 @@ ok('Chat cards and inline forms reuse the kit', (() => {
     && msg.includes('function CxWriteForm') && msg.includes('h(CxField,') && msg.includes('h(CxBtn,')
     && css.includes('.cx-kv-row{') && css.includes('.cx-field-lite{');
 })());
+ok('Chat body children keep their natural height', (() => {
+  const css = read('src/client/styles/main.css');
+  return css.includes('.cx-chat-b>*{flex:none}');
+})());
 ok('Chat messages never shrink inside the scrolling column', (() => {
   const css = read('src/client/styles/main.css') + read('src/client/styles/kit.css');
   const rule = (css.match(/^\.cx-msg-wrap\{[^}]*\}/m) || [''])[0];

@@ -157,14 +157,14 @@ const CASES = [
     name: 'chat-no-shrink',
     fixture: 'scripts/fixtures/chat-shrink.html',
     window: '560,300',
-    sels: ['#b', '#last', '#last .cx-wform', '#last .cx-bd'],
+    sels: ['#b', '#last', '.cx-wform', '.cx-wform .cx-bd'],
     assert: (m) => {
-      const last = m['#last'], form = m['#last .cx-wform'];
+      const last = m['#last'], form = m['.cx-wform'];
       return [
-        [!!last && last.flexShrink === '0', '消息不被 flex 压缩（flex-shrink:0）', `shrink ${last?.flexShrink}`],
-        [!!last && last.h >= 120, '带表单的消息保持完整高度', `高 ${last?.h}px`],
+        [!!form && form.flexShrink === '0', '表单不被 flex 压缩（flex-shrink:0）', `shrink ${form?.flexShrink}`],
+        [!!form && form.h >= 120, '待填表单保持完整高度', `高 ${form?.h}px`],
         [!!form && form.h >= 90, '表单卡片自身不被压扁', `高 ${form?.h}px`],
-        [!!m['#last .cx-bd'] && m['#last .cx-bd'].h >= 40, '卡片正文不被裁成一条边', `正文高 ${m['#last .cx-bd']?.h}px`],
+        [!!m['.cx-wform .cx-bd'] && m['.cx-wform .cx-bd'].h >= 40, '卡片正文不被裁成一条边', `正文高 ${m['.cx-wform .cx-bd']?.h}px`],
       ];
     },
   },
