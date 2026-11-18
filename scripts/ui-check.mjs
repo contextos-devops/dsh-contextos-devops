@@ -190,6 +190,11 @@ ok('Chat cards and inline forms reuse the kit', (() => {
     && msg.includes('function CxWriteForm') && msg.includes('h(CxField,') && msg.includes('h(CxBtn,')
     && css.includes('.cx-kv-row{') && css.includes('.cx-field-lite{');
 })());
+ok('Chat messages never shrink inside the scrolling column', (() => {
+  const css = read('src/client/styles/main.css') + read('src/client/styles/kit.css');
+  const rule = (css.match(/^\.cx-msg-wrap\{[^}]*\}/m) || [''])[0];
+  return rule.includes('flex:none');
+})());
 ok('Header views do not clip the first tab when narrow', (() => {
   const css = read('src/client/styles/main.css');
   return css.includes('.cx-shell .cx-header .cx-views{justify-content:safe center}');

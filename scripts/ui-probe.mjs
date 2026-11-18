@@ -154,6 +154,20 @@ const CASES = [
     },
   },
   {
+    name: 'chat-no-shrink',
+    fixture: 'scripts/fixtures/chat-shrink.html',
+    window: '560,300',
+    sels: ['#b', '#last', '#last .cx-wform'],
+    assert: (m) => {
+      const last = m['#last'], form = m['#last .cx-wform'];
+      return [
+        [!!last && last.flexShrink === '0', '消息不被 flex 压缩（flex-shrink:0）', `shrink ${last?.flexShrink}`],
+        [!!last && last.h >= 120, '带表单的消息保持完整高度', `高 ${last?.h}px`],
+        [!!form && form.h >= 90, '表单卡片自身不被压扁', `高 ${form?.h}px`],
+      ];
+    },
+  },
+  {
     name: 'header-views',
     fixture: 'scripts/fixtures/header-views.html',
     window: '560,160',

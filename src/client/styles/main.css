@@ -3056,7 +3056,7 @@ body:has(.cx-taskmap.full) .cx-pm-side{transform:none!important;contain:none!imp
 .cx-pm-side:not(.right) .cx-gantt-sec{flex:none}
 
 /* 2026-11-13: message hover toolbar */
-.cx-msg-wrap{display:flex;flex-direction:column;align-items:stretch;gap:2px;max-width:94%;min-width:0}
+.cx-msg-wrap{display:flex;flex-direction:column;align-items:stretch;gap:2px;max-width:94%;min-width:0;flex:none}
 .cx-msg-wrap.user{align-items:flex-end}
 .cx-msg-wrap .cx-msg{max-width:100%}
 .cx-msg-meta .cx-msg-tools{margin-left:auto;display:flex;align-items:center;gap:6px;flex:0 0 auto;opacity:0;transition:opacity .12s ease}
