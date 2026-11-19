@@ -32,6 +32,9 @@
       if (bootRef.current === null) bootRef.current = cxSessionGet() || {};
       const boot = bootRef.current;
       const restored = !!boot.view;
+      const bootNode = boot.node ?? bootSelRef.current?.node ?? null;
+      const bootSpace = boot.space ?? bootSelRef.current?.space ?? null;
+      const bootAvatar = boot.avatar || '';
       const nodeFresh = (x) => !!x && !!(x.builtAt || x.sizeText || (x.runtime && x.runtime.builtAt));
       const [nodes, setNodes] = useState(() => cxRead('nodes', []).filter(nodeFresh));
       const nodesRef = useRef(nodes); nodesRef.current = nodes;
@@ -41,16 +44,19 @@
       useEffect(() => cxWrite('sel-map', selMap), [selMap]);
       const rememberSel = (port, patch) => { if (!port) return; setSelMap((m) => ({ ...m, [port]: { ...(m[port] || {}), ...patch } })); };
       const appKeyOf = (a) => (a ? `${a.space || ''}:${a.command || ''}:${a.place_uid || a.name || ''}` : '');
-      const [node, setNode] = useState(() => boot.node ?? bootSelRef.current?.node ?? null);
-      const [spaces, setSpaces] = useState([]);
-      const [space, setSpace] = useState(() => boot.space ?? bootSelRef.current?.space ?? null);
-      const [apps, setApps] = useState([]);
+      const [node, setNode] = useState(() => bootNode);
+      const [spaces, setSpaces] = useState(() => (bootNode ? (cxCacheGet('cache-spaces', bootNode) || []) : []));
+      const [space, setSpace] = useState(() => bootSpace);
+      const [apps, setApps] = useState(() => {
+        if (!bootNode || !bootAvatar) return [];
+        return cxCacheGet('cache-apps', `${bootNode}:${bootSpace || ''}:${bootAvatar}`) || [];
+      });
       const [app, setApp] = useState(() => boot.app ?? bootSelRef.current?.app ?? null);
       const [modal, setModal] = useState(null);
       // 消息列表里的数据表单请求（替代 DATA 弹窗）
       const [formReq, setFormReq] = useState(null);
       const [appMode, setAppMode] = useState('recent');
-      const [store, setStore] = useState([]);
+      const [store, setStore] = useState(() => (bootNode ? (cxCacheGet('cache-store', bootNode) || []) : []));
       const [storeService, setStoreService] = useState(null);
       const [webTabs, setWebTabs] = useState(() => {
         try {
@@ -711,7 +717,7 @@
       const loadSpaces = useCallback(async (port) => {
         const seq = ++spacesSeqRef.current;
         if (!port) { setSpaces([]); return []; }
-        try { const d = await api('spaces', { node: port }); if (seq === spacesSeqRef.current) setSpaces(d || []); activity(`加载空间 ${(d || []).length} 个（节点 ${port}）`, 'ok'); return d || []; } catch { if (seq === spacesSeqRef.current) setSpaces([]); return []; }
+        try { const d = await api('spaces', { node: port }); if (seq === spacesSeqRef.current) { setSpaces(d || []); cxCacheSet('cache-spaces', port, d || []); } activity(`加载空间 ${(d || []).length} 个（节点 ${port}）`, 'ok'); return d || []; } catch { if (seq === spacesSeqRef.current) setSpaces([]); return []; }
       }, []);
       const appsSeqRef = useRef(0);
       const appsCacheRef = useRef({ key: '', at: 0, data: null, promise: null });
@@ -728,10 +734,10 @@
         if (cache.key === key && Date.now() - cache.at < 600 && cache.data) return cache.data;
         const seq = ++appsSeqRef.current;
         const promise = (async () => {
-          try { const d = await api('apps', { node: port, space: sp || '', uid }); if (seq === appsSeqRef.current) setApps(d || []); activity(`加载应用 ${(d || []).length} 个（${sp || '全部空间'}）`, 'ok'); appsCacheRef.current = { key, at: Date.now(), data: d || [], promise: null }; return d || []; }
+          try { const d = await api('apps', { node: port, space: sp || '', uid }); if (seq === appsSeqRef.current) { setApps(d || []); cxCacheSet('cache-apps', key, d || []); } activity(`加载应用 ${(d || []).length} 个（${sp || '全部空间'}）`, 'ok'); appsCacheRef.current = { key, at: Date.now(), data: d || [], promise: null }; return d || []; }
           catch (e) {
             if (/unknown op|unknown op apps/i.test(String(e?.message || e))) {
-              const d = await fallbackApps(port, sp); if (seq === appsSeqRef.current) setApps(d); appsCacheRef.current = { key, at: Date.now(), data: d, promise: null }; return d;
+              const d = await fallbackApps(port, sp); if (seq === appsSeqRef.current) { setApps(d); cxCacheSet('cache-apps', key, d); } appsCacheRef.current = { key, at: Date.now(), data: d, promise: null }; return d;
             }
             if (seq === appsSeqRef.current) setApps([]); appsCacheRef.current = { key, at: Date.now(), data: [], promise: null }; return [];
           }
@@ -1031,7 +1037,7 @@
       }, [initState, runInit]);
       const loadStore = useCallback(async (port) => {
         if (!port) { setStore([]); return []; }
-        try { const d = await api('storeApps', { node: port, lang: locale }); setStore(d || []); return d || []; } catch { setStore([]); return []; }
+        try { const d = await api('storeApps', { node: port, lang: locale }); setStore(d || []); cxCacheSet('cache-store', port, d || []); return d || []; } catch { setStore([]); return []; }
       }, [locale]);
 
       useEffect(() => {
@@ -1123,6 +1129,30 @@
         await loadApps(node, space, actorUid);
         if (appMode === 'store') await loadStore(node);
       });
+      // 回到插件（窗口重新可见）时静默补一次数据：先用缓存渲染，再后台对齐最新状态。
+      // 30 秒节流，避免窗口焦点在输入框间切换时反复请求。
+      const lastWakeRef = useRef(Date.now());
+      useEffect(() => {
+        const wake = () => {
+          if (document.visibilityState !== 'visible' || !node) return;
+          const now = Date.now();
+          if (now - lastWakeRef.current < 30000) return;
+          lastWakeRef.current = now;
+          (async () => {
+            try {
+              const list = await loadNodes();
+              const p = (list || []).some((n) => Number(n.port) === Number(node)) ? node : ((list || [])[0]?.port ?? null);
+              if (!p) return;
+              await Promise.all([loadSpaces(p), loadAvatars(p)]);
+              if (actorUid) await loadApps(p, space, actorUid);
+              if (appMode === 'store') await loadStore(p);
+            } catch {}
+          })();
+        };
+        document.addEventListener('visibilitychange', wake);
+        window.addEventListener('focus', wake);
+        return () => { document.removeEventListener('visibilitychange', wake); window.removeEventListener('focus', wake); };
+      }, [node, space, actorUid, appMode, loadNodes, loadSpaces, loadAvatars, loadApps, loadStore]);
       const openUrl = (url) => { try { window.open(url, '_blank', 'noopener'); } catch {} };
       const withActor = (raw) => {
         try {

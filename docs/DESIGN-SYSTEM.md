@@ -175,10 +175,11 @@ UiAddressBar {
 3. **显示用 `label`**：UI 展示 label（缺省回退 name），不把显示值发回去。
 4. **存量数据要归一**：编辑旧记录时按 `value/name/label` 三种形态匹配到 `value` 再提交。
 5. **默认值也取自选项**：默认 = `options[0].value`，不硬编码英文名。
-6. **初始 state 也要归一**：`options` 异步到达，记录里的 `name`（`shouldImprove`）与选项 `value`（`"1"`）不同形态；`<select value>` 匹配不到会静默回退第一项（显示「可完成」实为「待改进」）。options 到位后用 effect 归一到 `value`，弹窗以 `kind:mode:uid` 为 key 重挂载。回归：`46-pm.js` 与 `50-chat.js` 的 PMModal。
+6. **初始 state 也要归一**：记录的 `name`（`shouldImprove`）与选项 `value`（`"1"`）不同形态，`<select value>` 匹配不到会静默回退第一项；options 到位后 effect 归一，弹窗按 `kind:mode:uid` 重挂载。回归：`46-pm.js`、`50-chat.js`。
 7. **筛选 chip 标签走翻译表**：`pmFilterOptions` 的 `status_name` 调 `pmStatusText`，`canFinish/shouldImprove` 同时进 `PM_STATUS_ZH/EN`；别拼 `${key}_label`（英文模式下 `status_label` 就是枚举名）。回归：`55-pm.js` 反馈筛选。
-8. **消息存描述不存成品字符串**：写 `i18n:{op,kind,title,action}`，渲染用 `pmMsgText(m)` 现取词；卡片状态从 `status_name`/`type_name` 现算，快照 `status_label` 只兜底旧数据。词表对齐后台：`created=待提交`、`approved=待开始`。回归：`50-chat.js`、`55-pm.js`。
-9. **筛选项聚合计数、与卡片同词**：`countOptions`；节点「运行中/离线」；长空间名强制下拉。
+8. **消息存描述不存成品字符串**：写 `i18n:{op,kind,title,action}`，渲染用 `pmMsgText(m)`；卡片状态从 `status_name`/`type_name` 现算，快照 `status_label` 只兜底。词表对齐后台：`created=待提交`、`approved=待开始`。回归：`50-chat.js`、`55-pm.js`。
+9. **筛选项聚合计数**：`countOptions`；节点/空间用卡片状态词。
+10. **重进插件先缓存后刷新**：`spaces/apps/store` 落 `cache-*`，初始 state 用 `cxCacheGet`，成功后 `cxCacheSet`；可见 30s 静默补数据。
 
 实现入口：`lib/core/project.js → optionValue({ node, space, command, field, raw })`。
 

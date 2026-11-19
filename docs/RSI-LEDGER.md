@@ -73,3 +73,12 @@ Each entry records: lesson → reusable abstraction → verification.
 - 固化：新增 `lib/core/appindex.js` 三级路由（最近应用→应用商店→软件工厂，确定性打分，0 次模型调用）+ `appRoute` op + `scripts/route-check.mjs` 16 条断言（含「结构性功能名不算命中」「无匹配不 list[0]」「模糊写意图不生成应用」）；store miss 自动升级 `askAppPlan`。
 - 数字：实况 4 句 → 任务/会议/目标 3 句命中最近应用、审批句命中商店模板；客户管理（商店无模板）升级软件工厂；`build:client` EXIT=0 / 276 PASS。
 - 教训：**定位是索引问题，不是生成问题**——能用确定性打分就别问模型；兜底一旦选「第一个」就等于替用户做了错误决定。
+
+## 2026-11-19 — 从会话切回插件，空间/应用/商店要等或手动刷新
+
+- **现象**：从会话再进入插件，节点列有内容，但项目空间、最近应用、应用商店先空一段时间；有时要按 ↻ 才能看到最新数据。
+- **根因层次**：**生命周期 + 数据层**——切到会话时 DSH 卸载 `Page`，React state 全丢；重进是全新 mount。`nodes` 有 `cxRead('nodes')` 首屏缓存，`spaces/apps/store` 初始都是 `[]`，必须等网络返回；且窗口重新可见时没有补数据逻辑，若宿主保留挂载则数据会一直旧。
+- **类别**：缓存/重进体验（重挂载后空白或陈旧；第 1 次）。
+- **固化**：① `08-store.js` 新增 `cache-spaces`/`cache-apps`/`cache-store` 与 `cxCacheGet/cxCacheSet`（TTL 7 天、单条 ≤200KB、最多 30 键）；② `60-page.js` 初始 state 从缓存取 spaces/apps/store，加载成功后回写；③ `visibilitychange`/`focus` 30s 节流静默补节点/空间/分身/应用/商店；④ `DESIGN-SYSTEM.md` §18 新增第 10 条。
+- **数字**：`/tmp/cachetest.mjs` 断言往返、跨模块重载、TTL 过期、200KB 跳过、30 键上限、bundle 接线全部 PASS；`build:client` EXIT=0（1.48.158、701.8KB、hash `d7a17a2b6e3a`）、`ui-check: 178 passed`、`gate ERR=0 WARN=0`、`ui-probe` 全通过。
+- **教训**：**重挂载不能只靠"再请求一次"**——先画上次成功结果，再后台对齐（stale-while-revalidate）；缓存只存小 JSON，图标/场景图这类大对象不要落盘。

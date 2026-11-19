@@ -17,6 +17,9 @@
 | `chatfull` | 文本 | `1` | 对话全屏：1 全屏 / 0 分栏 |
 | `actor` | 文本 | `` | 当前分身：user.uid |
 | `nodes` | JSON | `[]` | 节点缓存：进入插件先渲染，↻ 才刷新 |
+| `cache-spaces` | JSON | `{}` | 空间缓存：按节点缓存，重进先渲染再刷新 |
+| `cache-apps` | JSON | `{}` | 应用缓存：按 节点:空间:分身 缓存，重进先渲染再刷新 |
+| `cache-store` | JSON | `{}` | 商店缓存：按节点缓存，重进先渲染再刷新 |
 | `sel` | JSON | `{}` | 本次选择：节点/空间/应用启动引导 |
 | `sel-map` | JSON | `{}` | 按节点记忆选择：{ node: [space, app] } |
 | `console` | JSON | `{}` | 控制台：open / tab / height / sort |

@@ -11,6 +11,9 @@ const CX_STORE_SCHEMA = {
   chatfull: { kind: 'text', def: '1', zh: '对话全屏', note: '1 全屏 / 0 分栏' },
   actor: { kind: 'text', def: '', zh: '当前分身', note: 'user.uid' },
   nodes: { kind: 'json', def: [], zh: '节点缓存', note: '进入插件先渲染，↻ 才刷新' },
+  'cache-spaces': { kind: 'json', def: {}, zh: '空间缓存', note: '按节点缓存，重进先渲染再刷新' },
+  'cache-apps': { kind: 'json', def: {}, zh: '应用缓存', note: '按 节点:空间:分身 缓存，重进先渲染再刷新' },
+  'cache-store': { kind: 'json', def: {}, zh: '商店缓存', note: '按节点缓存，重进先渲染再刷新' },
   sel: { kind: 'json', def: {}, zh: '本次选择', note: '节点/空间/应用启动引导' },
   'sel-map': { kind: 'json', def: {}, zh: '按节点记忆选择', note: '{ node: [space, app] }' },
   console: { kind: 'json', def: {}, zh: '控制台', note: 'open / tab / height / sort' },
@@ -75,6 +78,30 @@ function cxPref(key) {
   useEffect(() => { if (spec.kind === 'text') cxWriteText(key, value); else cxWrite(key, value); }, [value]);
   return [value, setValue];
 }
+// 读取缓存：按 id（节点/空间键）取最近一次成功结果，超过 7 天视为过期。
+const CX_CACHE_TTL = 7 * 24 * 3600 * 1000;
+const CX_CACHE_MAX = 30;
+function cxCacheGet(key, id) {
+  const m = cxRead(key, {});
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return null;
+  const hit = m[String(id)];
+  if (!hit || hit.data == null) return null;
+  if (Date.now() - Number(hit.at || 0) > CX_CACHE_TTL) return null;
+  return hit.data;
+}
+// 写入缓存：单条超过 200KB 不落盘（防止图标/图片把浏览器存储撑爆），最多保留 30 个键。
+function cxCacheSet(key, id, data) {
+  try {
+    const text = JSON.stringify(data);
+    if (text == null || text.length > 200000) return;
+    const m = { ...(cxRead(key, {}) || {}) };
+    m[String(id)] = { at: Date.now(), data };
+    const ids = Object.keys(m);
+    if (ids.length > CX_CACHE_MAX) ids.sort((a, b) => (m[a]?.at || 0) - (m[b]?.at || 0)).slice(0, ids.length - CX_CACHE_MAX).forEach((k) => delete m[k]);
+    cxWrite(key, m);
+  } catch {}
+}
+
 // 控制台 STATE 页与文档索引共用：schema + 当前值 + 占用字符数。
 function cxStoreDump() {
   return Object.keys(CX_STORE_SCHEMA).map((key) => {
