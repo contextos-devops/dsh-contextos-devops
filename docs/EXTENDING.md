@@ -127,7 +127,7 @@ npm run new -- motion flash
 ## 7. 做完统一收尾
 
 ```sh
-npm run build:client      # 15 道门禁，全绿才算改完
+npm run build:client      # 全链门禁（20 步，见 CODE-INDEX §5.1），全绿才算改完
 node scripts/docs-index.mjs --write   # 有状态/接口/代码结构变化时
 ```
 

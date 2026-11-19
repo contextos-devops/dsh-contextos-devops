@@ -93,7 +93,7 @@
 | 客户端重复排序 | 与服务端口径漂移 | `INTERFACE.md` §11 + `dup-check` |
 | 提示词每次重拼 | 前缀缓存 0 命中、1.6s/次 | `buildChatPrompt` 分层 + `bench-chat` |
 
-## 8. 质量体系（16 道门禁，按「发现问题的层次」排）
+## 8. 质量体系（`build:client` 20 步链，按「发现问题的层次」排；步数见 CODE-INDEX §5.1）
 
 `gate`（产物/文案）→ `load-check`（能加载）→ `hook-order`（TDZ）→ `op-check`（路由契约）
 → `install-check`（安装计划）→ `store-check`（存储出口）→ `ui-check`（结构断言）

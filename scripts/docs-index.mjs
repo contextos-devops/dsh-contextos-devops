@@ -89,7 +89,9 @@ const purpose = {
 for (const f of scripts) code += `| \`scripts/${f}\` | ${purpose[f] || '—'} |\n`;
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const npmPurpose = {
-  'build:client': '构建 + 全部门禁（11 道，红先修）',
+// 门禁数不手写：从 build:client 链推导，避免文档里 10/11/15/16 各说各话。
+const buildChain = String((pkg.scripts || {})['build:client'] || '').split('&&').map((s) => s.trim()).filter(Boolean);
+  'build:client': `构建 + 全部门禁（${buildChain.length} 步，红先修）`,
   'watch:client': '监听片段变化重建（不跑门禁）',
   'release': 'build:client + verify:ui',
   'verify:ui': '真浏览器验收（Edge CDP 9223）',

@@ -11,14 +11,14 @@
 | 问题 | 答案 |
 | --- | --- |
 | 这是什么 | DSH 插件：把 ContextOS 的节点/空间/应用/分身/项目/物联装进对话式界面 |
-| 规模 | 宿主 345 行 + `lib/**` 5.6k 行 + 客户端 25 片段 8.1k 行 + CSS 3.3k 行 + 102 个 op |
+| 规模 | 宿主 345 行 + `lib/**` 5.6k 行 + 客户端 25 片段 8.1k 行 + CSS 3.3k 行 + 113 个 op |
 | 代码在哪 | 宿主 `index.js` + `lib/**`；客户端 `src/client/parts/*.js`（拼成 `client.js`）；样式 `src/client/styles/*.css` |
 | 一条请求怎么走 | 组件 → `api(op)` → `index.js` 查 `lib/core/ops.js` → `lib/core/<域>.js` → ContextOS HTTP |
-| 怎么算改完 | `npm run build:client` 全绿（16 道门禁）+ 有证据 + 报告落盘 |
+| 怎么算改完 | `npm run build:client` 全绿（20 步门禁链，见 `docs/CODE-INDEX.md` §5.1）+ 有证据 + 报告落盘 |
 | 下一步干什么 | §七 验收标准 → §十三 本轮优先级：红门禁 > 已知限制 > 用户需求 |
 
 ```sh
-npm run build:client     # 构建 + 16 道门禁（红了先修，不许带 FAIL 交付）
+npm run build:client     # 构建 + 全链门禁（20 步，红了先修，不许带 FAIL 交付）
 npm run check:probe      # 离线渲染 fixture 量布局（需本机 Edge/Chrome）
 npm run verify:ui        # 真浏览器验收（需 Edge CDP 9223），exit 0 才算过
 node --check index.js    # 只改宿主时先做语法检查
@@ -95,7 +95,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 | --- | --- |
 | 服务端每个文件多少行、导出什么 | `docs/CODE-INDEX.md` §1 |
 | 客户端 25 个片段各多少行、有哪些组件 | `docs/CODE-INDEX.md` §2 |
-| op 契约（102 条）与服务端专用 op | `docs/CODE-INDEX.md` §3 |
+| op 契约（113 条）与服务端专用 op | `docs/CODE-INDEX.md` §3 |
 | 脚本与门禁、npm 命令 | `docs/CODE-INDEX.md` §5 + §5.1 |
 | 浏览器 38 个键、服务端 9 项状态 | `docs/STATE.md` |
 | 某处代码该放哪一层 | `docs/ARCHITECTURE.md` §1、§8 |
@@ -103,7 +103,7 @@ ContextOS HTTP（lib/base/http.js + url.js 构造，URL 只走这两处）
 生成物过期时：`node scripts/docs-index.mjs --write`。
 **构建产物** `client.js`、`assets/client.css` 只由 `build/client.mjs` 生成，不许手改。
 
-## 四、文档索引（20 份，入口 `docs/INDEX.md`）
+## 四、文档索引（26 份，入口 `docs/INDEX.md`）
 
 | 我要干什么 | 读这份 |
 | --- | --- |
@@ -276,7 +276,7 @@ YYYY-MM-DD — <一句话现象>
 本轮只需要记住三条：
 
 ```sh
-npm run build:client    # 构建 + 16 道门禁（红先修，不许带 FAIL 交付）
+npm run build:client    # 构建 + 全链门禁（20 步，红先修，不许带 FAIL 交付）
 npm run check:probe     # 离线量布局（改 UI 时）
 npm run verify:ui       # 真浏览器验收（Edge CDP 9223）
 ```

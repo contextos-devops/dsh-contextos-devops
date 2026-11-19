@@ -29,7 +29,7 @@ const BUDGET = {
   'ARCHITECTURE.md': 2300,
   'INDEX.md': 2500, // 唯一入口：一份文档约 +30 tokens，26 份文档后需 2360；余量留到 28 份
   'IAM.md': 2000,
-  'DIAGNOSTICS.md': 2000,
+  'DIAGNOSTICS.md': 2400, // 症状路由 + 2026-11-19 六会话 1217 条提问的高频表；表行由数据推导，压到 2000 会丢排优先级依据
   'DSH-COS.md': 1800,
   'STATE.md': 1500,
   'DOCTRINE.md': 1300,
