@@ -71,7 +71,7 @@
 | `src/client/parts/46-pm.js` | 165 | `PMModal` `RichText` |
 | `src/client/parts/47-three.js` | 325 | `ThreeAvatar` `ThreeCity` `TechBackdrop` |
 | `src/client/parts/49-msg.js` | 161 | `Elapsed` `FN_LABEL` `ACT_LABEL` `FN_LABEL_EN` `ACT_LABEL_EN` `FIELD_ZH` `FIELD_EN` `KIND_META` `CxEntityCard` `L` |
-| `src/client/parts/50-chat.js` | 1582 | `ChatPanel` `userUpRef` `ToolRow` `PM_CMD_RE` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` `PM_OP_ALIAS` |
+| `src/client/parts/50-chat.js` | 1673 | `ChatPanel` `userUpRef` `ToolRow` `PM_CMD_RE` `CN_NUM` `PM_ENTITY` `PM_TOPICS` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` |
 | `src/client/parts/51-pmselection.js` | 32 | `usePmSelection` |
 | `src/client/parts/52-pmdata.js` | 30 | `usePmData` |
 | `src/client/parts/55-pm.js` | 181 | `PM_REPORT_TONE` `PM_STATUS_TONE` `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_MENU_ACTIONS` `Gantt` `PmFilter` `PmEmpty` `PmCreateButton` |
@@ -147,7 +147,7 @@
 | --- | ---: | --- |
 | `docs/ACCEPTANCE.md` | 247 | 人写 |
 | `docs/AI-CONTEXT.md` | 76 | 人写 |
-| `docs/AI-CONVERSATION.md` | 140 | 人写 |
+| `docs/AI-CONVERSATION.md` | 142 | 人写 |
 | `docs/ARCHITECTURE.md` | 135 | 人写 |
 | `docs/CODE-GEN.md` | 424 | 人写 |
 | `docs/DESIGN-SYSTEM.md` | 363 | 人写 |

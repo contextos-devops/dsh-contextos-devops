@@ -97,17 +97,9 @@
 | `sysControl` | `{action,value}` | 音量/静音/剪贴板/截图/打开/网络/睡眠/锁屏/壁纸/快捷键 |
 | `data` / `writeData` | `{space,command,text}` | 写应用数据（仅 avatar） |
 
-## 五、宿主工具（`index.js` 的 op，共 93 个）
+## 五、宿主工具（`index.js` 的 op）
 
-- **基础设施**：`health` `freePort` `nodes` `refreshNodes` `deploy` `dockerDeploy` `remoteDeploy` `remoteLogin` `nodeAuth` `openTerminal` `nodeTerminal` `compile`
-- **空间**：`spaces` `createSpace` `initSpace` `buildSpace` `spaceStart` `spaceStop` `spaceReady` `spaceDir` `spaceOpen` `spaceTerminal` `deleteSpace` `storageCheck`
-- **应用**：`apps` `storeApps` `storeAction` `createStoreInstance` `createInstance` `autogenApp` `autogenSpec` `appPlan` `appFields` `nameCheck` `resolveWrite` `ensureProject` `planProject` `projectStatus`
-- **数据**：`readData` `writeData` `removeData` `fieldOptions` `commandStyle` `monitorQuery`
-- **项目五功能**：`pmList` `pmTree` `pmCreate` `pmModify` `pmRemove` `pmDelete` `pmAct` `pmLog`
-- **身份/主体**：`avatars` `createAvatar` `updateAvatar` `deleteAvatar` `setAvatar` `users` `stateGet` `stateSet` `iamList` `iamCall` `iamEndpoints` `iamSubjects`
-- **文件/代码**：`files` `tree` `listDir` `readFile` `writeFile` `mkdir` `renamePath` `removePath` `file`
-- **备份/采样**：`backupSpace` `backups` `sampleNodes`
-- **其它**：`backgrounds` `createBackground` `setBackground` `updateBackground` `deleteBackground` `llmInfo` `pipeline` `chat` `clientError` `sysControl` `sshHosts` `devices`
+93 个 op 按 基础设施 / 空间 / 应用 / 数据 / 项目五功能 / 身份主体 / 文件代码 / 备份采样 / 其它 分组，完整清单见 `docs/CODE-INDEX.md`（`index.js` 条目）。
 
 ## 六、失败与回执
 
@@ -137,3 +129,13 @@
 2. `context` 截断 6000 字符，`apps`/`nodes` 很长时会被截掉尾部；
 3. 没有工具调用的结构化回执（没有 tool_call id / 结果回灌），模型看不到执行结果；
 4. iot 模式的设备控制没有「先问再做」的白名单，睡眠/锁屏靠 prompt 约束。
+
+## 批量创建（数量 × 实体）
+
+「三个随机的任务」= task × 3，标题取随机主题（`任务 1 · 库存盘点`）；「5 个任务」「两个计划」「创建目标：测试」同理。
+
+- `pmEntityOf`：反馈 > 报告 > 任务 > 计划 > 目标；
+- `pmCountOf`：识别 `三个/5 个/两条/三份`；
+- 实体优先于模型给的 `fn`，不会把任务判成目标；
+- 父级缺失自动补（任务→计划→目标）；
+- 批量走 `pmCreateMany`，只发一张表格卡（序号/标题/UID）。

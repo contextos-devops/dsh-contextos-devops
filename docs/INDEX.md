@@ -81,7 +81,7 @@
 | `URL-SPEC.md` | 243 | 两类 URL 与禁止清单 | 构造 URL 前 | 接口语义 → `INTERFACE.md` |
 | `CODE-GEN.md` | 424 | 代码生成规范与工厂要点 | factory 模式 | 架构 → `ARCHITECTURE.md` |
 | `ARCHITECTURE.md` | 135 | 五层/请求流程/模块归属 | 判断代码放哪 | 生成细节 → `CODE-GEN.md` |
-| `AI-CONVERSATION.md` | 140 | 对话参数/动作表/缺口 | 改 Copilot 链路 | 提示词 → `../lib/core/copilot.js` |
+| `AI-CONVERSATION.md` | 142 | 对话参数/动作表/缺口 | 改 Copilot 链路 | 提示词 → `../lib/core/copilot.js` |
 | `MONITOR.md` | 83 | 监控面板与数据源 | 改监控视图 | — |
 | `ECOM-DEMO.md` | 184 | 电商流水线演示（mock） | 改电商视图 | 真实方案 → dsh-reports |
 | `IAM.md` | 151 | 权限与身份模型 | 涉及 user.uid/角色 | 接口 → `INTERFACE.md` |

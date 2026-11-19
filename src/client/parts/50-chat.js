@@ -517,18 +517,101 @@
       // 而父级本来就在上下文里（当前选中的计划/任务/报告）。
       const PM_CMD_RE = /^web\.team\.xiangmuguanli\.(target|plan|task|report|feedback)$/;
       const pmKindOf = (command) => (String(command || '').match(PM_CMD_RE) || [])[1] || '';
+      // —— 数量 / 实体解析：说「创建三个随机的任务」就要建 3 个任务，不能糊成一个目标 ——
+      const CN_NUM = { 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10, 十一: 11, 十二: 12 };
+      const PM_ENTITY = [
+        ['反馈', 'feedback'], ['报告', 'report'], ['任务', 'task'], ['计划', 'plan'], ['目标', 'target'],
+      ];
+      const pmEntityOf = (t) => {
+        for (const [word, kind] of PM_ENTITY) if (String(t).includes(word)) return kind;
+        return '';
+      };
+      const pmCountOf = (t) => {
+        const text = String(t);
+        const re = /(\d+|[一二两三四五六七八九十]+)\s*(个|条|项|份)?\s*(?:随机的?)?\s*(反馈|报告|任务|计划|目标)/;
+        const m = text.match(re);
+        if (!m) return 0;
+        return /^\d+$/.test(m[1]) ? Number(m[1]) : (CN_NUM[m[1]] || 0);
+      };
+      const PM_TOPICS = ['库存盘点', '竞品比价', '主图优化', '评价维护', '补货计划', '活动报名', '物流跟进', '退款核查'];
+      const pmTitlesOf = (kind, n, text, values) => {
+        const label = { target: '目标', plan: '计划', task: '任务', report: '报告', feedback: '反馈' }[kind] || '记录';
+        const base = String((values && values.title) || '').trim();
+        const generic = !base || base === String(text).trim() || base.length > 24;
+        return Array.from({ length: n }, (_, i) => {
+          if (!generic) return n > 1 ? `${base} ${i + 1}` : base;
+          if (/随机/.test(text)) {
+            const t0 = PM_TOPICS[(i + Math.floor(Math.random() * PM_TOPICS.length)) % PM_TOPICS.length];
+            return `${label} ${i + 1} · ${t0}`;
+          }
+          return `${label} ${i + 1}`;
+        });
+      };
       const pmParentOf = { plan: 'target', task: 'plan', report: 'task', feedback: 'report' };
       const pmParentUid = (kind) => {
         const parent = pmParentOf[kind];
         const picked = parent === 'target' ? activeTarget?.uid : parent === 'plan' ? activePlan?.uid : parent === 'task' ? activeTask?.uid : activeReport?.uid;
         return String(pmChain.current[parent] || picked || '');
       };
+      const pmEnsureParent = async (kind) => {
+        const parent = pmParentOf[kind];
+        if (!parent) return '';
+        let uid = pmParentUid(kind);
+        if (uid) return uid;
+        const pick = parent === 'target' ? (pm?.targets || [])[0]
+          : parent === 'plan' ? (pm?.plans || [])[0]
+            : parent === 'task' ? (pm?.tasks || [])[0] : (pm?.reports || [])[0];
+        if (pick && pick.uid) { pmChain.current[parent] = pick.uid; return pick.uid; }
+        const gp = await pmEnsureParent(parent);
+        const body = {
+          node, uid: avatar?.uid || '', kind: parent,
+          title: `默认${{ target: '目标', plan: '计划', task: '任务', report: '报告' }[parent] || parent}`,
+          content: '', target_uid: '', plan_uid: '', task_uid: '', report_uid: '',
+          begin_time: '', end_time: '', report_type: 'daily', score: '5', feedback_status: 'canFinish',
+        };
+        const fk = { target: 'target_uid', plan: 'plan_uid', task: 'task_uid', report: 'report_uid' }[parent];
+        if (fk && gp) body[fk] = gp;
+        const d = await api('pmCreate', body);
+        if (d?.uid) pmChain.current[parent] = d.uid;
+        return d?.uid || '';
+      };
+
+      // 批量创建：一条指令建 N 条（「三个任务」不再退化成一条目标）
+      const pmCreateMany = async (kind, n, text, values) => {
+        const parent = pmParentOf[kind];
+        let pid = '';
+        if (parent) {
+          pid = await pmEnsureParent(kind);
+          if (!pid) { ai(T('请先选择一个') + (PM_KIND_LABEL[parent] || parent)); return true; }
+        }
+        const titles = pmTitlesOf(kind, n, text, values);
+        const fk = { target: 'target_uid', plan: 'plan_uid', task: 'task_uid', report: 'report_uid' }[parent];
+        const uids = [];
+        for (let i = 0; i < titles.length; i += 1) {
+          const body = {
+            node, uid: avatar?.uid || '', kind, title: titles[i], content: '',
+            target_uid: '', plan_uid: '', task_uid: '', report_uid: '',
+            begin_time: '', end_time: '', report_type: 'daily', score: '5', feedback_status: 'canFinish',
+          };
+          if (fk && pid) body[fk] = pid;
+          const d = await api('pmCreate', body);
+          if (d?.uid) uids.push(d.uid);
+        }
+        await loadPm();
+        const unit = { target: '个目标', plan: '个计划', task: '个任务', report: '份报告', feedback: '条反馈' }[kind] || '条记录';
+        ai(`${T('已创建')} ${uids.length} ${T(unit)}`);
+        if (uids.length) {
+          push('table', '', { table: { title: `${PM_KIND_LABEL[kind] || kind} · ${uids.length}`, count: uids.length, columns: [{ key: 'i', label: '#' }, { key: 'title', label: T('标题') }, { key: 'uid', label: 'UID' }], rows: uids.map((u, i) => ({ i: String(i + 1), title: titles[i] || '', uid: String(u).slice(0, 8) })) } });
+        }
+        return true;
+      };
+
       const pmCreateFrom = async (kind, args = {}, text = '') => {
         const body = { node, uid: avatar?.uid || '', kind, title: args.title || '', content: args.content || '', target_uid: '', plan_uid: '', task_uid: '', report_uid: '', begin_time: args.begin_time || '', end_time: args.end_time || '', report_type: args.report_type || 'daily', score: args.score || '5', feedback_status: args.feedback_status || 'canFinish' };
         const parent = pmParentOf[kind];
         if (parent) {
           const fk = { target: 'target_uid', plan: 'plan_uid', task: 'task_uid', report: 'report_uid' };
-          const uid = pmParentUid(kind);
+          const uid = pmParentUid(kind) || await pmEnsureParent(kind);
           const names = { target: '目标', plan: '计划', task: '任务', report: '报告' };
           if (!uid) {
             ai(T('请先选择一个') + T(names[parent] || parent));
@@ -575,15 +658,23 @@
         if (!fn) fn = (/创建|新建|添加|建立|定义/.test(text) && /流程/.test(text)) ? 'flow' : (/发起|提交|申请|送审|报批/.test(text) ? 'request' : '');
         if (fns.length && fn && !fns.includes(fn)) fn = fns.includes('supplier') && /供应商/.test(text) ? 'supplier' : fns[0];
         if (!fn) fn = fns[0] || '';
+        const entHint = pmEntityOf(text);
+        if (entHint && (!fns.length || fns.includes(entHint))) fn = entHint;
         if (!fn) { ai('这个应用还没有可用的功能，请先到应用商店重新生成模板。'); return true; }
         push('step', `② 定位功能（文件）：${app0.title || app0.name} / ${fn}`);
 
         const command = String(app0.command || '').replace(/\.portal$/, '') + '.' + fn;
 
         const pmKind = pmKindOf(command);
-        if (mode !== 'read' && pmKind) {
+        const entKind = pmEntityOf(text) || pmKind;
+        const wantN = Math.max(1, pmCountOf(text) || 1);
+        if (mode !== 'read' && entKind) {
+          if (wantN > 1) {
+            push('step', `③ 批量创建：${wantN} 个${PM_KIND_LABEL[entKind] || entKind}（父级自动补齐）`);
+            return Boolean(await pmCreateMany(entKind, wantN, text, plan && plan.values ? plan.values : {}));
+          }
           push('step', `③ 项目管理接口：${command}（父级取自当前选中）`);
-          return Boolean(await pmCreateFrom(pmKind, plan && plan.values ? plan.values : {}, text));
+          return Boolean(await pmCreateFrom(entKind, plan && plan.values ? plan.values : {}, text));
         }
 
         if (mode === 'read') {
