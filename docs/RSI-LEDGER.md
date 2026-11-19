@@ -138,3 +138,12 @@ Each entry records: lesson → reusable abstraction → verification.
 - 固化：① `46-pm.js` 新增 effect，options 到位后把 `report_type/feedback_status/score` 按 `value/name/label` 归一到 `value`；② `50-chat.js` 给 PMModal 加 `kind:mode:uid` key，切换记录不再复用旧 state；③ `docs/DESIGN-SYSTEM.md` §18 新增第 6 条，明确「初始 state 也要归一 + 不匹配会回退第一项」；④ React 18 UMD 复现页作为证据（旧逻辑 value=`shouldImprove` 渲染 `0/可完成`，归一后 `1/待改进`）。
 - 数字：修复前 `<select>` `value=0 selectedIndex=0 text=可完成`（state 仍是 `shouldImprove`）；归一后 `value=1 selectedIndex=1 text=待改进`；`build:client` 170 条 ui-check、render/hook/op/store/i18n/context/docs 全过，`ui-probe` 仅 `pop-inside` 一条既有断言失败（无浏览器沙箱环境下与本次改动无关，CSS 未改）。
 - 教训：**「提交时归一」不等于「显示时归一」**；异步 options + 受控 select 的组合必须把 state 也当作「存量数据」处理，否则 200 提交正确、界面照样骗人。
+
+## 2026-11-19 — 反馈筛选栏显示 shouldImprove/canFinish
+
+- 现象：反馈卡片的「状态」过滤条直接显示 `shouldImprove 1`、`canFinish 1`，没有中文；同页其他计划/任务状态筛选正常。
+- 根因层次：**展示层**——`src/client/parts/55-pm.js` 的 `pmFilterOptions` 把 labelKey 拼成 `status_name_label`（实际字段是 `status_label`），取不到后回退 `pmStatusText(value)`，而 `PM_STATUS_ZH/EN` 只覆盖计划/任务七态，没有 `canFinish/shouldImprove`，于是枚举名原样漏出。英文模式下服务端 `status_label` 也直接是枚举名，只读 label 同样会漏。
+- 类别：i18n/筛选项标签（状态词表与状态机脱节；第 1 次）。
+- 固化：① `55-pm.js` 的 `pmFilterOptions` 对 `status_name` 统一走 `pmStatusText`，类型仍用服务端 `type_label`，最后过 `T()`；② `00-prelude.js` 的 `PM_STATUS_ZH/EN` 补 `canFinish/shouldImprove`；③ `DESIGN-SYSTEM.md` §18 新增第 7 条，明确「筛选 chip 也走翻译表，不要拼 `${key}_label`」。
+- 数字：修复后 `shouldImprove 2 → 待改进 2`、`canFinish 1 → 可完成 1`（中英双语脚本断言通过）；`build:client` 的 170 条 ui-check 与 i18n/docs/gate 全过，`ui-probe` 仍只有既有的 `pop-inside` 一条失败（CSS 未改）。
+- 教训：**状态词表要和状态机一起长**；新增状态只改后端枚举、不改 `PM_STATUS_*`，筛选栏就会把内部名字暴露给用户，而且卡片本身因为读 `status_label` 看起来是正常的，容易漏测筛选路径。

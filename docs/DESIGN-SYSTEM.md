@@ -266,6 +266,7 @@ UiAddressBar {
 4. **存量数据要归一**：编辑旧记录时按 `value/name/label` 三种形态匹配到 `value` 再提交。
 5. **默认值也取自选项**：默认 = `options[0].value`，不硬编码英文名。
 6. **初始 state 也要归一，不能只在提交时归一**：`options` 通常是异步加载的，记录里的 `name`（如 `shouldImprove`）与选项 `value`（如 `"1"`）不是同一形态；`<select value>` 匹配不到选项时 React/浏览器会**静默回退到第一项**，界面显示「可完成」而实际是「待改进」。做法：options 到位后用 effect 把 state 按 `value/name/label` 归一到 `value`，并让弹窗以 `kind:mode:uid` 为 key 重挂载，避免切换记录时沿用旧 state。回归：`46-pm.js` 的 PMModal（反馈/报告类型）与 `50-chat.js` 的 `PMModal` key。
+7. **筛选 chip 的标签也走翻译表**：`pmFilterOptions` 对 `status_name` 调 `pmStatusText`，反馈状态 `canFinish/shouldImprove` 必须同时进 `PM_STATUS_ZH/EN`；不要拼 `${key}_label`。英文模式下服务端 `status_label` 就是枚举名，直接读它会把 `shouldImprove` 漏到筛选栏。回归：`55-pm.js` 的反馈状态筛选。
 
 实现入口：`lib/core/project.js → optionValue({ node, space, command, field, raw })`。
 
