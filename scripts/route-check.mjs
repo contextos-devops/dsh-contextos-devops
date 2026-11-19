@@ -120,5 +120,17 @@ const store = [
   check(chat.includes("api('appRoute'"), 'client calls appRoute');
   check(!/list\[0\]/.test(chat.split('createAppFromStore')[1] || ''), 'createAppFromStore has no list[0] blind pick');
 }
+
+// 10) 写回执判定：正常回执 detail 是路径段，不能当「空间没启动」；否则每次写白等 2.5s×3 还重复建记录
+{
+  const { isEcho } = await import(path.join(root, 'lib/core/data.js'));
+  const ok = JSON.stringify({ detail: ['web.s', 'pod'], _status: ['[{"name":"count","value":"1x12"}]'], append: ['uid'], uid: ['a1'] });
+  check(isEcho(ok) === false, 'write receipt with _status is not echo');
+  check(isEcho('{"detail":["web.s"],"_handle":["true"],"_process":["_cookie"]}') === true, 'echo receipt (detail only) is echo');
+  check(isEcho('') === true, 'empty body is echo');
+  const data = fs.readFileSync(path.join(root, 'lib/core/data.js'), 'utf8');
+  check(!/"detail"\s*:/.test(data.split('export function isEcho')[0]), 'data.js no longer runs the detail heuristic');
+  check(data.includes('const instUid = inst ||'), 'readData derives instance uid from query');
+}
 if (failed) { console.error(`route-check: ${failed} failed`); process.exit(1); }
 console.log('route-check: passed');

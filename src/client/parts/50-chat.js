@@ -56,21 +56,22 @@
         try {
           const base = (cxSessionGet() || {}).chatTab;
           if (!base || base === 'chat') return 'chat';
+          if (base === 'index') return 'index';
           return tabIdOfBase(base) || 'chat';
         } catch { return 'chat'; }
       });
       useEffect(() => {
         // 切换节点/空间后标签会被重建，此时回退到对话
-        if (chatTab !== 'chat' && !(webTabs || []).some((t) => t.id === chatTab)) { setChatTab('chat'); return; }
+        if (chatTab !== 'chat' && chatTab !== 'index' && !(webTabs || []).some((t) => t.id === chatTab)) { setChatTab('chat'); return; }
         const t = (webTabs || []).find((x) => x.id === chatTab);
-        cxSessionSave({ chatTab: t ? (t.base || t.url) : 'chat' });
+        cxSessionSave({ chatTab: chatTab === 'index' ? 'index' : (t ? (t.base || t.url) : 'chat') });
       }, [chatTab, webTabs]);
       const [replyPop, setReplyPop] = useState(false);
       const [chatLoaded, setChatLoaded] = useState({});
       const [webMax, setWebMax] = useState(() => !!(cxSessionGet() || {}).webMax);
       useEffect(() => { cxSessionSave({ webMax }); }, [webMax]);
       // 网页标签一出现就进入「最大化」：收起左右两栏，让页面占满整个对话区
-      useEffect(() => { onWebFocus && onWebFocus(!!webMax && chatTab !== 'chat'); }, [webMax, chatTab]);
+      useEffect(() => { onWebFocus && onWebFocus(!!webMax && chatTab !== 'chat' && chatTab !== 'index' && (webTabs || []).some((t) => t.id === chatTab)); }, [webMax, chatTab, webTabs]);
       const [turn, setTurn] = useState(null);
       // 链接直接在聊天框自带的网页标签里打开（CHAT 旁边那个 tab），不再另开窗口
       OPEN_LINK = (url, title) => { const id = onOpenWebTab ? onOpenWebTab(url, title) : ''; if (id) setChatTab(id); };
@@ -86,7 +87,7 @@
         window.addEventListener('message', onMsg);
         return () => window.removeEventListener('message', onMsg);
       }, [onOpenWebTab]);
-      useEffect(() => { if (chatTab !== 'chat' && !(webTabs || []).some((t) => t.id === chatTab)) setChatTab('chat'); }, [webTabs, chatTab]);
+      useEffect(() => { if (chatTab !== 'chat' && chatTab !== 'index' && !(webTabs || []).some((t) => t.id === chatTab)) setChatTab('chat'); }, [webTabs, chatTab]);
       const [avatarEditOpen, setAvatarEditOpen] = useState(false);
       const openCtx = (e, kind) => { e.preventDefault(); e.stopPropagation(); setCtxMenu({ x: e.clientX, y: e.clientY, kind }); };
       useEffect(() => {
@@ -660,16 +661,19 @@
         const text = String(rawText || lastUserRef.current || '');
         if (!text.trim()) return false;
         let list = Array.isArray(apps) ? apps.slice() : [];
-        if (!list.length) {
-          try { const r = await api('apps', { node, space, uid: actorId() }); if (Array.isArray(r)) list = r; } catch {}
-        }
-        if (!list.length) { ai('最近应用里还没有应用实例，请先在应用商店创建一个。'); return true; }
-
         // 三级路由：最近应用（工具索引+存储索引）→ 应用商店 → 软件工厂。
         // 打分在服务端一次算完（不调模型），这里只按 tier 分流：应用就地读写、商店建实例、工厂生成模板。
-        push('step', `① 定位应用（目录）：在 ${list.length} 个最近应用里匹配`);
+        // 不再预取 app 列表：appRoute 服务端本来就会 listApps（45ms），预取等于同一份数据跑两遍。
         let route = null;
         try { route = await api('appRoute', { node, text, mode, uid: actorId() }); } catch (e) { route = null; }
+        if (!route) {
+          // 服务端路由不可用时才回退到旧路：本地列表 + 客户端匹配
+          if (!list.length) {
+            try { const r = await api('apps', { node, space, uid: actorId() }); if (Array.isArray(r)) list = r; } catch {}
+          }
+          if (!list.length) { ai('最近应用里还没有应用实例，请先在应用商店创建一个。'); return true; }
+          push('step', `① 定位应用（目录）：在 ${list.length} 个最近应用里匹配`);
+        }
         if (route && Array.isArray(route.steps)) route.steps.forEach((x) => push('step', x));
         if (route && route.tier === 'store') {
           const svc = route.store || {};
@@ -1704,6 +1708,7 @@
                   h(IconButton, { name: 'close', className: 'x', onClick: onClose, title: tt('close') })))),
             h('div', { className: 'cx-chat-tabs' },
               h('button', { className: `cx-chat-tab${chatTab === 'chat' ? ' on' : ''}`, onClick: () => setChatTab('chat') }, tt('chat')),
+              h('button', { className: `cx-chat-tab${chatTab === 'index' ? ' on' : ''}`, onClick: () => setChatTab('index'), title: T('Index') }, T('Index')),
               (webTabs || []).map((t) => h('button', { key: t.id, className: `cx-chat-tab${chatTab === t.id ? ' on' : ''}`, title: t.url, onClick: () => setChatTab(t.id) },
                 h('span', { className: 'nm' }, t.title || 'web'),
                 h(IconButton, { name: 'close', className: 'x', onClick: (e) => { e.stopPropagation(); onCloseWebTab && onCloseWebTab(t.id); if (chatTab === t.id) setChatTab('chat'); } })))),
@@ -1719,7 +1724,9 @@
                 { label: '在管理中打开', action: () => onManageWebTab && onManageWebTab(chatWebTab.id) },
                 { label: '关闭标签', danger: true, action: () => { onCloseWebTab && onCloseWebTab(chatWebTab.id); setChatTab('chat'); } },
               ] })) : null,
-            h('div', { className: 'cx-chat-webframes', style: chatTab === 'chat' ? { display: 'none' } : null },
+            h('div', { className: 'cx-chat-index', style: chatTab === 'index' ? null : { display: 'none' } },
+              h(IndexPage, { active: chatTab === 'index', node, space, apps, locale, onOpenWebTab, onRefresh, onOpenDev })),
+            h('div', { className: 'cx-chat-webframes', style: chatTab === 'chat' || chatTab === 'index' ? { display: 'none' } : null },
               (webTabs || []).map((t) => h('iframe', { key: t.id, src: t.url, title: t.title || 'web', allow: 'clipboard-read; clipboard-write', onLoad: () => setChatLoaded((m) => (m[t.id] ? m : { ...m, [t.id]: 1 })), style: chatTab === t.id ? null : { display: 'none' } })),
               chatWebTab && !chatLoaded[chatWebTab.id] ? h('div', { className: 'cx-webmask' }, T('加载中…')) : null),
             h('div', { className: 'cx-chat-b', ref: endRef, onScroll: onMsgScroll, style: chatTab !== 'chat' ? { display: 'none' } : null, onContextMenu: (e) => { if (e.target.closest('.cx-msg, button, a, input, textarea, select, .cx-sel, .cx-hint, .cx-suggest')) return; openCtx(e, 'bg'); } },
