@@ -33,7 +33,7 @@
 .cx-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--cx-muted)}
 .cx-chip .dot.on{background:var(--cx-green);box-shadow:0 0 8px var(--cx-green)}
 .cx-actions{display:flex;align-items:center;gap:7px;flex:none;white-space:nowrap}
-.cx-btn{appearance:none;border:1px solid var(--cx-line2);background:rgba(8,25,40,.9);color:var(--cx-text);font:600 var(--cx-fs)/1 var(--cx-font);padding:7px 10px;cursor:pointer;letter-spacing:.04em}
+.cx-btn{appearance:none;border:1px solid var(--cx-line2);background:rgba(8,25,40,.9);color:var(--cx-text);cursor:pointer;letter-spacing:.04em}
 .cx-btn:hover{border-color:var(--cx-cyan);color:var(--cx-cyan);box-shadow:0 0 14px rgba(var(--cx-hue-rgb),.12)}
 .cx-btn.pri{border-color:var(--cx-cyan);background:linear-gradient(135deg,rgba(var(--cx-hue-rgb),.18),rgba(24,182,216,.08));color:#dffcff}
 .cx-btn.warn{border-color:rgba(255,180,84,.55);color:var(--cx-orange)}

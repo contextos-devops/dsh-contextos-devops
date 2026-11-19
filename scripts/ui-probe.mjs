@@ -243,15 +243,15 @@ const CASES = [
     name: 'datetime-pop',
     fixture: 'scripts/fixtures/datetime-pop.html',
     window: '600,400',
-    sels: ['#dt', '#pop', '#grid', '#time', '#ok'],
+    sels: ['#dt', '#pop', '#grid', '#time', '#ok', '#acts'],
     assert: (m) => {
-      const pop = m['#pop'], grid = m['#grid'], time = m['#time'], ok = m['#ok'];
+      const pop = m['#pop'], grid = m['#grid'], time = m['#time'], ok = m['#ok'], dt = m['#dt'];
       return [
-        [!!pop && pop.w >= 240 && pop.w <= 340, '面板宽度固定（约 300px）', `${pop?.w}px`],
+        [!!pop && !!dt && Math.abs(pop.w - dt.w) <= 1, '面板与输入框同宽', `${pop?.w} vs ${dt?.w}`],
         [!!pop && pop.sw <= pop.cw + 1, '面板内容不横向溢出', `${pop?.sw} ≤ ${pop?.cw}`],
         [!!ok && !!pop && ok.right <= pop.right + 1, '确定按钮落在面板内（没被切掉）', `${ok?.right} ≤ ${pop?.right}`],
-        [!!time && time.h >= 30, '时间行占一行高度（不塌缩）', `${time?.h}px`],
-        [!!grid && grid.w >= 180 && grid.w <= 280, '日历七列不被挤压', `${grid?.w}px`],
+        [!!time && !!ok && Math.abs((time.y + time.h / 2) - (ok.y + ok.h / 2)) <= 1.5, '时分秒与按钮同一行且垂直居中', `时间 ${time?.y}/${time?.h} 按钮 ${ok?.y}/${ok?.h} acts ${m['#acts']?.y}/${m['#acts']?.h}`],
+        [!!grid && grid.w >= 180 && grid.w <= 300, '日历七列不被挤压', `${grid?.w}px`],
       ];
     },
   },

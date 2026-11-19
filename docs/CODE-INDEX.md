@@ -3,7 +3,7 @@
 > 读这份当：要找某个文件 / 组件 / op / 脚本在哪，或核对接口契约。
 > 不读这份当 → 架构分层与模块归属 → [ARCHITECTURE.md](ARCHITECTURE.md)；产品设计 → [PRODUCT-DESIGN.md](PRODUCT-DESIGN.md)
 >
-> 生成物：`node scripts/docs-index.mjs --write`（2026-11-18）· 源：`src/client/parts/*.js`、`lib/**/*.js`、`scripts/*.mjs`、`docs/*.md`
+> 生成物：`node scripts/docs-index.mjs --write`（2026-11-19）· 源：`src/client/parts/*.js`、`lib/**/*.js`、`scripts/*.mjs`、`docs/*.md`
 > 手改会被下一次生成覆盖；要改内容改代码里的源头。
 
 ## 1. 服务端（宿主进程）
