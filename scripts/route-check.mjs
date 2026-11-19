@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { planRoute, usableFunctions, pickStore } = await import(path.join(root, 'lib/core/appindex.js'));
+const { planRoute, usableFunctions, pickStore, extractValues } = await import(path.join(root, 'lib/core/appindex.js'));
 
 let failed = 0;
 const check = (ok, label) => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}`); if (!ok) failed++; };
@@ -88,6 +88,30 @@ const store = [
 {
   const hit = pickStore('帮我做一个量子纠缠实验台应用', store);
   check(!hit, `store threshold: ${hit ? hit.tpl.name : 'null'}`);
+}
+
+// 10) 表单预填：从原话抽标题/内容/起止时间/地点，减少输入
+{
+  const NOW = new Date('2026-11-19T12:20:00+08:00');   // 周四中午
+  const v1 = extractValues('明天见投资人，帮我创建一个会议安排', NOW);
+  check(v1.title === '见投资人', `prefill title: ${v1.title}`);
+  check(v1.begin_time === '2026-11-20 09:00' && v1.end_time === '2026-11-20 10:00', `prefill tomorrow: ${v1.begin_time}~${v1.end_time}`);
+  const v2 = extractValues('明天下午3点见投资人，帮我创建一个会议安排', NOW);
+  check(v2.begin_time === '2026-11-20 15:00' && v2.end_time === '2026-11-20 16:00', `prefill 3pm: ${v2.begin_time}~${v2.end_time}`);
+  const v3 = extractValues('下周一上午10点评审会', NOW);
+  check(v3.begin_time === '2026-11-23 10:00' && v3.title === '评审会', `prefill next mon: ${v3.begin_time}/${v3.title}`);
+  const v4 = extractValues('12月5日下午2点半客户拜访', NOW);
+  check(v4.begin_time === '2026-12-05 14:30', `prefill date+half: ${v4.begin_time}`);
+  const v5 = extractValues('三点半开会', NOW);
+  check(v5.begin_time === '2026-11-19 15:30', `prefill bare hour → pm: ${v5.begin_time}`);
+  const v6 = extractValues('明天在会议室A开会，讨论Q4预算', NOW);
+  check(v6.title === '讨论Q4预算' && v6.address === '会议室A', `prefill addr/agenda: ${v6.title}/${v6.address}`);
+  const v7 = extractValues('帮我创建一个任务', NOW);
+  check(!v7.begin_time && !v7.end_time, `prefill no invented time: ${JSON.stringify(v7)}`);
+  const m2 = planRoute({ text: '下周一上午10点评审会', apps, fnMap, now: NOW });
+  check(m2.tier === 'app' && m2.fn === 'meeting' && m2.values.begin_time === '2026-11-23 10:00', `评审会→会议: ${m2.tier}/${m2.fn}/${m2.values.begin_time}`);
+  const p = planRoute({ text: '明天见投资人，帮我创建一个会议安排', apps, fnMap, now: NOW });
+  check(p.tier === 'app' && p.op === 'writeData' && p.values.begin_time === '2026-11-20 09:00' && p.values.title === '见投资人', `plan values: ${p.op}/${JSON.stringify(p.values)}`);
 }
 // 9) 客户端不再调用会挂起的 resolveWrite
 {

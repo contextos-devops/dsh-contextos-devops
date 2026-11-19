@@ -12,7 +12,7 @@
   │
   ├─ 0. 前置短路（不调模型）
   │    avatar 模式 + 写意图（添加/录入/新增/写入/加一条/新建一条/创建/发起/提交/报批）
-  │      → appOp({text, mode:'write'})：appRoute 三级定位（最近应用→商店→工厂，不调模型）→ 表单
+  │      → appOp({text, mode:'write'})：appRoute 三级定位（最近应用→商店→工厂，不调模型）→ 预填表单（标题/时间/地点）
   │    avatar 模式 + 读意图（查看/查询/列出/统计/多少条…）且含数据词（数据/记录/列表/明细/清单…）
   │      → appOp({text, mode:'read'})：appRoute 定位 → readData → 消息区表格
   │    avatar 模式 + 「继续/下一步/然后呢/接下来」且 pmList.next 存在

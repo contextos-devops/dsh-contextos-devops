@@ -20,7 +20,7 @@
 | `lib/base/table.js` | 48 | `decodeCell()` `parseFixedTable()` `parseTable()` |
 | `lib/base/texttable.js` | 27 | `parseTextTable()` |
 | `lib/base/url.js` | 179 | `portalOf()` `placeUidKey()` `apiPath()` `dataPath()` `webUrl()` `systemUrl()` `spaceUrl()` `platformUrl()` …19 个 |
-| `lib/core/appindex.js` | 350 | `commonRun()` `usableFunctions()` `appFunctions()` `pickFunction()` `pickApp()` `pickStore()` `detectIntent()` `factoryName()` …11 个 |
+| `lib/core/appindex.js` | 466 | `commonRun()` `usableFunctions()` `appFunctions()` `pickFunction()` `pickApp()` `pickStore()` `detectIntent()` `factoryName()` …13 个 |
 | `lib/core/apps.js` | 659 | `storeApps()` `storeAction()` `createStoreInstance()` `listApps()` `scanApps()` `uniqueAppName()` `autogenSpec()` `autogenService()` …15 个 |
 | `lib/core/auth.js` | 111 | `toolToken()` `adminSessid()` `appSession()` `appSessid()` `peekNodeAuth()` `ensureNodeAuth()` `APP_COOKIE` `nodeToken` …9 个 |
 | `lib/core/avatar.js` | 351 | `avatarsFile()` `readAvatars()` `writeAvatars()` `defaultAvatar()` `listAvatars()` `createProjectForAvatar()` `ensureProject()` `createAvatar()` …20 个 |
@@ -71,8 +71,8 @@
 | `src/client/parts/45-map.js` | 110 | `TaskMap` `L` |
 | `src/client/parts/46-pm.js` | 182 | `PMModal` `RichText` |
 | `src/client/parts/47-three.js` | 325 | `ThreeAvatar` `ThreeCity` `TechBackdrop` |
-| `src/client/parts/49-msg.js` | 161 | `Elapsed` `FN_LABEL` `ACT_LABEL` `FN_LABEL_EN` `ACT_LABEL_EN` `FIELD_ZH` `FIELD_EN` `KIND_META` `CxEntityCard` `L` |
-| `src/client/parts/50-chat.js` | 1762 | `ChatPanel` `userUpRef` `ToolRow` `PM_CMD_RE` `CN_NUM` `PM_ENTITY` `PM_TOPICS` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` |
+| `src/client/parts/49-msg.js` | 165 | `Elapsed` `FN_LABEL` `ACT_LABEL` `FN_LABEL_EN` `ACT_LABEL_EN` `FIELD_ZH` `FIELD_EN` `KIND_META` `CxEntityCard` `L` |
+| `src/client/parts/50-chat.js` | 1784 | `FORM_VALUE_ALIAS` `ChatPanel` `userUpRef` `ToolRow` `PM_CMD_RE` `CN_NUM` `PM_ENTITY` `PM_TOPICS` `APP_CHAIN` `CHAIN_VALUE` |
 | `src/client/parts/51-pmselection.js` | 32 | `usePmSelection` |
 | `src/client/parts/52-pmdata.js` | 68 | `PM_FOCUS_UID` `usePmData` |
 | `src/client/parts/55-pm.js` | 213 | `PM_REPORT_TONE` `PM_STATUS_TONE` `PM_KIND_LABEL` `PM_SHORT` `PM_ACTION_LABEL` `PM_REPORT_ZH` `PM_REPORT_EN` `PM_ACTION_DONE` `PM_MENU_ACTIONS` `Gantt` |
@@ -169,6 +169,6 @@
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
 | `docs/PUBLISH.md` | 172 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
-| `docs/RSI-LEDGER.md` | 86 | 人写 |
+| `docs/RSI-LEDGER.md` | 76 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 243 | 人写 |

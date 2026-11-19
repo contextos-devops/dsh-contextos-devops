@@ -1,3 +1,23 @@
+    // 服务端只给「有依据」的预填值（标题/内容/起止时间/地点/链接）；这里按表单真实字段名落位，
+    // 字段名不一致时走别名（如服务端 address → 表单 place），多余字段一律丢掉，避免写脏数据。
+    const FORM_VALUE_ALIAS = {
+      title: ['title', 'name', 'subject'],
+      content: ['content', 'remark', 'desc', 'description', 'note', 'summary'],
+      begin_time: ['begin_time', 'start_time', 'begin', 'start'],
+      end_time: ['end_time', 'finish_time', 'end', 'finish'],
+      address: ['address', 'place', 'location', 'venue'],
+      link: ['link', 'url'],
+    };
+    const fitFieldValues = (vals, fields) => {
+      const out = {};
+      const names = (fields || []).map((f) => f.name);
+      for (const [k, v] of Object.entries(vals || {})) {
+        if (v === '' || v === null || v === undefined) continue;
+        const target = names.includes(k) ? k : (FORM_VALUE_ALIAS[k] || []).find((n) => names.includes(n));
+        if (target) out[target] = v;
+      }
+      return out;
+    };
     function ChatPanel({ open, booted, fx, onClose, nodes, node, spaces, space, apps, app, avatar, ideFile, view, mode, onModeChange, onRequest, webTabs, onOpenWebTab, onCloseWebTab, onNavWebTab, onReloadWebTab, onManageWebTab, full, docked, theme, locale, themeMode, setThemeMode, langMode, setLangMode, onToggleFull, onInit, onSelectNode, onSelectSpace, onSelectApp, onSelectAvatar, avatars, backgrounds, bg, onSelectBg, onCreateBg, onUploadBg, onUploadAvatar, onUpdateScene, onUpdateAvatar, onCreateAvatar, onRefresh, onOpenApp, onData, onStore, onDevices, formReq, cards, onOpenDev, onWebFocus }) {
       const tt = (key) => term(locale, key);
       const sectionTitle = (cn, en) => locale === 'zh' ? `${cn} ${en}` : en;
@@ -729,8 +749,10 @@
 
         const fk = `${node}|${app0.space}|${app0.place_uid}|${fn}`;
         const saved = (typeof readFormState === 'function' ? readFormState(fk) : null) || {};
-        const planned = route && route.values && Object.keys(route.values).length ? { ...route.values } : null;
+        const fitted = route && route.values ? fitFieldValues(route.values, fields) : {};
+        const planned = Object.keys(fitted).length ? fitted : null;
         const values = saved.values || planned;
+        if (planned) push('step', `⑤ 预填参数：${Object.keys(planned).join(' / ')}（可直接改）`);
         // 表单自带上下文：节点 / 空间 / 命令 / 实例 / 身份，随时能拼出完整接口 URL
         const ctx = {
           node, space: app0.space,                 // 空间只用名称（pod），绝不用 uid

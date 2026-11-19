@@ -109,9 +109,13 @@
           (fields || []).map((f) => (done
             ? h('div', { key: f.name, className: 'cx-kv-row' }, h('span', { className: 'cx-kv-k' }, fLabel(f)), h('b', { className: 'cx-kv-v' }, vals[f.name] || '—'))
             : h(CxField, { key: f.name, className: 'cx-field-lite', label: `${fLabel(f)}${f.required ? ' *' : ''}` },
-                f.type === 'select'
+                (f.type === 'select' && (f.options || []).length)
                   ? h(CxSelect, { value: vals[f.name] ?? '', disabled: busy, onChange: (e) => set(f.name, e.target.value) },
-                      (f.options || []).map((o) => h('option', { key: o.value, value: o.value }, o.label)))
+                      // 预填值可能不在选项里（如刚抽出的时间），补一个同名选项，避免 silently 丢值
+                      ((f.options || []).some((o) => String(o.value) === String(vals[f.name] ?? ''))
+                        ? []
+                        : (vals[f.name] ? [{ value: vals[f.name], label: vals[f.name] }] : []))
+                        .concat(f.options || []).map((o) => h('option', { key: o.value, value: o.value }, o.label)))
                   : h(CxInput, { value: vals[f.name] ?? '', disabled: busy, placeholder: f.label || f.name, onChange: (e) => set(f.name, e.target.value) }))))),
         err ? h('div', { className: 'cx-wform-err' }, err) : null,
         done && link ? h('div', { className: 'cx-foot' },

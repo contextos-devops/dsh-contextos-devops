@@ -617,3 +617,21 @@ gate added so the same bug cannot return silently
   ⑤ `AGENTS.md` 岗位表加一行「加页面/组件/状态/接口/样式/动效 → 先 scaffold」。
 - **数字**：样式层 5 → **6**；扩展路径 0 → **6 类脚本化**；`anim` 用例 5/5；`check:extend` PASS；
   门禁 15 道（+`css-check` 之后未再新增）；`build:client` exit 0。
+
+## 2026-11-17 — 样式全写在一个文件里，新组件只能复制粘贴
+
+- **现象**：新增一个弹窗/卡片要复制 15~20 行 CSS（字号、颜色、flex 三段式），`main.css` 3396 行里
+  `font-size:var(--cx-fs-body)` 出现 150 次、`display:flex` 290 次、`align-items:center` 214 次；
+  字号还有 74 处写成 `px` 字面量，色值 562 处 `#hex`。
+- **根因**：级联层 —— 只有 `tokens.css`(2 行) 与 `main.css`(3396 行) 两个文件，缺「基座/布局/控件」三层，
+  于是每个组件都要自己重复声明默认值；同时 `:root` 在 main.css 里又声明了一遍调色板，主题有两个真源。
+- **类别**：级联层 · 第 2 次（首次是 2026-11-15「宿主令牌污染」，那次只清了 `:root` 命名空间）。
+- **固化**：
+  ① 新建 `base.css`/`layout.css`/`kit.css`，`build/client.mjs` 固定顺序 `tokens → base → layout → kit → main`；
+  ② `tokens.css` 成为唯一字面量层（含四块主题：`:root` 深/浅、`.cx-shell:not([data-theme=light])`、`.cx-shell[data-theme=light]`），main.css 的两处 `:root` 调色板删除；
+  ③ 新增 `scripts/css-check.mjs`（构建第 8 道）：tokens 只准 `:root/.cx-shell`、main.css 字面量色/`rgba`/`!important`/重复率/行数棘轮、`var(--cx-*)` 必须有定义或 fallback；
+  ④ 新增 `07-kit.js` 结构原语（`CxStack/CxRow/CxCol/CxSection/CxField/CxBtn/CxInput/CxSelect/CxChip/CxTabs`），`UpdateModal` 迁移为「零 className」写法；
+  ⑤ `ui-check` 增 2 条：原语必须存在、`UpdateModal` 必须用原语。
+- **数字**：`font-size:<px>` 74 → **0**；未定义令牌 7 个（`--cx-panel-2/--cx-text-2/--cx-text-3/--cx-fg/--cx-dim/--cx-mut/--cx-rose`）→ 0（补别名）；
+  同选择器重复声明 −103 条；CSS 文件 2 → 5 个（tokens 298 / base 75 / layout 50 / kit 119 / main 3395）；
+  门禁 14 → 15 道，`build:client` exit 0。

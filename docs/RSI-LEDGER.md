@@ -12,24 +12,6 @@ Workflow: 目标 → 计划（时间/金钱预期）→ 分析决策 → 任务�
 
 Each entry records: lesson → reusable abstraction → verification.
 
-## 2026-11-17 — 样式全写在一个文件里，新组件只能复制粘贴
-
-- **现象**：新增一个弹窗/卡片要复制 15~20 行 CSS（字号、颜色、flex 三段式），`main.css` 3396 行里
-  `font-size:var(--cx-fs-body)` 出现 150 次、`display:flex` 290 次、`align-items:center` 214 次；
-  字号还有 74 处写成 `px` 字面量，色值 562 处 `#hex`。
-- **根因**：级联层 —— 只有 `tokens.css`(2 行) 与 `main.css`(3396 行) 两个文件，缺「基座/布局/控件」三层，
-  于是每个组件都要自己重复声明默认值；同时 `:root` 在 main.css 里又声明了一遍调色板，主题有两个真源。
-- **类别**：级联层 · 第 2 次（首次是 2026-11-15「宿主令牌污染」，那次只清了 `:root` 命名空间）。
-- **固化**：
-  ① 新建 `base.css`/`layout.css`/`kit.css`，`build/client.mjs` 固定顺序 `tokens → base → layout → kit → main`；
-  ② `tokens.css` 成为唯一字面量层（含四块主题：`:root` 深/浅、`.cx-shell:not([data-theme=light])`、`.cx-shell[data-theme=light]`），main.css 的两处 `:root` 调色板删除；
-  ③ 新增 `scripts/css-check.mjs`（构建第 8 道）：tokens 只准 `:root/.cx-shell`、main.css 字面量色/`rgba`/`!important`/重复率/行数棘轮、`var(--cx-*)` 必须有定义或 fallback；
-  ④ 新增 `07-kit.js` 结构原语（`CxStack/CxRow/CxCol/CxSection/CxField/CxBtn/CxInput/CxSelect/CxChip/CxTabs`），`UpdateModal` 迁移为「零 className」写法；
-  ⑤ `ui-check` 增 2 条：原语必须存在、`UpdateModal` 必须用原语。
-- **数字**：`font-size:<px>` 74 → **0**；未定义令牌 7 个（`--cx-panel-2/--cx-text-2/--cx-text-3/--cx-fg/--cx-dim/--cx-mut/--cx-rose`）→ 0（补别名）；
-  同选择器重复声明 −103 条；CSS 文件 2 → 5 个（tokens 298 / base 75 / layout 50 / kit 119 / main 3395）；
-  门禁 14 → 15 道，`build:client` exit 0。
-
 ## 2026-11-17 · 原生控件与自绘样式两套语言
 - 现象：确认/候选/时间用的是浏览器原生控件，与应用风格割裂；根因：控件层（级联层第 3 次）。固化：`cxAsk`+`CxConfirmHost`、`CxCombo`、`CxDateTime` + `ui-probe datetime-pop`。数字：4→0、1→0、2→0。
 
@@ -41,6 +23,14 @@ Each entry records: lesson → reusable abstraction → verification.
 
 2026-11-15 的 3 条早期条目，连同之前的 45 条，均已移入 [docs/archive/LEDGER-2026H1.md](archive/LEDGER-2026H1.md)（10-08 起，按日原样保存）。
 正册只保留**最近 6–8 条**（滚动窗口，含本次上架；超过 8 条就把最旧的移入归档）；查旧坑先看这份，不够再进归档。
+
+## 2026-11-19 — 定位到应用后表单全空
+
+- 现象：输入「明天见投资人，帮我创建一个会议安排」，路由正确（会议管理 / meeting），表单却 title/content/begin_time 全空；begin_time 声明为 select 但 options 为空，填了也显示不出来。
+- 根因：① `lib/core/appindex.js` 原 `valuesOf` 只认「标题：」「引号」「X 分」三种写法，原话里的时间和地点直接丢掉；② `src/client/parts/49-msg.js` 对 select 只渲染 options，空 options 的受控 select 会把预填值静默回退成空白。
+- 固化：`extractValues`/`parseWhen`（今天/明天/下周一/12月5日 + 上午/下午/3点半 → `YYYY-MM-DD HH:mm`，只有日期默认 09:00+1h，没有时间不猜）；客户端 `fitFieldValues` 按真实字段名落位（address→place 等别名，多余字段丢弃）；空 options 的 select 退回输入框，预填值不在选项里时补一个 option。
+- 数字：`route-check` 287 PASS；「明天见投资人…」→ title=见投资人、2026-11-20 09:00~10:00；「下周一上午10点评审会」→ 2026-11-23 10:00；「加一条记录」仍为 none。
+- 教训：**「有值」不等于「看得见」**——受控 select 的空 options 会把预填值静默丢掉；预填要同时改「抽值」和「落位」两端。
 
 ## 2026-11-19 — 反馈编辑弹窗把「待改进」显示成「可完成」
 
