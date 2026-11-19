@@ -102,7 +102,7 @@
           }
           body.uid_options = Object.fromEntries(Object.entries(parent || {}).filter(([k, v]) => /_uid$/.test(k) && k !== 'user_uid' && v));
           if (mode === 'edit') { body.item_uid = item.uid; body.uid_options = uidFieldMap(item); await api('pmModify', body); }
-          else await api('pmCreate', body);
+          else { const d = await api('pmCreate', body); onDone(d); return; }
           onDone();
         } catch (e) { setErr(String(e?.message || e)); } finally { setBusy(false); }
       };

@@ -340,8 +340,8 @@
         return () => clearTimeout(t);
       }, [toast]);
       const loadPref = (k, d) => cxRead(k, d);
-      const [nodeStatusFilter, setNodeStatusFilter] = useState(() => loadPref('filter-node', []));
-      const [spaceStatusFilter, setSpaceStatusFilter] = useState(() => loadPref('filter-space', []));
+      const [nodeStatusFilter, setNodeStatusFilter] = useState(() => [...new Set((loadPref('filter-node', []) || []).map((v) => (v === 'running' ? 'running' : 'offline')))]);
+      const [spaceStatusFilter, setSpaceStatusFilter] = useState(() => [...new Set((loadPref('filter-space', []) || []).map((v) => (v === 'running' || v === 'start' ? 'running' : 'stopped')))]);
       const [appSpaceFilter, setAppSpaceFilter] = useState(() => loadPref('filter-app', []));
       const [storeSpaceFilter, setStoreSpaceFilter] = useState(() => loadPref('filter-store', []));
       useEffect(() => cxWrite('filter-node', nodeStatusFilter), [nodeStatusFilter]);
@@ -1413,15 +1413,24 @@
         window.addEventListener('pointermove', move);
         window.addEventListener('pointerup', up);
       };
-      const nodeRows = nodes.filter((n) => !nodeStatusFilter.length || nodeStatusFilter.includes(n.state));
-      const spaceRows = spaces.filter((s) => !spaceStatusFilter.length || spaceStatusFilter.includes(s.status));
-      const appRows = apps.filter((a) => !appSpaceFilter.length || appSpaceFilter.includes(a.space || space || ''));
-      const appSpaceOptions = [...new Set(apps.map((a) => a.space || space).filter(Boolean))].map((v) => ({ value: v, label: v }));
-      const stateLabel = (v) => ({ running: t('running'), stopped: t('stopped'), offline: t('offline'), missing: t('missing'), starting: t('starting') })[v] || v;
-      const nodeStatusOptions = [...new Set(nodes.map((n) => n.state).filter(Boolean))].map((v) => ({ value: v, label: stateLabel(v) }));
-      const spaceStatusOptions = [...new Set(spaces.map((s) => s.status).filter(Boolean))].map((v) => ({ value: v, label: v === 'start' ? t('running') : v === 'stop' ? t('offline') : v }));
+      // 过滤选项直接由当前数据列表聚合，并带上计数；标签必须与卡片上的状态词一致
+      // （节点卡只有 运行中/离线，空间卡只有 运行中/已停止），不能拿底层 state 原样当标签。
+      const countOptions = (list, keyOf, labelOf) => {
+        const counts = new Map();
+        (list || []).forEach((x) => { const v = keyOf(x); if (v) counts.set(v, (counts.get(v) || 0) + 1); });
+        return [...counts.entries()].map(([value, count]) => ({ value, count, label: labelOf(value) }));
+      };
+      const nodeStatusKey = (n) => (n.state === 'running' ? 'running' : 'offline');
+      const spaceStatusKey = (s) => (String(s.status || '').trim() === 'start' ? 'running' : 'stopped');
+      const appSpaceKey = (a) => a.space || space || '';
+      const nodeRows = nodes.filter((n) => !nodeStatusFilter.length || nodeStatusFilter.includes(nodeStatusKey(n)));
+      const spaceRows = spaces.filter((s) => !spaceStatusFilter.length || spaceStatusFilter.includes(spaceStatusKey(s)));
+      const appRows = apps.filter((a) => !appSpaceFilter.length || appSpaceFilter.includes(appSpaceKey(a)));
+      const appSpaceOptions = countOptions(apps, appSpaceKey, (v) => v);
+      const nodeStatusOptions = countOptions(nodes, nodeStatusKey, (v) => (v === 'running' ? t('running') : t('offline')));
+      const spaceStatusOptions = countOptions(spaces, spaceStatusKey, (v) => (v === 'running' ? t('running') : t('stopped')));
       const storeRows = store.filter((s) => !storeSpaceFilter.length || storeSpaceFilter.includes(s.space));
-      const storeSpaceOptions = [...new Set(store.map((s) => s.space).filter(Boolean))].map((v) => ({ value: v, label: v }));
+      const storeSpaceOptions = countOptions(store, (s) => s.space, (v) => v);
       const activeNode = nodes.find((n) => n.port === node);
       const activeSpace = spaces.find((s) => s.name === space);
       const running = nodes.filter((n) => n.state === 'running').length;
@@ -1554,8 +1563,8 @@
             title: appMode === 'store' ? t('store') : tp('recent'),
             count: appMode === 'store' ? `${store.length} SERVICES` : (node ? `${appRows.length}/${apps.length} APPS` : 'SELECT NODE'),
             tools: appMode === 'store'
-              ? [h(MultiFilter, { key: 'f', label: t('space'), options: storeSpaceOptions, value: storeSpaceFilter, onChange: setStoreSpaceFilter }), h('button', { key: 'b', className: 'cx-btn xs pri', onClick: backRecent }, '← ' + t('recent')), h('span', { key: 'sp', className: 'cx-tools-spacer' }), h(IconButton, { name: 'refresh', key: 'r', className: 'cx-btn xs cx-icon-btn cx-tool-refresh', disabled: !node, onClick: () => act('REFRESH STORE', () => loadStore(node)), title: t('refresh') }), h(IconButton, { name: 'plus', key: 't', className: 'cx-btn xs cx-icon-btn', disabled: !space, onClick: () => setModal('app'), title: t('create') + ' ' + t('template') })]
-              : [h(MultiFilter, { key: 'f', label: t('space'), options: appSpaceOptions, value: appSpaceFilter, onChange: setAppSpaceFilter }), h('button', { key: 's', className: 'cx-btn xs pri', disabled: !node, onClick: showStore }, t('store')), h('span', { key: 'sp', className: 'cx-tools-spacer' }), h(IconButton, { name: 'refresh', key: 'r', className: 'cx-btn xs cx-icon-btn cx-tool-refresh', disabled: !node, onClick: () => act('REFRESH RECENT', () => loadApps(node, space, actorUid)), title: t('refresh') }), h(IconButton, { name: 'plus', key: 'c', className: 'cx-btn xs cx-icon-btn', disabled: !space, onClick: () => setModal('app'), title: t('create') + ' ' + t('template') })],
+              ? [h('button', { key: 'b', className: 'cx-btn xs pri', onClick: backRecent }, '← ' + t('recent')), h(MultiFilter, { key: 'f', label: t('space'), options: storeSpaceOptions, value: storeSpaceFilter, onChange: setStoreSpaceFilter, menu: true }), h('span', { key: 'sp', className: 'cx-tools-spacer' }), h(IconButton, { name: 'refresh', key: 'r', className: 'cx-btn xs cx-icon-btn cx-tool-refresh', disabled: !node, onClick: () => act('REFRESH STORE', () => loadStore(node)), title: t('refresh') }), h(IconButton, { name: 'plus', key: 't', className: 'cx-btn xs cx-icon-btn', disabled: !space, onClick: () => setModal('app'), title: t('create') + ' ' + t('template') })]
+              : [h('button', { key: 's', className: 'cx-btn xs pri', disabled: !node, onClick: showStore }, t('store')), h(MultiFilter, { key: 'f', label: t('space'), options: appSpaceOptions, value: appSpaceFilter, onChange: setAppSpaceFilter, menu: true }), h('span', { key: 'sp', className: 'cx-tools-spacer' }), h(IconButton, { name: 'refresh', key: 'r', className: 'cx-btn xs cx-icon-btn cx-tool-refresh', disabled: !node, onClick: () => act('REFRESH RECENT', () => loadApps(node, space, actorUid)), title: t('refresh') }), h(IconButton, { name: 'plus', key: 'c', className: 'cx-btn xs cx-icon-btn', disabled: !space, onClick: () => setModal('app'), title: t('create') + ' ' + t('template') })],
           },
             appMode === 'store'
               ? (storeRows.length ? storeRows.map((s) => h(StoreRow, { key: `${s.space}:${s.command}:${s.uid}`, s, onCreate: openStoreCreate, busy: !!busy, onAction: storeAct, onCode: storeCode, onConfig: storeConfig, locale, node })) : h('div', { className: 'cx-empty' }, '应用商店加载中，或当前节点没有 service。'))

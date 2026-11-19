@@ -7,90 +7,20 @@
 
 ## 1. 纵向结构
 
-```text
-标题栏 HeaderBar
-标签栏 TabBar
-工具栏 ToolBar
-内容区 Content
-状态栏 StatusBar
-```
-
-对应组件：
-
-```text
-UiBar kind="header|tabs|toolbar|status"
-```
+`UiBar kind="header|tabs|toolbar|status"` 依次是标题栏 HeaderBar、标签栏 TabBar、工具栏 ToolBar、内容区 Content、状态栏 StatusBar。
 
 ## 2. 横向结构
 
-```text
-左导航栏  内容区  预览区  右导航栏
-             └──── 输出区 ────┘
-```
-
-- 输出区位于内容区与预览区下方；
-- 左导航、右导航独立滚动；
-- 内容区与预览区共享画布；
-- 输出区高度可调，默认不超过 42%。
-
-对应组件：
-
-```text
-UiWorkspace {
-  header, tabs, toolbar,
-  left, content, preview, output, right,
-  status
-}
-```
+左导航栏、内容区、预览区、右导航栏；输出区在内容区与预览区下方（高度可调，默认 ≤42%），左右导航各自独立滚动，内容区与预览区共享画布。对应组件 `UiWorkspace { header, tabs, toolbar, left, content, preview, output, right, status }`。
 
 ## 3. 内容结构
 
-```text
-UiCardList   卡片列表
-UiTableList  表格列表
-UiTreeList   树状结构
-```
-
-统一空态、间距、滚动和键盘可达性。
+`UiCardList`（卡片列表）、`UiTableList`（表格列表）、`UiTreeList`（树状结构）；三者统一空态、间距、滚动与键盘可达性。
 
 ## 4. 展示元素
 
-### 单行标题
-
-```text
-SingleLineTitle
-= UiAffordance
-```
-
-```text
-[图标] 中文 English 操作
-```
-
-显示模式：
-
-```text
-icon   只显示图标
-short  图标 + 中文
-full   图标 + 中文 + 英文
-text   只显示文字
-```
-
-### 双行标题
-
-```text
-DoubleLineTitle
-= EntityTitle
-```
-
-```text
-[大图/图标]  类型  主标题              状态
-             副标题（时间/文件/计数等）
-```
-
-- 图片尺寸 = 两行文字高度；
-- 类型在标题左侧；
-- 状态在标题右侧；
-- 副标题承载时间、文件、计数等元信息。
+- **单行标题** `SingleLineTitle = UiAffordance`，形如 `[图标] 中文 English 操作`；显示模式 `icon`（只图标）/`short`（图标+中文）/`full`（图标+中文+英文）/`text`（只文字）。
+- **双行标题** `DoubleLineTitle = EntityTitle`：`[大图/图标] 类型 主标题 … 状态`，第二行副标题放时间/文件/计数；图片尺寸 = 两行文字高，类型在左、状态在右。
 
 ## 5. 布局与视觉规则
 
@@ -168,10 +98,7 @@ UiAddressBar {
 
 ---
 
-# 今日设计规范（2026-11-08 定稿）
-
-> 单一来源：`src/client/styles/tokens.css`（变量）+ `main.css` 末尾「字号规范（唯一来源）」段。
-> 所有页面/卡片/控件必须引用变量，不允许再写裸像素。
+> 单一来源：`tokens.css`（变量）+ `main.css` 末尾字号段；页面/卡片/控件只引用变量，不写裸像素。
 
 ## 9. 字号（唯一来源）
 
@@ -186,18 +113,13 @@ UiAddressBar {
 
 ## 10. 颜色
 
-- **色系**（`data-hue`，7 档）：cyan / green / violet / amber / rose / ice / warm
-  - 每档同时定义 `--cx-cyan`、`--cx-accent`、`--cx-green`、`--cx-hue-rgb`、`--cx-green-rgb`
-  - 所有 `rgba()` 一律写 `rgba(var(--cx-hue-rgb), α)`，禁止硬编码色值
-- **风格**（`data-style`，7 档）：tech / classic / desert / rainforest / cyber / steam / minimal
-  - 覆盖主色 + 背景渐变 + 字体族（古典用衬线）
-- 边框/弱文字跟随色系：`--cx-line`、`--cx-line2`、`--cx-border`、`--cx-border-strong`、`--cx-muted`、`--cx-text-dim`
+- **色系** `data-hue`（7 档）：cyan/green/violet/amber/rose/ice/warm，每档定义 `--cx-cyan`、`--cx-accent`、`--cx-green`、`--cx-hue-rgb`、`--cx-green-rgb`；`rgba()` 一律写 `rgba(var(--cx-hue-rgb), α)`，禁止硬编码色值。
+- **风格** `data-style`（7 档）：tech/classic/desert/rainforest/cyber/steam/minimal，覆盖主色 + 背景渐变 + 字体族（古典用衬线）。
+- 边框/弱文字跟随色系：`--cx-line`、`--cx-line2`、`--cx-border`、`--cx-border-strong`、`--cx-muted`、`--cx-text-dim`。
 
 ## 11. 布局
 
-- **顶部四段**：`[☰] [品牌标题] [模式组 flex:1 居中] [样式组]`
-  - 模式组吃掉剩余空间并居中；样式组 2px 间隔、固定右侧
-  - 窄屏按优先级隐藏：声效(1560) → 动效(1440) → 色系(1340) → 风格(1240) → 主题(1140) → 语言(1040)
+- **顶部四段**：`[☰] [品牌标题] [模式组 flex:1 居中] [样式组]`；模式组吃掉剩余空间并居中，样式组 2px 间隔固定右侧；窄屏按序隐藏声效(1560)→动效(1440)→色系(1340)→风格(1240)→主题(1140)→语言(1040)。
 - **右栏**：`时间 / 任务 / 报告 / 反馈 / 地点` 五段，标题依次吸顶（`top: i*34px`）
 - **卡片**：`EntityTitle`（图标 + 标题 + 类型 + 状态 + 元信息）+ 正文 + 操作行
 
@@ -219,19 +141,7 @@ UiAddressBar {
 
 ## 14. 动效（全部可被「动效·关」禁用）
 
-| 名称 | 时长 | 触发 |
-|---|---|---|
-| 卡片入场（5 种：滑入/弹跳/翻牌/霓虹/下落） | 1.0s | 新卡或字段变化 |
-| 扫光 | 1.8s | 同上 |
-| 模式欢迎（五扇门） | 3.2s | 首次进入模式 |
-| 初始化欢迎 | 1.8s | 进入/离开初始化 |
-| 选中闪光 | 1.5s | 切换模式 |
-| 光波扩散 | 3.2s | 点击（canvas） |
-| 光标彗星 | 持续 | 鼠标移动 |
-| 静止光波 | 60s | 鼠标静止 ≥55s |
-| 数据操作 | 0.95s | 创建/修改/删除/刷新 |
-
-动效强弱四档（强/中/弱/微）+ 关：`data-light` 控制光晕透明度、彗星透明度、动画时长。
+卡片入场（滑入/弹跳/翻牌/霓虹/下落）与扫光：1.0s/1.8s，新卡或字段变化；模式欢迎（五扇门）3.2s；初始化欢迎 1.8s；选中闪光 1.5s；光波扩散 3.2s（canvas 点击）；光标彗星（鼠标移动，持续）；静止光波 60s（静止 ≥55s）；数据操作 0.95s。动效强弱四档（强/中/弱/微）+ 关：`data-light` 控制光晕透明度、彗星透明度、动画时长。
 
 ## 15. 交互反馈
 
@@ -265,9 +175,10 @@ UiAddressBar {
 3. **显示用 `label`**：UI 展示 label（缺省回退 name），不把显示值发回去。
 4. **存量数据要归一**：编辑旧记录时按 `value/name/label` 三种形态匹配到 `value` 再提交。
 5. **默认值也取自选项**：默认 = `options[0].value`，不硬编码英文名。
-6. **初始 state 也要归一，不能只在提交时归一**：`options` 通常是异步加载的，记录里的 `name`（如 `shouldImprove`）与选项 `value`（如 `"1"`）不是同一形态；`<select value>` 匹配不到选项时 React/浏览器会**静默回退到第一项**，界面显示「可完成」而实际是「待改进」。做法：options 到位后用 effect 把 state 按 `value/name/label` 归一到 `value`，并让弹窗以 `kind:mode:uid` 为 key 重挂载，避免切换记录时沿用旧 state。回归：`46-pm.js` 的 PMModal（反馈/报告类型）与 `50-chat.js` 的 `PMModal` key。
-7. **筛选 chip 的标签也走翻译表**：`pmFilterOptions` 对 `status_name` 调 `pmStatusText`，反馈状态 `canFinish/shouldImprove` 必须同时进 `PM_STATUS_ZH/EN`；不要拼 `${key}_label`。英文模式下服务端 `status_label` 就是枚举名，直接读它会把 `shouldImprove` 漏到筛选栏。回归：`55-pm.js` 的反馈状态筛选。
-8. **生成的消息存描述、不存成品字符串**：创建/更新/删除/动作结果消息写入语言无关的 `i18n:{op,kind,title,action}`，渲染时用 `pmMsgText(m)` 重新取词；卡片状态从 `status_name`/`type_name` 现算，快照里的 `status_label` 只作旧数据兜底（它是生成时那门语言的字符串）。状态词表与后台 `STATUS_ZH` 对齐：`created=待提交`、`approved=待开始`。回归：`50-chat.js` 的 `aiCard(..., { i18n })`、`55-pm.js` 的 `PmCard`。
+6. **初始 state 也要归一**：`options` 异步到达，记录里的 `name`（`shouldImprove`）与选项 `value`（`"1"`）不同形态；`<select value>` 匹配不到会静默回退第一项（显示「可完成」实为「待改进」）。options 到位后用 effect 归一到 `value`，弹窗以 `kind:mode:uid` 为 key 重挂载。回归：`46-pm.js` 与 `50-chat.js` 的 PMModal。
+7. **筛选 chip 标签走翻译表**：`pmFilterOptions` 的 `status_name` 调 `pmStatusText`，`canFinish/shouldImprove` 同时进 `PM_STATUS_ZH/EN`；别拼 `${key}_label`（英文模式下 `status_label` 就是枚举名）。回归：`55-pm.js` 反馈筛选。
+8. **消息存描述不存成品字符串**：写 `i18n:{op,kind,title,action}`，渲染用 `pmMsgText(m)` 现取词；卡片状态从 `status_name`/`type_name` 现算，快照 `status_label` 只兜底旧数据。词表对齐后台：`created=待提交`、`approved=待开始`。回归：`50-chat.js`、`55-pm.js`。
+9. **筛选项聚合计数、与卡片同词**：`countOptions`；节点「运行中/离线」；长空间名强制下拉。
 
 实现入口：`lib/core/project.js → optionValue({ node, space, command, field, raw })`。
 
@@ -287,20 +198,20 @@ UiAddressBar {
 
 ### 20.1 六层，只允许单向依赖
 
-| 层 | 文件 | 只放什么 | 不许放什么 |
-| --- | --- | --- | --- |
-| 1 令牌 | `tokens.css` | `--cx-*` 字面量 + 主题覆盖 | 组件类 |
-| 2 基座 | `base.css` | 元素默认值（字体继承、标题、`table`、`code`、滚动条、焦点环） | 组件 |
-| 3 布局 | `layout.css` | `.cx-row/.cx-col/.cx-sec/.cx-fill/.cx-scroll` + 间距工具类 | 颜色/字号 |
-| 4 控件 | `kit.css` | `.cx-btn/.cx-input/.cx-chip/.cx-tag/.cx-tabs/.cx-list/.cx-panel/.cx-table/.cx-modal` | 业务布局 |
-| 5 动效 | `motion.css` | `.cx-anim-*`；`prefers-reduced-motion` 一次关掉 | 业务动画 |
-| 6 业务 | `main.css` | 只写「这个功能独有」的定位/网格/尺寸例外 | 重复的字体/颜色/圆角/间距 |
+| 层 | 文件 | 只放什么 |
+| --- | --- | --- |
+| 1 令牌 | `tokens.css` | `--cx-*` 字面量 + 主题覆盖（不放组件类） |
+| 2 基座 | `base.css` | 元素默认值：字体继承、标题、`table`、`code`、滚动条、焦点环 |
+| 3 布局 | `layout.css` | `.cx-row/.cx-col/.cx-sec/.cx-fill/.cx-scroll` + 间距工具类（无颜色/字号） |
+| 4 控件 | `kit.css` | `.cx-btn/.cx-input/.cx-chip/.cx-tag/.cx-tabs/.cx-list/.cx-panel/.cx-table/.cx-modal` |
+| 5 动效 | `motion.css` | `.cx-anim-*`；`prefers-reduced-motion` 一次关掉 |
+| 6 业务 | `main.css` | 只写该功能独有的定位/网格/尺寸例外，不重复字体/颜色/圆角/间距 |
 
-依赖方向：`main → motion → kit → layout → base → tokens`；反方向一律不接受。
+依赖方向 `main → motion → kit → layout → base → tokens`，反方向不接受。
 
 ### 20.2 新组件的默认写法
 
-先在 `07-kit.js` 找原语拼结构，不写 `className`：
+先在 `07-kit.js` 找原语拼结构，不手写 `className`：
 
 ```js
 h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick: reload }, T('Refresh')) },
@@ -310,38 +221,20 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
   h(CxToggle, { tabs: MODES, value: mode, onChange: setMode }));
 ```
 
-原语：`CxStack/CxRow/CxCol`（布局，`gap` 走 `--cx-g1..g5`）、`CxSection`（标题/副标题/动作/内容）、`CxField`（标签+控件+提示，`full` 独占一行）、`CxBtn`（`variant`+`size`+`icon/active/loading`）、`CxInput/CxSelect`、`CxChip/CxTabs`、`CxToggle`（平铺分组，待抽 `CxSegmented`）。
-
-要写新样式时：① 已有类能否拼出来 → ② 能否给 `kit.css` 加**变体** → ③ 才在 `main.css` 写业务规则（且只写定位/网格）。
+原语：`CxStack/CxRow/CxCol`（`gap` 走 `--cx-g1..g5`）、`CxSection`（标题/副标题/动作/内容）、`CxField`（标签+控件+提示，`full` 独占一行）、`CxBtn`（`variant`+`size`+`icon/active/loading`）、`CxInput/CxSelect`、`CxChip/CxTabs`、`CxToggle`（平铺分组，待抽 `CxSegmented`）。
+新样式三步：① 已有类能否拼出 → ② 能否给 `kit.css` 加变体 → ③ 才在 `main.css` 写业务规则（只写定位/网格）。
 
 ### 20.3 文案（铁律：英文优先）
 
-- 新功能一律**英文 key**，中文进 `00-prelude.js` 的 `ZH_TEXT`；旧中文 key 靠 `EN_TEXT` 翻译并逐步迁移。
-- 渲染只走 `T('…')`；带变量用 `TT('已更新 {kind}', { kind })`，模板两边都要词条。
-- 缺词条或把中文写进 `title/label/placeholder/desc`，`npm run check:i18n` 会红（`i18n-lint`，直写中文按基线只减不增）。
+新功能一律**英文 key**，中文进 `00-prelude.js` 的 `ZH_TEXT`；旧中文 key 靠 `EN_TEXT` 翻译并逐步迁移。渲染只走 `T('…')`；带变量用 `TT('已更新 {kind}', { kind })`，模板两边都要词条。缺词条或把中文写进 `title/label/placeholder/desc` → `npm run check:i18n` 红（`i18n-lint` 按基线只减不增）。
 
-### 20.4 门禁
-
-`scripts/css-check.mjs`：tokens 只准 `:root/.cx-shell`；main.css 的字面量颜色/`!important`/重复声明按基线只减不增；`var(--cx-*)` 必须已定义或有 fallback；死类只 WARN。
-
-### 20.5 六类扩展的固定入口
-
-加页面/组件/状态/接口/样式/动效，先 `npm run new -- <kind> <Name>`，再按 `docs/EXTENDING.md` 补接线；
-动效验收 `node scripts/ui-probe.mjs --case anim`（量 `animationName`/`animationDuration`）。
-
-### 20.8 交互控件
+### 20.4 交互控件
 
 确认 `cxAsk`+`CxConfirmHost`；候选输入 `CxCombo`；日期时间 `CxDateTime`（值 `YYYY-MM-DD HH:mm:ss`）。禁 `window.confirm`/`datalist`/`type=date`；门禁 `ui-check` 三条、`ui-probe datetime-pop`。
 
-### 20.7 分节堆叠（标题 + 当前卡片）
+### 20.5 状态与类型的颜色语言
 
-`.cx-pm-sec` 与其中的 `.cx-card-list` 都是 `display:contents`，粘性容器是整条滚动区；`50-chat.js` 的 `pinStack()` 量出每组高度后写 `--pm-top`（标题）与 `--pm-card-top`（当前卡片）：
-`.cx-pm-sec>.cx-pm-h{position:sticky;top:var(--pm-top,0px)}`、`.cx-pm-sec .cx-pm-card.on{position:sticky;top:var(--pm-card-top,34px)}`、`.cx-shell .cx-pm-sec .cx-pm-card.on{background-color:var(--cx-surface-2)}`。
-右栏 TIME 不在 `.cx-pm-sec` 内，所以不吸顶。门禁：`ui-probe --case right-panel-stack|pm-stack`。
-
-### 20.6 状态与类型的颜色语言
-
-判断顺序：先问「要不要用户现在看一眼」，再问「警醒还是鼓励」。七档一色，禁止就地发明颜色。
+先问「要不要用户现在看一眼」，再问「警醒还是鼓励」；七档一色，禁止就地发明颜色。
 
 | 档 | class | 色 | 对应值 |
 |---|---|---|---|
@@ -353,13 +246,15 @@ h(CxSection, { title: T('Deploy node'), actions: h(CxBtn, { size: 'sm', onClick:
 | halted | `.is-halted` | 暗红（终止） | canceled |
 | failed | `.is-failed` | 亮红（失败） | rejected |
 
-类型标签一律 `.cx-entity-type` 安静灰；新增状态先归到七档之一；门禁 `ui-probe --case status-tones`。
+类型标签一律 `.cx-entity-type` 安静灰；新增状态先归到七档之一（`ui-probe status-tones`）。标题栏主题与语言用**单按钮循环** `CtxCycle`（显示当前档、点击进下一档）。报告周期按长短配色：日报青 → 周报绿 → 月报蓝 → 季报紫 → 年报琥珀（`.is-rt-*` / `PM_REPORT_TONE`）。反馈评分一律星星（`cxStars(n)`：`★`×n + `☆`×(5-n)），卡片上并进副标题同一行（`.cx-stars`），表单评分下拉每个选项也显示星星。卡片按钮区一律 `justify-content:flex-start`，`⋯`（PmActionMenu）无二级动作时置灰但不消失（`ui-probe pm-card-actions`）。
 
-标题栏主题与语言用**单按钮循环**（`CtxCycle`）：显示当前档、点击进下一档，不再并排三枚。
+### 20.6 分节堆叠（标题 + 当前卡片）
 
-报告周期按长短配色：日报青 → 周报绿 → 月报蓝 → 季报紫 → 年报琥珀（`.is-rt-*` / `PM_REPORT_TONE`）。
+`.cx-pm-sec` 与其中 `.cx-card-list` 都是 `display:contents`，粘性容器是整条滚动区；`50-chat.js` 的 `pinStack()` 量每组高度后写 `--pm-top`（标题）与 `--pm-card-top`（当前卡片）：
+`.cx-pm-sec>.cx-pm-h{position:sticky;top:var(--pm-top,0px)}`、`.cx-pm-sec .cx-pm-card.on{position:sticky;top:var(--pm-card-top,34px)}`、`.cx-shell .cx-pm-sec .cx-pm-card.on{background-color:var(--cx-surface-2)}`。
+右栏 TIME 不在 `.cx-pm-sec` 内，故不吸顶。门禁 `ui-probe --case right-panel-stack|pm-stack`。
 
-反馈评分一律用星星（`cxStars(n)`：`★`×n + `☆`×(5-n)）——卡片上并进副标题同一行（`.cx-stars`），表单里评分下拉的每个选项也显示星星；不再单独占一行。
+### 20.7 门禁与扩展入口
 
-卡片按钮区一律 `justify-content:flex-start`，`⋯`（PmActionMenu）在没有二级动作时置灰但不消失——同一列卡的按钮区永远对齐。门禁 `ui-probe --case pm-card-actions`。
-
+`scripts/css-check.mjs`：tokens 只准 `:root/.cx-shell`；main.css 字面量颜色/`!important`/重复声明按基线只减不增；`var(--cx-*)` 必须已定义或有 fallback；死类只 WARN。
+加页面/组件/状态/接口/样式/动效，先 `npm run new -- <kind> <Name>`，再按 `docs/EXTENDING.md` 补接线；动效验收 `node scripts/ui-probe.mjs --case anim`（量 `animationName`/`animationDuration`）。

@@ -86,7 +86,7 @@
           image: iconUrl,
           icon: 'space',
           title: [s.help, s.name].filter(Boolean).join(' '),
-          status: on ? (locale === 'zh' ? '运行中' : 'start') : (locale === 'zh' ? '已停止' : 'stop'),
+          status: on ? (locale === 'zh' ? '运行中' : 'RUNNING') : (locale === 'zh' ? '已停止' : 'STOPPED'),
           statusTone: on ? 'is-active' : 'is-done',
           // 代码版本 · 编译时间 · 程序大小
           meta: [cardVer(s.version) || '—', cardTime(s.builtAt) || '—', s.size || '—'].join(' · '),

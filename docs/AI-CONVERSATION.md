@@ -12,9 +12,11 @@
   │
   ├─ 0. 前置短路（不调模型）
   │    avatar 模式 + 写意图（添加/录入/新增/写入/加一条/新建一条/创建/发起/提交/报批）
-  │      → appOp({text, mode:'write'})：resolveWrite 定位应用/功能 → appFields 取字段 → 消息区表单
+  │      → appOp({text, mode:'write'})：appRoute 三级定位（最近应用→商店→工厂，不调模型）→ 表单
   │    avatar 模式 + 读意图（查看/查询/列出/统计/多少条…）且含数据词（数据/记录/列表/明细/清单…）
-  │      → appOp({text, mode:'read'})：readData → 消息区表格
+  │      → appOp({text, mode:'read'})：appRoute 定位 → readData → 消息区表格
+  │    avatar 模式 + 「继续/下一步/然后呢/接下来」且 pmList.next 存在
+  │      → pmNextChips(pm)[0]：直接执行服务端算出的下一步（建任务/写报告/给反馈/完成），不调模型
   │    成功即结束本轮
   │
   ├─ 1. 组装请求
@@ -59,9 +61,9 @@
 | `functions` | `{target,plan,task,report,feedback}` 各 `{uid,title,content,status}` | 项目五功能的默认父级与 item_uid |
 | `nodes` | `[{port,name,state,env}]` | 已部署节点列表 |
 | `spaces` | `[{name,status}]` | 当前节点的空间列表 |
-| `apps` | `[{name,title,command}]` | 最近应用（为空时用 `api('apps')` 现取） |
+| `apps` | `[{name,title,command,space,place_uid,place,functions[],pri}]` | **工具索引 + 存储索引**：`functions`=可调功能，`space/place_uid/place`=数据归属实例，`pri=1` 最优先（项目管理常驻首位）；≤8 条。三级路由：最近应用（工具+存储索引）→应用商店→软件工厂，唯一实现 `lib/core/appindex.js`，提示词 **APP ROUTING** |
+| `project` | `{counts:[t,p,k,r,f],stage,next,kind,action,item_uid,title}` | 项目闭环的**下一步**（`pmNextStep` 算，`next` 给模型看，`kind/action/item_uid` 可直接落动作） |
 
-> 早期版本同时带 `selection`、`serve`/`pod`/`place`、`background` 等别名，内容与上表完全重复，已删除（v1.45.90）。现在一个概念只有一个字段名。
 
 ## 三、三种工作模式
 
@@ -89,7 +91,7 @@
 | `listApps` / `storeApps` | `{}` | 最近应用 / 应用商店 |
 | `createStoreInstance` | `{command,name?}` | 商店模板 → 实例确认表单 |
 | `code` | `{name}` | 打开编程工具 |
-| `pmCreate` / `pmModify` / `pmRemove` / `pmList` / `pmAct` | 项目五功能 | 目标/计划/任务/报告/反馈 CRUD |
+| `pmCreate`/`pmModify`/`pmRemove`/`pmList`/`pmAct` | 项目五功能 | 五实体 CRUD 与生命周期 |
 | `projectStatus` / `planProject` | `{}` / `{goal}` | 项目总览 / 拆解目标 |
 | `createAvatar` | `{name,city,company,persona,…}` | 新建数字分身 |
 | `devices` | `{}` | 扫描周边设备 |
@@ -99,7 +101,7 @@
 
 ## 五、宿主工具（`index.js` 的 op）
 
-93 个 op 按 基础设施 / 空间 / 应用 / 数据 / 项目五功能 / 身份主体 / 文件代码 / 备份采样 / 其它 分组，完整清单见 `docs/CODE-INDEX.md`（`index.js` 条目）。
+op 按基础设施/空间/应用/数据/项目/身份/代码/备份分组，完整清单见 `docs/CODE-INDEX.md`。
 
 ## 六、失败与回执
 
@@ -109,7 +111,7 @@
 | `count 0x0` | 命令执行了但没数据 |
 | 响应体含 `detail` 且无 `index/help/meta` | 命令未注册（空间没编译完 / 进程是旧二进制） |
 | `warn: not allow` | 动作不存在或无权限（不是「参数错」） |
-| 客户端「执行失败：…」 | `executeAction` 抛错，错误原文透出 |
+| 客户端「执行失败：…」 | `executeAction` 抛错，原文透出 |
 
 ## 七、延迟与调优（改了请求链路要看）
 
@@ -125,7 +127,7 @@
 
 ## 八、已知缺口
 
-1. `history` 只带文本，不带上一轮的动作与结果 → 多轮「继续」容易重复执行；
+1. `history` 只带文本，不带上一轮的动作与结果 → 多轮「继续」靠 `pmList.next` 短路兜底，但普通应用的多轮仍可能重复执行；
 2. `context` 截断 6000 字符，`apps`/`nodes` 很长时会被截掉尾部；
 3. 没有工具调用的结构化回执（没有 tool_call id / 结果回灌），模型看不到执行结果；
 4. iot 模式的设备控制没有「先问再做」的白名单，睡眠/锁屏靠 prompt 约束。

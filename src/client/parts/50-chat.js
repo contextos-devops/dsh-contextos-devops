@@ -469,22 +469,25 @@
         ], 'instance', { service: svc });
       };
 
+      // 商店 → 实例：先按一句话路由到模板；没有模板就升级到软件工厂生成（绝不 list[0] 盲选）。
       const createAppFromStore = async (source) => {
         if (!node) { ai('还没有选中节点。'); return undefined; }
         const direct = source && typeof source === 'object' && source.command ? source : null;
-        const kw = direct ? '' : String(source || '').trim();
-        return run(`STORE INSTANCE ${direct ? direct.name : (kw || '-')}`, async () => {
-          const list = direct ? [direct] : ((await api('storeApps', { node })) || []);
-          const norm = (s) => String(s || '').toLowerCase();
-          const hit = direct || list.find((s) => kw && (norm(s.title).includes(norm(kw)) || norm(s.help).includes(norm(kw)) || norm(s.command).includes(norm(kw))))
-            || list.find((s) => /审批/.test(kw) && /审批|shenpi/.test(String(s.title) + String(s.command) + String(s.help)))
-            || list.find((s) => /项目/.test(kw) && /项目|xiangmu/.test(String(s.title) + String(s.command) + String(s.help)))
-            || list[0];
-          if (!hit) { ai('应用商店里没有可用模板。'); return undefined; }
-          const nm = direct ? (direct.title || direct.name) : (kw && !/创建|生成|做一个|应用/.test(kw) ? kw : (hit.title || hit.name));
-          askInstance(hit, nm);
-          return hit;
-        });
+        if (direct) { askInstance(direct, direct.title || direct.name || ''); return direct; }
+        const kw = String(source || '').trim() || String(lastUserRef.current || '');
+        const route = await api('appRoute', { node, text: kw, mode: 'create', uid: actorId() }).catch(() => null);
+        if (route && route.tier === 'store' && route.store) {
+          return run(`STORE INSTANCE ${route.store.name || '-'}`, async () => {
+            askInstance(route.store, (route.args && route.args.name) || route.store.title || route.store.name || '');
+            return route.store;
+          });
+        }
+        ai(locale === 'zh'
+          ? `应用商店里没有匹配「${kw}」的模板，转入软件工厂生成。`
+          : `No template matched "${kw}"; generating one in the software factory.`);
+        const sp = spaceRef.current || space || '20240724-community';
+        const f = (route && route.factory) || {};
+        return askAppPlan(sp, f.name || 'apptodo', f.help || kw.slice(0, 18), '', kw);
       };
 
       // —— 往实例里写数据：先出表单 ——
@@ -509,7 +512,7 @@
           const sc = Math.max(commonRun(text, x.title), commonRun(text, x.name), commonRun(text, x.space));
           if (sc > bestScore) { bestScore = sc; best = x; }
         });
-        return bestScore >= 2 ? best : list[0];
+        return bestScore >= 2 ? best : null;
       };
 
       // 项目管理是平台一等公民（有专用接口与状态机）：对话里提到目标/计划/任务/报告/反馈时
@@ -625,10 +628,10 @@
           pmChain.current[kind] = d.uid;
           for (const k of Object.keys(pmParentOf)) if (k !== kind && pmParentOf[k] === kind) pmChain.current[k] = '';
         }
-        await loadPm();
+        const fresh = await loadPm({ kind, uid: d?.uid || '', ...body });
         const item = await pmFetchItem(kind, d?.uid, body);
         const i18n = { op: 'create', kind };
-        aiCard(pmResultText(i18n), { pm: { kind, op: 'create', item: item || { uid: d?.uid || '', title: body.title, status_name: '', actions: [] } }, link: pmPortalUrl(kind, d?.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(kind, d?.uid) } : null }, { i18n });
+        aiCard(pmResultText(i18n), { pm: { kind, op: 'create', item: item || { uid: d?.uid || '', title: body.title, status_name: '', actions: [] } }, link: pmPortalUrl(kind, d?.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(kind, d?.uid) } : null, next: pmNextChips(fresh || pm) }, { i18n });
         return d;
       };
 
@@ -642,20 +645,39 @@
         }
         if (!list.length) { ai('最近应用里还没有应用实例，请先在应用商店创建一个。'); return true; }
 
+        // 三级路由：最近应用（工具索引+存储索引）→ 应用商店 → 软件工厂。
+        // 打分在服务端一次算完（不调模型），这里只按 tier 分流：应用就地读写、商店建实例、工厂生成模板。
         push('step', `① 定位应用（目录）：在 ${list.length} 个最近应用里匹配`);
-        let plan = null;
-        try {
-          plan = await api('resolveWrite', {
-            node, text, mode,
-            apps: list.map((x) => ({ title: x.title, name: x.name, space: x.space, command: x.command, functions: x.functions })),
-          });
-        } catch (e) { plan = null; }
-        const byPlan = plan && plan.command ? list.find((x) => String(x.command) === String(plan.command)) : null;
-        const app0 = byPlan || matchRecentApp(text, list);
+        let route = null;
+        try { route = await api('appRoute', { node, text, mode, uid: actorId() }); } catch (e) { route = null; }
+        if (route && Array.isArray(route.steps)) route.steps.forEach((x) => push('step', x));
+        if (route && route.tier === 'store') {
+          const svc = route.store || {};
+          askInstance(svc, (route.args && route.args.name) || svc.title || svc.name || '');
+          return true;
+        }
+        if (route && route.tier === 'factory') {
+          ai(locale === 'zh' ? '最近应用与应用商店都没有匹配的能力，转入软件工厂生成应用模板。' : 'No app or template matched; generating a template in the software factory.');
+          const sp = spaceRef.current || space || '20240724-community';
+          const f = route.factory || {};
+          return askAppPlan(sp, f.name || 'apptodo', f.help || String(text).slice(0, 18), '', text);
+        }
+        if (route && route.tier === 'none') {
+          const cands = (route.candidates || []).map((c) => `${c.title}${c.fnLabel ? '（' + c.fnLabel + '）' : ''}`).join('、');
+          ai(cands
+            ? `最近应用里没有匹配的应用。可能是：${cands}；请说清楚要操作哪个应用/功能。`
+            : '最近应用里没有匹配的应用，请说清楚要操作哪个应用。');
+          return true;
+        }
+        const app0 = (route && route.app && route.app.command)
+          ? (list.find((x) => String(x.command) === String(route.app.command)) || {
+            ...route.app, functions: (route.app.fns || []).map((f) => f.name).join(','),
+          })
+          : matchRecentApp(text, list);
         if (!app0) { ai('最近应用里没有匹配的应用，请说清楚是哪个应用。'); return true; }
 
         const fns = String(app0.functions || '').split(',').map((x) => x.trim()).filter(Boolean);
-        let fn = String((plan && plan.fn) || fnArg || '').trim();
+        let fn = String((route && route.fn) || fnArg || '').trim();
         if (!fn) fn = (/创建|新建|添加|建立|定义/.test(text) && /流程/.test(text)) ? 'flow' : (/发起|提交|申请|送审|报批/.test(text) ? 'request' : '');
         if (fns.length && fn && !fns.includes(fn)) fn = fns.includes('supplier') && /供应商/.test(text) ? 'supplier' : fns[0];
         if (!fn) fn = fns[0] || '';
@@ -672,10 +694,10 @@
         if (mode !== 'read' && entKind) {
           if (wantN > 1) {
             push('step', `③ 批量创建：${wantN} 个${PM_KIND_LABEL[entKind] || entKind}（父级自动补齐）`);
-            return Boolean(await pmCreateMany(entKind, wantN, text, plan && plan.values ? plan.values : {}));
+            return Boolean(await pmCreateMany(entKind, wantN, text, route && route.values ? route.values : {}));
           }
           push('step', `③ 项目管理接口：${command}（父级取自当前选中）`);
-          return Boolean(await pmCreateFrom(entKind, plan && plan.values ? plan.values : {}, text));
+          return Boolean(await pmCreateFrom(entKind, route && route.values ? route.values : {}, text));
         }
 
         if (mode === 'read') {
@@ -707,7 +729,7 @@
 
         const fk = `${node}|${app0.space}|${app0.place_uid}|${fn}`;
         const saved = (typeof readFormState === 'function' ? readFormState(fk) : null) || {};
-        const planned = plan && plan.values && Object.keys(plan.values).length ? { ...plan.values } : null;
+        const planned = route && route.values && Object.keys(route.values).length ? { ...route.values } : null;
         const values = saved.values || planned;
         // 表单自带上下文：节点 / 空间 / 命令 / 实例 / 身份，随时能拼出完整接口 URL
         const ctx = {
@@ -926,7 +948,12 @@
         } catch (e) { /* 名字检查失败时继续，提交前还有一次 */ }
         const ttl = (help && String(help).trim().length <= 20 && !/[，。；、]/.test(String(help))) ? String(help).trim() : shortAppTitle(text, nm);
         let plan = null;
-        try { plan = await api('appPlan', { node, space: sp, name: nm, help: ttl, text: String(text || help || nm) }); } catch (e) { plan = null; }
+        try {
+          plan = await Promise.race([
+            api('appPlan', { node, space: sp, name: nm, help: ttl, text: String(text || help || nm) }),
+            new Promise((res) => setTimeout(() => res(null), 20000)),
+          ]);
+        } catch (e) { plan = null; }
         const fns = (plan && Array.isArray(plan.functions) && plan.functions.length === 5)
           ? plan.functions
           : APP_CHAIN.map((x, i) => ({ name: x.name, label: x.label, depends: i ? [APP_CHAIN[i - 1].name] : [] }));
@@ -1064,7 +1091,7 @@
           // Digital-avatar / cyber-world mode never writes code.「创建 X 应用」means:
           // find the matching template in the app store, then create an instance.
           if (mode && mode !== 'factory') {
-            const kw = String(appName || args.title || '').trim();
+            const kw = String(appName || args.title || lastUserRef.current || '').trim();
             return createAppFromStore(kw);
           }
           const sp = spaceRef.current || space;
@@ -1110,29 +1137,44 @@
           const kind = String(args.kind || (pmChain.current.task ? 'task' : pmChain.current.plan ? 'plan' : 'target'));
           return run(`PM CREATE ${kind}`, async () => pmCreateFrom(kind, args, args.title || lastUserRef.current || ''));
         }
+        if (op === 'pmAct') {
+          const kind = String(args.kind || 'target');
+          const action = String(args.action || '');
+          const pool = { target: pm?.targets, plan: pm?.plans, task: pm?.tasks, report: pm?.reports, feedback: pm?.feedbacks }[kind] || [];
+          const itemUid = String(args.item_uid || '');
+          const known = (pool || []).find((x) => x.uid === itemUid) || (pool || [])[0] || null;
+          const item = { ...(known || {}), uid: itemUid || known?.uid || '', title: args.title || known?.title || '' };
+          if (!item.uid) { ai(`找不到要操作的${PM_KIND_LABEL[kind] || kind}，先选择一个。`); return; }
+          if (!action) { ai('要执行哪个动作？开始/提交/审批/完成/取消。'); return; }
+          return run(`PM ACT ${kind} ${action}`, async () => runPmAction(kind, item, action));
+        }
         if (op === 'pmList' || op === 'pmTree') {
-          return run('PM TREE', async () => { await loadPm(); const rows = [['目标', String((pm?.targets || []).length)], ['计划', String((pm?.plans || []).length)], ['任务', String((pm?.tasks || []).length)], ['报告', String((pm?.reports || []).length)], ['反馈', String((pm?.feedbacks || []).length)]]; aiCard('项目数据已刷新', { title: '项目管理概览', rows, link: pmPortalUrl(args.kind, d.uid) ? { label: '打开项目管理', url: pmPortalUrl(args.kind, d.uid) } : null }); });
+          return run('PM TREE', async () => {
+            const d = await loadPm();
+            const rows = [['目标', String((d?.targets || []).length)], ['计划', String((d?.plans || []).length)], ['任务', String((d?.tasks || []).length)], ['报告', String((d?.reports || []).length)], ['反馈', String((d?.feedbacks || []).length)]];
+            aiCard('项目数据已刷新', { title: '项目管理概览', rows, link: pmPortalUrl(args.kind, '') ? { label: '打开项目管理', url: pmPortalUrl(args.kind, '') } : null, next: pmNextChips(d) });
+          });
         }
         if (op === 'pmModify' || op === 'pmUpdate') {
           return run(`PM MODIFY ${args.kind || ''}`, async () => {
             const itemUid = args.item_uid || (args.kind === 'target' ? activeTarget?.uid : args.kind === 'plan' ? activePlan?.uid : args.kind === 'task' ? activeTask?.uid : args.kind === 'report' ? activeReport?.uid : activeFeedback?.uid) || '';
             await api('pmModify', { node, uid: avatar?.uid || '', kind: args.kind || '', item_uid: itemUid, title: args.title || '', content: args.content || '', begin_time: args.begin_time || '', end_time: args.end_time || '', report_type: args.report_type || '', score: args.score || '', feedback_status: args.feedback_status || '' });
-            await loadPm();
+            const fresh = await loadPm({ kind: args.kind || '', uid: itemUid, target_uid: activeTarget?.uid || '', plan_uid: activePlan?.uid || '', task_uid: activeTask?.uid || '', report_uid: activeReport?.uid || '' });
             const i18n = { op: 'update', kind: args.kind || '' };
-            aiCard(pmResultText(i18n) || `已更新${PM_KIND_LABEL[args.kind] || '项目数据'}`, { title: '更新成功', rows: [['类型', PM_KIND_LABEL[args.kind] || args.kind || '项目数据'], ['标题', args.title || '—']], link: pmPortalUrl(args.kind, d.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(args.kind, d.uid) } : null }, { i18n });
+            aiCard(pmResultText(i18n) || `已更新${PM_KIND_LABEL[args.kind] || '项目数据'}`, { title: '更新成功', rows: [['类型', PM_KIND_LABEL[args.kind] || args.kind || '项目数据'], ['标题', args.title || '—']], link: pmPortalUrl(args.kind, itemUid) ? { label: T('打开项目管理'), url: pmPortalUrl(args.kind, itemUid) } : null, next: pmNextChips(fresh) }, { i18n });
           });
         }
         if (op === 'pmRemove' || op === 'pmDelete') {
           return run(`PM REMOVE ${args.kind || ''}`, async () => {
             const itemUid = args.item_uid || (args.kind === 'target' ? activeTarget?.uid : args.kind === 'plan' ? activePlan?.uid : args.kind === 'task' ? activeTask?.uid : args.kind === 'report' ? activeReport?.uid : activeFeedback?.uid) || '';
             await api('pmRemove', { node, uid: avatar?.uid || '', kind: args.kind || '', item_uid: itemUid });
-            await loadPm();
+            const fresh = await loadPm();
             const i18n = { op: 'remove', kind: args.kind || '' };
-            aiCard(pmResultText(i18n) || `已删除${PM_KIND_LABEL[args.kind] || '项目数据'}`, { title: '删除成功', rows: [['类型', PM_KIND_LABEL[args.kind] || args.kind || '项目数据']], link: pmPortalUrl(args.kind, d.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(args.kind, d.uid) } : null }, { i18n });
+            aiCard(pmResultText(i18n) || `已删除${PM_KIND_LABEL[args.kind] || '项目数据'}`, { title: '删除成功', rows: [['类型', PM_KIND_LABEL[args.kind] || args.kind || '项目数据']], link: pmPortalUrl(args.kind, itemUid) ? { label: T('打开项目管理'), url: pmPortalUrl(args.kind, itemUid) } : null, next: pmNextChips(fresh) }, { i18n });
           });
         }
         if (op === 'projectStatus') {
-          return run('PROJECT STATUS', async () => { const d = await api('projectStatus', { node, uid: avatar?.uid || '' }); const rows = [['目标', String(d.counts?.target || 0)], ['计划', String(d.counts?.plan || 0)], ['任务', String(d.counts?.task || 0)], ['报告', String(d.counts?.report || 0)], ['反馈', String(d.counts?.feedback || 0)]]; aiCard(`项目：${d.project?.name || '未创建'}`, { title: '项目概览', rows, link: pmPortalUrl(args.kind, d.uid) ? { label: '打开项目管理', url: pmPortalUrl(args.kind, d.uid) } : null }); });
+          return run('PROJECT STATUS', async () => { const d = await api('projectStatus', { node, uid: avatar?.uid || '' }); const rows = [['目标', String(d.counts?.target || 0)], ['计划', String(d.counts?.plan || 0)], ['任务', String(d.counts?.task || 0)], ['报告', String(d.counts?.report || 0)], ['反馈', String(d.counts?.feedback || 0)]]; aiCard(`项目：${d.project?.name || '未创建'}`, { title: '项目概览', rows, link: pmPortalUrl(args.kind, '') ? { label: '打开项目管理', url: pmPortalUrl(args.kind, '') } : null }); });
         }
         if (op === 'planProject') {
           return run('PLAN PROJECT', async () => {
@@ -1210,6 +1252,18 @@
           }
           setBusy(false);
         }
+        // 闭环短路：项目管理是最高优先应用，用户说「继续/下一步」时直接执行
+        // pmList.next，不再让模型重猜应用/功能/参数（少一次往返，也不会挑错应用）。
+        if (mode === 'avatar' && /^(继续|下一步|然后呢|接下来|继续吧)/.test(String(text).trim()) && pm?.next) {
+          const chip = pmNextChips(pm)[0];
+          if (chip) {
+            setBusy(true);
+            push('step', `闭环下一步：${chip.label}`);
+            try { await runNextChip(chip); } catch (e) { ai(`执行失败：${String(e?.message || e)}`); }
+            setBusy(false);
+            return;
+          }
+        }
         const history = msgs.filter((m) => m.role === 'user' || m.role === 'ai').slice(-8).map((m) => ({ role: m.role, text: m.text }));
         const selectedApp = app ? { name: app.name, title: app.title, command: app.command, space: app.space || space, place_uid: app.place_uid || '', place: app.place || '' } : null;
         const selectedAvatar = avatar ? { name: avatar.name, uid: avatar.uid, city: avatar.city, company: avatar.company, persona: avatar.persona || '', preferences: avatar.preferences || '', style: avatar.style || '', skills: avatar.skills || [] } : null;
@@ -1247,7 +1301,22 @@
         if (!recentApps.length) {
           try { const rr = await api('apps', { node, space, uid: actorId() }); if (Array.isArray(rr)) recentApps = rr; } catch {}
         }
-        context.apps = (recentApps || []).map((a) => ({ name: a.name, title: a.title, command: a.command }));
+        // 最近应用 = 工具索引 + 存储索引：functions 决定「能调什么功能」，
+        // place_uid/space/place 决定「数据存在哪个实例」。项目管理固定第一优先。
+        const priApps = (recentApps || []).slice().sort((a, b) => Number(/xiangmuguanli/.test(b.command || '')) - Number(/xiangmuguanli/.test(a.command || '')));
+        context.apps = priApps.map((a) => ({
+          name: a.name, title: a.title, command: a.command,
+          space: a.space || space || '', place_uid: a.place_uid || '', place: a.place || '',
+          functions: String(a.functions || '').split(',').map((x) => x.trim()).filter(Boolean),
+          pri: /xiangmuguanli/.test(a.command || '') ? 1 : 0,
+        }));
+        const pmNext = pm && pm.next ? pm.next : null;
+        context.project = pm ? {
+          counts: [String((pm.targets || []).length), String((pm.plans || []).length), String((pm.tasks || []).length), String((pm.reports || []).length), String((pm.feedbacks || []).length)],
+          stage: pmNext ? pmNext.stage : '',
+          next: pmNext ? [pmNext.kind, pmNext.action, pmNext.title].filter(Boolean).join(' ') : '',
+          kind: pmNext ? pmNext.kind : '', action: pmNext ? pmNext.action : '', item_uid: pmNext ? pmNext.item_uid : '', title: pmNext ? pmNext.title : '',
+        } : null;
         // 请求上下文只保留一个场景来源：scene。旧会话可能残留 background/bg 别名，
         // 在发送边界统一剥离，避免同一份赛博世界配置在提示词里重复出现。
         const requestContext = stripSceneAliases(context);
@@ -1420,7 +1489,8 @@
                 : m.card && m.card.entity && m.card.entity.kind === 'node' && m.card.entity.data
                   ? h(NodeCard, { n: m.card.entity.data, locale, active: false, busy: false, onSelect: cards?.selectNode, onStart: cards?.startNode, onStop: cards?.stopNode, onDelete: cards?.deleteNode, onOpen: cards?.openNode, onIde: cards?.openIde, onTool: cards?.openCardTool, onHome: () => cards?.openHome?.(''), isOpen: cards?.isOpenUrl, tone: cards?.tone })
                 : m.card && m.card.pm ? h('div', { className: 'cx-msg-pm' },
-                  h(PmCard, { item: m.card.pm.item, kind: m.card.pm.kind, onAction: (action) => runPmAction(m.card.pm.kind, m.card.pm.item, action) }))
+                  h(PmCard, { item: m.card.pm.item, kind: m.card.pm.kind, onAction: (action) => runPmAction(m.card.pm.kind, m.card.pm.item, action) }),
+                  pmNextRow(m.card.next))
                 : m.card && m.card.entity ? h(CxEntityCard, { e: m.card.entity, lang: locale, onOpen: (u, t) => { if (typeof OPEN_LINK === 'function') OPEN_LINK(u, t); } })
                 : m.card && m.card.app ? h('div', { className: 'cx-app-card' },
                   h('div', { className: 'cx-app-card-ico' }, m.card.app.icon ? h('img', { src: m.card.app.icon, alt: '' }) : h('span', { className: 'ph' }, String(m.card.app.title || 'A').slice(0, 1))),
@@ -1428,13 +1498,29 @@
                     h('div', { className: 'cx-app-card-title' }, m.card.app.title || '应用'),
                     h('div', { className: 'cx-app-card-sub' }, m.card.app.meta || '')),
                   m.card.app.link ? h('button', { className: 'cx-app-card-open', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.app.link.url, m.card.app.title || '打开'); } }, 'OPEN') : null)
-                  : (m.card && (m.card.title || (m.card.rows || []).length || m.card.link)) ? h(CxSection, { className: 'cx-msg-card', title: m.card.title || T('结果') },
+                  : (m.card && (m.card.title || (m.card.rows || []).length || m.card.link || (m.card.next || []).length)) ? h(CxSection, { className: 'cx-msg-card', title: m.card.title || T('结果') },
                   h('div', { className: 'cx-kv' }, (m.card.rows || []).map(([k, v], j) => h('div', { key: j, className: 'cx-kv-row' },
                     h('span', { className: 'cx-kv-k' }, k),
                     h('b', { className: 'cx-kv-v' }, String(v ?? '—'))))),
-                  m.card.link ? h('div', { className: 'cx-foot' }, h(CxBtn, { size: 'sm', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.link.url, m.card.link.label || '管理'); } }, m.card.link.label || T('打开'))) : null) : null))));
+                  m.card.link ? h('div', { className: 'cx-foot' }, h(CxBtn, { size: 'sm', onClick: () => { if (typeof OPEN_LINK === 'function') OPEN_LINK(m.card.link.url, m.card.link.label || '管理'); } }, m.card.link.label || T('打开'))) : null,
+                  pmNextRow(m.card.next)) : null))));
 
       const pmCardOf = (card) => (card && card.pm ? card : null);
+      // 闭环下一步的两个出口：表单预填（create）与直接动作（process/finish/…）。
+      // chips 只带可序列化字段，这里重建 item 后复用既有的 PM 表单与 pmAct 通道。
+      const runNextChip = async (chip) => {
+        const c = chip || {};
+        if (!c.kind) return;
+        if (c.action === 'create') {
+          const item = c.preset ? { ...c.preset, title: c.title || '' } : (c.title ? { title: c.title } : null);
+          setPmForm({ kind: c.kind, mode: 'create', item, parent: { ...(c.uids || {}) } });
+          return;
+        }
+        await runPmAction(c.kind, { uid: c.item_uid || '', title: c.title || '' }, c.action);
+      };
+      const pmNextRow = (chips) => (Array.isArray(chips) && chips.length
+        ? h('div', { className: 'cx-chips', style: { marginTop: 8, flex: '0 0 auto' } }, chips.map((c, ci) => h('button', { key: ci, className: 'cx-chip', title: c.title || '', onClick: () => runNextChip(c) }, c.label)))
+        : null);
       const uidCtx = (it) => uidFieldMap(it);
       const openPm = (kind, mode = 'create', item = null) => {
         const parent = kind === 'target' ? {} : kind === 'plan' ? (activeTarget ? { target_uid: activeTarget.uid, ...uidCtx(activeTarget) } : null) : kind === 'task' ? (activePlan ? { plan_uid: activePlan.uid, ...uidCtx(activePlan) } : null) : kind === 'report' ? (activeTask ? { task_uid: activeTask.uid, ...uidCtx(activeTask) } : null) : kind === 'feedback' ? (activeReport ? { report_uid: activeReport.uid, task_uid: activeReport.task_uid || '', ...uidCtx(activeReport) } : null) : null;
@@ -1470,7 +1556,7 @@
         if (action === 'modify') return openPm(kind, 'edit', item);
         if (action === 'open') { if (item.link && typeof OPEN_LINK === 'function') OPEN_LINK(item.link, item.title || 'link'); return; }
         if (action === 'remove') return removePm(kind, item);
-        try { await api('pmAct', { node, uid: avatar?.uid || '', kind, item_uid: item.uid, action, uid_options: uidFieldMap(item) }); await loadPm(); const i18n = { op: 'act', kind, title: item.title, action }; const msg = pmResultText(i18n); ai(msg, { i18n }); try { window.dispatchEvent(new CustomEvent('cx-toast', { detail: { text: msg, kind: 'ok' } })); } catch {} }
+        try { await api('pmAct', { node, uid: avatar?.uid || '', kind, item_uid: item.uid, action, uid_options: uidFieldMap(item) }); const fresh = await loadPm({ kind, uid: item.uid, ...uidFieldMap(item) }); const i18n = { op: 'act', kind, title: item.title, action }; const msg = pmResultText(i18n); ai(msg, { i18n, card: { next: pmNextChips(fresh) } }); try { window.dispatchEvent(new CustomEvent('cx-toast', { detail: { text: msg, kind: 'ok' } })); } catch {} }
         catch (e) { const msg = `操作失败：${String(e?.message || e)}`; ai(msg); try { window.dispatchEvent(new CustomEvent('cx-toast', { detail: { text: msg, kind: 'err' } })); } catch {} }
       };
       const pmItem = (item, active, onClick, sub, kind) => h(PmCard, {
@@ -1671,5 +1757,5 @@
           ]) : null,
         avatarEditOpen ? h(AvatarEditModal, { avatar, onClose: () => setAvatarEditOpen(false), onSave: (p) => { onUpdateAvatar(p); setAvatarEditOpen(false); } }) : null,
         sceneOpen ? h(SceneModal, { scene: bg, onClose: () => setSceneOpen(false), onSave: (p) => { onUpdateScene(p); setSceneOpen(false); } }) : null,
-        pmForm ? h(PMModal, { key: `${pmForm.kind}:${pmForm.mode}:${pmForm.item?.uid || 'new'}`, kind: pmForm.kind, mode: pmForm.mode, item: pmForm.item, parent: pmForm.parent, node, avatar, onClose: () => setPmForm(null), onDone: async () => { setPmForm(null); await loadPm(); } }) : null);
+        pmForm ? h(PMModal, { key: `${pmForm.kind}:${pmForm.mode}:${pmForm.item?.uid || 'new'}`, kind: pmForm.kind, mode: pmForm.mode, item: pmForm.item, parent: pmForm.parent, node, avatar, onClose: () => setPmForm(null), onDone: async (d) => { const f = pmForm; setPmForm(null); await loadPm(f ? { kind: f.kind, uid: d?.uid || '', ...(f.parent || {}) } : null); } }) : null);
     }

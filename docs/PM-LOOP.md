@@ -56,10 +56,28 @@ PM 只有两层：**平台 REST（真源）** 与 **插件 op（唯一出口）*
 |---|---|---|
 | `pmCreate` | PUT | `kind, title, content, uid, target_uid, plan_uid, task_uid, report_uid, begin_time, end_time, report_type, score, feedback_status` |
 | `pmAct` | POST | `kind, uid, action, item_uid(=uid), uid_options` |
-| `pmList` | GET | `uid, target_uid, plan_uid, task_uid, report_uid, scope` |
+| `pmList` | GET | `uid, target_uid, plan_uid, task_uid, report_uid, scope, focus_kind, focus_uid` |
 | `pmModify` / `pmRemove` | POST / DELETE | `kind, uid, ...fields` |
 
 对话里模型只输出 `{op:'pmCreate'|'pmAct', args}`；父 UID 由客户端 `pmChain` 补齐，避免「刚建目标就建计划」拿不到 target_uid。
+
+`pmList` 除数据外还返回两项派生值（同一函数算，界面/对话共用）：
+
+| 字段 | 形状 | 含义 |
+|---|---|---|
+| `active` | `{target_uid,plan_uid,task_uid,report_uid,feedback_uid}` | 本次查询实际选中的链路 |
+| `next` | `{kind,action,item_uid,title,label,reason,stage}` | 闭环的**唯一下一步**（`pmNextStep`） |
+
+`focus_kind/focus_uid` 传入刚创建/刚操作的实体：其父级 uid 一并查询，保证新实体出现在返回列表里，`next` 才能从它继续。`next` 的判定顺序：
+
+1. 无目标 → `target.create`；无计划 → `plan.create`；
+2. plan `created/submited/approved` → `submit/approve/process`；
+3. plan `process` 且无任务 → `task.create`；有任务但未开始 → `task.process`；
+4. 进行中任务无报告 → `report.create`；报告无反馈 → `feedback.create`；
+5. 反馈 `shouldImprove` → `task.create`（改进任务）；`canFinish` → `task.finish`；
+6. 当前计划收口后：同目标还有未收口计划则跳过去，否则 `plan.create`（新计划）。
+
+对话侧不再各写一套状态机：卡片 chips（`pmNextChips`）与 context 的 `project.next` 都读这一处。
 
 ## 6 闭环自驱
 
@@ -72,3 +90,14 @@ PM 只有两层：**平台 REST（真源）** 与 **插件 op（唯一出口）*
 报告是产物记录（`link` 指向文件/网页，`type` 是周期）；反馈是验收结论（`canFinish` 放行、`shouldImprove` 触发改进任务）；计划未完成前持续循环，直到没有 `process` 任务才允许 `plan.finish`。
 
 AI 电商沿用同一状态机：商品/订单流水线拆成任务 → 派给智能体 → 产物落报告 → 反馈决定放行或返工。
+
+## 7 对话里的闭环入口
+
+| 用户说法 | 走哪条 | 结果 |
+|---|---|---|
+| 「继续 / 下一步 / 然后呢」 | 客户端短路 → `pmNextChips(pm)[0]` | 不调模型，直接执行 `next` |
+| 「创建任务 / 写报告 / 给反馈」 | `appOp` → `pmEntityOf` → `pmCreateFrom` | 表单/直接建，父级自动补 |
+| 「开始/完成/提交/审批」 | `executeAction('pmAct')`（`pmStart/pmFinish` 是别名） | 落库归一 `process/finish` |
+| 卡片底部 chips | `card.next` → `runNextChip` | `create` 开预填表单；动作类直接 `pmAct` |
+
+`card.next` 的 chips 必须可 JSON 序列化（消息会存 `cx-store`）：只存 `{label,kind,action,item_uid,title,uids,preset}`，点击时再重建 item。

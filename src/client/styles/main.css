@@ -48,7 +48,7 @@
 .cx-stage.done{color:var(--cx-green)}
 .cx-stage.done .n{border-color:var(--cx-green);color:var(--cx-green)}
 .cx-arrow{color:var(--cx-line2);padding:0 6px;font-size:var(--cx-fs)}
-.cx-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(320px,480px) minmax(320px,480px) minmax(320px,480px) minmax(420px,1fr);gap:10px;padding:10px 12px 0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}
+.cx-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(280px,320px) minmax(280px,320px) minmax(280px,320px) minmax(420px,1fr);gap:10px;padding:10px 12px 0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}
 .cx-panel{min-width:0;min-height:0;display:flex;flex-direction:column;border:1px solid var(--cx-line);background:linear-gradient(180deg,rgba(8,22,36,.92),rgba(6,15,25,.94));position:relative}
 .cx-panel:before{content:"";position:absolute;left:-1px;top:-1px;width:18px;height:18px;border-left:1px solid var(--cx-cyan);border-top:1px solid var(--cx-cyan);opacity:.7}
 .cx-ph{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--cx-line);background:rgba(9,27,43,.55)}

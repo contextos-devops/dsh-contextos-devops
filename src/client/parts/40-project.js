@@ -456,20 +456,20 @@
             h('button', { onClick: () => onChange('', '') }, T('清除')))));
     });
 
-    function MultiFilter({ label, options, value, onChange, align = 'left' }) {
+    function MultiFilter({ label, options, value, onChange, align = 'left', menu = false }) {
       const [open, setOpen] = useState(false);
       const picked = value || [];
       const toggle = (v) => onChange(picked.includes(v) ? picked.filter((x) => x !== v) : [...picked, v]);
       if (!options || options.length <= 1) return null;
-      if (options.length <= 2) {   /* 选项多时一律用下拉多选，避免挤成一行 */
+      if (!menu && options.length <= 2) {   /* 两个以内的状态用平铺 chip；空间名等长选项强制走下拉，避免挤出列宽 */
         return h('div', { className: 'cx-filter inline' },
           h('span', { className: 'cx-filter-label' }, label),
-          options.map((o) => h('button', { key: o.value, type: 'button', className: `cx-filter-chip${picked.includes(o.value) ? ' on' : ''}`, onClick: (e) => { e.stopPropagation(); toggle(o.value); } }, o.label || o.value, o.count != null ? h('span', { className: 'cx-filter-n' }, o.count) : null)));
+          options.map((o) => h('button', { key: o.value, type: 'button', className: `cx-filter-chip${picked.includes(o.value) ? ' on' : ''}`, onClick: (e) => { e.stopPropagation(); toggle(o.value); } }, o.label || o.value, o.count != null ? h('span', { className: 'cx-filter-n cx-tag' }, o.count) : null)));
       }
       return h('div', { className: 'cx-filter' },
         h('button', { className: `cx-filter-btn${picked.length ? ' on' : ''}`, onClick: (e) => { e.stopPropagation(); setOpen((x) => !x); } }, `${label}${picked.length ? ` ${picked.length}` : ''}`, h(UiIcon, { name: 'chevronDown', size: 12 })),
         open ? h('div', { className: `cx-filter-menu ${align}` },
-          options.length ? options.map((o) => h('button', { key: o.value, className: `cx-filter-item${picked.includes(o.value) ? ' on' : ''}`, onClick: (e) => { e.stopPropagation(); toggle(o.value); } }, h('span', { className: 'cx-filter-text' }, o.label), o.count != null ? h('span', { className: 'cx-filter-n' }, o.count) : null, h('span', { className: 'cx-filter-check' }, picked.includes(o.value) ? h(UiIcon, { name: 'check', size: 12 }) : ''))) : h(EmptyState, { text: '暂无选项', style: { padding: 7 } }),
+          options.length ? options.map((o) => h('button', { key: o.value, className: `cx-filter-item${picked.includes(o.value) ? ' on' : ''}`, onClick: (e) => { e.stopPropagation(); toggle(o.value); } }, h('span', { className: 'cx-filter-text' }, o.label), o.count != null ? h('span', { className: 'cx-filter-n cx-tag' }, o.count) : null, h('span', { className: 'cx-filter-check' }, picked.includes(o.value) ? h(UiIcon, { name: 'check', size: 12 }) : ''))) : h(EmptyState, { text: '暂无选项', style: { padding: 7 } }),
           h('button', { className: 'cx-filter-clear', onClick: (e) => { e.stopPropagation(); onChange([]); setOpen(false); } }, T('清除'))) : null);
     }
 

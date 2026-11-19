@@ -138,7 +138,7 @@ ok('task process uses reportCreate', project.includes("status === 'process'") &&
 ok('danger actions are in context menu', pm.includes("new Set(['modify', 'remove', 'cancel', 'reject', 'handover'])"));
 ok('Chat context has one scene source', chat.includes('function stripSceneAliases') && chat.includes('const requestContext = stripSceneAliases(context);') && chat.includes('context: requestContext'));
 ok('Workspace has exactly one grid definition', (css.match(/^\.cx-body\{/gm) || []).length === 1);
-  ok('Workspace keeps four columns with horizontal scroll', css.includes('grid-template-columns:minmax(320px,480px) minmax(320px,480px) minmax(320px,480px) minmax(420px,1fr)') && css.includes('overflow-x:auto') && css.includes('overscroll-behavior-x:contain'));
+  ok('Workspace keeps four columns with horizontal scroll', css.includes('grid-template-columns:minmax(280px,320px) minmax(280px,320px) minmax(280px,320px) minmax(420px,1fr)') && css.includes('overflow-x:auto') && css.includes('overscroll-behavior-x:contain'));
   ok('Chat message body is a vertical column', css.includes('.cx-shell .cx-msg .cx-msg-main{display:flex!important;flex-direction:column!important') && css.includes('.cx-shell .cx-msg .cx-msg-body{width:100%!important;min-width:0}'));
 ok('version chip opens update modal', read('src/client/parts/60-page.js').includes("className: `cx-ver${upd && upd.hasUpdate ? ' upd' : ''}`") && read('src/client/parts/60-page.js').includes('h(UpdateModal, { info: upd'));
 ok('update check is a GET op with noUser', read('lib/core/ops.js').includes("checkUpdate: { method: 'GET', noUser: true") && read('src/client/parts/05-bootstrap.js').includes("'checkUpdate']"));
@@ -316,6 +316,44 @@ ok('PM item is refetched after writes for fresh actions', read('src/client/parts
 ok('the composer chip opens a three-level cascade', (() => { const c = read('src/client/parts/58-config.js'); return c.includes('function CtxCascade') && c.includes("col('服务节点 / NODE'") && c.includes("col('项目空间 / SPACE'") && c.includes("col('最近应用 / APP'"); })());
 ok('the header utilities button is gone', !page.includes("'conversation.session.header.utilities'"));
 ok('conversation view host fills its tab', mainCss.includes('.cx-view-host{height:100%'));
+// 应用索引 + 项目闭环（v1.48.151）：最近应用必须同时当工具索引（functions）与
+// 存储索引（space/place_uid）；下一步只由 pmNextStep 算，客户端不再各写状态机。
+ok('recent apps carry functions and place_uid into context', (() => {
+  const c = read('src/client/parts/50-chat.js');
+  return c.includes('functions: String(a.functions || \'\').split(\',\')') && c.includes('place_uid: a.place_uid || \'\'') && c.includes('pri: /xiangmuguanli/.test(a.command || \'\') ? 1 : 0');
+})());
+ok('compact apps keep fns and place_uid', (() => {
+  const c = read('lib/core/copilot.js');
+  return c.includes("'place_uid', 'place', 'pri'") && c.includes("if (fns.length) one.fns = fns.slice(0, 8).join(',')");
+})());
+ok('pmList computes one next step', (() => {
+  const p = read('lib/core/project.js');
+  return p.includes('export function pmNextStep(') && p.includes('result.next = pmNextStep(') && p.includes('focusKind = \'\'') && p.includes('result.active = {');
+})());
+ok('pmList op forwards focus', (() => { const o = read('lib/core/ops.js'); return o.includes('focusKind: String(b.focus_kind') && o.includes('focusUid: String(b.focus_uid'); })());
+ok('next-step chips stay serializable and reuse PM ops', (() => {
+  const d = read('src/client/parts/52-pmdata.js');
+  const c = read('src/client/parts/50-chat.js');
+  return d.includes('function pmNextChips(') && d.includes("action: 'create'") && !/onClick:\s*function|next:\s*\(\)\s*=>/.test(d)
+    && c.includes('const runNextChip = async (chip)') && c.includes('setPmForm({ kind: c.kind, mode: \'create\', item, parent')
+    && c.includes('pmNextRow(m.card.next)');
+})());
+ok('avatar mode can act on the PM lifecycle', (() => {
+  const c = read('lib/core/copilot.js');
+  const chat = read('src/client/parts/50-chat.js');
+  return c.includes("'pmAct'") && chat.includes("if (op === 'pmAct')");
+})());
+ok('continue/next executes pmList.next without a model round', (() => {
+  const c = read('src/client/parts/50-chat.js');
+  return c.includes('闭环短路') && c.includes('const chip = pmNextChips(pm)[0]');
+})());
+// 模型只回散文不落动作是实测过的退化（「好的，现在开始执行」+ actions=[]）；
+// 上下文已有下一步时必须能确定性补 pmAct，但问题句与新建句不许被劫持。
+ok('prose-only reply still lands the next PM action', (() => {
+  const c = read('lib/core/copilot.js');
+  return c.includes('const guessed = inferAction({ message, context, mode })')
+    && c.includes('if (!action && !actions.length)') && c.includes('inferred: Boolean(');
+})());
 const failed = checks.filter((c) => !c.condition);
 for (const c of checks) console.log(`${c.condition ? 'PASS' : 'FAIL'}  ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
 if (failed.length) { console.error(`ui-check: ${failed.length} failed`); process.exit(1); }

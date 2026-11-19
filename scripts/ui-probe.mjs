@@ -405,6 +405,34 @@ window.__PROBE_SELS__ = __SELS__;
 </script>`;
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cx-probe-'));
+
+// macOS 上 headless=new 的窗口仍按「带浏览器外壳」算：实测 --window-size=420,420
+// 得到 innerHeight=289（矮 131px），视口下半部的元素 elementFromPoint 恒为 null，
+// pop-inside 的 fixed 断言因此假红。先量一次差额，再把每个用例的窗口高度补回来。
+// DSH 文件沙箱下 Chromium 也起不了自己的 sandbox（sandbox initialization failed:
+// Operation not permitted → dump-dom 空输出），所以统一加 --no-sandbox：只渲染本地
+// file:// fixture，不联网。
+const BASE_FLAGS = ['--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--no-default-browser-check'];
+function viewportChromeHeight() {
+  const probe = path.join(tmp, 'calib.html');
+  fs.writeFileSync(probe, '<!doctype html><body><script>window.addEventListener("load",function(){document.title="CAL:"+innerHeight;});</script>');
+  try {
+    const dom = execFileSync(browser, [...BASE_FLAGS, `--user-data-dir=${path.join(tmp, 'profile-calib')}`,
+      '--window-size=800,600', '--virtual-time-budget=2000', '--dump-dom', `file://${probe}`],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const hit = dom.match(/<title>CAL:(\d+)<\/title>/);
+    const inner = hit ? Number(hit[1]) : 0;
+    return inner > 0 && inner < 600 ? 600 - inner : 0;
+  } catch {
+    return 0;
+  }
+}
+const CHROME_H = viewportChromeHeight();
+const windowSize = (spec) => {
+  const [w, h] = String(spec).split(',').map(Number);
+  return `${w},${h + CHROME_H}`;
+};
+
 let failed = 0;
 
 for (const c of CASES) {
@@ -422,8 +450,7 @@ for (const c of CASES) {
   fs.writeFileSync(file, html);
 
   const profile = path.join(tmp, `profile-${c.name}`);
-  const common = ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
-    `--user-data-dir=${profile}`, '--virtual-time-budget=3000', `--window-size=${c.window}`];
+  const common = [...BASE_FLAGS, `--user-data-dir=${profile}`, '--virtual-time-budget=3000', `--window-size=${windowSize(c.window)}`];
   let dom = '';
   try {
     dom = execFileSync(browser, [...common, '--dump-dom', `file://${file}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
