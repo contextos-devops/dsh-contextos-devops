@@ -147,3 +147,13 @@ Each entry records: lesson → reusable abstraction → verification.
 - 固化：① `55-pm.js` 的 `pmFilterOptions` 对 `status_name` 统一走 `pmStatusText`，类型仍用服务端 `type_label`，最后过 `T()`；② `00-prelude.js` 的 `PM_STATUS_ZH/EN` 补 `canFinish/shouldImprove`；③ `DESIGN-SYSTEM.md` §18 新增第 7 条，明确「筛选 chip 也走翻译表，不要拼 `${key}_label`」。
 - 数字：修复后 `shouldImprove 2 → 待改进 2`、`canFinish 1 → 可完成 1`（中英双语脚本断言通过）；`build:client` 的 170 条 ui-check 与 i18n/docs/gate 全过，`ui-probe` 仍只有既有的 `pop-inside` 一条失败（CSS 未改）。
 - 教训：**状态词表要和状态机一起长**；新增状态只改后端枚举、不改 `PM_STATUS_*`，筛选栏就会把内部名字暴露给用户，而且卡片本身因为读 `status_label` 看起来是正常的，容易漏测筛选路径。
+
+
+## 2026-11-19 — 切语言后消息标题和卡片状态还是旧语言
+
+- **现象**：英文界面里 AI 消息显示 `Created 任务`，任务卡片状态位仍显示小写 `created`；切回中文，此前生成的消息和卡片也不会变。
+- **根因**：**数据层**——生成消息时把 `T('已创建') + ' ' + PM_KIND_LABEL[kind]` 的成品串存进 `text`，`PM_KIND_LABEL` 只有中文，于是中英混排；卡片 item 的 `status_label` 是 `pmList` 按创建时 `lang` 算好的快照（英文时甚至是枚举名 `created`），`PmCard` 直接读快照，切换语言后既不重算也翻译不动。服务端持久化只存 `{role,text,t}`，卡片被剥掉，刷新后更无从恢复。
+- **类别**：i18n/消息模型（把展示串当数据存；同类第 1 次）。
+- **固化**：① 消息带 `i18n:{op:'create'|'update'|'remove'|'act',kind,title,action}` 描述，渲染走 `pmMsgText(m)` 用 `pmResultText` 重取词，旧消息可从 `card.pm.kind` 反推；② `PmCard` 状态改为 `status_name`/`type_name` 优先（报告卡走 `pmReportTypeText`），快照 label 仅兜底；③ `PM_STATUS_ZH/EN` 与后台 `STATUS_ZH` 对齐（`created=待提交`、`approved=待开始`），并补反馈两态；④ 服务端持久化补 `i18n` 字段；⑤ `DESIGN-SYSTEM.md` §18 新增第 8 条。
+- **数字**：旧逻辑 zh `T('created')='created'`、en 拼出 `Created 任务`；新逻辑 zh/en 分别 `已创建 任务`/`Created Task`、`已更新 报告`/`Updated Report`、`任务「随机任务」开始执行`/`Task “随机任务” started`；状态 `待提交`/`Not submitted`、`待改进`/`Needs improvement`；`build:client` 170 条 ui-check、gate ERR=0 WARN=0，`ui-probe` 仍只有既有的 `pop-inside` 一条失败。
+- **教训**：**消息是数据，不是渲染结果**——凡是会随语言/主题变化的文案，存的必须是可重算的描述（op/kind/action），不能存 `T()` 之后的成品串；快照里的 label 也只能当缓存，不能当状态真源。

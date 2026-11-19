@@ -383,7 +383,7 @@
         if (!cur.ready) { cur.ready = true; cur.msgs = msgs; return; }
         cur.msgs = msgs;
         cxWrite(sessionKey, msgs);
-        try { api('stateSet', { name: 'chat:' + sessionKey, value: msgs.slice(-100).map((m) => ({ role: m.role, text: String(m.text || '').slice(0, 4000), t: m.t || '' })) }).catch(() => {}); } catch {}
+        try { api('stateSet', { name: 'chat:' + sessionKey, value: msgs.slice(-100).map((m) => ({ role: m.role, text: String(m.text || '').slice(0, 4000), t: m.t || '', i18n: m.i18n || null })) }).catch(() => {}); } catch {}
       }, [msgs, sessionKey, open]);
 
       const sanitizeTrace = (v, depth = 0) => {
@@ -627,7 +627,8 @@
         }
         await loadPm();
         const item = await pmFetchItem(kind, d?.uid, body);
-        aiCard(T('已创建') + ' ' + (PM_KIND_LABEL[kind] || kind), { pm: { kind, item: item || { uid: d?.uid || '', title: body.title, status_name: '', actions: [] } }, link: pmPortalUrl(kind, d?.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(kind, d?.uid) } : null });
+        const i18n = { op: 'create', kind };
+        aiCard(pmResultText(i18n), { pm: { kind, op: 'create', item: item || { uid: d?.uid || '', title: body.title, status_name: '', actions: [] } }, link: pmPortalUrl(kind, d?.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(kind, d?.uid) } : null }, { i18n });
         return d;
       };
 
@@ -1117,7 +1118,8 @@
             const itemUid = args.item_uid || (args.kind === 'target' ? activeTarget?.uid : args.kind === 'plan' ? activePlan?.uid : args.kind === 'task' ? activeTask?.uid : args.kind === 'report' ? activeReport?.uid : activeFeedback?.uid) || '';
             await api('pmModify', { node, uid: avatar?.uid || '', kind: args.kind || '', item_uid: itemUid, title: args.title || '', content: args.content || '', begin_time: args.begin_time || '', end_time: args.end_time || '', report_type: args.report_type || '', score: args.score || '', feedback_status: args.feedback_status || '' });
             await loadPm();
-            aiCard(`已更新${PM_KIND_LABEL[args.kind] || '项目数据'}`, { title: '更新成功', rows: [['类型', PM_KIND_LABEL[args.kind] || args.kind || '项目数据'], ['标题', args.title || '—']], link: pmPortalUrl(args.kind, d.uid) ? { label: '打开项目管理', url: pmPortalUrl(args.kind, d.uid) } : null });
+            const i18n = { op: 'update', kind: args.kind || '' };
+            aiCard(pmResultText(i18n) || `已更新${PM_KIND_LABEL[args.kind] || '项目数据'}`, { title: '更新成功', rows: [['类型', PM_KIND_LABEL[args.kind] || args.kind || '项目数据'], ['标题', args.title || '—']], link: pmPortalUrl(args.kind, d.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(args.kind, d.uid) } : null }, { i18n });
           });
         }
         if (op === 'pmRemove' || op === 'pmDelete') {
@@ -1125,7 +1127,8 @@
             const itemUid = args.item_uid || (args.kind === 'target' ? activeTarget?.uid : args.kind === 'plan' ? activePlan?.uid : args.kind === 'task' ? activeTask?.uid : args.kind === 'report' ? activeReport?.uid : activeFeedback?.uid) || '';
             await api('pmRemove', { node, uid: avatar?.uid || '', kind: args.kind || '', item_uid: itemUid });
             await loadPm();
-            aiCard(`已删除${PM_KIND_LABEL[args.kind] || '项目数据'}`, { title: '删除成功', rows: [['类型', PM_KIND_LABEL[args.kind] || args.kind || '项目数据']], link: pmPortalUrl(args.kind, d.uid) ? { label: '打开项目管理', url: pmPortalUrl(args.kind, d.uid) } : null });
+            const i18n = { op: 'remove', kind: args.kind || '' };
+            aiCard(pmResultText(i18n) || `已删除${PM_KIND_LABEL[args.kind] || '项目数据'}`, { title: '删除成功', rows: [['类型', PM_KIND_LABEL[args.kind] || args.kind || '项目数据']], link: pmPortalUrl(args.kind, d.uid) ? { label: T('打开项目管理'), url: pmPortalUrl(args.kind, d.uid) } : null }, { i18n });
           });
         }
         if (op === 'projectStatus') {
@@ -1398,12 +1401,12 @@
                 h('div', { className: 'cx-msg-tools', style: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 } },
                 m.trace ? h('button', { className: 'cx-msg-tool', title: T('查看请求的上下文与返回'), onClick: () => setTraceMsg(m) }, T('详情')) : null,
                 m.role === 'ai' ? h('button', { className: 'cx-msg-tool', title: T('重试'), onClick: () => { const prev = [...msgs.slice(0, i)].reverse().find((x) => x.role === 'user'); if (prev) handle(prev.text); } }, T('重试')) : null,
-                h('button', { className: 'cx-msg-tool', title: T('引用'), onClick: () => { const el = inputRef.current; if (!el) return; el.value = '> ' + String(m.text || '').split('\n').join('\n> ') + '\n'; el.focus(); } }, T('引用')),
-                h('button', { className: 'cx-msg-tool', title: T('复制'), onClick: () => { try { navigator.clipboard.writeText(m.text); } catch {} } }, T('复制')),
+                h('button', { className: 'cx-msg-tool', title: T('引用'), onClick: () => { const el = inputRef.current; if (!el) return; el.value = '> ' + pmMsgText(m).split('\n').join('\n> ') + '\n'; el.focus(); } }, T('引用')),
+                h('button', { className: 'cx-msg-tool', title: T('复制'), onClick: () => { try { navigator.clipboard.writeText(pmMsgText(m)); } catch {} } }, T('复制')),
                 h('button', { className: 'cx-msg-tool danger', title: T('删除'), onClick: () => { setMsgs((list) => list.filter((_, j) => j !== i)); } }, T('删除'))),
               ),
               h('div', { className: 'cx-msg-body' },
-                h(RichText, { text: m.text }),
+                h(RichText, { text: pmMsgText(m) }),
                 m.ask ? h(CxAskForm, { m, lang: locale, onSubmit: submitAsk })
                 : m.card && m.card.entity && m.card.entity.kind === 'space' && m.card.entity.data
                   ? h(SpaceCard, { s: m.card.entity.data, node: m.card.entity.node || node, locale, busy: false,
@@ -1467,7 +1470,7 @@
         if (action === 'modify') return openPm(kind, 'edit', item);
         if (action === 'open') { if (item.link && typeof OPEN_LINK === 'function') OPEN_LINK(item.link, item.title || 'link'); return; }
         if (action === 'remove') return removePm(kind, item);
-        try { await api('pmAct', { node, uid: avatar?.uid || '', kind, item_uid: item.uid, action, uid_options: uidFieldMap(item) }); await loadPm(); const msg = `${PM_SHORT[kind]}「${item.title}」执行 ${action}`; ai(msg); try { window.dispatchEvent(new CustomEvent('cx-toast', { detail: { text: msg, kind: 'ok' } })); } catch {} }
+        try { await api('pmAct', { node, uid: avatar?.uid || '', kind, item_uid: item.uid, action, uid_options: uidFieldMap(item) }); await loadPm(); const i18n = { op: 'act', kind, title: item.title, action }; const msg = pmResultText(i18n); ai(msg, { i18n }); try { window.dispatchEvent(new CustomEvent('cx-toast', { detail: { text: msg, kind: 'ok' } })); } catch {} }
         catch (e) { const msg = `操作失败：${String(e?.message || e)}`; ai(msg); try { window.dispatchEvent(new CustomEvent('cx-toast', { detail: { text: msg, kind: 'err' } })); } catch {} }
       };
       const pmItem = (item, active, onClick, sub, kind) => h(PmCard, {

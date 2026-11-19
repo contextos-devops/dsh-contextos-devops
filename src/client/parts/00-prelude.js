@@ -427,8 +427,9 @@ window.__ModuleLoader__.load({
       if (vars) for (const k of Object.keys(vars)) out = out.split(`{${k}}`).join(String(vars[k]));
       return out;
     };
-    const PM_STATUS_ZH = { created: '已创建', submited: '已提交', approved: '已通过', process: '进行中', finished: '已完成', canceled: '已取消', rejected: '已拒绝', canFinish: '可完成', shouldImprove: '待改进' };
-    const PM_STATUS_EN = { created: 'Created', submited: 'Submitted', approved: 'Approved', process: 'In progress', finished: 'Finished', canceled: 'Canceled', rejected: 'Rejected', canFinish: 'Can finish', shouldImprove: 'Needs improvement' };
+    // 与后台 STATUS_ZH 对齐：created=待提交，approved=待开始（不要另造一套说法）。
+    const PM_STATUS_ZH = { created: '待提交', submited: '待审批', approved: '待开始', process: '进行中', finished: '已完成', canceled: '已取消', rejected: '已驳回', canFinish: '可完成', shouldImprove: '待改进' };
+    const PM_STATUS_EN = { created: 'Not submitted', submited: 'Pending approval', approved: 'Not started', process: 'In progress', finished: 'Completed', canceled: 'Canceled', rejected: 'Rejected', canFinish: 'Can finish', shouldImprove: 'Needs improvement' };
     const pmStatusText = (v) => (CURRENT_LANG === 'zh' ? (PM_STATUS_ZH[v] || v) : (PM_STATUS_EN[v] || EN_TEXT[v] || v));
     const term = (lang, key) => (TERMS[lang] && TERMS[lang][key]) || TERMS.en[key] || key;
     const browserLang = () => (typeof navigator !== 'undefined' && String(navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en');

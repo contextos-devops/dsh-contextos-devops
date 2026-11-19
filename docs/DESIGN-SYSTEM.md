@@ -267,6 +267,7 @@ UiAddressBar {
 5. **默认值也取自选项**：默认 = `options[0].value`，不硬编码英文名。
 6. **初始 state 也要归一，不能只在提交时归一**：`options` 通常是异步加载的，记录里的 `name`（如 `shouldImprove`）与选项 `value`（如 `"1"`）不是同一形态；`<select value>` 匹配不到选项时 React/浏览器会**静默回退到第一项**，界面显示「可完成」而实际是「待改进」。做法：options 到位后用 effect 把 state 按 `value/name/label` 归一到 `value`，并让弹窗以 `kind:mode:uid` 为 key 重挂载，避免切换记录时沿用旧 state。回归：`46-pm.js` 的 PMModal（反馈/报告类型）与 `50-chat.js` 的 `PMModal` key。
 7. **筛选 chip 的标签也走翻译表**：`pmFilterOptions` 对 `status_name` 调 `pmStatusText`，反馈状态 `canFinish/shouldImprove` 必须同时进 `PM_STATUS_ZH/EN`；不要拼 `${key}_label`。英文模式下服务端 `status_label` 就是枚举名，直接读它会把 `shouldImprove` 漏到筛选栏。回归：`55-pm.js` 的反馈状态筛选。
+8. **生成的消息存描述、不存成品字符串**：创建/更新/删除/动作结果消息写入语言无关的 `i18n:{op,kind,title,action}`，渲染时用 `pmMsgText(m)` 重新取词；卡片状态从 `status_name`/`type_name` 现算，快照里的 `status_label` 只作旧数据兜底（它是生成时那门语言的字符串）。状态词表与后台 `STATUS_ZH` 对齐：`created=待提交`、`approved=待开始`。回归：`50-chat.js` 的 `aiCard(..., { i18n })`、`55-pm.js` 的 `PmCard`。
 
 实现入口：`lib/core/project.js → optionValue({ node, space, command, field, raw })`。
 

@@ -6,6 +6,33 @@
     const PM_KIND_LABEL = { target: '目标', plan: '计划', task: '任务', report: '报告', feedback: '反馈' };
     const PM_SHORT = { target: '目标', plan: '计划', task: '任务', report: '报告', feedback: '反馈' };
     const PM_ACTION_LABEL = { planCreate: '+ 计划', taskCreate: '+ 任务', reportCreate: '+ 报告', feedbackCreate: '+ 反馈', submit: '提交', approve: '通过', reject: '驳回', process: '开始', finish: '完成', cancel: '取消', modify: '编辑', remove: '删除', handover: '交接', open: '打开链接' };
+    // 报告卡片的「状态」位显示报告类型；必须由 type_name 重新取词，不能信快照里的 type_label。
+    const PM_REPORT_ZH = { issue: '问题', daily: '日报', weekly: '周报', monthly: '月报', quarterly: '季报', annual: '年报' };
+    const PM_REPORT_EN = { issue: 'Issue', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly', annual: 'Annual' };
+    const pmReportTypeText = (v) => (CURRENT_LANG === 'zh' ? (PM_REPORT_ZH[v] || v) : (PM_REPORT_EN[v] || EN_TEXT[v] || v));
+    // 操作结果消息：存结构化描述（kind/op/title/action），渲染时再取词，语言切换才能跟着变。
+    const PM_ACTION_DONE = {
+      zh: { submit: '已提交', approve: '已通过', reject: '已驳回', process: '开始执行', finish: '已完成', cancel: '已取消', modify: '已更新', remove: '已删除' },
+      en: { submit: 'submitted', approve: 'approved', reject: 'rejected', process: 'started', finish: 'completed', cancel: 'canceled', modify: 'updated', remove: 'removed' },
+    };
+    const pmKindText = (kind) => T(PM_KIND_LABEL[kind] || kind || '');
+    function pmResultText(pm) {
+      const kind = pm?.kind || '';
+      if (!kind) return '';
+      const op = pm?.op || 'create';
+      if (op === 'act') {
+        const done = (PM_ACTION_DONE[CURRENT_LANG === 'zh' ? 'zh' : 'en'] || {})[pm.action] || pm.action || '';
+        const title = String(pm.title || '');
+        return CURRENT_LANG === 'zh' ? `${pmKindText(kind)}「${title}」${done}` : `${pmKindText(kind)} “${title}” ${done}`;
+      }
+      const tpl = op === 'update' ? '已更新 {kind}' : op === 'remove' ? '已删除 {kind}' : '已创建 {kind}';
+      return TT(tpl, { kind: pmKindText(kind) });
+    }
+    // 历史消息里没有 i18n 描述时，创建卡片仍可从 card.pm 反推（PM 结果卡只有创建一种）。
+    function pmMsgText(m) {
+      const meta = m?.i18n || (m?.card?.pm ? { op: 'create', kind: m.card.pm.kind } : null);
+      return (meta && pmResultText(meta)) || String(m?.text || '');
+    }
     // Shared PM card. Keep status/action presentation in one place so every
     // entity type has the same selection, badge, effect and context-menu UI.
     const PM_MENU_ACTIONS = new Set(['modify', 'remove', 'cancel', 'reject', 'handover']);
@@ -153,7 +180,11 @@
       const statusKey = item.status_name || item.type_name || (kind === 'report' ? 'report' : '');
       const reportType = kind === 'report' ? String(item.type_name || item.inputs?.report_type || '').toLowerCase() : '';
       const statusTone = PM_REPORT_TONE[reportType] || pmTone(statusKey);
-      const statusLabel = item.status_label ? T(item.status_label) : (item.status_name ? pmStatusText(item.status_name) : '');
+      // 优先用语言无关的 status_name/type_name 现算；快照里的 status_label 是旧语言的字符串。
+      const statusLabel = kind === 'report' && (item.type_name || item.type_label)
+        ? pmReportTypeText(item.type_name || item.type_label)
+        : item.status_name ? pmStatusText(item.status_name)
+        : (item.status_label ? T(item.status_label) : '');
       const score = Number(item.score);
       const stars = kind === 'feedback' && Number.isFinite(score) && item.score !== '' && item.score != null ? cxStars(score) : '';
       const animRef = useRef(0);
