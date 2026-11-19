@@ -129,3 +129,12 @@ Each entry records: lesson → reusable abstraction → verification.
   两条棘轮：`css-check` 锁死 main.css → 样式落 `layout.css`；`i18n-lint` 中文棘轮 → 徽标改英文。
 - 数字：`build:client` exit 0（ui-check 151）；新增 1 视图 / 75 行样式 / 263 行组件。
 - 教训：视图级样式不要往 `main.css` 堆——它被预算棘轮锁死，新视图应落在 `layout.css` 或独立层。
+
+## 2026-11-19 — 反馈编辑弹窗把「待改进」显示成「可完成」
+
+- 现象：反馈卡片状态为「待改进」，点修改后表单的「反馈状态」却显示「可完成」；截图里评分还是 5 星（同标题的两条反馈，弹窗开在了较早那条 canFinish/5 上）。
+- 根因层次：**逻辑层**——`src/client/parts/46-pm.js` 的 PMModal 用记录里的 `feedback_status`（`shouldImprove`）直接初始化 `<select value>`，而后台 `inputs` 返回的选项值是数字码 `0/1`（name 才是 `canFinish/shouldImprove`）；提交时有 `norm()` 归一，显示时没有。React 18 对匹配不到的 `value` 会静默回退到第一个 option，于是显示「可完成」。`report_type` 同样存在 `daily` vs `0` 的错位。
+- 类别：表单取值/异步选项（同类第 1 次，规则早已写在 `DESIGN-SYSTEM` §18-4，但只覆盖提交、不覆盖初始 state）。
+- 固化：① `46-pm.js` 新增 effect，options 到位后把 `report_type/feedback_status/score` 按 `value/name/label` 归一到 `value`；② `50-chat.js` 给 PMModal 加 `kind:mode:uid` key，切换记录不再复用旧 state；③ `docs/DESIGN-SYSTEM.md` §18 新增第 6 条，明确「初始 state 也要归一 + 不匹配会回退第一项」；④ React 18 UMD 复现页作为证据（旧逻辑 value=`shouldImprove` 渲染 `0/可完成`，归一后 `1/待改进`）。
+- 数字：修复前 `<select>` `value=0 selectedIndex=0 text=可完成`（state 仍是 `shouldImprove`）；归一后 `value=1 selectedIndex=1 text=待改进`；`build:client` 170 条 ui-check、render/hook/op/store/i18n/context/docs 全过，`ui-probe` 仅 `pop-inside` 一条既有断言失败（无浏览器沙箱环境下与本次改动无关，CSS 未改）。
+- 教训：**「提交时归一」不等于「显示时归一」**；异步 options + 受控 select 的组合必须把 state 也当作「存量数据」处理，否则 200 提交正确、界面照样骗人。

@@ -40,6 +40,23 @@
         if (kind === 'report' && !item && fieldOpts.report_type?.options?.length) setReportType(String(fieldOpts.report_type.options[0].value ?? ''));
         if (kind === 'feedback' && !item && fieldOpts.feedback_status?.options?.length) setFeedbackStatus(String(fieldOpts.feedback_status.options[0].value ?? ''));
       }, [kind, item, fieldOpts]);
+      // 枚举字段的真源是 inputs 返回的 value（数字编码），而编辑项带的是 name/label。
+      // 选项异步到达后把状态归一到 value：否则 <select> 无匹配项会退回第一个选项
+      // （反馈「待改进」显示成「可完成」），保存时虽然 norm 能兜住，但显示是错的。
+      useEffect(() => {
+        const pick = (field, cur) => {
+          const list = fieldOpts[field]?.options || [];
+          if (!list.length) return '';
+          const hit = list.find((o) => String(o.value) === String(cur) || String(o.name) === String(cur) || String(o.label) === String(cur));
+          return hit && String(hit.value) !== String(cur) ? String(hit.value) : '';
+        };
+        const reportTypeValue = pick('report_type', reportType);
+        if (reportTypeValue) setReportType(reportTypeValue);
+        const feedbackStatusValue = pick('feedback_status', feedbackStatus);
+        if (feedbackStatusValue) setFeedbackStatus(feedbackStatusValue);
+        const scoreValue = pick('score', score);
+        if (scoreValue) setScore(scoreValue);
+      }, [fieldOpts, reportType, feedbackStatus, score]);
       const missing = [...requiredFields].filter((field) => {
         const value = field === 'title' ? title : field === 'content' ? content : field === 'begin' ? begin : field === 'end' ? end : field === 'report_type' ? reportType : field === 'score' ? score : field === 'feedback_status' ? feedbackStatus : '';
         return !String(value ?? '').trim();

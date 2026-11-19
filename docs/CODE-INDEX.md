@@ -68,7 +68,7 @@
 | `src/client/parts/36-data.js` | 253 | `AvatarModal` `QUESTIONS` `DeviceModal` `DataModal` `INIT_DEFAULTS` |
 | `src/client/parts/40-project.js` | 494 | `InitOverlay` `T` `CX_LUNAR_INFO` `CX_TERM_INFO` `CX_TERM_NAME` `CX_GAN` `CX_ZHI` `CX_ANIMALS` `CX_NSTR1` `CX_NSTR2` |
 | `src/client/parts/45-map.js` | 110 | `TaskMap` `L` |
-| `src/client/parts/46-pm.js` | 165 | `PMModal` `RichText` |
+| `src/client/parts/46-pm.js` | 182 | `PMModal` `RichText` |
 | `src/client/parts/47-three.js` | 325 | `ThreeAvatar` `ThreeCity` `TechBackdrop` |
 | `src/client/parts/49-msg.js` | 161 | `Elapsed` `FN_LABEL` `ACT_LABEL` `FN_LABEL_EN` `ACT_LABEL_EN` `FIELD_ZH` `FIELD_EN` `KIND_META` `CxEntityCard` `L` |
 | `src/client/parts/50-chat.js` | 1673 | `ChatPanel` `userUpRef` `ToolRow` `PM_CMD_RE` `CN_NUM` `PM_ENTITY` `PM_TOPICS` `APP_CHAIN` `CHAIN_VALUE` `CHAIN_TRANS` |
@@ -150,7 +150,7 @@
 | `docs/AI-CONVERSATION.md` | 142 | 人写 |
 | `docs/ARCHITECTURE.md` | 135 | 人写 |
 | `docs/CODE-GEN.md` | 424 | 人写 |
-| `docs/DESIGN-SYSTEM.md` | 363 | 人写 |
+| `docs/DESIGN-SYSTEM.md` | 364 | 人写 |
 | `docs/DESIGN.md` | 123 | 人写 |
 | `docs/DIAGNOSTICS.md` | 105 | 人写 |
 | `docs/DOCTRINE.md` | 108 | 人写 |
@@ -167,6 +167,6 @@
 | `docs/PRODUCT-DESIGN.md` | 843 | 人写 |
 | `docs/PUBLISH.md` | 172 | 人写 |
 | `docs/RSI-CONSTITUTION.md` | 111 | 人写 |
-| `docs/RSI-LEDGER.md` | 132 | 人写 |
+| `docs/RSI-LEDGER.md` | 141 | 人写 |
 | `docs/STATE.md` | — | 生成 |
 | `docs/URL-SPEC.md` | 243 | 人写 |

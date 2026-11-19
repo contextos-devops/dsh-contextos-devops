@@ -1668,5 +1668,5 @@
           ]) : null,
         avatarEditOpen ? h(AvatarEditModal, { avatar, onClose: () => setAvatarEditOpen(false), onSave: (p) => { onUpdateAvatar(p); setAvatarEditOpen(false); } }) : null,
         sceneOpen ? h(SceneModal, { scene: bg, onClose: () => setSceneOpen(false), onSave: (p) => { onUpdateScene(p); setSceneOpen(false); } }) : null,
-        pmForm ? h(PMModal, { kind: pmForm.kind, mode: pmForm.mode, item: pmForm.item, parent: pmForm.parent, node, avatar, onClose: () => setPmForm(null), onDone: async () => { setPmForm(null); await loadPm(); } }) : null);
+        pmForm ? h(PMModal, { key: `${pmForm.kind}:${pmForm.mode}:${pmForm.item?.uid || 'new'}`, kind: pmForm.kind, mode: pmForm.mode, item: pmForm.item, parent: pmForm.parent, node, avatar, onClose: () => setPmForm(null), onDone: async () => { setPmForm(null); await loadPm(); } }) : null);
     }
